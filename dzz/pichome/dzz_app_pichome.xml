@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+    <item id="Title"><![CDATA[Dzz! app]]></item>
+    <item id="Version"><![CDATA[2.02]]></item>
+    <item id="Time"><![CDATA[2018-11-28 15:12]]></item>
+    <item id="From"><![CDATA[oaooa系统 (http://192.168.3.43/)]]></item>
+    <item id="Data">
+        <item id="app">
+            <item id="mid"><![CDATA[0]]></item>
+            <item id="appname"><![CDATA[pichome]]></item>
+            <item id="appico"><![CDATA[data:image/png;base64,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
+]]></item>
+            <item id="appdesc"><![CDATA[支持将服务器中eagle文件包导入到系统指定目录]]></item>
+            <item id="appurl"><![CDATA[{dzzscript}?mod=pichome&op=index]]></item>
+            <item id="noticeurl"><![CDATA[]]></item>
+            <item id="disp"><![CDATA[0]]></item>
+            <item id="vendor"><![CDATA[乐云网络]]></item>
+            <item id="haveflash"><![CDATA[0]]></item>
+            <item id="isshow"><![CDATA[1]]></item>
+            <item id="havetask"><![CDATA[0]]></item>
+            <item id="hideInMarket"><![CDATA[0]]></item>
+            <item id="feature"><![CDATA[]]></item>
+            <item id="fileext"><![CDATA[eaglepack,zip]]></item>
+            <item id="group"><![CDATA[1]]></item>
+            <item id="position"><![CDATA[1]]></item>
+            <item id="system"><![CDATA[0]]></item>
+            <item id="notdelete"><![CDATA[1]]></item>
+            <item id="open"><![CDATA[0]]></item>
+            <item id="nodup"><![CDATA[0]]></item>
+            <item id="identifier"><![CDATA[pichome]]></item>
+            <item id="app_path"><![CDATA[dzz]]></item>
+            <item id="version"><![CDATA[2.01]]></item>
+            <item id="extra">
+                <item id="installfile"><![CDATA[install.php]]></item>
+                <item id="uninstallfile"><![CDATA[uninstall.php]]></item>
+            </item>
+        </item>
+        <item id="version"><![CDATA[2.02]]></item>
+    </item>
+</root>

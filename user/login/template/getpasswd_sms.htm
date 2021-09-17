@@ -1,0 +1,153 @@
+<!--{template common/header_simple_start}-->
+<style>
+	.modal-header{
+		text-align: center;
+	}
+	.brand {
+	   margin:15px 0;
+		text-align: center;
+	}
+	.brand img {
+		max-width:350px;
+		max-height:150px;
+	}
+	.Mtitle{
+		font-size:24px;
+	}
+	@media (min-width: 768px){
+		.modal-dialog {
+			width: 450px;
+			margin: 30px auto;
+		}
+	}
+	.modal-open .modal .modal-body {
+    	padding: 20px;
+	}
+	 .btn-sm {
+		padding: 5px 10px;
+		font-size: 12px;
+		line-height: 1.5;
+		border-radius: 3px;
+	}
+	.ml20{
+		margin-left:20px;
+	}
+	.modal .modal-dialog {
+		margin: auto;
+		padding-top: 100px;
+	}
+</style>
+<!--{template common/header_simple_end}-->
+<div id="wrapper_div" style="width: 100%;height:100%;  position: absolute; top: 0px; left: 0px; margin: 0px; padding: 0px; overflow: hidden;z-index:0;  font-size: 0px; background:{eval echo $_G['setting']['loginset']['bcolor']?$_G['setting']['loginset']['bcolor']:'#76838f';};"> 
+	<!--{if $_G['setting']['loginset']['img']}-->
+	<img src="$_G['setting']['loginset']['img']" name="imgbg" id="imgbg" style="right: 0px; bottom: 0px; top: 0px; left: 0px; z-index:10;margin:0;padding:0;overflow:hidden; position: absolute;width:100%;height:100%" height="100%" width="100%">
+	<!--{/if}-->
+    <!--{if $_G['setting']['loginset']['url']}-->
+    <iframe id="wrapper_frame" name="wrapper_frame" src="$_G['setting']['loginset']['url']" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" allowtransparency="true" style="z-index:20;position:absolute;width:100%;height:100%;background:url(dzz/images/b.gif);"></iframe>
+    <!--{/if}-->
+</div>
+<div id="modal_login" class="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display:block">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			
+			<form class="form-horizontal" role="form" method="post" action="user.php?mod=login&op=logging&action=getPasswdBySms" onsubmit="return validate(this);">
+				<input type="hidden" name="formhash" value="{FORMHASH}" />
+				<input type="hidden" name="uid" value="$uid" />
+
+				<div class="modal-header">
+					<div class="brand"> <img src="{eval echo $_G['setting']['sitelogo']?'index.php?mod=io&op=thumbnail&size=small&path='.dzzencode('attach::'.$_G['setting']['sitelogo']):'static/image/common/logo.png';}" /></div>
+					<h3 class="Mtitle" ><span >{lang getpassword}</span></h3>
+					<p class="text-muted">{lang lostpassword_sms}</p>
+					
+				</div>
+				
+					
+				<div class="modal-body">
+					<div class="form-group ">
+						<label class="control-label col-sm-4">{lang login_email}:</label>
+						<div class="col-sm-8">
+							<p class="form-control-static">{eval echo substr_replace($member[email], '****', 1, 4);}</p>
+							
+						</div>
+					</div>
+					<div class="form-group ">
+						<label class="control-label col-sm-4">{lang username}:</label>
+						<div class="col-sm-8">
+							<p class="form-control-static">$member['username']</p>
+							
+						</div>
+					</div>
+					<div class="form-group ">
+						<label class="control-label col-sm-4">{lang sms_phone}:</label>
+						<div class="col-sm-8">
+							<span>{eval echo substr_replace($member[phone], '*****', 3, 5);}</span>
+							<button id="sms_send_btn" type="button" class="btn btn-success btn-sm ml20"  data-loading-text="{lang sms_sended}">{lang sms_send}</button>
+							<span id="chk_nsms_code" class="help-block text-danger"> </span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="control-label col-sm-4" for="sms_code">{lang sms_code}</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" id="sms_code" name="code" autocomplete="off" placeholder="{lang sms_code}">
+							
+						</div>
+						
+					</div>
+					
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" role="button" type="submit" name="getpwsubmit" value="true">{lang identify_changes}</button>
+					<a class="btn btn-default" href="$_G['siteurl']" title="{lang back_homepage}">{lang back_homepage}</a>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="user/scripts/register.js?{VERHASH}"></script>
+<script type="text/javascript">
+	function validate(form) {
+		if(document.getElementById('sms_code').value == '') {
+			document.getElementById('sms_code').focus();
+			return false;
+		} 
+		return true;
+	}
+	jQuery('#sms_send_btn').on('click',function(){
+		var el=jQuery(this);
+		el.prop('disabled',true);
+		el.html('{lang sms_sended} ( <span class="num">60</span> )');
+		
+		
+		jQuery.post('user.php?mod=login&op=logging&action=getPasswdBySms&operation=sms_send',{'uid':'$uid'},function(json){
+			console.log(json);
+			if(json.msg=='success'){
+				jquery('#chk_nsms_code').html('');
+				jump(60);
+				window.setTimeout(function(){
+					el.prop('disabled',false).html('{lang sms_send_repeat}');
+				},60000);
+			}else{
+				jump(10);
+				window.setTimeout(function(){
+					el.prop('disabled',false).html('{lang sms_send_repeat}');
+				},10000);
+				jQuery('#chk_nsms_code').html(json.error);
+			}
+		},'json');
+	});
+	function jump(cont){						
+		window.setTimeout(function(){
+			cont--;
+			if(cont>0){
+				$('.num').text(cont);
+				jump(cont);
+			}
+		},1000)
+	}
+					
+</script>
+<script type="text/javascript">
+	jQuery('body').addClass('modal-open');
+</script>
+<script src="static/bootstrap/js/bootstrap.min.js?{VERHASH}"></script>
+<!--{template common/footer}-->

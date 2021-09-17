@@ -1,0 +1,1414 @@
+<template id="tpscreen">
+	<div class="screen-box" v-if="IsShowScreen==1">
+		<template v-for="sitem in ScreenData">
+			<template v-if="sitem.key=='color'">
+				<div class="block">
+					<el-popover placement="bottom" width="507" trigger="click">
+						<div class="field-select-box">
+							<ul class="field-color-box clearfix">
+								<li class="colors-single" v-for="item in GetColors" :class="colors.color==item?'active':''" :style="{background:item}" @click="handleColoBlock(item)"></li>
+							</ul>
+							<div class="voluntarily">
+								<div class="color-disk">
+									<span class="show" :style="{background:colors.color}"></span>
+									<input class="el-input__inner" v-model="colors.color" type="text" />
+									<span class="icon">
+										 <el-color-picker v-model="colors.color" color-format="hex" @change="handleColoPicker"></el-color-picker>
+										<img src="{MOD_PATH}/image/palette.png">
+									</span>
+								</div>
+								<div class="slider" v-if="colors.color">
+									<span class="txt">精确的</span>
+									<el-slider v-model="colors.persion" @change="handleColoSlider"></el-slider>
+								</div>
+							</div>
+						</div>
+					
+						<div class="field-single" :class="GetParams.color?'active':''" slot="reference">
+							<span>
+								颜色
+								<template v-if="GetParams.color">
+									:<span class="color" :style="{background:GetParams.color}"></span>
+								</template>
+							</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.color" class="delBtn el-icon-close" @click.stop="handleClickDelete('color')"></span>
+						</div>
+					</el-popover>
+				</div>
+			</template>
+			<template v-else-if="sitem.key=='link'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="link.link" label="1" @click.native.prevent="handleLink('1')">有链接</el-radio>
+							</li>
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="link.link" label="0" @click.native.prevent="handleLink('0')">没有链接</el-radio>
+							</li>
+							<li v-if="link.link=='1'">
+								<el-input 
+									type="textarea"
+									v-model="link.val"
+									:autosize="{ minRows: 2, maxRows: 4}"
+									placeholder="包含关键字(使用,隔开)"></el-input>
+							</li>
+						</ul>
+						<div class="field-single" :class="link.val||link.link=='1'||link.link=='0'?'active':''" slot="reference">
+							<span v-if="link.link=='0'">链接：没有</span>
+							<span v-else-if="link.val">链接：{{link.val}}</span>
+							<span v-else-if="link.link=='1'">链接：有</span>
+							<span v-else>链接</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="link.val || link.link=='1' || link.link=='0'" class="delBtn el-icon-close" @click.stop="handleClickDelete('link')"></span>
+						</div>
+					</el-popover>
+				</div>
+			</template>
+			<template v-else-if="sitem.key=='desc'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="desc.desc" label="1" @click.native.prevent="handleDesc('1')">有注释</el-radio>
+							</li>
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="desc.desc" label="0" @click.native.prevent="handleDesc('0')">没有注释</el-radio>
+							</li>
+							<li v-if="desc.desc=='1'">
+								<el-input 
+									type="textarea"
+									v-model="desc.val"
+									:autosize="{ minRows: 2, maxRows: 4}"
+									placeholder="包含关键字(使用,隔开)"></el-input>
+							</li>
+						</ul>
+						<div class="field-single" :class="desc.val||desc.desc=='1'||desc.desc=='0'?'active':''" slot="reference">
+							<span v-if="desc.desc=='0'">注释：没有</span>
+							<span v-else-if="desc.val">注释：{{desc.val}}</span>
+							<span v-else-if="desc.desc=='1'">注释：有</span>
+							<span v-else>注释</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="desc.val || desc.desc=='1' || desc.desc=='0'" class="delBtn el-icon-close" @click.stop="handleClickDelete('desc')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='duration'">
+				<div class="block">
+					<el-popover placement="bottom" width="240" trigger="click">
+						<div class="field-section">
+							<el-input size="small" class="field-el-input" v-model.number="duration.start" placeholder="最小"></el-input>
+							<span>-</span>
+							<el-input size="small" class="field-el-input" v-model.number="duration.end" placeholder="最大"></el-input>
+							<el-select size="small" class="field-el-select" v-model="duration.dunit" @change="handleduration">
+								<el-option label="秒" value="s"></el-option>
+								<el-option label="分" value="m"></el-option>
+							</el-select>
+						</div>
+						<div class="field-single" :class="GetParams.duration?'active':''" slot="reference">
+							<span v-if="duration.start&&duration.end">
+								{{duration.start}}≤时长≤{{duration.end}}
+								<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+							</span>
+							<span v-else-if="duration.start">
+								时长≥{{duration.start}}
+								<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+							</span>
+							<span v-else-if="duration.end">
+								时长≤{{duration.end}}
+								<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+							</span>
+							<span v-else>时长</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.duration" class="delBtn el-icon-close" @click.stop="handleClickDelete('duration')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='size'">
+				<div class="block">
+					<el-popover placement="bottom" width="235" trigger="click">
+						<div class="field-section">
+							<span style="width: 20%;display: inline-block;">宽</span>
+							<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="wsize.start" placeholder="最小"></el-input>
+							<span>-</span>
+							<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="wsize.end" placeholder="最大"></el-input>
+						</div>
+						<div class="field-section" style="margin-top: 8px;">
+							<span style="width: 20%;display: inline-block;">高</span>
+							<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="hsize.start" placeholder="最小"></el-input>
+							<span>-</span>
+							<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="hsize.end" placeholder="最大"></el-input>
+						</div>
+						<div class="field-single" :class="GetParams.wsize||GetParams.hsize?'active':''"  slot="reference">
+							<span v-if="wsize.start&&wsize.end">{{wsize.start}}≤宽≤{{wsize.end}}</span>
+							<span v-else-if="wsize.start">宽≥{{wsize.start}}</span>
+							<span v-else-if="wsize.end">宽≤{{wsize.end}}</span>
+							<template v-if="GetParams.wsize && GetParams.hsize">,</template>
+							<span v-if="hsize.start&&hsize.end">{{hsize.start}}≤高≤{{hsize.end}}</span>
+							<span v-else-if="hsize.start">高≥{{hsize.start}}</span>
+							<span v-else-if="hsize.end">高≤{{hsize.end}}</span>
+							<span v-if="!GetParams.wsize && !GetParams.hsize">尺寸</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.wsize || GetParams.hsize" class="delBtn el-icon-close" @click.stop="handleClickDelete('csize')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='ext'">
+				<div class="block">
+					<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="handleShowPopover('ext')">
+						<div class="field-select-box dzz-dropdown-menu scroll" :style="{height: ext.height+'px'}">
+							<el-scrollbar class="page-component__scroll">
+								<div style="padding: 12px;">
+									<template v-if="ext.data && ext.data.length">
+										<div class="dzz-dropdown-menu__item single" v-for="item in ext.data">
+											<el-checkbox v-model="ext.val" :label="item.ext" @change="handleChangeExt"></el-checkbox>
+											<span class="quantity">{{item.num}}</span>
+										</div>
+									</template>
+									<template v-else>
+										<div class="dzz-dropdown-menu__item single screen-notdata">没有找到相关项目</div>
+									</template>
+								</div>
+							</el-scrollbar>
+						</div>
+						<div class="field-single" :class="GetParams.ext?'active':''" slot="reference">
+							<span>类型<template v-if="GetParams.ext">：{{GetParams.ext}}</template></span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.ext" class="delBtn el-icon-close" @click.stop="handleClickDelete('ext')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='shape'">
+				<div class="block">
+					<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="handleShowPopover('shape')">
+						<div class="field-select-box dzz-dropdown-menu">
+							<div style="padding:12px;">
+								<div class="dzz-dropdown-menu__item single" v-for="item in shape.data">
+									<el-checkbox v-model="shape.shape" :label="item.lablename" @change="handleChangeShape"></el-checkbox>
+									<span class="quantity">{{item.num}}</span>
+								</div>
+								<div class="dzz-dropdown-menu__item single">
+									<el-checkbox v-model="shape.custom" label="自定义" @change="handleChangeShapeCustom"></el-checkbox>
+								</div>
+								<div class="dzz-dropdown-menu__item single nothover" v-if="shape.custom">
+									<el-row :gutter="0">
+										<el-col :span="10">
+											<el-input v-model.number="shape.width" size="mini"></el-input>
+										</el-col>
+										<el-col :span="4" style="text-align: center;">:</el-col>
+										<el-col :span="10">
+											<el-input v-model.number="shape.height" size="mini"></el-input>
+										</el-col>
+									</el-row>
+								</div>
+							</div>
+						</div>
+						<div class="field-single" :class="GetParams.shape||GetParams.shapesize?'active':''" slot="reference">
+							<span>
+								形状
+								<template v-if="shape.txt">：{{shape.txt}}</template><template v-if="shape.txt&&GetParams.shapesize">,</template>{{GetParams.shapesize}}
+							</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.shape || GetParams.shapesize" class="delBtn el-icon-close" @click.stop="handleClickDelete('shape')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='grade'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('grade')">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single" v-for="item in grade.data">
+								<el-checkbox v-if="item.grade == 0" v-model="grade.grade" label="未评分" @change="handleChangeGrade">未评分</el-checkbox>
+								<el-checkbox v-else v-model="grade.grade" name="type" :label="item.grade" @change="handleChangeGrade">
+									<i class="ri-star-fill stars" v-for="fitem in parseInt(item.grade)"></i>
+								</el-checkbox>
+								<span class="quantity">{{item.num}}</span>
+							</li>
+						</ul>
+						<div class="field-single" :class="GetParams.grade?'active':''" slot="reference">
+							<span>评分<template v-if="GetParams.grade">：{{GetParams.grade}}</template></span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.grade" class="delBtn el-icon-close" @click.stop="handleClickDelete('grade')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='btime'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('btime')">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single" v-for="item in btime.data">
+								<el-radio v-model="btime.btime" :label="item.label" @click.native.prevent="handleScreenTime('btime',item.label)"></el-radio>
+								<span class="quantity">{{item.num}}</span>
+							</li>
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="btime.btime" label="自定义范围" @click.native.prevent="handleScreenTime('btime','自定义范围')"></el-radio>
+							</li>
+							<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="btime.btime.indexOf('自定义范围')>-1">
+								<el-date-picker 
+									class="dateline" 
+									v-model="btime.datelinepicker" 
+									size="mini" 
+									:clearable="false" 
+									@change="handleChangebtimepicker"
+									value-format="yyyy-MM-dd"
+									type="daterange" 
+									range-separator="至" 
+									start-placeholder="开始日期" 
+									end-placeholder="结束日期">
+								</el-date-picker>
+							</li>
+						</ul>
+						<div class="field-single" :class="GetParams.btime?'active':''" slot="reference">
+							<span>添加时间<template v-if="GetParams.btime">：{{GetParams.btime}}</template></span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.btime" class="delBtn el-icon-close" @click.stop="handleClickDelete('btime')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='dateline'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('dateline')">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single" v-for="item in dateline.data">
+								<el-radio v-model="dateline.dateline" :label="item.label" @click.native.prevent="handleScreenTime('dateline',item.label)"></el-radio>
+								<span class="quantity">{{item.num}}</span>
+							</li>
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="dateline.dateline" label="自定义范围" @click.native.prevent="handleScreenTime('dateline','自定义范围')"></el-radio>
+							</li>
+							<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="dateline.dateline.indexOf('自定义范围')>-1">
+								<el-date-picker 
+									class="dateline" 
+									v-model="dateline.datelinepicker" 
+									size="mini" 
+									:clearable="false" 
+									@change="handleChangedatelinepicker"
+									value-format="yyyy-MM-dd"
+									type="daterange" 
+									range-separator="至" 
+									start-placeholder="开始日期" 
+									end-placeholder="结束日期">
+								</el-date-picker>
+							</li>
+						</ul>
+						<div class="field-single" :class="GetParams.dateline?'active':''" slot="reference">
+							<span>修改时间<template v-if="GetParams.dateline">：{{GetParams.dateline}}</template></span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.dateline" class="delBtn el-icon-close" @click.stop="handleClickDelete('dateline')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='mtime'">
+				<div class="block">
+					<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('mtime')">
+						<ul class="field-select-box dzz-dropdown-menu">
+							<li class="dzz-dropdown-menu__item single" v-for="item in mtime.data">
+								<el-radio v-model="mtime.mtime" :label="item.label" @click.native.prevent="handleScreenTime('mtime',item.label)"></el-radio>
+								<span class="quantity">{{item.num}}</span>
+							</li>
+							<li class="dzz-dropdown-menu__item single">
+								<el-radio v-model="mtime.mtime" label="自定义范围" @click.native.prevent="handleScreenTime('mtime','自定义范围')"></el-radio>
+							</li>
+							<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="mtime.mtime.indexOf('自定义范围')>-1">
+								<el-date-picker 
+									class="dateline" 
+									v-model="mtime.datelinepicker" 
+									size="mini" 
+									:clearable="false" 
+									@change="handleChangemtimepicker"
+									value-format="yyyy-MM-dd"
+									type="daterange" 
+									range-separator="至" 
+									start-placeholder="开始日期" 
+									end-placeholder="结束日期">
+								</el-date-picker>
+							</li>
+						</ul>
+						<div class="field-single" :class="GetParams.mtime?'active':''" slot="reference">
+							<span><span>创建时间</span><template v-if="GetParams.mtime">：{{GetParams.mtime}}</template></span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="GetParams.mtime" class="delBtn el-icon-close" @click.stop="handleClickDelete('mtime')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			<template v-else-if="sitem.key=='tag'">
+				<template v-if="sitem.showtype">
+					<template v-for="bitem in ParamsTagData">
+						<div class="block">
+							<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="handleShowPopover('grouptag',bitem.cid)" width="255" trigger="click">
+								<div class="field-select-box">
+									<div class="tags-box clearfix">
+										<div class="right">
+											<div style="padding: 0 12px;margin-bottom: 8px;">
+												<el-input size="small" placeholder="请输入内容" prefix-icon="el-icon-search" v-model.trim="modelParamsTag[bitem.cid].search" clearable @input="handleRightGroupTagSearch(bitem.cid)"></el-input>
+											</div>
+											<el-scrollbar class="page-component__scroll" style="height: 357px;">
+												<ul class="el-popper">
+													<li class="el-dropdown-menu__item" v-for="vitem in paramsTag[bitem.cid].newVal">
+														<el-checkbox class="txt" v-model="modelParamsTag[bitem.cid].data" :label="vitem.tid" @change="handleClickRightGroupTag(bitem.cid,vitem.tid)">{{vitem.tagname}}</el-checkbox>
+														<span class="num">{{vitem.num}}</span>
+													</li>
+												</ul>
+											</el-scrollbar>
+										</div>
+									</div>
+							
+								</div>
+								<div class="field-single" slot="reference">
+									<span>{{bitem.catname}} <span v-if="modelParamsTag[bitem.cid].text">:{{modelParamsTag[bitem.cid].text}}</span> </span>
+									<i class="ri-arrow-down-s-fill icon"></i>
+									<span v-if="modelParamsTag[bitem.cid].text" class="delBtn el-icon-close" @click.stop="handleClickDelete('grouptag',bitem.cid)"></span>
+								</div>
+							</el-popover>
+						</div>
+					</template>
+				</template>
+				<template v-else>
+					<div class="block">
+						<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="handleShowPopover('tag')" :width="GetAppid?508:255" trigger="click">
+							<div class="field-select-box">
+								<div class="tags-box clearfix">
+									<div class="left" v-if="GetAppid">
+										<p class="title">标签分类</p>
+										<el-scrollbar class="page-component__scroll" style="height: 308px;">
+											<ul class="el-popper">
+												<li class="el-dropdown-menu__item" :class="tagData.checkedsFid=='all'?'active':''" @click="handleClickLeftTag('all')">
+													<div class="txt">全部</div>
+												</li>
+												<li class="el-dropdown-menu__item" v-for="(item,index) in tagData.alltagdata.catdata" :class="tagData.checkedsFid==index?'active':''" @click="handleClickLeftTag(index)">
+													<div class="txt">{{item.catname}}</div>
+													<span class="num">{{item.num}}</span>
+												</li>
+											</ul>
+										</el-scrollbar>
+										<div class="logic">
+											<span>逻辑：</span>
+											<el-dropdown trigger="click" @command="handleClickLeftlogic">
+											  <el-button type="primary" size="mini">
+												<template v-if="tagData.tagrelative=='1'">
+													任意(OR)
+												</template>
+												<template v-else>
+													全部(AND)
+												</template>
+											    <i class="el-icon-arrow-down el-icon--right"></i>
+											  </el-button>
+											  <el-dropdown-menu slot="dropdown">
+											    <el-dropdown-item command="1">任意(OR)</el-dropdown-item>
+											    <el-dropdown-item command="0">全部(AND)</el-dropdown-item>
+											  </el-dropdown-menu>
+											</el-dropdown>
+										</div>
+									</div>
+									<div class="right">
+										<div style="padding: 0 12px;margin-bottom: 8px;">
+											<el-input size="small" placeholder="请输入内容" prefix-icon="el-icon-search" v-model.trim="tagData.search" clearable @input="handleRightTagSearch"></el-input>
+										</div>
+										<el-scrollbar class="page-component__scroll" style="height: 357px;">
+											<ul class="el-popper">
+												<li class="el-dropdown-menu__item" v-for="item in tagData.Rightdata">
+													<el-checkbox class="txt" v-model="tagData.checkedsId" :label="item.tid" @change="handleClickRightTag(item.tid)">{{item.tagname}}</el-checkbox>
+													<span class="num">{{item.num}}</span>
+												</li>
+											</ul>
+										</el-scrollbar>
+									</div>
+								</div>
+						
+							</div>
+							<div class="field-single" :class="tagData.checkedstxt?'active':''" slot="reference">
+								<span v-if="tagData.checkedstxt">标签：{{tagData.checkedstxt}}</span>
+								<span v-else>标签</span>
+								<i class="ri-arrow-down-s-fill icon"></i>
+								<span v-if="tagData.checkedstxt" class="delBtn el-icon-close" @click.stop="handleClickDelete('tag')"></span>
+							</div>
+						</el-popover>
+					</div>	
+				</template>
+				
+			</template>
+		</template>
+	</div>
+
+</template>
+
+<script type="text/javascript">
+	
+	Vue.component('tpscreen', {
+		template: '#tpscreen',
+		data: function() {
+			return {
+				tagData:{//标签数据
+					alltagdata:{
+						alltagdata:[],
+						catdata:[]
+					},
+					Rightdata:[],
+					checkedsFid:'all',
+					checkedsId:[],
+					checkedstxt:'',
+					tagrelative:'1',
+					search:''
+				},
+				paramsTag:{},
+				modelParamsTag:{},
+				colors:{
+					color:'',
+					persion:50
+				},
+				link:{
+					link:'',
+					val:''
+				},
+				desc:{
+					desc:'',
+					val:''
+				},
+				duration:{
+					start:'',
+					end:'',
+					dunit:'s'
+				},
+				wsize:{
+					start:'',
+					end:''
+				},
+				hsize:{
+					start:'',
+					end:''
+				},
+				ext:{
+					val:[],
+					height:0,
+					data:[]
+				},
+				shape:{
+					shape:[],
+					custom:false,
+					width:'',
+					height:'',
+					txt:'',
+					data:[],
+				},
+				grade:{
+					grade:[],
+					data:[]
+				},
+				btime:{
+					btime:'',
+					datelinepicker:[],
+					data:[],
+				},
+				mtime:{
+					mtime:'',
+					datelinepicker:[],
+					data:[],
+				},
+				dateline:{
+					dateline:'',
+					datelinepicker:[],
+					data:[],
+				},
+				FirstLoad:true
+			}
+		},
+		watch:{
+			ParamsTagData(val){
+				var str = {};
+				var fstr = {};
+				var str1 = {};
+				if(this.GetParamsInit.tag.length){
+					for(var x in this.GetParamsInit.tag){
+						var p = this.GetParamsInit.tag[x];
+						if(fstr[p.cid]){
+							fstr[p.cid].text.push(p.tagname);
+							fstr[p.cid].data.push(p.tid);
+						}else{
+							fstr[p.cid] = {
+								search:'',
+								text:[p.tagname],
+								data:[p.tid]
+							}
+							
+						}
+						
+					}
+				}
+				for(var i in val){
+					str[val[i].cid] = {
+						newVal:[],
+						oldVal:[]
+					};
+					if(fstr[val[i].cid]){
+						fstr[val[i].cid].text = fstr[val[i].cid].text.join(',');
+						str1[val[i].cid] = fstr[val[i].cid];
+					}else{
+						str1[val[i].cid] = {
+							search:'',
+							text:'',
+							data:[],
+						};
+					}
+
+					
+				}
+				this.modelParamsTag = str1;
+				this.paramsTag = str;
+			},
+			GetParamsInit:{
+				handler(item){
+					if(item){
+						for(var i in item){
+							if(i == 'tag' && item[i]){
+								var newArrtid = [];
+								var newArrtxt = [];
+								var classs = {};
+								for(var t in item[i]){
+									newArrtid.push(item[i][t].tid);
+									newArrtxt.push(item[i][t].tagname);
+								}
+								var tagfid = localStorage.getItem("tagfid");
+								if(tagfid){
+									this.tagData.checkedsFid = tagfid;
+								}
+								this.tagData.checkedsId = newArrtid;
+								this.tagData.checkedstxt = newArrtxt.join(',');
+							}
+						}
+					}
+					
+				},
+				deep:true
+			},
+			'colors.color':debounce(function(val){//颜色输入
+				if(val){
+					VuexStore.commit('SetParams',{key:'color',val:val});
+					VuexStore.commit('SetParams',{key:'persion',val:this.colors.persion});
+					if(!this.FirstLoad&&val){
+						VuexStore.dispatch('handleHash');
+					}
+				}else{
+					if(!this.FirstLoad){
+						this.handleClickDelete('color');
+					}
+				}
+			},800),
+			'link.val':debounce(function(val){//链接输入
+				VuexStore.commit('SetParams',{key:'linkval',val:val});
+				if(!this.FirstLoad&&val){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'desc.val':debounce(function(val){//注释输入
+				VuexStore.commit('SetParams',{key:'descval',val:val});
+				if(!this.FirstLoad&&val){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'duration.start':debounce(function(val){//时长输入
+				if(val || this.duration.end){
+					var str = val+'_'+this.duration.end;
+					VuexStore.commit('SetParams',{key:'duration',val:str});
+					VuexStore.commit('SetParams',{key:'dunit',val:this.duration.dunit});
+					if(!this.FirstLoad){
+						VuexStore.dispatch('handleHash');
+					}
+				}else{
+					this.handleClickDelete('duration');
+				}
+			},800),
+			'duration.end':debounce(function(val){//时长输入
+				if(val || this.duration.start){
+					var str = this.duration.start+'_'+val;
+					VuexStore.commit('SetParams',{key:'duration',val:str});
+					VuexStore.commit('SetParams',{key:'dunit',val:this.duration.dunit});
+					if(!this.FirstLoad){
+						VuexStore.dispatch('handleHash');
+					}
+				}else{
+					this.handleClickDelete('duration');
+				}
+				
+			},800),
+			'wsize.start':debounce(function(val){//尺寸宽
+				if(val || this.wsize.end){
+					var str = val+'_'+this.wsize.end;
+					VuexStore.commit('SetParams',{key:'wsize',val:str});
+				}else{
+					VuexStore.commit('SetParams',{key:'wsize',val:''});
+				}
+				if(!this.FirstLoad){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'wsize.end':debounce(function(val){//尺寸宽
+				if(val || this.wsize.start){
+					var str = this.wsize.start+'_'+val;
+					VuexStore.commit('SetParams',{key:'wsize',val:str});
+				}else{
+					VuexStore.commit('SetParams',{key:'wsize',val:''});
+				}
+				if(!this.FirstLoad){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'hsize.start':debounce(function(val){//尺寸高
+				if(val || this.hsize.end){
+					var str = val+'_'+this.hsize.end;
+					VuexStore.commit('SetParams',{key:'hsize',val:str});
+				}else{
+					VuexStore.commit('SetParams',{key:'hsize',val:''});
+				}
+				if(!this.FirstLoad){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'hsize.end':debounce(function(val){//尺寸高
+				if(val || this.hsize.start){
+					var str = this.hsize.start+'_'+val;
+					VuexStore.commit('SetParams',{key:'hsize',val:str});
+				}else{
+					VuexStore.commit('SetParams',{key:'hsize',val:''});
+				}
+				if(!this.FirstLoad){
+					VuexStore.dispatch('handleHash');
+				}
+			},800),
+			'GetParams.shape':{
+				handler(val){
+					if(val){
+						var data = val.split(',');
+						if(data.indexOf('自定义')>-1){
+							data.splice(data.indexOf('自定义'),1);
+							this.shape.txt = data.join(',');
+						}else{
+							this.shape.txt = val;
+						}
+					}else{
+						this.shape.txt = '';
+					}
+					
+				},
+				deep:true
+			},
+			'shape.width':debounce(function(val){//形状自定义
+				this.handleWatchShape();
+			},800),
+			'shape.height':debounce(function(val){//形状自定义
+				this.handleWatchShape();
+			},800),
+		},
+		computed:{
+			GetColors(){
+				return VuexStore.getters.GetColors;
+			},
+			IsShowScreen(){
+				return VuexStore.getters.GetShowScreen;
+			},
+			GetParamsInit(){
+				return VuexStore.getters.GetParamsInit;
+			},
+			GetParams(){
+				return VuexStore.getters.GetParams;
+			},
+			GetimgParameter(){
+				return VuexStore.getters.GetimgParameter;
+			},
+			GetAppid(){
+				return VuexStore.getters.GetAppid;
+			},
+			shapeData(){
+				return VuexStore.getters.GetShapeData;
+			},
+			ParamsTagData(){
+				return VuexStore.getters.GetParamsTagData;
+			},
+			ScreenData(){
+				return VuexStore.getters.GetScreenData;
+			},
+			// VParamsTag(){
+			// 	return VuexStore.getters.GetParamsTag;
+			// },
+		},
+		created() {
+			this.GetHashParams();
+		},
+		methods: {
+			handleScreenTime(type,val){
+				if(type=='btime'){
+					if(this.btime.btime == val){
+						this.handleClickDelete('btime');
+						return false;
+					}
+					this.btime.btime = val;
+					if(val != '自定义范围'){
+						this.btime.datelinepicker = [];
+						VuexStore.commit('SetParams',{key:'btime',val:val});
+						VuexStore.dispatch('handleHash');
+					}
+					
+				}else if(type=='dateline'){
+					if(this.dateline.dateline == val){
+						this.handleClickDelete('dateline');
+						return false;
+					}
+					this.dateline.dateline = val;
+					if(val != '自定义范围'){
+						this.dateline.datelinepicker = [];
+						VuexStore.commit('SetParams',{key:'dateline',val:val});
+						VuexStore.dispatch('handleHash');
+					}
+				}else if(type=='mtime'){
+					if(this.mtime.mtime == val){
+						this.handleClickDelete('mtime');
+						return false;
+					}
+					this.mtime.mtime = val;
+					if(val != '自定义范围'){
+						this.mtime.datelinepicker = [];
+						VuexStore.commit('SetParams',{key:'mtime',val:val});
+						VuexStore.dispatch('handleHash');
+					}
+				}
+			},
+			handleClickLeftTag(fid){//标签左侧点击
+				this.tagData.checkedsFid = fid;
+				window.sessionStorage.setItem("tagfid",fid);
+				if(fid == 'all'){
+					this.tagData.Rightdata = this.tagData.alltagdata.alltagdata;
+				}else{
+					if(this.tagData.alltagdata.catdata && this.tagData.alltagdata.catdata[fid]){
+						this.tagData.Rightdata = this.tagData.alltagdata.catdata[fid].tdatas;
+					}else{
+						this.tagData.Rightdata = [];
+					}
+					
+				}
+			},
+			handleClickLeftlogic(value){//标签右侧逻辑点击
+				if(this.tagData.checkedsId.length){
+					VuexStore.commit('SetParams',{key:'tagrelative',val:value});
+					VuexStore.dispatch('handleHash');
+				}
+				this.tagData.tagrelative = value;
+			},
+			handleClickRightTag(val){//标签右侧点击
+				if(this.tagData.checkedsId.length){
+					var newVal = [];
+					var keyword = '';
+					var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+					for(var i in data){
+						var item = data[i];
+						if(this.tagData.checkedsId.indexOf(item.tid)>-1){
+							newVal.push(item.tagname);
+						}
+						if(val==data[i].tid){
+							keyword = item.tagname;
+						}
+					}
+					VuexStore.commit('SetParams',{key:'tag',val:this.tagData.checkedsId.join(',')});
+					VuexStore.commit('SetParams',{key:'tagrelative',val:this.tagData.tagrelative});
+					VuexStore.dispatch('handleHash');
+					this.tagData.checkedstxt = newVal.join(',');
+					var self = this;
+					if(this.tagData.checkedsId.indexOf(val)>-1 && keyword){
+						$.post('{MOD_URL}&op=ajax&operation=addsearch',{
+							appid:self.GetAppid,
+							keyword:keyword,
+							ktype:1
+						});
+					}
+				}else{
+					this.handleClickDelete('tag');
+				}
+			},
+			handleClickRightGroupTag(cid,tid){//标签右侧点击
+				if(this.modelParamsTag[cid].data.length){
+					var arr = [];
+					var texts = [];
+					for(var i in this.modelParamsTag){
+						arr.push.apply(arr,this.modelParamsTag[i].data);
+					}
+					for(var x in this.paramsTag[cid].oldVal){
+						var val = this.paramsTag[cid].oldVal[x];
+						if(this.modelParamsTag[cid].data.indexOf(val.tid)>-1){
+							texts.push(val.tagname);
+						}
+					}
+					this.modelParamsTag[cid].text = texts.join(',');
+					VuexStore.commit('SetParams',{key:'tag',val:arr.join(',')});
+					VuexStore.dispatch('handleHash');
+				}else{
+					this.handleClickDelete('grouptag',cid);
+				}
+			},
+			handleRightTagSearch(val){//标签右侧搜索
+				var tagfid = localStorage.getItem("tagfid");
+				if(tagfid == 'all'){
+					var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+				}else{
+					if(this.tagData.alltagdata.catdata && this.tagData.alltagdata.catdata[tagfid]){
+						var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[tagfid].tdatas));
+					}else{
+						var data = [];
+					}
+				}
+				if(val){
+					var newObj = [];
+					for(var i in data){
+						var item = data[i];
+						if(item.tagname.indexOf(val)>-1){
+							newObj.push(item);
+						}
+					}
+					this.tagData.Rightdata = newObj;
+				}else{
+					this.tagData.Rightdata = data;
+				}
+			},
+			handleRightGroupTagSearch(cid){//标签右侧搜索
+				var keyword =  this.modelParamsTag[cid].search;
+				var data = JSON.parse(JSON.stringify(this.paramsTag[cid].oldVal));
+				if(keyword){
+					var newObj = [];
+					for(var i in data){
+						var item = data[i];
+						if(item.tagname.indexOf(keyword)>-1){
+							newObj.push(item);
+						}
+					}
+					this.paramsTag[cid].newVal = newObj;
+				}else{
+					this.paramsTag[cid].newVal = data;
+				}
+			},
+			handleLink(type){//链接改变
+				if(type != this.link.link){
+					this.link.link = type
+					VuexStore.commit('SetParams',{key:'link',val:type});
+					VuexStore.dispatch('handleHash');
+				}else{
+					this.handleClickDelete('link');
+				}
+			},
+			handleDesc(type){//注释改变
+				if(type != this.desc.desc){
+					this.desc.desc = type
+					VuexStore.commit('SetParams',{key:'desc',val:type});
+					VuexStore.dispatch('handleHash');
+				}else{
+					this.handleClickDelete('desc');
+				}
+			},
+			handleChangeExt(){//类型改变
+				VuexStore.commit('SetParams',{key:'ext',val:this.ext.val.join(',')});
+				VuexStore.dispatch('handleHash');
+			},
+			handleChangeShape(){//形状改变
+				VuexStore.commit('SetParams',{key:'shape',val:this.shape.shape.join(',')});
+				VuexStore.dispatch('handleHash');
+			},
+			handleChangeShapeCustom(type){//形状自定义改变
+				if(!type){
+					this.shape.width = '';
+					this.shape.height = '';
+				}
+			},
+			handleWatchShape(type){//形状改变
+				if(parseInt(this.shape.width)>0 && parseInt(this.shape.height)>0){
+					var str = this.shape.width+':'+this.shape.height;
+					VuexStore.commit('SetParams',{key:'shapesize',val:str});
+					if(!this.FirstLoad){
+						VuexStore.dispatch('handleHash');
+					}
+					return false;
+				}
+				if(this.shape.width=='' && this.shape.height=='' && this.GetParams.shapesize){
+					VuexStore.commit('SetParams',{key:'shapesize',val:''});
+					if(!this.FirstLoad){
+						VuexStore.dispatch('handleHash');
+					}
+					return false;
+				}
+			},
+			handleChangeGrade(){//评分
+				VuexStore.commit('SetParams',{key:'grade',val:this.grade.grade.join(',')});
+				VuexStore.dispatch('handleHash');
+			},
+			handleChangebtimepicker(val){//添加时间自定义
+				VuexStore.commit('SetParams',{key:'btime',val:val.join('_')});
+				VuexStore.dispatch('handleHash');
+			},
+			handleChangemtimepicker(val){//创建日期自定义
+				VuexStore.commit('SetParams',{key:'mtime',val:val.join('_')});
+				VuexStore.dispatch('handleHash');
+			},
+			handleChangedatelinepicker(val){//修改日期自定义
+				VuexStore.commit('SetParams',{key:'dateline',val:val.join('_')});
+				VuexStore.dispatch('handleHash');
+			},
+			
+			handleColoBlock(value){//颜色块点击
+				if(this.colors.color == value){
+					this.colors.color = '';
+				}else{
+					this.colors.color = value;
+					VuexStore.commit('SetParams',{key:'color',val:value});
+					VuexStore.commit('SetParams',{key:'persion',val:this.colors.persion});
+					// VuexStore.dispatch('handleHash');
+				}
+				
+			},
+			handleColoPicker(value){//颜色块插件
+				VuexStore.commit('SetParams',{key:'color',val:value});
+				VuexStore.commit('SetParams',{key:'persion',val:this.colors.persion});
+				// VuexStore.dispatch('handleHash');
+			},
+			handleColoSlider(value){//颜色滑块
+				VuexStore.commit('SetParams',{key:'persion',val:value});
+				VuexStore.dispatch('handleHash');
+			},
+			handleduration(value){//时长单位选择
+				VuexStore.commit('SetParams',{key:'dunit',val:value});
+				VuexStore.dispatch('handleHash');
+			},
+			handleShowPopover(type,cid){//弹窗显示
+				if(type == 'grouptag'){
+					var data = this.GetScreenData(type,cid);
+				}else{
+					var data = this.GetScreenData(type);
+				}
+				switch(type){
+					case 'grouptag'://标签弹窗显示
+						if(this.paramsTag[cid]){
+							this.paramsTag[cid] = [];
+							var arr = [];
+							var arr1 = [];
+							for(var i in data){
+								arr.push(data[i]);
+								arr1.push(data[i]);
+							}
+							this.paramsTag[cid].newVal = arr;
+							this.paramsTag[cid].oldVal = arr1;
+						}
+					break;
+					case 'tag'://标签弹窗显示
+						this.tagData.alltagdata = data;
+						var tagfid = localStorage.getItem("tagfid");
+						if(tagfid){
+							if(tagfid == 'all'){
+								this.tagData.Rightdata = data.alltagdata;
+							}else{
+								if(data.catdata && data.catdata[tagfid]){
+									this.tagData.Rightdata = data.catdata[tagfid].tdatas;
+								}else{
+									this.tagData.Rightdata = [];
+								}
+							}
+						}else{
+							this.tagData.Rightdata = data.alltagdata;
+						}
+					break;
+					case 'ext'://类型弹窗显示
+						if(data){
+							this.ext.data = data;
+							this.ext.height = data.length*35+24;
+						}else{
+							this.ext.data = [];
+						}
+					break;
+					case 'shape'://形状弹窗显示
+						if(data){
+							this.shape.data = data;
+						}else{
+							this.shape.data = [];
+						}
+					break;
+					case 'grade'://评分弹窗显示
+						if(data){
+							var fdata = [];
+							var notStr = {num: 0, grade: 0};
+							var not = false;
+							for(var i in data){
+								if(parseInt(data[i].grade) == 0){
+									not = true;
+									notStr.num = data[i].num;
+								}else{
+									fdata.push(data[i]);
+								}
+							}
+							fdata.push(notStr);
+							this.grade.data = fdata;
+						}else{
+							this.grade.data = [];
+						}
+					break;
+					case 'btime'://形状弹窗显示
+						if(data){
+							this.btime.data = data;
+						}else{
+							this.btime.data = [];
+						}
+					break;
+					case 'mtime'://形状弹窗显示
+						if(data){
+							this.mtime.data = data;
+						}else{
+							this.mtime.data = [];
+						}
+					break;
+					case 'dateline'://形状弹窗显示
+						if(data){
+							this.dateline.data = data;
+						}else{
+							this.dateline.data = [];
+						}
+					break;
+				}
+			},
+			handleClickDelete(type,cid){//清除标签选项
+				switch(type){
+					case 'tag':
+						// localStorage.removeItem('tagfid');
+						// this.tagData.checkedsFid = 'all';
+						this.tagData.checkedsId = [];
+						this.tagData.checkedstxt = '';
+						this.tagData.search = '';
+						this.tagData.tagrelative = '1';
+						VuexStore.commit('SetParams',{key:'tag',val:''});
+						VuexStore.commit('SetParams',{key:'tagrelative',val:''});
+						
+						if(this.tagData.checkedsFid == 'all'){
+							var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+							this.tagData.Rightdata = data;
+						}else{
+							var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
+							this.tagData.Rightdata = data;
+						}
+					break;
+					case 'color':
+						var colors = {
+							color:'',
+							persion:50
+						};
+						this.colors = colors;
+						VuexStore.commit('SetParams',{key:'color',val:''});
+						VuexStore.commit('SetParams',{key:'persion',val:50});
+					break;
+					case 'link':
+						this.link = {
+							link:'',
+							val:''
+						};
+						VuexStore.commit('SetParams',{key:'link',val:''});
+						VuexStore.commit('SetParams',{key:'linkval',val:''});
+					break;
+					case 'desc':
+						this.desc = {
+							desc:'',
+							val:''
+						};
+						VuexStore.commit('SetParams',{key:'desc',val:''});
+						VuexStore.commit('SetParams',{key:'descval',val:''});
+					break;
+					case 'duration':
+						this.duration = {
+							start:'',
+							end:'',
+							dunit:'s'
+						};
+						VuexStore.commit('SetParams',{key:'duration',val:''});
+						VuexStore.commit('SetParams',{key:'dunit',val:''});
+					break;
+					case 'csize':
+						this.wsize = {
+							start:'',
+							end:''
+						};
+						this.hsize = {
+							start:'',
+							end:''
+						};
+						VuexStore.commit('SetParams',{key:'wsize',val:''});
+						VuexStore.commit('SetParams',{key:'hsize',val:''});
+					break;
+					case 'ext':
+						this.ext = {
+							val:[],
+							height:0,
+							data:[]
+						};
+						VuexStore.commit('SetParams',{key:'ext',val:''});
+					break;
+					case 'shape':
+						this.shape = {
+							shape:[],
+							width:'',
+							height:'',
+							txt:'',
+							data:[]
+						};
+						VuexStore.commit('SetParams',{key:'shape',val:''});
+						VuexStore.commit('SetParams',{key:'shapesize',val:''});
+					break;
+					case 'grade':
+						this.grade = {
+							grade:[],
+							data:[]
+						};
+						VuexStore.commit('SetParams',{key:'grade',val:''});
+					break;
+					case 'btime':
+						this.btime = {
+							btime:'',
+							datelinepicker:[],
+							data:this.btime.data
+						};
+						VuexStore.commit('SetParams',{key:'btime',val:''});
+					break;
+					case 'mtime':
+						this.mtime = {
+							mtime:'',
+							datelinepicker:[],
+							data:this.mtime.data
+						};
+						VuexStore.commit('SetParams',{key:'mtime',val:''});
+					break;
+					case 'dateline':
+						this.dateline = {
+							dateline:'',
+							datelinepicker:[],
+							data:this.dateline.data
+						};
+						VuexStore.commit('SetParams',{key:'dateline',val:''});
+					break;
+					case 'grouptag':
+						var tags = [];
+						for(var t in this.modelParamsTag){
+							if(t!=cid){
+								tags.push.apply(tags,this.modelParamsTag[t].data);
+							}
+						}
+						VuexStore.commit('SetParams',{key:'tag',val:tags.join(',')});
+						this.modelParamsTag[cid] = {
+							search:'',
+							text:'',
+							data:[]
+						};
+						var fata = JSON.parse(JSON.stringify(this.paramsTag[cid].oldVal));
+						this.paramsTag[cid].newVal = fata;
+					break;
+					
+				}
+				VuexStore.dispatch('handleHash');
+			},
+			GetScreenData(type,cid){
+				var self = this;
+				var param;
+				if(!type){
+					return false;
+				}
+				var str = {
+					skey:type
+				};
+				if(type == 'grouptag'){
+					str['cid']=cid;
+				}
+				if(this.GetAppid){
+					str['appid'] = this.GetAppid;
+				}
+				if(this.GetimgParameter && this.GetimgParameter.keyword){
+					str['keyword'] = this.GetimgParameter.keyword;
+				}
+				var Params = this.GetParams;
+				for(var p in Params){
+					if(p==type){
+						continue;
+					}
+					if(type == 'shape' && p =='shapesize'){
+						continue;
+					}
+					if(Params[p]){
+						if(p=='classify'){
+							str['fids'] = Params[p];
+						}else if(p=='grade'){
+							if(Params[p].indexOf('未评分')>-1){
+								var farr = Params[p].split(',');
+								if(farr.length){
+									farr.splice(farr.indexOf('未评分'),1);
+								}
+								farr.push(0);
+								str[p] = farr.join(',');
+							}else{
+								str[p] = Params[p];
+							}
+							
+						}else if(p=='shape'){
+							var shape = [];
+							var fshape = Params[p].split(',');
+							var shapeData = this.shapeData;
+							for(var s in fshape){
+								for(var b in shapeData){
+									if(fshape[s] == shapeData[b].name){
+										shape.push(shapeData[b].val);
+									}
+								}
+							}
+							str[p] = shape.join(',');
+						}else if(p=='btime' || p=='mtime' || p=='dateline'){
+							var len = Params[p].split('_');
+							if(len.length>1){
+								str[p] = Params[p];
+							}else{
+								str[p] = GetDateVal(Params[p]);
+							}
+						}else{
+							str[p] = Params[p];
+						}
+					}
+					
+				}
+				var vtag = [];
+				for(var t in this.modelParamsTag){
+					if(t!=cid){
+						vtag.push.apply(vtag,this.modelParamsTag[t].data);
+					}
+				}
+				if(vtag.length){
+					str['tag'] = vtag.join(',');
+				}
+				$.ajax({
+					url : MOD_URL+'&op=ajax&operation=searchmenu_num',
+					type : "post",
+					data : str,
+					async : false,
+					dataType: "json",
+					success : function(data) {
+						param = data;
+					}
+				});
+				return param;
+			},
+			GetHashParams(){
+				var arr = (location.hash || "").replace(/^\?/,'').split("&");
+				var params = {};
+				for(var i=0; i<arr.length; i++){
+					var data = arr[i].split("=");
+					if(data.length == 2){
+						if(i==0){
+							data[0]=data[0].replace("#","");
+						}
+						switch(data[0]){
+							case 'tagrelative':
+								this.tagData.tagrelative = data[1];
+							break;
+							case 'color':
+								this.colors.color = data[1];
+							break;
+							case 'persion':
+								this.colors.persion = parseInt(data[1]);
+							break;
+							case 'link':
+								this.link.link = data[1];
+							break;
+							case 'linkval':
+								this.link.val = data[1];
+							break;
+							case 'desc':
+								this.desc.desc = data[1];
+							break;
+							case 'descval':
+								this.desc.val = data[1];
+							break;
+							case 'duration':
+								var p = data[1].split('_');
+								this.duration.start = p[0];
+								this.duration.end = p[1];
+							break;
+							case 'dunit':
+								this.duration.dunit = data[1];
+							break;
+							case 'wsize':
+								var p = data[1].split('_');
+								this.wsize.start = p[0];
+								this.wsize.end = p[1];
+							break;
+							case 'hsize':
+								var p = data[1].split('_');
+								this.hsize.start = p[0];
+								this.hsize.end = p[1];
+							break;
+							case 'ext':
+								this.ext.val = data[1].split(',');
+							break;
+							case 'shape':
+								var value = decodeURI(data[1]);
+								this.shape.shape = value.split(',');
+								this.shape.txt = value;
+							break;
+							case 'shapesize':
+								var p = data[1].split(':');
+								this.shape.width = p[0];
+								this.shape.height = p[1];
+								this.shape.custom = true;
+							break;
+							case 'grade':
+								var value = decodeURI(data[1]);
+								this.grade.grade = value.split(',');
+							break;
+							case 'btime':
+								var value = decodeURI(data[1]);
+								var value1 = value.split('_');
+								if(value1.length>1){
+									this.btime.btime = '自定义范围';
+									this.btime.datelinepicker = value1;
+								}else{
+									this.btime.btime = value;
+								}
+							break;
+							case 'mtime':
+								var value = decodeURI(data[1]);
+								var value1 = value.split('_');
+								if(value1.length>1){
+									this.mtime.mtime = '自定义范围';
+									this.mtime.datelinepicker = value1;
+								}else{
+									this.mtime.mtime = value;
+								}
+							break;
+							case 'dateline':
+								var value = decodeURI(data[1]);
+								var value1 = value.split('_');
+								if(value1.length>1){
+									this.dateline.dateline = '自定义范围';
+									this.dateline.datelinepicker = value1;
+								}else{
+									this.dateline.dateline = value;
+								}
+							break;
+						}
+					}
+				}
+				this.FirstLoad = false;
+			},
+		},
+		
+		
+		
+		mounted() {
+		},
+		components:{
+			
+		}
+	})
+</script>

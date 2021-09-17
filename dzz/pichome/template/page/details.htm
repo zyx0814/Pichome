@@ -1,0 +1,962 @@
+<!--{template frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/details.css?{VERHASH}"/>
+<!--{template frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="70" style="padding: 0;z-index: 10;">
+			<div id="top_header">
+				<div class="header-content">
+					<a class="h-left" href="{MOD_URL}">
+						<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+						<span class="text">$_G['setting'][sitename]</span>
+					</a>
+					<div class="h-center">
+						<span>{{ImgParam.index}}&nbsp;&nbsp;/&nbsp;&nbsp;{{ImgParam.total}}</span>
+						<div class="carousel__arrow-box clearfix">
+							<el-tooltip effect="dark" content="上一张" placement="bottom">
+								<div @click="handleCarouselArrow('left')" class="carousel__arrow carousel__arrow--left"><i class="el-icon-arrow-left icon"></i></div>
+							</el-tooltip>
+							<el-tooltip effect="dark" content="下一张" placement="bottom">
+								<div @click="handleCarouselArrow('right')" class="carousel__arrow carousel__arrow--right"><i class="el-icon-arrow-right icon"></i></div>
+							</el-tooltip>
+						</div>
+						<div class="imgoperation" v-if="imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text'">
+							<div class="proportion" style="width: 170px;">
+								<div class="el-slider">
+									<div class="el-slider__runway">
+										<div class="el-slider__bar" :style="{width: ImgParam.slider+'px','left': '0%'}"></div>
+										<div class="el-slider__button-wrapper" :style="{left: ImgParam.slider+'px'}" @mousedown="handleSliderDrag">
+											<div class="el-tooltip el-slider__button"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<el-dropdown trigger="click" @command="handleImgScale">
+							  <span class="text proportionnum">{{ImgParam.fproportion}}%</span>
+							  <el-dropdown-menu slot="dropdown" style="width: 125px;" class="proportionnum-box">
+							    <el-dropdown-item command="5">5%</el-dropdown-item>
+							    <el-dropdown-item command="10">10%</el-dropdown-item>
+							    <el-dropdown-item command="25">25%</el-dropdown-item>
+								<el-dropdown-item command="50">50%</el-dropdown-item>
+								<el-dropdown-item command="100">100%</el-dropdown-item>
+								<el-dropdown-item command="125">125%</el-dropdown-item>
+								<el-dropdown-item command="150">150%</el-dropdown-item>
+								<el-dropdown-item command="200">200%</el-dropdown-item>
+								<el-dropdown-item command="300">300%</el-dropdown-item>
+								<el-dropdown-item command="400">400%</el-dropdown-item>
+								<el-dropdown-item command="800">800%</el-dropdown-item>
+								<el-divider></el-divider>
+								<el-dropdown-item command="size">原始大小</el-dropdown-item>
+								<el-dropdown-item command="adaption">自适应宽度</el-dropdown-item>
+							  </el-dropdown-menu>
+							</el-dropdown>
+							<el-tooltip effect="dark" content="原始大小" placement="bottom">
+								<span class="text" @click="handleImgOperation(1)">1:1</span>
+							</el-tooltip>
+							
+							<span class="text" @click="handleImgOperation(2)">自适应</span>
+							<el-tooltip effect="dark" content="旋转" placement="bottom">
+								<span class="text" @click="handleImgOperation(3)"><i class="el-icon-refresh-right icon"></i></span>
+							</el-tooltip>
+
+							
+						</div>
+					</div>
+					<div class="h-right">
+						<div class="r-option">
+							<el-tooltip effect="dark" :content="IsFullScreen?'退出全屏':'全屏'" placement="bottom">
+								<div class="right-block" @click="handleFullScreen(IsFullScreen?false:true)"><i v-if="IsFullScreen" class="ri-fullscreen-exit-line"></i><i v-else class="ri-fullscreen-line"></i></div>
+							</el-tooltip>
+							<el-tooltip effect="dark" :content="HideInformation?'显示信息':'隐藏信息'" placement="bottom">
+								<div class="right-block" @click="handleHideInformation(HideInformation?false:true)">
+									<i v-if="HideInformation" class="ri-layout-right-2-line"></i><i v-else class="ri-layout-right-line"></i>
+								</div>
+							</el-tooltip>
+								
+							<el-dropdown trigger="click" @command="handleavatar">
+								<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
+								<el-dropdown-menu slot="dropdown" style="width: 165px;">
+									<el-dropdown-item command="personal">个人设置</el-dropdown-item>
+									<el-dropdown-item command="help">帮助文档</el-dropdown-item>
+									<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+									<el-divider></el-divider>
+									<el-dropdown-item command="setting">站点设置</el-dropdown-item>
+									<el-dropdown-item command="library">库设置</el-dropdown-item>
+									<el-dropdown-item command="system">系统工具</el-dropdown-item>
+									<el-divider></el-divider>
+									<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
+									<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+								</el-dropdown-menu>
+							</el-dropdown>
+						</div>
+					</div>
+				</div>
+			</div>
+		</el-header>
+		<el-main>
+			<div class="page-content">
+				<el-scrollbar class="page-component__scroll">
+					<div class="details-top" v-if="!HtmlLoading">
+						<div class="details-maincontainer">
+							<div class="floating-layer clearfix" :class="HideInformation?'HideInformation':''">
+								<div class="picture-box">
+									
+									<template v-if="imagesData.opentype=='video'">
+										<iframe 
+											style="border: 0px;"
+											:src="'index.php?mod=xgplayer&src='+imagesData.realpath" 
+											width="100%" 
+											height="100%"></iframe>
+									</template>
+									<template v-else-if="imagesData.opentype=='pdf'">
+										<iframe
+											style="border: 0px;"
+											:src="'index.php?mod=pdf&src='+imagesData.realpath" 
+											width="100%" 
+											height="100%"></iframe>
+									</template>
+									<template v-else-if="imagesData.opentype=='text'">
+										<iframe
+											style="border: 0px;border-radius: 18px;"
+											:src="'index.php?mod=textviewer&src='+imagesData.realpath" 
+											width="100%" 
+											height="100%"></iframe>
+									</template>
+									<template v-else-if="imagesData.opentype=='other'">
+										<el-scrollbar v-if="imagesData.icondata" class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="handleImgDrag">
+											<img 
+												@load="handleImgload"
+												:src="imagesData.icondata"
+												class="image-viewer__img max" />
+												
+										</el-scrollbar>
+									</template>
+									<template v-else>
+										<el-scrollbar class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="handleImgDrag">
+											<img
+												:src="imagesData.icondata"
+												class="image-viewer__img max thumbnail" />
+											<img 
+												@load="handleImgload"
+												:src="imagesData.originalimg"
+												class="image-viewer__img max opacity" />
+												
+										</el-scrollbar>
+									</template>
+								</div>
+								
+								<div class="information-box">
+									<el-scrollbar class="page-component__scroll">
+										<div class="title">{{imagesData.name}}.{{imagesData.ext}}</div>
+										<div class="operation clearfix" v-if="(imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text') || parseInt(imagesData.download) || parseInt(imagesData.share)">
+											<div v-if="parseInt(imagesData.download)" class="circular bg" @click="handleDown">立即下载</div>
+											<el-tooltip v-if="imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text'" class="item" effect="dark" content="查看原图" placement="bottom">
+												<div class="circular" @click="handleView">
+											      	<i class="el-icon-view"></i>
+												</div>
+											</el-tooltip>
+											<el-tooltip v-if="parseInt(imagesData.share)" class="item" effect="dark" content="分享" placement="bottom">
+												<div class="circular" @click="handleShare">
+											      	<i class="el-icon-share"></i>
+												</div>
+											</el-tooltip>
+										</div>
+
+										<div class="message">
+											<div class="thesis-wrap" v-if="imagesData.colors && imagesData.colors.length">
+												<div class="tip-title">颜色</div>
+												<ul class="color clearfix">
+													<li class="color-list" v-for="citem in imagesData.colors">
+														<el-dropdown trigger="click" @visible-change="ShowPopoverColor(citem.val)" @command="handleCommandColor" placement="bottom">
+															<el-tooltip :content="'#'+citem.val" effect="light" placement="top" popper-class="color-top">
+																<div class="bg" :style="{background: '#'+citem.val}"></div>
+															</el-tooltip>
+															<el-dropdown-menu slot="dropdown" class="el-popover-color">
+																<el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item>
+																<el-divider></el-divider>
+																<el-dropdown-item :command="ColorPopver.base">复制&nbsp;{{ColorPopver.base}}</el-dropdown-item>
+																<el-dropdown-item :command="ColorPopver.rgb">复制&nbsp;{{ColorPopver.rgb}}</el-dropdown-item>
+																<el-dropdown-item :command="ColorPopver.rgba">复制&nbsp;{{ColorPopver.rgba}}</el-dropdown-item>
+																<el-dropdown-item :command="ColorPopver.hsl">复制&nbsp;{{ColorPopver.hsl}}</el-dropdown-item>
+																<el-divider></el-divider>
+																<el-dropdown-item :command="ColorPopver.hsv">复制&nbsp;{{ColorPopver.hsv}}</el-dropdown-item>
+																<el-dropdown-item :command="ColorPopver.cmyk">复制&nbsp;{{ColorPopver.cmyk}}</el-dropdown-item>
+															</el-dropdown-menu>
+														</el-dropdown>
+													</li>
+												</ul>
+											</div>
+											
+											<div class="thesis-wrap" v-if="imagesData.tag && imagesData.tag.length">
+												<div class="tip-title">标签</div>
+												<div v-if="imagesData.tag" class="label clearfix">
+													<el-tag v-for="item in imagesData.tag" effect="plain" @click="handleClickTag(item.key)">{{item.val}}</el-tag>
+												</div>
+											</div>
+											<div class="thesis-wrap" v-if="imagesData.desc">
+												<div class="tip-title">注释</div>
+												<div v-if="imagesData.desc" class="notes">{{imagesData.desc}}</div>
+											</div>
+
+											<div class="thesis-wrap" v-if="imagesData.link">
+												<div class="tip-title">链接</div>
+												<p class="link">
+													<span id="copyText" @click="handleClickLink(imagesData.link)">{{imagesData.link}}</span>
+													<i class="ri-file-copy-line" @click="copyText"></i>
+												</p>
+											</div>
+											<div class="thesis-wrap" v-if="imagesData.fids">
+												<div class="tip-title">分类</div>
+												<div class="label clearfix" style="padding: 0;">
+													<el-tag v-for="item in imagesData.fids" effect="plain" @click="handleClickClass(item)">
+														{{imagesData.foldernames[item]}}</el-tag>
+												</div>
+											</div>
+
+										</div>
+										<div class="information">
+											<div class="tip">基本信息</div>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">评分</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">
+														<i v-for="item in parseInt(imagesData.grade)"
+															class="ri-star-fill star active"></i>
+														<i v-for="item in 5-parseInt(imagesData.grade)"
+															class="ri-star-fill star"></i>
+													</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">尺寸</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.width}}×{{imagesData.height}}</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">文件大小</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.fsize}}</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">类型</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.ext}}</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">创建时间</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.mtime}}</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">添加时间</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.btime}}</div>
+												</el-col>
+											</el-row>
+											<el-row type="flex" class="field">
+												<el-col :span="12">
+													<div class="name">修改时间</div>
+												</el-col>
+												<el-col :span="12">
+													<div class="record">{{imagesData.dateline}}</div>
+												</el-col>
+											</el-row>
+										</div>
+									</el-scrollbar>
+
+								</div>
+							
+							</div>
+						</div>
+
+					</div>
+
+				</el-scrollbar>
+			</div>
+
+		</el-main>
+	</el-container>
+</div>
+<!--{template components/header/index}-->
+
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			return {
+				rid:'',
+				HtmlLoading:true,
+				ColorPopver: {
+					base: '',
+					rgb: '',
+					rgba: '',
+					hsl: '',
+					hsv: '',
+					cmyk: ''
+				},
+				HideInformation:false,
+				IsFullScreen:false,
+				imagesData: {},
+				rids:[],
+				ImgParam:{
+					slider:0,
+					proportion:0,
+					fproportion:0,
+					rotate:0,
+					total:0,
+					index:0,
+					LoadFirst:false
+				},
+				
+			}
+		},
+		watch: {
+			rid:{
+				handler(val){
+					window.location.hash = 'rid='+val;
+				},
+				deep:true,
+			},
+			
+			'ImgParam.proportion':function(val){
+				this.ImgParam.fproportion = Math.round(val*100);
+				this.handleImgSize(val);
+			},
+			'ImgParam.rotate':function(val){
+				$('.image-viewer__img').css({
+					transform:'rotate('+val+'deg)'
+				})
+			},
+			rids:{
+				handler(data){
+					if(data && data.length){
+						this.ImgParam.total = data.length;
+						this.ImgParam.index = data.indexOf(this.rid)+1;
+					}else{
+						this.ImgParam.total = 1;
+						this.ImgParam.index = 1;
+					}
+				},
+				deep:true,
+				immediate:true
+			},
+			imagesData:{
+				handler(dasta){
+					var self = this;
+					self.$nextTick(function(){
+						if(dasta.opentype=='image' || dasta.opentype=='other'){
+							self.handleImgSet();
+						}
+					});
+				},
+				deep:true,
+			}
+		},
+		created() {
+			var arr = (location.hash || "").replace(/^\?/,'').split("&");
+			if(arr.length){
+				rid=arr[0].replace("#","").split('=')[1];
+				this.rid = rid;
+			}
+			var rids = window.localStorage.getItem('imgs');
+			if(rids && rids.indexOf(this.rid)>-1){
+				this.rids = rids.split(',');
+			}
+			this.GetData();
+		},
+		
+		methods: {
+			handleImgSize(proportion){
+				var self = this;
+				// if(self.ImgParam.LoadFirst){
+				// 	self.ImgParam.LoadFirst = false;
+				// 	return false;
+				// }
+				var ImgScroll = $('#ImgScroll');
+				var img = $('.image-viewer__img');
+				var wrap = $('#ImgScroll .el-scrollbar__wrap');
+				var canva = $('#ImgScroll .el-scrollbar__view');
+				
+				if(this.imagesData.opentype == 'other'){
+					var width = parseFloat(this.imagesData.iconwidth);
+					var height = parseFloat(this.imagesData.iconheight);
+				}else{
+					var width = parseFloat(this.imagesData.width);
+					var height = parseFloat(this.imagesData.height);
+				}
+				var fwidth = width*proportion;
+				var fheight = height*proportion;
+
+				var owidth = fwidth-img.width();
+				var oheight = fheight-img.height();
+				var pwidth = $('#ImgScroll').width()-($('#ImgScroll').width()/5);
+				var pheight = $('#ImgScroll').height()-($('#ImgScroll').height()/5);
+				
+				canva.css({
+					'line-height': $('#ImgScroll').height()+'px'
+				});
+				if(fwidth>ImgScroll.width()){
+					img.css({
+						'max-width': '',
+						'width':fwidth+'px',
+					});
+					wrap[0].scrollLeft += owidth/2;
+		
+				}else{
+					img.css({
+						'max-width': '',
+						'width': fwidth+'px',
+					});
+				}
+				if(fheight>ImgScroll.height()){
+					img.css({
+						'max-height': '',
+						'height':fheight+'px',
+					});
+					wrap[0].scrollTop += oheight/2;
+				}else{
+					img.css({
+						'max-height': '',
+						
+						'height':fheight+'px',
+					});
+				}
+				if(fheight>ImgScroll.height() || fwidth>ImgScroll.width()){
+					ImgScroll.addClass('move');
+				}else{
+					ImgScroll.removeClass('move');
+				}
+				img.removeClass('max');
+				if(self.$refs.scrollImg){
+					self.$refs.scrollImg.update();
+				}
+			},
+			handleImgload(){
+				var img = $('.image-viewer__img');
+				img.removeClass('opacity');
+				$('.image-viewer__img.thumbnail').addClass('opacity');
+			},
+			handleImgSet(){
+				var self = this;
+				self.ImgParam.rotate = 0;
+				var img = $('.image-viewer__img');
+				var canva = $('#ImgScroll .el-scrollbar__view');
+				var Bw = $('#ImgScroll').width();
+				var Bh = $('#ImgScroll').height();
+				var Lw = 0;
+				var Lh = 0;
+				var proportion = 0;
+				if(self.imagesData.opentype == 'other'){
+					var Lw = parseFloat(self.imagesData.iconwidth);
+					var Lh = parseFloat(self.imagesData.iconheight);
+				}else{
+					var Lw = parseFloat(self.imagesData.width);
+					var Lh = parseFloat(self.imagesData.height);
+				}
+				if(Bw < Lw || Bh < Lh){
+					var rateW =  Bw/Lw;
+					var rateH = Bh/Lh;
+					if(rateW>rateH){
+						num = rateH;
+					}else{
+						num = rateW;
+					}
+					proportion = num;
+				}else{
+					proportion = 1;
+				}
+				this.ImgParam.proportion = proportion;
+				var fproportion = Math.round(proportion*100);
+				this.ImgParam.slider = ($('.el-slider').width()/2)*(fproportion/100);
+		
+			},
+			handleImgDrag(e){//图片移动
+				var self = this;
+				var oDiv = $('#ImgScroll');
+				var oImg = $('.image-viewer__img');
+				var wrap = $('#ImgScroll .el-scrollbar__wrap');
+				e = e ? e : window.event;
+				oDiv.addClass('activemove');
+				var lastClientX = e.clientX;
+				var lastClientY = e.clientY;
+				//movemove事件必须绑定到$(document)上，鼠标移动是在整个屏幕上的  
+				$(document).bind("mousemove", function(e){
+					e = e ? e : window.event;
+					var ClientX = e.clientX;
+					var ClientY = e.clientY;
+							
+					if(oImg.width()>oDiv.width()){
+						wrap[0].scrollLeft -=(- lastClientX + (lastClientX=ClientX));
+					}
+					if(oImg.height()>oDiv.height()){
+						var num  = (- lastClientY + (lastClientY=ClientY));
+						wrap[0].scrollTop -=num;
+					}
+					return false; //阻止默认事件或冒泡  
+				});
+				//此处的$(document)可以改为obj  
+				$(document).bind("mouseup", function(){
+					oDiv.removeClass('activemove');
+					//解绑定，这一步很必要，前面有解释  
+					$(document).unbind("mousemove");
+					$(document).unbind("mouseup");
+				});
+				
+			},
+			handleSliderDrag(even){//滑块移动
+				var self = this;
+				var box = $('.el-slider__button-wrapper');
+				box.addClass('grabbing');
+				even = even ? even : window.event;
+				var fx = even.clientX;
+				var originX = fx - box[0].offsetLeft;
+				var slider = $('.el-slider').width();
+				var sliderWidth = $('.el-slider').width();
+				//movemove事件必须绑定到$(document)上，鼠标移动是在整个屏幕上的  
+				$(document).bind("mousemove", function(e){
+					var  x = e.clientX;
+					var moveX = e.clientX - originX;
+					var fmoveX = (sliderWidth/2)*(5/100);
+					if(moveX<=fmoveX){
+						moveX = fmoveX;
+					}
+					if(moveX>=sliderWidth){
+						moveX = sliderWidth;
+					}
+					var proportion = 0;
+					if(moveX<=(sliderWidth/2)){
+						proportion = Math.round((moveX-(sliderWidth/2))/(((sliderWidth/2))*0.1)*10)+100;
+					}else{
+						proportion = Math.round((moveX-(sliderWidth/2))/(((sliderWidth/2)/7)*0.1)*10)+100;
+					}
+					self.ImgParam.slider = moveX;
+					self.ImgParam.proportion = proportion/100;
+					
+					return false; //阻止默认事件或冒泡  
+				});
+				//此处的$(document)可以改为obj  
+				$(document).bind("mouseup", function(){
+					$('.el-slider__button-wrapper').removeClass('grabbing');
+					//解绑定，这一步很必要，前面有解释  
+					$(document).unbind("mousemove");
+					$(document).unbind("mouseup");
+				});
+			},
+			GetData(){
+				var self = this;
+				self.imagesData.icondata = '';
+				self.imagesData.originalimg = '';
+				self.HtmlLoading = true;
+				$.post(MOD_URL+'&op=details&operation=fetch',{
+					rid:self.rid
+				},function(json){
+					var item = json.resourcesdata;
+					if(item.opentype=='image' || item.opentype=='other'){
+						item['icondata'] = (item['icondata']);
+						item['realpath'] = (item['realpath']);
+						item['originalimg'] = (item['originalimg']);
+					}
+					var colors = [];
+					if(item.colors){
+						for(var c in item.colors){
+							var cstr = {
+								key:c,
+								val:item.colors[c]
+							};
+							colors.push(cstr);
+						}
+					}
+					item.colors = colors;
+					
+					var tags = [];
+					if(item.tag){
+						for(var t in item.tag){
+							var tstr = {
+								key:t,
+								val:item.tag[t]
+							};
+							tags.push(tstr);
+						}
+					}
+					item.tag = tags;
+					self.imagesData = item
+					self.HtmlLoading = false;
+				},'json');
+			},
+			handleCarouselArrow(type){//图片箭头
+				var self = this;
+				if(type == 'left'){
+					if(this.ImgParam.index == 1){
+						self.$message.error('已经是第一张了！');
+						return false;
+					}
+					var num = this.ImgParam.index - 1;
+					this.rid = this.rids[num- 1];
+					this.ImgParam.index = num;
+				}else{
+					if(this.ImgParam.index == this.ImgParam.total){
+						self.$message .error('已经是最后一张了！');
+						return false;
+					}
+					this.rid = this.rids[this.ImgParam.index];
+					this.ImgParam.index = this.ImgParam.index + 1;
+				}
+				this.GetData();
+			},
+			handleImgScale(type){//比例选择
+				var self = this;
+				if(type == 'size'){
+					this.handleImgOperation(1);
+				}else if(type == 'adaption'){
+					this.handleImgOperation(2);
+				}else{
+					var num = parseInt(type)/100;
+					this.ImgParam.scale = num;
+					var proportion = parseInt(type);
+					this.ImgParam.proportion = proportion/100;
+					// var img = $('.image-viewer__img');
+					var slider = $('.el-slider');
+					var fslider = 0;
+					if(proportion>100){
+						fslider = ((slider.width()/2)/7)*(proportion/100)+(slider.width()/2)-12;
+					}else{
+						fslider = (slider.width()/2)*(proportion/100);
+					}
+					this.ImgParam.slider = fslider;
+
+				}
+			},
+			handleImgOperation(type){//图片快捷点击
+				var type = parseInt(type);
+				var self = this;
+				if(type==1){
+					var proportion = 1;
+					this.ImgParam.proportion = proportion;
+					// var img = $('.image-viewer__img');
+					var slider = $('.el-slider');
+					this.ImgParam.slider = (slider.width()/2)*proportion;
+
+				}else if(type==2){
+					this.handleImgSet();
+				}else if(type==3){
+					var num = this.ImgParam.rotate + 90;
+					if(num>=360){
+						num=0;
+					}
+					this.ImgParam.rotate = num;
+				}
+				
+			},
+			handleFullScreen(status){//F11
+				this.IsFullScreen = status;
+				if(status){
+					this.fullScreen();
+				}else{
+					this.exitFullScreen();
+				}
+			},
+			fullScreen(){
+				var el = document.getElementById('dzzoffice');
+				var rfs = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen, 
+				          wscript; 
+				      if(typeof rfs != "undefined" && rfs) { 
+				          rfs.call(el); 
+				          return; 
+				      } 
+				      if(typeof window.ActiveXObject != "undefined") { 
+				          wscript = new ActiveXObject("WScript.Shell"); 
+				          if(wscript) { 
+				              wscript.SendKeys("{F11}"); 
+				          } 
+				      } 
+			},
+			exitFullScreen(){
+				var el= document, 
+				          cfs = el.cancelFullScreen || el.webkitCancelFullScreen || el.mozCancelFullScreen || el.exitFullScreen, 
+				          wscript; 
+				      
+				      if (typeof cfs != "undefined" && cfs) { 
+				        cfs.call(el); 
+				        return; 
+				      } 
+				      
+				      if (typeof window.ActiveXObject != "undefined") { 
+				          wscript = new ActiveXObject("WScript.Shell"); 
+				          if (wscript != null) { 
+				              wscript.SendKeys("{F11}"); 
+				          } 
+				    } 
+			},
+			handleHideInformation(status){//隐藏图片信息
+				this.HideInformation = status;
+			},
+
+			ShowPopoverColor(val) {
+				var rgb = this.hexToRgb('#' + val);
+				var hsl = this.rgbToHsl(rgb.r, rgb.g, rgb.b);
+				var cmyk = this.RgbToCmyk(rgb.r, rgb.g, rgb.b);
+				var hsv = this.rgbToHsv(rgb.r, rgb.g, rgb.b);
+				this.ColorPopver = {
+					base: '#' + val,
+					rgb: 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')',
+					rgba: 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 1)',
+					hsl: hsl,
+					hsv: hsv,
+					cmyk: cmyk
+				};
+			},
+			handleCommandColor(val){
+				if(val == 'common'){
+					window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+				}else{
+					CopyTxt(this,val)
+				}
+			},
+
+			handleView(){
+				window.open(SITEURL+this.imagesData.icondata);
+			},
+			handleShare() {
+				var self = this;
+				if (self.imagesData.rid) {
+					$.post('{MOD_URL}&op=ajax&operation=createshare', {
+						rid: self.imagesData.rid
+					}, function(data) {
+						if (data.success) {
+							self.$notify({
+								title: '分享成功',
+								duration: 10000,
+								dangerouslyUseHTMLString: true,
+								message: '<p class="address">' + data.success +
+									'</p><div style="text-align: right;margin-top: 6px;"><button type="button" class="el-button el-button--primary el-button--mini copy-share-btn"><span>复制地址</span></button></div>',
+								position: 'bottom-right'
+							});
+						} else {
+							self.$message({
+								message: '分享失败',
+								type: 'error'
+							});
+						}
+					}, 'json')
+				} else {
+					this.$message({
+						message: '数据错误',
+						type: 'error'
+					});
+				}
+
+			},
+			handleDown() {
+				if (this.imagesData.dpath) {
+					window.open(SITEURL + MOD_URL + '&op=download&dpath=' + this.imagesData.dpath)
+				} else {
+					this.$message({
+						message: '数据错误',
+						type: 'error'
+					});
+				}
+
+			},
+			handleClickTag(tid){
+				window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&tag=' + tid;
+			},
+			handleClickClass(cid){
+				window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&classify=' + cid;
+			},
+			handleClickLink(val){
+				window.open(val);
+				// window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&link=1&linkval=' + val;
+			},
+			copyText() {
+				var text = document.getElementById("copyText").innerText;
+				CopyTxt(this, text);
+			},
+			hexToRgb(hex) {
+				var str = {
+					r: parseInt('0x' + hex.slice(1, 3)),
+					g: parseInt('0x' + hex.slice(3, 5)),
+					b: parseInt('0x' + hex.slice(5, 7))
+				};
+				return str;
+			},
+			rgbToHsl(r, g, b) {
+				r /= 255, g /= 255, b /= 255;
+				var max = Math.max(r, g, b),
+					min = Math.min(r, g, b);
+				var h, s, l = (max + min) / 2;
+				if (max == min) {
+					h = s = 0; // achromatic
+				} else {
+					var d = max - min;
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0);
+							break;
+						case g:
+							h = (b - r) / d + 2;
+							break;
+						case b:
+							h = (r - g) / d + 4;
+							break;
+					}
+					h *= 6;
+				}
+				return 'hsl(' + Math.round(parseInt(h * 100) / 10) + ', ' + Math.round(parseInt(s * 1000) / 10) +
+					'%, ' + Math.round(parseInt(l * 1000) / 10) + '%)';
+			},
+			rgbToHsv(R, G, B) {
+				R /= 255
+				G /= 255
+				B /= 255
+				var max = Math.max(R, G, B)
+				var min = Math.min(R, G, B)
+				var range = max - min
+				var V = max
+				var S = V === 0 ? 0 : range / V
+				var H = 0
+				if (R === V) H = (60 * (G - B)) / range
+				if (G === V) H = 120 + (60 * (B - R)) / range
+				if (B === V) H = 240 + (60 * (R - G)) / range
+				if (range === 0) H = 0
+				if (H < 0) H += 360
+				return 'hsv(' + Math.round(H) + ', ' + Math.round(parseInt(S * 1000) / 10) + '%, ' + Math.round(
+					parseInt(V * 1000) / 10) + '%)';
+			},
+			RgbToCmyk(R, G, B) {
+				if ((R == 0) && (G == 0) && (B == 0)) {
+					return [0, 0, 0, 1];
+				} else {
+					var calcR = 1 - (R / 255),
+						calcG = 1 - (G / 255),
+						calcB = 1 - (B / 255);
+
+					var K = Math.min(calcR, Math.min(calcG, calcB)),
+						C = (calcR - K) / (1 - K),
+						M = (calcG - K) / (1 - K),
+						Y = (calcB - K) / (1 - K);
+
+					return 'cmyk(' + Math.round(parseInt(C * 1000) / 10) + '%, ' + Math.round(parseInt(M * 1000) /
+						10) + '%, ' + Math.round(parseInt(Y * 1000) / 10) + '%, ' + Math.round(parseInt(K *
+						1000) / 10) + '%)';
+				}
+			},
+			handleavatar(type) {//头像点击
+				switch(type){
+					case 'personal':
+						window.location.href = MOD_URL + '&op=user&do=personal';
+					break;
+					case 'help':
+						window.open('https://www.yuque.com/pichome');
+					break;
+					case 'problem':
+						window.open('https://support.qq.com/products/340252');
+					break;
+					case 'setting':
+						window.location.href = MOD_URL + '&op=admin&do=basic';
+					break;
+					case 'library':
+						window.location.href = MOD_URL + '&op=library';
+					break;
+					case 'about':
+						this.$alert(
+						`<div class="aboutlogo">
+							<img src="`+MOD_PATH+`/image/phlogo.png" alt="">
+						</div>
+						<div class="aboutmessage">
+							<div class="aboutlist">
+								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版本信息：</span><span class="mes">Beat 1 <a class="update" href="javascript:;">检查更新</a></span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>
+							</div>
+						</div>`,
+						'',
+						{
+							customClass:'aboutPichome',
+							showClose:false,
+							showConfirmButton:false,
+							dangerouslyUseHTMLString: true,
+							closeOnClickModal:true
+						});
+					break;
+					case 'OutLogin':
+						this.$confirm('您确定要注销登录?', '提示', {
+						          confirmButtonText: '确定',
+						          cancelButtonText: '取消',
+						          type: 'warning'
+						        }).then(() => {
+						         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
+						         		window.location.reload();
+						         	});
+						        }).catch(() => {
+						                   
+						        });
+					break;
+					case 'system':
+						window.open(SITEURL+'admin.php?mod=system');
+					break;
+				}
+				
+			},
+			
+		},
+		mounted() {
+			var self = this;
+			$(document).keydown(function(event){
+				var code = event.keyCode
+				if(code == 37){//左边
+					self.handleCarouselArrow('left')
+				}else if(code == 39){//右边
+					self.handleCarouselArrow('right')
+				}
+			});
+			$(document).on('click', '.copy-share-btn', function() {
+				var txt = $(this).parent().siblings('.address').text()
+				CopyTxt(self, txt);
+			});
+			$('.color-list').hover(function() {
+				$(this).removeClass('opacity');
+				$(this).siblings().addClass('opacity');
+			}, function() {
+				$('.color-list').removeClass('opacity');
+			});
+			$(window).resize(function(){
+				$('#ImgScroll .el-scrollbar__view').css({
+					// 'width': $('#ImgScroll').width()+'px',
+					// 'height': $('#ImgScroll').height()+'px',
+					'line-height': $('#ImgScroll').height()+'px'
+				});
+			});
+		
+		
+		},
+
+	})
+	
+</script>
+
+<script type="text/javascript" src="{MOD_PATH}/js/jquery.mousewheel.min.js?{VERHASH}"></script>
+<!--{template frame/footer_simple}-->

@@ -1,0 +1,173 @@
+<div class="form-group" id="verify-type">
+    <label class="control-label" for="chktype" required>{lang safe_verification_method}</label>
+    <select name="chktype" id="chktype" class="form-control input-sm " >
+        <!--{if $chkarr['emailstatus'] && $chkarr['email']}-->
+        <option value="email">$hideemail {lang safe_verification}</option>
+        <!--{/if}-->
+        <!--{if $chkarr['phonestatus'] && $chkarr['phone']}-->
+        <option value="phone">$hidephone {lang safe_verification}</option>
+        <!--{/if}-->
+       <!--{if !$chkarr['phonestatus'] && !$chkarr['emailstatus']}-->
+        <option value="pass">{lang password} {lang safe_verification}</option>
+        <!--{/if}-->
+    </select>
+</div>
+<div id="emailchk_show"  class="showchktype" style="display:none;">
+<div class="form-group">
+    <label class="control-label"></label>
+    <div class="controls"><input type="button" class="btn btn-primary return_chk" value="{lang send_validation_mail}" onclick="chkemail_verify()"></div>
+</div>
+</div>
+<div id="passchk_show"   class="showchktype" style="display:none;">
+<div class="form-group">
+    <label class="control-label" for="chkpassword" required>{lang password}</label>
+    <input type="password" name="chkpassword" class="form-control" autocomplete="off" id="chkpassword" placeholder="{lang seccode}">
+    <span id="chk_chkpassword" class="help-inline"><span id="suc_chkpassword"></span> <kbd  class="p_chk"></kbd> </span>
+</div>
+<div class="form-group" id="codeverify" {if $sessionerrornum > 2}style="display:block;"{else}style="display:none;"{/if}>
+    <!--{block sectpl}-->
+    <sec>
+        <sec>
+            <sec>
+                <!--{/block}-->
+                <div class="form-group">
+                    <label class="control-label">{lang seccode}</label>
+                    <div class="controls">
+                        <!--{template common/seccheck}-->
+                    </div>
+                </div>
+</div>
+
+<div class="form-group">
+    <label class="control-label"></label>
+    <div class="controls"><input type="button" class="btn btn-primary return_chk" value="{lang confirms}" onclick="pass_chk()"></div>
+</div>
+</div>
+<div id="phonechk_show"   class="showchktype" style="display:none;">
+<div class="form-group">
+    <label class="control-label" for="pcode" required>{lang safe_verification_phonechk_code}</label>
+    <input type="text" name="pcode" class="form-control" autocomplete="off" id="pcode" placeholder="{lang seccode}">
+    <input type="button" class="btn btn-primary" value="{lang safe_verification_get_code}"  onclick="get_pcode()"/>
+    <span id="chk_pcode" class="help-inline"><span id="suc_pcode"></span> <kbd  class="p_chk"></kbd> </span>
+</div>
+<div class="form-group">
+    <label class="control-label"></label>
+    <div class="controls"><input type="button" class="btn btn-primary return_chk" value="{lang confirms}" onclick="pcode_chk()"></div>
+</div>
+</div>
+<div class="conTent" id="email_sendmsg" style="display:none;">
+    <div class="success">
+        <span class="glyphicon glyphicon-ok"></span>
+        <span class="msgobj">{lang verification_mail_send}</span>
+    </div>
+    <div class="theme">
+        <p><span class="msgobj">{lang verification_mail}</span>{lang verification_mail_send_to_mail} <span class="phone"><a  href="" id="return_email" target="_blank"></a></span>,{lang verification_mail_tip}</p>
+        <p>{lang verification_mail_expire}</p>
+        <p>{lang verification_mail_trash}</p>
+    </div>
+    <div class="email">
+        <button type="button" class="btn btn-success" id="reffer_email">{lang enter_my_mailbox}</button>
+        <span><span id="sendstart">{lang been_send}</span><span id="sendstatus" style="display:none;"><b class="time" id="down_time">3</b>{lang after_secend}<span id="false_resend">{lang verification_mail_send_again}</span><span id="resend_true" style="display:none"><input type="button" class="btn btn-success"  value="{lang verification_mail_send_again}" onclick="chkemail_verify()" ></span></span></span>
+    </div>
+</div>
+<script>
+    var verifyresult = false;
+    jQuery('#chktype').change(function(){
+        var val = jQuery(this).val();
+        jQuery('.showchktype').hide();
+        jQuery("#"+val+"chk_show").show();
+    });
+    jQuery('#chktype').change();
+    function pass_chk(){
+        var val = jQuery('#chkpassword').val();
+        var chkcode = (jQuery("#codeverify").is(":visible"))?1:0;
+        var form = jQuery('#chkpassword').parents('form').get(0);
+        var seccode = form.seccodeverify.value ? form.seccodeverify.value:'';
+        var sech = form.sechash.value ? form.sechash.value:'';
+        var url = 'user.php?mod=profile&op=safeverify&do=chkpass&returnType=json';
+        jQuery.post(url,{chkpassword:val,chkcodeverify:chkcode,seccodeverify:seccode,sechash:sech},function(json){
+                if(json['success']){
+                    jQuery('#chk_chkpassword .p_chk').html('');
+                    verifyresult = true;
+                    if(verifyresult){
+                        safeverifystep(1);
+                    }
+                }else if(json['error']){
+                    if(json['codeerror']){
+                        showmessage(json['error'],'danger',1000,1)
+                    }else{
+                        jQuery('#chk_chkpassword .p_chk').html(json['error']);
+                        if(json['errornum'] > 2 && jQuery("#codeverify").is(":hidden")){
+                            jQuery('#codeverify').show();
+                        }
+                    }
+                }
+        },'json');
+        return false;
+    }
+    function getEmailPath(email){
+        var hash={
+            'qq.com': 'http://mail.qq.com',
+            'gmail.com': 'http://mail.google.com',
+            'sina.com': 'http://mail.sina.com.cn',
+            '163.com': 'http://mail.163.com',
+            '126.com': 'http://mail.126.com',
+            'yeah.net': 'http://www.yeah.net/',
+            'sohu.com': 'http://mail.sohu.com/',
+            'tom.com': 'http://mail.tom.com/',
+            'sogou.com': 'http://mail.sogou.com/',
+            '139.com': 'http://mail.10086.cn/',
+            'hotmail.com': 'http://www.hotmail.com',
+            'live.com': 'http://login.live.com/',
+            'live.cn': 'http://login.live.cn/',
+            'live.com.cn': 'http://login.live.com.cn',
+            '189.com': 'http://webmail16.189.cn/webmail/',
+            'yahoo.com.cn': 'http://mail.cn.yahoo.com/',
+            'yahoo.cn': 'http://mail.cn.yahoo.com/',
+            'eyou.com': 'http://www.eyou.com/',
+            '21cn.com': 'http://mail.21cn.com/',
+            '188.com': 'http://www.188.com/',
+            'foxmail.coom': 'http://www.foxmail.com'
+        };
+        var url =email.split('@')[1];
+        var emailpath = hash[url];
+        return emailpath;
+    }
+    function chkemail_verify(){
+        jQuery('#sendstatus').hide();
+        jQuery('#down_time').html(3);
+        jQuery('#resend_true').hide();
+        jQuery('#sendstart').html('{lang sending_waiting}');
+        var url = 'user.php?mod=profile&op=safeverify&do=chkemail&returnType=json';
+        jQuery.post(url,{email_verify:1},function(json){
+            if(json['success']){
+                jQuery('#emailchk_show').hide();
+                jQuery('#verify-type').hide();
+                jQuery('#sendstart').html('{lang been_send}');
+                jQuery('#sendstatus').show();
+                jQuery('#false_resend').show();
+               // jQuery('#emailform').hide();
+                jQuery('#email_sendmsg').show();
+                var path = getEmailPath(json['success']['email']);
+                jQuery('#return_email').html(json['success']['email']).attr('href',path);
+                jQuery('#reffer_email').click(function(){
+                    window.location.href = path;
+                });
+                var sum = 3;
+                var timer = setInterval(function(){
+                    if(sum <= 0) {
+                        sum = 0;
+                        jQuery('#false_resend').hide();
+                        jQuery('#resend_true').show();
+                        clearTimeout(timer);
+                    }
+                    jQuery('#down_time').html(sum);
+                    sum--;
+                },1000);
+            }else if(json['error']){
+                showmessage(json['error'],'danger',3000,1);
+            }
+        },'json')
+
+    }
+</script>

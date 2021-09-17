@@ -1,0 +1,815 @@
+<template id="images">
+	<div style="position: relative;min-height: 300px;">
+		<components v-if="imgdatas.length" :is="GetLayout" :imgdatas="imgdatas" @handleoperation="handleoperation" ref="mychild"></components>
+		<div v-if="!imageLoading&&imgdatas.length==0&&!GetFirstLoading" class="el-empty">
+			<div class="el-empty__image">
+				<img src="{MOD_PATH}/image/nodata.svg" />
+			</div>
+			<div class="el-empty__description">
+				<p>暂无数据</p>
+			</div>
+		</div>
+		<div class="img-loading" v-if="imageLoading">
+			<span class="el-icon-loading"></span>拼命加载中...
+		</div>
+		<div class="img-loading" v-if="imgdatas.length&&Parameter.page>=Parameter.totalpage&&!GetFirstLoading&&!imageLoading">没有更多了</div>
+		
+	</div>
+</template>
+
+<script type="text/javascript">
+	Vue.component('images', {
+		template: '#images',
+		data: function() {
+			return {
+				resize:0,
+			}
+		},
+		watch:{
+			InformationShow:{
+				handler(val){
+					var self = this;
+					if(self.GetLayout == 'rowGrid'){
+						self.$refs.mychild.ImgRowGridInit('refresh');
+					}else if(self.GetLayout == 'waterFall'){
+						self.$refs.mychild.WaterfallInit('refresh');
+					}else{
+						self.$refs.mychild.ImageListInit('refresh');
+					}
+				},
+				deep:true,
+			},
+			InformationOther:{
+				handler(val){
+					var self = this;
+					if(self.GetLayout == 'rowGrid'){
+						self.$refs.mychild.ImgRowGridInit('refresh');
+					}else if(self.GetLayout == 'waterFall'){
+						self.$refs.mychild.WaterfallInit('refresh');
+					}else{
+						self.$refs.mychild.ImageListInit('refresh');
+					}
+				},
+				deep:true,
+			},
+			imgdatas:{
+				handler(val){
+					var str = [];
+					for(var i in val){
+						str.push(val[i].rid);
+					}
+					str = str.join(',');
+					window.localStorage.setItem('imgs',str)
+				},
+				deep:true,
+				immediate:true
+			},
+			resize:debounce(function(val){
+				var self = this;
+				if(self.GetLayout == 'rowGrid'){
+					self.$refs.mychild.ImgRowGridInit('refresh');
+				}else if(self.GetLayout == 'waterFall'){
+					self.$refs.mychild.WaterfallInit('refresh');
+				}else{
+					self.$refs.mychild.ImageListInit('refresh');
+				}
+			},500)
+		},
+		computed:{
+			InformationOther(){
+				return VuexStore.getters.Getinformation_other;
+			},
+			InformationShow(){
+				return VuexStore.getters.Getinformation_show;
+			},
+			imageLoading(){
+				return VuexStore.getters.GetimageLoading;
+			},
+			imgdatas(){
+				return VuexStore.getters.Getimgdatas;
+			},
+			GetLayout(){
+				return VuexStore.getters.Getinformation_layout;
+			},
+			Parameter(){
+				return VuexStore.getters.GetimgParameter;
+			},
+			GetFirstLoading(){
+				return VuexStore.getters.GetFirstLoading;
+			},
+		},
+		created() {
+			
+		},
+		methods: {
+			handleScroll(){
+				var self = this;
+				var Parameter = self.Parameter;
+				jQuery('.body_scroll>.el-scrollbar__wrap').scroll(function(){
+					
+					if(self.GetLayout == 'rowGrid'){
+						self.$refs.mychild.ImgRowGridhandleScroll();
+					}else if(self.GetLayout == 'waterFall'){
+						self.$refs.mychild.WaterfallhandleScroll();
+					}else{
+						self.$refs.mychild.ImageListhandleScroll();
+					}
+					
+					if($(this).scrollTop()+$(this).height()>=this.scrollHeight-80){
+						if(Parameter.page>=Parameter.totalpage || self.imageLoading || self.GetFirstLoading){
+							return false;
+						}
+						VuexStore.dispatch('handleHash','scroll');
+						
+					}
+				});
+			},
+			handleoperation(param){
+				if(param.type == 'share'){
+					var self = this;
+					$.post('{MOD_URL}&op=ajax&operation=createshare',{
+						rid:param.val
+					},function(data){
+						if(data.success){
+							self.$notify({
+							  title: '分享成功',
+							  duration:6000,
+							  dangerouslyUseHTMLString: true,
+							  message: '<p class="address">'+data.success+'</p><div style="text-align: right;margin-top: 6px;"><button type="button" class="el-button el-button--primary el-button--mini copy-share-btn"><span>复制地址</span></button></div>',
+							  position: 'bottom-right'
+							});
+						}else{
+							self.$message({
+							  message: '分享失败',
+							  type: 'error'
+							});
+						}
+					},'json')
+				}else if(param.type == 'down'){
+					window.open(SITEURL+MOD_URL+'&op=download&dpath='+param.val);
+				}
+				
+			},
+			
+		},
+		mounted() {
+			var self = this;
+			window.addEventListener('resize',function(){
+				self.resize += 1;
+			});
+			this.handleScroll();
+			
+			$(document).on('click','.copy-share-btn',function(){
+				var txt = $(this).parent().siblings('.address').text()
+				CopyTxt(self,txt);
+			});
+		},
+		components:{
+			rowGrid:{
+				props:['imgdatas'],
+				template:`<div class="rowGrids-box clearfix">
+							<div class="rowGrids-list clearfix">
+								<div class="Icoblock-box each-piece" v-for="(item,index) in NewImgdatas" :style="{top:item.ptop+'px',left:item.pleft+'px',width: item.pwidth+'px'}" :key="index">
+									<div class="backg radius" :style="{background:'#'+item.color}" v-bind:class="item.opentype=='video'||item.opentype=='audio'?'border':''">
+										<div 
+											class="el-image Icoblock rowGrids-Icoblock" 
+											:style="{width: item.pwidth+'px', height: item.pheight+'px'}"
+											@click="item.type!='audio'&&handleDetails(item.rid)"
+											@mouseenter ="handleMouseenter"
+											@mouseleave ="handleMouseleave">
+											<img 
+												class="el-image__inner opacity" 
+												:ref="'ref_'+item.rid"
+												@load="handleImgload(item.rid)" 
+												:src="item.icondata" alt="" />
+											<div class="bgimage-operation" data-status="true" :data-type="item.type" :data-playurl="item.realpath">
+												<template v-if="item.type=='audio'">
+													<div @click.stop="handleDetails(item.rid)" class="circulars link">
+														<i class="ri-search-line"></i>
+														<span class="el-link--inner">详情</span>
+													</div>
+												</template>
+												<template v-else>
+													<div v-if="item.link" @click.stop="handleLink(item.link)" class="circulars link">
+														<i class="ri-link"></i>
+														<span class="el-link--inner">链接</span>
+													</div>
+												</template>
+												
+												
+												<div class="topFlex" v-if="parseInt(item.download)||parseInt(item.share)">
+													<div v-if="parseInt(item.share)" class="circulars" @click.stop="handleoperation('share',item.rid)">
+														<i class="ri-share-line"></i>
+													</div>
+													<div v-if="parseInt(item.download)" class="circulars" @click.stop="handleoperation('down',item.dpath)">
+														<i class="ri-download-2-line"></i>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									
+									<div v-if="InformationShow.indexOf('tagging')>-1&&parseInt(item.annonationnum)>0" class="annotation">{{item.annonationnum}}</div>
+									<div class="bottom-img-message" v-if="InformationShow.length">
+										<div class="name">
+											<span v-if="InformationShow.indexOf('name')>-1">{{item.name}}</span>
+											<span v-if="InformationShow.indexOf('extension')>-1" class="suffix">.{{item.ext}}</span>
+										</div>
+										<template v-if="InformationShow.indexOf('other')>-1">
+											<div class="other" v-if="InformationOther=='size'">
+												<span>{{item.width}} × {{item.height}}</span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='filesize'">
+												<span>{{item.fsize}}</span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='tag'">
+												<span v-if="!item.tags" class="label">-</span>
+												<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='grade'">
+												<span v-for="item in parseInt(item.grade)" class="score active el-icon-star-on"></span>
+												<span v-for="item in 5-parseInt(item.grade)" class="score el-icon-star-on"></span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='btime'">
+												<span>{{item.btime}}</span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='dateline'">
+												<span>{{item.dateline}}</span>
+											</div>
+											<div class="other" v-else-if="InformationOther=='mtime'">
+												<span>{{item.mtime}}</span>
+											</div>
+										</template>
+									</div>
+								</div>
+							</div>
+						</div>`,
+				data: function() {
+					return {
+						start:true,
+						NewImgdatas:{},
+						StoreImgdatas:{},
+						SurplusImgdatas:{},
+						RowgridParam:{
+							maxNewtop:0,
+							maxNewLeft:0,
+							rowElems:[],
+							perpage : 0,
+							Margin:10,
+							rowWidth:0,
+							OtherHeight:0
+						},
+					}
+				},
+				watch:{
+					imgdatas:{
+						handler(val){
+							var self = this;
+							if(val && val.length>0){
+								self.$nextTick(function(){
+									if(self.start){
+										self.ImgRowGridInit()
+										self.start = false;
+									}else{
+										self.ImgRowGridInit('append');
+									}
+								});
+							}
+						},
+						deep:true,
+						immediate:true
+					},
+					NewImgdatas:{
+						handler(val){
+							var self = this;
+							self.$nextTick(function(){
+								$('.rowGrids-list').width($('.rowGrids-box').width())
+							});
+						},
+						deep:true,
+					},
+				},
+				computed:{
+					InformationOther(){
+						return VuexStore.getters.Getinformation_other;
+					},
+					InformationShow(){
+						return VuexStore.getters.Getinformation_show;
+					},
+					GetScrollAppend(){
+						return VuexStore.getters.GetScrollAppend;
+					},
+					GetimgParameter(){
+						return VuexStore.getters.GetimgParameter;
+					},
+				},
+				methods:$.extend({},ImgRowGrid,{
+					handleDetails(rid){
+						window.open(SITEURL+MOD_URL+'&op=details#rid='+rid);
+					},
+					handleoperation(type,val){
+						this.$emit('handleoperation',{
+							type:type,
+							val:val
+						})
+					},
+					handleLink(url){
+						if(url.indexOf('https://')>-1){
+							window.open(url);
+						}else{
+							window.open('https://'+url);
+						}
+						return false;
+					},
+					handleMouseenter(e){
+						handleMouseenter($(e.target))
+					},
+					handleMouseleave(e){
+						handleMouseleave($(e.target));
+					},
+					handleImgload(rid){
+						var self = this;
+						var item = $(self.$refs['ref_'+rid]);
+						item.removeClass('opacity');
+						item.closest('.backg').css('background','').removeClass('radius');
+					}
+				}),
+				mounted() {
+					var self = this;
+				},
+			},
+			imageList:{
+				props:['imgdatas'],
+				template:`<div class="list-box clearfix">
+							<div class="list-list">
+								<div class="Icoblock-block each-piece" v-for="(item,index) in NewImgdatas" :style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}" :key="index">
+									<div class="image-section">
+										<div 
+										class="el-Icoblock radius" 
+										:style="{height: item.pheight+'px',background:'#'+item.color}" 
+										v-bind:class="item.opentype=='video'||item.opentype=='audio'?'border':''" 
+										@click="item.type!='audio'&&handleDetails(item.rid)"
+										@mouseenter="handleMouseenter"
+										@mouseleave="handleMouseleave">
+											<div class="el-image">
+												<img 
+													:src="item.icondata" 
+													class="el-image__inner opacity" 
+													:ref="'ref_'+item.rid"
+													@load="handleImgload(item.rid)" 
+													style="object-fit: contain;">
+											</div>
+											<div class="bgimage-operation" data-status="true" :data-type="item.type" :data-playurl="item.realpath">
+												<template v-if="item.type=='audio'">
+													<div @click.stop="handleDetails(item.rid)" class="circulars link">
+														<i class="ri-search-line"></i>
+														<span class="el-link--inner">详情</span>
+													</div>
+												</template>
+												<template v-else>
+													<div v-if="item.link" @click.stop="handleLink(item.link)" class="circulars link">
+														<i class="ri-link"></i>
+														<span class="el-link--inner">链接</span>
+													</div>
+												</template>
+												<div class="topFlex" v-if="parseInt(item.download)||parseInt(item.share)">
+													<div v-if="parseInt(item.share)" class="circulars" @click.stop="handleoperation('share',item.rid)">
+														<i class="ri-share-line"></i>
+													</div>
+													<div v-if="parseInt(item.download)" class="circulars" @click.stop="handleoperation('down',item.dpath)">
+														<i class="ri-download-2-line"></i>
+													</div>
+												</div>
+											</div>
+											<div v-if="InformationShow.indexOf('tagging')>-1&&parseInt(item.annonationnum)>0" class="annotation">{{item.annonationnum}}</div>
+										</div>
+										
+										<div class="bottom-img-message" v-if="InformationShow.length">
+											<div class="name"  v-if="InformationShow.indexOf('name')>-1 || InformationShow.indexOf('extension')>-1">
+												<span v-if="InformationShow.indexOf('name')>-1">{{item.name}}</span>
+												<span v-if="InformationShow.indexOf('extension')>-1" class="suffix">.{{item.ext}}</span>
+											</div>
+											<template v-if="InformationShow.indexOf('other')>-1">
+												<div class="other" v-if="InformationOther=='size'">
+													<span>{{item.width}} × {{item.height}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='filesize'">
+													<span>{{item.fsize}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='tag'">
+													<span v-if="!item.tags" class="label">-</span>
+													<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='grade'">
+													<span v-for="item in parseInt(item.grade)" class="score active el-icon-star-on"></span>
+													<span v-for="item in 5-parseInt(item.grade)" class="score el-icon-star-on"></span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='btime'">
+													<span>{{item.btime}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='dateline'">
+													<span>{{item.dateline}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='mtime'">
+													<span>{{item.mtime}}</span>
+												</div>
+											</template>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>`,
+				data: function() {
+					return {
+						state:true,
+						imgparam:{
+							maxNewtop:0,
+							maxNewLeft:0,
+							perpage : 0,
+							Margin:10,
+							columns:0,
+							fcolumns:1,
+							newWidth:0,//图片宽度
+							newHeight:0,//图片高度
+							boxHeight:0,//总体高度
+							OtherHeight:0//底部信息
+						},
+						NewImgdatas:{},
+						StoreImgdatas:{},
+						
+					}
+				},
+				
+				watch:{
+					imgdatas:{
+						handler(val){
+							var self = this;
+							if(val && val.length>0){
+								self.$nextTick(function(){
+									if(self.state){
+										self.state = false;
+										self.ImageListInit();
+									}else{
+										self.ImageListInit('append');	
+									}
+								});
+							}
+							
+						},
+						deep:true,
+						immediate:true
+					},
+
+					NewImgdatas:{
+						handler(val){
+							var self = this;
+							self.$nextTick(function(){
+								
+							})
+						},
+						deep:true,
+						immediate:true
+					},
+				},
+				computed:{
+					InformationOther(){
+						return VuexStore.getters.Getinformation_other;
+					},
+					InformationShow(){
+						return VuexStore.getters.Getinformation_show;
+					},
+					GetimgParameter(){
+						return VuexStore.getters.GetimgParameter;
+					},
+					GetScrollAppend(){
+						return VuexStore.getters.GetScrollAppend;
+					},
+				},
+				created() {
+				},
+				methods:{
+					ImageListInit(type){
+						var self = this;
+						if(type == 'append'){
+							self.ImageListCompute(type);
+						}else{
+							self.ImageListCompute();
+						}
+					},
+					ImageListCompute(type){
+						var self = this;
+						if(type == 'append'){
+							// self.imgparam.perpage += self.GetimgParameter.perpage;
+						}else{
+							self.imgparam.perpage = 0;
+							var boxWidth = $('.list-box').width();
+							var documentW = document.body.clientWidth;
+							$('.list-list').width(boxWidth);
+							var columns = 0;
+							if(documentW>=1200){
+								columns = 5;
+							}else if(documentW>=992){
+								columns = 4;
+							}else if(documentW>=768){
+								columns = 3;
+							}else{
+								columns = 2;
+							}
+	
+							self.imgparam.maxNewLeft = 0;
+							self.imgparam.maxNewtop = 0;
+							self.imgparam.fcolumns = 1;
+							self.imgparam.boxHeight = 0;
+							
+							self.imgparam.columns = columns;
+							self.imgparam.newWidth = (boxWidth-(columns*self.imgparam.Margin-self.imgparam.Margin)) / columns;
+							self.imgparam.newHeight = 2 / 3 * self.imgparam.newWidth;
+							
+							var OtherHeight = 0
+							if(self.InformationShow.indexOf('name')>-1 || self.InformationShow.indexOf('extension')>-1){
+								OtherHeight += 45;
+							}
+							if(self.InformationShow.indexOf('other')>-1){
+								OtherHeight += 20;
+							}
+							self.imgparam.OtherHeight = OtherHeight;
+							
+							
+						}
+						var arr = {};
+						for(var index = self.imgparam.perpage; index < self.imgdatas.length;++index){
+							var item = JSON.parse(JSON.stringify(self.imgdatas[index]));
+							arr[item.rid] = item;
+							arr[item.rid]['pwidth'] = self.imgparam.newWidth;
+							arr[item.rid]['pheight'] = self.imgparam.newHeight;
+							arr[item.rid]['ptop'] = self.imgparam.maxNewtop;
+							arr[item.rid]['pleft'] = self.imgparam.maxNewLeft;
+							arr[item.rid]['pbottom'] = self.imgparam.maxNewtop + self.imgparam.newHeight+self.imgparam.OtherHeight;
+							self.imgparam.maxNewLeft += self.imgparam.newWidth+self.imgparam.Margin;
+							self.imgparam.fcolumns++;
+							if(self.imgparam.fcolumns > self.imgparam.columns){
+								self.imgparam.maxNewLeft = 0;
+								self.imgparam.maxNewtop += self.imgparam.newHeight+self.imgparam.Margin+self.imgparam.OtherHeight;
+								self.imgparam.fcolumns = 1;
+								self.imgparam.boxHeight = self.imgparam.maxNewtop;
+							}
+						}
+						self.imgparam.perpage = self.imgdatas.length;
+						if(self.GetScrollAppend){
+							var StoreImgdatas = JSON.parse(JSON.stringify(self.StoreImgdatas));
+							var result = $.extend(StoreImgdatas, arr);
+							self.StoreImgdatas = result;
+						}else{
+							self.StoreImgdatas = arr;
+						}
+						if(self.imgparam.fcolumns>1&&self.imgparam.fcolumns<self.imgparam.columns+1){
+							self.imgparam.boxHeight += self.imgparam.newHeight+self.imgparam.OtherHeight;
+						}
+						$('.list-list').height(self.imgparam.boxHeight+40);
+						self.ImageListhandleScroll()
+					},
+					ImageListhandleScroll(){
+						var self = this;
+						var H = jQuery('.body_scroll>.el-scrollbar__wrap')[0].clientHeight;//获取可视区域高度
+						var S = jQuery('.body_scroll>.el-scrollbar__wrap')[0].scrollTop;
+						// var data = JSON.parse(JSON.stringify(self.NewImgdatas));
+						var arr = [];
+						self.NewImgdatas = {};
+						for(var o in self.StoreImgdatas){
+							var item = JSON.parse(JSON.stringify(self.StoreImgdatas[o]));
+							if ((H+S) >= item.ptop && S<item.pbottom) {
+								self.NewImgdatas[item.rid] = item;
+							}
+						}
+						
+					},
+					handleResize() {
+						$('.Icoblock-block').each(function(){
+							let padding = 2 / 3 * this.clientWidth;
+							$(this).find('.el-Icoblock').css('paddingBottom',padding);
+						})
+					},
+					handleDetails(rid){
+						window.open(SITEURL+MOD_URL+'&op=details#rid='+rid);
+					},
+					handleoperation(type,val){
+						this.$emit('handleoperation',{
+							type:type,
+							val:val
+						})
+					},
+					handleMouseenter(e){
+						handleMouseenter($(e.target))
+					},
+					handleMouseleave(e){
+						handleMouseleave($(e.target));
+					},
+					handleLink(url){
+						if(url.indexOf('https://')>-1){
+							window.open(url);
+						}else{
+							window.open('https://'+url);
+						}
+						return false;
+					},
+					handleImgload(rid){
+						var self = this;
+						var item = $(self.$refs['ref_'+rid]);
+						item.removeClass('opacity');
+						item.closest('.el-Icoblock').css('background','').removeClass('radius');
+					}
+				},
+				mounted() {
+					var _this = this;
+
+				},
+			},
+			
+			
+			waterFall:{
+				props:['imgdatas'],
+				template:`<div id="waterfallCenter">
+							<div class="imgmargin">
+								<div class="w-block each-piece" v-for="(item,index) in NewImgdatas" :style="{top:item.ptop+'px',left:item.pleft+'px'}" :key="index" :rid="item.rid">
+									<div class="w-p">
+										<div 
+										class="w-storage" 
+										:style="{height: (236/parseInt(item.width)*parseInt(item.height)>120?236/parseInt(item.width)*parseInt(item.height):120)+'px'}"
+										v-bind:class="item.opentype=='video'||item.opentype=='audio'?'border':''"
+										@click="item.type!='audio'&&handleDetails(item.rid)"
+										@mouseenter ="handleMouseenter"
+										@mouseleave ="handleMouseleave">
+											<div class="w-dimg radius" :style="{background:'#'+item.color}">
+												<img 
+												class="img el-image__inner opacity" 
+												:ref="'ref_'+item.rid"
+												@load="handleImgload(item.rid)"
+												:src="item.icondata" 
+												alt="" />
+											</div>
+											<div class="bgimage-operation" data-status="true" :data-type="item.type" :data-playurl="item.realpath">
+												<template v-if="item.type=='audio'">
+													<div @click.stop="handleDetails(item.rid)" class="circulars link">
+														<i class="ri-search-line"></i>
+														<span class="el-link--inner">详情</span>
+													</div>
+												</template>
+												<template v-else>
+													<div v-if="item.link" @click.stop="handleLink(item.link)" class="circulars link">
+														<i class="ri-link"></i>
+														<span class="el-link--inner">链接</span>
+													</div>
+												</template>
+												<div class="topFlex" v-if="parseInt(item.download)||parseInt(item.share)">
+													<div v-if="parseInt(item.share)" class="circulars" @click.stop="handleoperation('share',item.rid)">
+														<i class="ri-share-line"></i>
+													</div>
+													<div v-if="parseInt(item.download)" class="circulars" @click.stop="handleoperation('down',item.dpath)">
+														<i class="ri-download-2-line"></i>
+													</div>
+												</div>
+											</div>
+											<div v-if="InformationShow.indexOf('tagging')>-1&&parseInt(item.annonationnum)>0" class="annotation">{{item.annonationnum}}</div>
+										</div>
+										
+										<div class="bottom-img-message" v-if="InformationShow.length">
+											<div class="name"  v-if="InformationShow.indexOf('name')>-1 || InformationShow.indexOf('extension')>-1">
+												<span v-if="InformationShow.indexOf('name')>-1">{{item.name}}</span>
+												<span v-if="InformationShow.indexOf('extension')>-1" class="suffix">.{{item.ext}}</span>
+											</div>
+											<template v-if="InformationShow.indexOf('other')>-1">
+												<div class="other" v-if="InformationOther=='size'">
+													<span>{{item.width}} × {{item.height}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='filesize'">
+													<span>{{item.fsize}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='tag'">
+													<span v-if="!item.tags" class="label">-</span>
+													<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='grade'">
+													<span v-for="item in parseInt(item.grade)" class="score active el-icon-star-on"></span>
+													<span v-for="item in 5-parseInt(item.grade)" class="score el-icon-star-on"></span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='btime'">
+													<span>{{item.btime}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='dateline'">
+													<span>{{item.dateline}}</span>
+												</div>
+												<div class="other" v-else-if="InformationOther=='mtime'">
+													<span>{{item.mtime}}</span>
+												</div>
+											</template>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>`,
+				data: function() {
+					return {
+						imgparam:[],
+						start:true,
+						waterFall:'',
+						WaterfallParam:{
+							imgWidth : 252,
+							imgArr : [],
+							ImgAll : [],
+							total : 0,
+							columns:0,
+							boxHeight:0,
+							OtherHeight:0,
+							perpage:0,
+							Margin:15,
+						},
+						NewImgdatas:{},
+						StoreImgdatas:{},
+					}
+				},
+				watch:{
+					imgdatas:{
+						handler(val){
+							var self = this;
+							var arr = [];
+							if(val && val.length>0){
+								self.$nextTick(function(){
+									if(self.start){
+										self.WaterfallInit()
+										self.start = false;
+									}else{
+										self.WaterfallInit('append');
+									}
+								});
+							}
+						},
+						deep:true,
+						immediate:true
+					},
+					NewImgdatas:{
+						handler(val){
+							var self = this;
+							self.$nextTick(function(){
+								$('.imgmargin').width($('#waterfallCenter').width())
+							})
+						},
+						deep:true,
+						immediate:true
+					},
+				},
+				computed:{
+					InformationOther(){
+						return VuexStore.getters.Getinformation_other;
+					},
+					InformationShow(){
+						return VuexStore.getters.Getinformation_show;
+					},
+					GetimgParameter(){
+						return VuexStore.getters.GetimgParameter;
+					},
+					GetScrollAppend(){
+						return VuexStore.getters.GetScrollAppend;
+					},
+				},
+				created() {
+					
+				},
+				methods:$.extend({},ImgWaterfall,{
+					handleDetails(rid){
+						window.open(SITEURL+MOD_URL+'&op=details#rid='+rid);
+					},
+					handleoperation(type,val){
+						this.$emit('handleoperation',{
+							type:type,
+							val:val
+						})
+					},
+					handleMouseenter(e){
+						handleMouseenter($(e.target))
+					},
+					handleMouseleave(e){
+						handleMouseleave($(e.target));
+					},
+					handleLink(url){
+						if(url.indexOf('https://')>-1){
+							window.open(url);
+						}else{
+							window.open('https://'+url);
+						}
+						return false;
+					},
+					handleImgload(rid){
+						var self = this;
+						var item = $(self.$refs['ref_'+rid]);
+						item.removeClass('opacity');
+						item.parent().css('background','').removeClass('radius');
+					}
+				}),
+				mounted() {
+					var self = this;
+				},
+			}
+			
+		}
+	})
+</script>

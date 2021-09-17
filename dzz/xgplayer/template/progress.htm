@@ -1,0 +1,80 @@
+<!--{template common/header_simple_start}-->
+<style>
+	html,
+	body {
+		height: 100%;
+		overflow: hidden;
+		background: #000;
+		color:#FFF;
+	}
+	video{
+		max-width:100%;
+		max-height: 100%;
+	}
+	#player_viewer{
+		width:100%;
+		height:100%;
+		position: absolute;
+		z-index: 1;
+		background: #000;
+		display:none;
+		left:0;
+		top:0;
+	}
+	#player_viewer.playing{
+		display:block;
+		width:100%;
+		height: 100%;
+	}
+	.playing video{
+		width:100%;
+		height: 100%;
+	}
+	
+</style>
+<!--{template common/header_simple_end}-->
+
+	<table id="player_table" width="100%" height="100%">
+	<tr>
+		<td align="center">
+			<div class="title">{lang your_file_extracted}</div>
+			<div class="progress" style="width:300px;display: inline-block;margin-top:30px;">
+				<div class="progress-bar" role="progressbar" aria-valuenow="$ff[percent]" aria-valuemin="0" aria-valuemax="100" style="width: {eval echo $ff[percent]?$ff[percent].'%':'auto'};"> {$ff[percent]}%
+					<span class="sr-only">{$ff[percent]}% Complete</span>
+			  </div>
+			</div>
+		</td>
+	</tr>
+	</table>
+	<div id="player_viewer"></div>
+<script type="text/javascript">
+	jQuery(document).ready(function(e) {
+		getProgress();
+	});
+	jQuery(document).on('click','.retry',function(){
+		var self=jQuery(this);
+		jQuery.getJSON(this.href,function(json){
+			jQuery('.title').html('{lang your_file_extracted}');
+		 });
+		return false;
+	})
+	function getProgress(){
+		jQuery.getJSON('{MOD_URL}&operation=progress&id=$ff[id]', function(json) {
+			if(json.status>1 || parseInt(json.percent) >=100 ) {
+				window.location.href='{MOD_URL}&ext=$_GET[ext]&path=$_GET[path]';
+			}else if(json.status<0){
+				var html = json.error;
+				html+='&nbsp;&nbsp;<a class="retry" href="{MOD_URL}&operation=retry&id=$ff[id]"> {lang retry}</a>';
+				jQuery('.title').html(html);
+			}else {
+				var el= jQuery('.progress-bar');
+				var percent=parseInt(json.percent);
+				if(percent<5) percent=5;
+				el.css('width',percent+'%');
+				el.html(json.percent+'%');
+				window.setTimeout(function() { getProgress(); }, 3000);
+			}
+		});
+	}
+</script>
+<!--{template common/footer_simple}-->

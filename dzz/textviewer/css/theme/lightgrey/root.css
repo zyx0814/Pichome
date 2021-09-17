@@ -1,0 +1,42 @@
+:root{
+	--bg-header:#DCDEDF;/* 头部颜色 */
+	--header-text:#191D1E;/* 头部文字 */
+	--header-active:#121516;/* 头部文字选中色 */
+	--header-icon:#3B3C3C;/* 头部icon */
+	--header-iconHover:#393A3A;/* 头部icon选中 */
+	--header-textHover:#D8DADC;/* 头部块hover的背景色 */
+	--header-screenDel:#F66E88;/* 头部清除筛选的 × 背景色 */
+	
+	--bg-content:#E2E4E5;/* 内容背景色 */
+	--content-text:#26292A;/* 内容文字颜色 */
+	--content-textHover:#121516;/* 内容文字hover颜色 */
+	--content-imgbg:#FFFFFF;/* 图片背景色 */
+	--content-imgbg-btn:rgb(0,0,0,.3);/* 图片上的操作按钮背景颜色 */
+	--content-imgbg-txt:#F5F5F5;/* 图片上的操作按钮文字颜色 */
+	--content-imgbg-btnHover:rgb(0,0,0,.5);/* 图片上的操作按钮背景颜色 */
+	--content-imgbg-txtHover:#F2F2F2;/* 图片上的操作按钮文字颜色 */
+	--content-imgbg-btnTime:rgb(0,0,0,.6);/* 图片上的操作时间背景颜色 */
+	--content-textMessage:#535558;/* 图片文字信息 */
+	
+	--td-striped:#EDEEEF;/* td斑纹颜色 */
+	
+	--bg-input:#EBEDEE;/* 输入框背景色 */
+	--bg-inputfocus:#FFFFFF;/* 输入框focus背景色 */
+	
+	--bg-poper:#DCDEDF;/* 浮层背景色 */
+	--bg-poperHover:#CBCDD0;/* hover背景色 */
+	
+	--color-primary:#0072EF;/* 选中颜色 */
+	--border-color-base:#C6C8C9;/* 组要边框颜色 */
+	--tip-color:#7E8182;/* 提示文字颜色 */
+	--bg-tooltip:#303030;/* title显示背景色 */
+	
+	--music-line:#9B9B9B;/* 音乐滑动线的颜色 */
+	--slider-line:#C3C5C7;/* 滑块颜色 */
+	--radio-line:#ACAFB0;/* radio边框颜色 */
+	
+	--tagbg:#F7F7F7;/* 标签左侧颜色 */
+	--stars:#BEC0C2;/* 评分颜色 */
+	--starsActive:#FD9B00;/* 选中评分颜色 */
+	
+}

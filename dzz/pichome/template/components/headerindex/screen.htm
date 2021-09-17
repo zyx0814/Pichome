@@ -1,0 +1,474 @@
+<div class="screen-box" v-if="ScreenData.length&&IsShowScreen>0">
+	<template v-for="sitem in ScreenData">
+		<template v-if="sitem.key=='classify'&&GetAppid">
+			<div class="block">
+				<el-popover placement="bottom" width="auto" trigger="click" ref="ScreenPopoverRef" @show="handleShowclassify">
+					<div class="classification-box">
+						<el-input v-model="filterText" size="mini" clearable placeholder="输入关键字进行过滤"></el-input>
+						<div class="classification-all-box">
+							<el-scrollbar class="page-component__scroll" style="height: 300px;">
+								<el-tree 
+									class="tree-line" 
+									ref="tree"
+									show-checkbox
+									check-strictly
+									node-key="fid"
+									default-expand-all
+									:expand-on-click-node="false"
+									check-on-click-node
+									@check="handleCheck"
+									:filter-node-method="filterClassify"
+									:data="classify.folderdatanum" 
+									:props="defaultProps">
+								</el-tree>
+								
+							</el-scrollbar>
+						</div>
+					</div>
+					<div class="field-single" :class="classify.text?'active':''" slot="reference">
+						分类
+						<span v-if="classify.text">：{{classify.text}}</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="classify.text" class="delBtn el-icon-close" @click.stop="handleClickDelete('classify')"></span>
+					</div>
+				</el-popover>
+			</div>
+		</template>
+		<template v-else-if="sitem.key=='color'">
+			<div class="block">
+				<el-popover placement="bottom" width="507" trigger="click" ref="ScreenPopoverRef">
+					<div class="field-select-box">
+						<ul class="field-color-box clearfix">
+							<li class="colors-single" v-for="item in GetColors" :class="colors.color==item?'active':''" :style="{background:item}" @click="handleColoBlock(item)"></li>
+						</ul>
+						<div class="voluntarily">
+							<div class="color-disk">
+								<span class="show" :style="{background:colors.color}"></span>
+								<input class="el-input__inner" v-model="colors.color" @input="handleColorInput" type="text" />
+								<span class="icon">
+									 <el-color-picker v-model="colors.color" color-format="hex" @change="handleColoPicker"></el-color-picker>
+									<img src="{MOD_PATH}/image/palette.png">
+								</span>
+							</div>
+							<div class="slider" v-if="colors.color">
+								<span class="txt">精确的</span>
+								<el-slider v-model="colors.persion" @change="handleColoSlider"></el-slider>
+							</div>
+						</div>
+					</div>
+				
+					<div class="field-single" :class="GetParams.color?'active':''" slot="reference">
+						<span>
+							颜色
+							<template v-if="GetParams.color">
+								:<span class="color" :style="{background:GetParams.color}"></span>
+							</template>
+						</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.color" class="delBtn el-icon-close" @click.stop="handleClickDelete('color')"></span>
+					</div>
+				</el-popover>
+			</div>
+		</template>
+		<template v-else-if="sitem.key=='link'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="link.link" label="1" @click.native.prevent="handleLink('1')">有链接</el-radio>
+						</li>
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="link.link" label="0" @click.native.prevent="handleLink('0')">没有链接</el-radio>
+						</li>
+						<li v-if="link.link=='1'">
+							<el-input 
+								type="textarea"
+								v-model="link.val"
+								:autosize="{ minRows: 2, maxRows: 4}"
+								placeholder="包含关键字(使用,隔开)"></el-input>
+						</li>
+					</ul>
+					<div class="field-single" :class="link.val||link.link=='1'||link.link=='0'?'active':''" slot="reference">
+						<span v-if="link.link=='0'">链接：没有</span>
+						<span v-else-if="link.val">链接：{{link.val}}</span>
+						<span v-else-if="link.link=='1'">链接：有</span>
+						<span v-else>链接</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="link.val || link.link=='1' || link.link=='0'" class="delBtn el-icon-close" @click.stop="handleClickDelete('link')"></span>
+					</div>
+				</el-popover>
+			</div>
+		</template>
+		<template v-else-if="sitem.key=='desc'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="desc.desc" label="1" @click.native.prevent="handleDesc('1')">有注释</el-radio>
+						</li>
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="desc.desc" label="0" @click.native.prevent="handleDesc('0')">没有注释</el-radio>
+						</li>
+						<li v-if="desc.desc=='1'">
+							<el-input 
+								type="textarea"
+								v-model="desc.val"
+								:autosize="{ minRows: 2, maxRows: 4}"
+								placeholder="包含关键字(使用,隔开)"></el-input>
+						</li>
+					</ul>
+					<div class="field-single" :class="desc.val||desc.desc=='1'||desc.desc=='0'?'active':''" slot="reference">
+						<span v-if="desc.desc=='0'">注释：没有</span>
+						<span v-else-if="desc.val">注释：{{desc.val}}</span>
+						<span v-else-if="desc.desc=='1'">注释：有</span>
+						<span v-else>注释</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="desc.val || desc.desc=='1' || desc.desc=='0'" class="delBtn el-icon-close" @click.stop="handleClickDelete('desc')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='duration'">
+			<div class="block">
+				<el-popover placement="bottom" width="240" trigger="click" ref="ScreenPopoverRef">
+					<div class="field-section">
+						<el-input size="small" class="field-el-input" v-model.number="duration.start" placeholder="最小"></el-input>
+						<span>-</span>
+						<el-input size="small" class="field-el-input" v-model.number="duration.end" placeholder="最大"></el-input>
+						<el-select size="small" class="field-el-select" v-model="duration.dunit" @change="handleduration">
+							<el-option label="秒" value="s"></el-option>
+							<el-option label="分" value="m"></el-option>
+						</el-select>
+					</div>
+					<div class="field-single" :class="GetParams.duration?'active':''" slot="reference">
+						<span v-if="duration.start&&duration.end">
+							{{duration.start}}≤时长≤{{duration.end}}
+							<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+						</span>
+						<span v-else-if="duration.start">
+							时长≥{{duration.start}}
+							<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+						</span>
+						<span v-else-if="duration.end">
+							时长≤{{duration.end}}
+							<template v-if="duration.dunit=='s'">秒</template><template v-else>分</template>
+						</span>
+						<span v-else>时长</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.duration" class="delBtn el-icon-close" @click.stop="handleClickDelete('duration')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='size'">
+			<div class="block">
+				<el-popover placement="bottom" width="235" trigger="click" ref="ScreenPopoverRef">
+					<div class="field-section">
+						<span style="width: 20%;display: inline-block;">宽</span>
+						<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="wsize.start" placeholder="最小"></el-input>
+						<span>-</span>
+						<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="wsize.end" placeholder="最大"></el-input>
+					</div>
+					<div class="field-section" style="margin-top: 8px;">
+						<span style="width: 20%;display: inline-block;">高</span>
+						<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="hsize.start" placeholder="最小"></el-input>
+						<span>-</span>
+						<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="hsize.end" placeholder="最大"></el-input>
+					</div>
+					<div class="field-single" :class="GetParams.wsize||GetParams.hsize?'active':''"  slot="reference">
+						<span v-if="wsize.start&&wsize.end">{{wsize.start}}≤宽≤{{wsize.end}}</span>
+						<span v-else-if="wsize.start">宽≥{{wsize.start}}</span>
+						<span v-else-if="wsize.end">宽≤{{wsize.end}}</span>
+						<template v-if="GetParams.wsize && GetParams.hsize">,</template>
+						<span v-if="hsize.start&&hsize.end">{{hsize.start}}≤高≤{{hsize.end}}</span>
+						<span v-else-if="hsize.start">高≥{{hsize.start}}</span>
+						<span v-else-if="hsize.end">高≤{{hsize.end}}</span>
+						<span v-if="!GetParams.wsize && !GetParams.hsize">尺寸</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.wsize || GetParams.hsize" class="delBtn el-icon-close" @click.stop="handleClickDelete('csize')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='ext'">
+			<div class="block">
+				<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="handleShowPopover('ext')" ref="ScreenPopoverRef">
+					<div class="field-select-box dzz-dropdown-menu scroll" :style="{height: ext.height+'px'}">
+						<el-scrollbar class="page-component__scroll">
+							<div style="padding: 12px;">
+								<template v-if="ext.data && ext.data.length">
+									<div class="dzz-dropdown-menu__item single" v-for="item in ext.data">
+										<el-checkbox v-model="ext.val" :label="item.ext" @change="handleChangeExt"></el-checkbox>
+										<span class="quantity">{{item.num}}</span>
+									</div>
+								</template>
+								<template v-else>
+									<div class="dzz-dropdown-menu__item single screen-notdata">没有找到相关项目</div>
+								</template>
+							</div>
+						</el-scrollbar>
+					</div>
+					<div class="field-single" :class="GetParams.ext?'active':''" slot="reference">
+						<span>类型<template v-if="GetParams.ext">：{{GetParams.ext}}</template></span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.ext" class="delBtn el-icon-close" @click.stop="handleClickDelete('ext')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='shape'">
+			<div class="block">
+				<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="handleShowPopover('shape')" ref="ScreenPopoverRef">
+					<div class="field-select-box dzz-dropdown-menu">
+						<div style="padding:12px;">
+							<div class="dzz-dropdown-menu__item single" v-for="item in shape.data">
+								<el-checkbox v-model="shape.shape" :label="item.lablename" @change="handleChangeShape"></el-checkbox>
+								<span class="quantity">{{item.num}}</span>
+							</div>
+							<div class="dzz-dropdown-menu__item single">
+								<el-checkbox v-model="shape.custom" label="自定义" @change="handleChangeShapeCustom"></el-checkbox>
+							</div>
+							<div class="dzz-dropdown-menu__item single nothover" v-if="shape.custom">
+								<el-row :gutter="0">
+									<el-col :span="10">
+										<el-input v-model.number="shape.width" size="mini"></el-input>
+									</el-col>
+									<el-col :span="4" style="text-align: center;">:</el-col>
+									<el-col :span="10">
+										<el-input v-model.number="shape.height" size="mini"></el-input>
+									</el-col>
+								</el-row>
+							</div>
+						</div>
+					</div>
+					<div class="field-single" :class="GetParams.shape||GetParams.shapesize?'active':''" slot="reference">
+						<span>
+							形状
+							<template v-if="shape.txt">：{{shape.txt}}</template><template v-if="shape.txt&&GetParams.shapesize">,</template>{{GetParams.shapesize}}
+						</span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.shape || GetParams.shapesize" class="delBtn el-icon-close" @click.stop="handleClickDelete('shape')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='grade'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('grade')" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single" v-for="item in grade.data">
+							<el-checkbox v-if="item.grade == 0" v-model="grade.grade" label="未评分" @change="handleChangeGrade">未评分</el-checkbox>
+							<el-checkbox v-else v-model="grade.grade" name="type" :label="item.grade" @change="handleChangeGrade">
+								<i class="ri-star-fill stars" v-for="fitem in parseInt(item.grade)"></i>
+							</el-checkbox>
+							<span class="quantity">{{item.num}}</span>
+						</li>
+					</ul>
+					<div class="field-single" :class="GetParams.grade?'active':''" slot="reference">
+						<span>评分<template v-if="GetParams.grade">：{{GetParams.grade}}</template></span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.grade" class="delBtn el-icon-close" @click.stop="handleClickDelete('grade')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='btime'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('btime')" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single" v-for="item in btime.data">
+							<el-radio v-model="btime.btime" :label="item.label" @click.native.prevent="handleScreenTime('btime',item.label)"></el-radio>
+							<span class="quantity">{{item.num}}</span>
+						</li>
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="btime.btime" label="自定义范围" @click.native.prevent="handleScreenTime('btime','自定义范围')"></el-radio>
+						</li>
+						<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="btime.btime.indexOf('自定义范围')>-1">
+							<el-date-picker 
+								class="dateline" 
+								v-model="btime.datelinepicker" 
+								size="mini" 
+								:clearable="false" 
+								@change="handleChangebtimepicker"
+								value-format="yyyy-MM-dd"
+								type="daterange" 
+								range-separator="至" 
+								start-placeholder="开始日期" 
+								end-placeholder="结束日期">
+							</el-date-picker>
+						</li>
+					</ul>
+					<div class="field-single" :class="GetParams.btime?'active':''" slot="reference">
+						<span>添加时间<template v-if="GetParams.btime">：{{GetParams.btime}}</template></span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.btime" class="delBtn el-icon-close" @click.stop="handleClickDelete('btime')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='dateline'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('dateline')" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single" v-for="item in dateline.data">
+							<el-radio v-model="dateline.dateline" :label="item.label" @click.native.prevent="handleScreenTime('dateline',item.label)"></el-radio>
+							<span class="quantity">{{item.num}}</span>
+						</li>
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="dateline.dateline" label="自定义范围" @click.native.prevent="handleScreenTime('dateline','自定义范围')"></el-radio>
+						</li>
+						<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="dateline.dateline.indexOf('自定义范围')>-1">
+							<el-date-picker 
+								class="dateline" 
+								v-model="dateline.datelinepicker" 
+								size="mini" 
+								:clearable="false" 
+								@change="handleChangedatelinepicker"
+								value-format="yyyy-MM-dd"
+								type="daterange" 
+								range-separator="至" 
+								start-placeholder="开始日期" 
+								end-placeholder="结束日期">
+							</el-date-picker>
+						</li>
+					</ul>
+					<div class="field-single" :class="GetParams.dateline?'active':''" slot="reference">
+						<span>修改时间<template v-if="GetParams.dateline">：{{GetParams.dateline}}</template></span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.dateline" class="delBtn el-icon-close" @click.stop="handleClickDelete('dateline')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='mtime'">
+			<div class="block">
+				<el-popover placement="bottom" width="225" trigger="click" @show="handleShowPopover('mtime')" ref="ScreenPopoverRef">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single" v-for="item in mtime.data">
+							<el-radio v-model="mtime.mtime" :label="item.label" @click.native.prevent="handleScreenTime('mtime',item.label)"></el-radio>
+							<span class="quantity">{{item.num}}</span>
+						</li>
+						<li class="dzz-dropdown-menu__item single">
+							<el-radio v-model="mtime.mtime" label="自定义范围" @click.native.prevent="handleScreenTime('mtime','自定义范围')"></el-radio>
+						</li>
+						<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="mtime.mtime.indexOf('自定义范围')>-1">
+							<el-date-picker 
+								class="dateline" 
+								v-model="mtime.datelinepicker" 
+								size="mini" 
+								:clearable="false" 
+								@change="handleChangemtimepicker"
+								value-format="yyyy-MM-dd"
+								type="daterange" 
+								range-separator="至" 
+								start-placeholder="开始日期" 
+								end-placeholder="结束日期">
+							</el-date-picker>
+						</li>
+					</ul>
+					<div class="field-single" :class="GetParams.mtime?'active':''" slot="reference">
+						<span><span>创建时间</span><template v-if="GetParams.mtime">：{{GetParams.mtime}}</template></span>
+						<i class="ri-arrow-down-s-fill icon"></i>
+						<span v-if="GetParams.mtime" class="delBtn el-icon-close" @click.stop="handleClickDelete('mtime')"></span>
+					</div>
+				</el-popover>
+			</div>	
+		</template>
+		<template v-else-if="sitem.key=='tag'">
+			<template v-if="sitem.showtype">
+				<template v-for="bitem in ParamsTagData">
+					<div class="block">
+						<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="handleShowPopover('grouptag',bitem.cid)" width="255" trigger="click" ref="ScreenPopoverRef">
+							<div class="field-select-box">
+								<div class="tags-box clearfix">
+									<div class="right">
+										<div style="padding: 0 12px;margin-bottom: 8px;">
+											<el-input size="small" placeholder="请输入内容" prefix-icon="el-icon-search" v-model.trim="modelParamsTag[bitem.cid].search" clearable @input="handleRightGroupTagSearch(bitem.cid)"></el-input>
+										</div>
+										<el-scrollbar class="page-component__scroll" style="height: 357px;">
+											<ul class="el-popper">
+												<li class="el-dropdown-menu__item" v-for="vitem in paramsTag[bitem.cid].newVal">
+													<el-checkbox class="txt" v-model="modelParamsTag[bitem.cid].data" :label="vitem.tid" @change="handleClickRightGroupTag(bitem.cid,vitem.tid)">{{vitem.tagname}}</el-checkbox>
+													<span class="num">{{vitem.num}}</span>
+												</li>
+											</ul>
+										</el-scrollbar>
+									</div>
+								</div>
+						
+							</div>
+							<div class="field-single" :class="modelParamsTag[bitem.cid].text?'active':''" slot="reference">
+								<span>{{bitem.catname}} <span v-if="modelParamsTag[bitem.cid].text">:{{modelParamsTag[bitem.cid].text}}</span> </span>
+								<i class="ri-arrow-down-s-fill icon"></i>
+								<span v-if="modelParamsTag[bitem.cid].text" class="delBtn el-icon-close" @click.stop="handleClickDelete('grouptag',bitem.cid)"></span>
+							</div>
+						</el-popover>
+					</div>
+				</template>
+			</template>
+			<template v-else>
+				<div class="block alltag-block">
+					<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="handleShowPopover('tag')" :width="GetAppid?508:255" trigger="click" ref="ScreenPopoverRef">
+						<div class="field-select-box">
+							<div class="tags-box clearfix">
+								<div class="left" v-if="GetAppid">
+									<p class="title">标签分类</p>
+									<el-scrollbar class="page-component__scroll" style="height: 308px;">
+										<ul class="el-popper">
+											<li class="el-dropdown-menu__item" :class="tagData.checkedsFid=='all'?'active':''" @click="handleClickLeftTag('all')">
+												<div class="txt">全部</div>
+											</li>
+											<li class="el-dropdown-menu__item" v-for="(item,index) in tagData.alltagdata.catdata" :class="tagData.checkedsFid==index?'active':''" @click="handleClickLeftTag(index)">
+												<div class="txt">{{item.catname}}</div>
+												<span class="num">{{item.num}}</span>
+											</li>
+										</ul>
+									</el-scrollbar>
+									<div class="logic">
+										<span>逻辑：</span>
+										<el-dropdown trigger="click" @command="handleClickLeftlogic">
+										  <el-button type="primary" size="mini">
+											<template v-if="tagData.tagrelative=='1'">
+												任意(OR)
+											</template>
+											<template v-else>
+												全部(AND)
+											</template>
+											<i class="el-icon-arrow-down el-icon--right"></i>
+										  </el-button>
+										  <el-dropdown-menu slot="dropdown">
+											<el-dropdown-item command="1">任意(OR)</el-dropdown-item>
+											<el-dropdown-item command="0">全部(AND)</el-dropdown-item>
+										  </el-dropdown-menu>
+										</el-dropdown>
+									</div>
+								</div>
+								<div class="right">
+									<div style="padding: 0 12px;margin-bottom: 8px;">
+										<el-input size="small" placeholder="请输入内容" prefix-icon="el-icon-search" v-model.trim="tagData.search" clearable @input="handleRightTagSearch"></el-input>
+									</div>
+									<el-scrollbar class="page-component__scroll" style="height: 357px;">
+										<ul class="el-popper">
+											<li class="el-dropdown-menu__item" v-for="item in tagData.Rightdata">
+												<el-checkbox class="txt" v-model="tagData.checkedsId" :label="item.tid" @change="handleClickRightTag(item.tid)">{{item.tagname}}</el-checkbox>
+												<span class="num">{{item.num}}</span>
+											</li>
+										</ul>
+									</el-scrollbar>
+								</div>
+							</div>
+					
+						</div>
+						<div class="field-single" :class="tagData.checkedstxt?'active':''" slot="reference">
+							<span v-if="tagData.checkedstxt">标签：{{tagData.checkedstxt}}</span>
+							<span v-else>标签</span>
+							<i class="ri-arrow-down-s-fill icon"></i>
+							<span v-if="tagData.checkedstxt" class="delBtn el-icon-close" @click.stop="handleClickDelete('tag')"></span>
+						</div>
+					</el-popover>
+				</div>	
+			</template>
+			
+		</template>
+	</template>
+</div>

@@ -1,0 +1,255 @@
+<!--{template frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/admin.css?{VERHASH}" />
+<style type="text/css">
+	.tipTxt{
+		margin-left: 6px;
+		display: inline-block;
+	}
+	.avatarstatus{
+	    width: 100%;
+	    height: 100%;	
+	}
+	.avatarstatus .img-circle{
+		border-radius: 0;
+	}
+</style>
+<!--{template frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="auto" style="padding: 0;z-index: 10;">
+			<page-header :isscreenshow="false"></page-header>
+		</el-header>
+		<el-main>
+			<div class="page-content">
+				<el-scrollbar class="page-component__scroll">
+					<div class="content" style="padding: 16px 25px;">
+						<el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="200px">
+							<el-form-item label="头像：">
+								<el-upload 
+									class="avatar-uploader" 
+									action="{MOD_URL}&op=user&do=uploadimg"
+									name="file"
+									accept="image/png,image/jpg,image/jpeg,image/gif" 
+									:on-success="handleLogoSuccess"
+									:on-progress="handleLogoProgress"
+									:before-upload="beforeLogoUpload"
+									:show-file-list="false">
+									<el-progress v-show="ispercentage" type="circle" :width="148" :percentage="percentage"></el-progress>
+									<template v-if="ruleForm.imgpath||avatarstatus==1">
+										<template v-if="ruleForm.imgpath">
+											<el-image class="avatarimg" fit="contain" :src="ruleForm.imgpath"></el-image>
+										</template>
+										<template v-else>
+											<div class="avatarstatus">
+												{eval echo avatar_block($_G[uid]);}
+											</div>
+										</template>
+										
+										
+									</template>
+									<i v-else class="el-icon-plus avatar-uploader-icon"></i>
+								</el-upload>
+							</el-form-item>
+							<el-form-item label="邮箱：" prop="email">
+								<el-input class="maxWidth" v-model.trim="ruleForm.email"></el-input>
+								<p class="tipTxt">用于登录</p>
+							</el-form-item>
+							<el-form-item label="用户名：" prop="nickname">
+								<el-input class="maxWidth" v-model.trim="ruleForm.nickname"></el-input>
+								<p class="tipTxt">用于登录，站点中不显示</p>
+							</el-form-item>
+							<el-form-item label="姓名：" prop="username">
+								<el-input class="maxWidth" v-model.trim="ruleForm.username"></el-input>
+								<p class="tipTxt">用户界面中显示，不能用于登录</p>
+							</el-form-item>
+							<el-form-item label="手机号：" prop="phone">
+								<el-input class="maxWidth" v-model.trim="ruleForm.phone"></el-input>
+							</el-form-item>
+							<el-form-item label="微信号：" prop="weixinid">
+								<el-input class="maxWidth" v-model.trim="ruleForm.weixinid"></el-input>
+							</el-form-item>
+							<el-form-item label="新密码：" prop="password">
+								<el-input class="maxWidth" v-model.trim="ruleForm.password"></el-input>
+							</el-form-item>
+							<el-form-item label="确认新密码：" prop="password2">
+								<el-input class="maxWidth" v-model.trim="ruleForm.password2"></el-input>
+							</el-form-item>
+							<el-form-item label="主题色：" prop="themecolor">
+								<div class="theme-block" v-for="item in themes" @click="handleColor(item.val)">
+									<el-tooltip class="item" effect="dark" :content="item.txt" placement="bottom">
+										<div class="bg" :class="item.val==ruleForm.themecolor?'active':''" :style="item.color">
+											<div class="triangle"></div>
+											<i class="icon el-icon-check"></i>
+										</div>
+									</el-tooltip>
+								</div>
+							</el-form-item>
+							<el-form-item>
+								<el-button type="primary" @click="handleSubmit" :loading="btnloading">保存更改</el-button>
+							</el-form-item>
+						</el-form>
+					</div>
+				</el-scrollbar>
+			</div>
+
+		</el-main>
+	</el-container>
+</div>
+<!--{template components/headerAdmin/index}-->
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			var self = this;
+			var inputpassword = function(rule, value, callback){
+				if (value) {
+					if (self.ruleForm.password2 !== '') {
+						self.$refs.ruleForm.validateField('password2');
+					}
+					callback();
+				}else{
+					callback();
+				}
+			};
+			var inputpassword2 = function(rule, value, callback){
+				if (value !== self.ruleForm.password) {
+					callback(new Error('两次输入密码不一致!'));
+				} else {
+					callback();
+				}
+			};
+			return {
+				percentage:0,
+				ispercentage:false,
+				btnloading:false,
+				avatarstatus:'$userdata[avatarstatus]',
+				ruleForm: {
+					imgpath:'',
+					email:'$userdata[email]',
+					nickname:'$userdata[nickname]',
+					username:'$userdata[username]',
+					phone:'$userdata[phone]',
+					weixinid:'$userdata[weixinid]',
+					password:'',
+					password2:'',
+					themecolor:'$theme'
+				},
+				rules: {
+					email: [
+						{ required: true, message: '请输入邮箱地址', trigger: 'blur' },
+						{ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+					],
+					nickname: [
+						{ required: true, message: '请输入用户名', trigger: 'blur' },
+						{ min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: ['blur', 'change'] }
+					],
+					username: [
+						{ required: true, message: '请输入姓名', trigger: 'blur' },
+						{ min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: ['blur', 'change'] }
+					],
+					phone: [
+						{ required: false, message: '请输入手机号'}
+					],
+					weixinid: [
+						{ required: false, message: '请输入微信' },
+					],
+					password: [
+						{ validator: inputpassword, trigger: ['blur', 'change'] }
+					],
+					password2: [
+						{ validator: inputpassword2, trigger: ['blur', 'change'] }
+					]
+				},
+				themes:[
+					{txt:'自动(依系统设置)',color:'',val:''},
+					{txt:'白色',color:'background:#D0D0D0',val:'white'},
+					{txt:'浅灰色',color:'background:#808080',val:'lightgrey'},
+					{txt:'深灰色',color:'background:#444444',val:'darkgrey'},
+					{txt:'黑色',color:'background:#333333',val:'black'},
+					{txt:'深蓝色',color:'background:#2A356D',val:'navyblue'},
+					{txt:'紫色',color:'background:#463275',val:'purple'},
+				],
+			}
+		},
+		created() {
+			// var avatarstatus = 
+			
+		},
+		methods: {
+			handleColor(val){
+				this.ruleForm.themecolor = val;
+			},
+			beforeLogoUpload(file){
+				var self = this;
+				var isJPG = ['image/png','image/jpeg','image/jpg','image/gif'];
+				var isLt2M = file.size / 1024 / 1024 < 2;
+				if (isJPG.indexOf(file.type)<0) {
+				  self.$message.error('图片格式错误');
+				}
+				if (!isLt2M) {
+				  self.$message.error('图片大小不能超过 2MB!');
+				}
+				return isJPG && isLt2M;
+						
+				self.ispercentage = true;
+			},
+			handleLogoSuccess(res, file){
+				if(res.error){
+					var self = this;
+					self.$message.error(res.error);
+				}else{
+					this.ruleForm.imgpath = res.path;
+				}
+			},
+			handleLogoProgress(event, file, fileList) {
+				var percent = parseInt(event.percent);
+				this.percentage = percent;
+				if(percent == 100){
+					this.ispercentage = false;
+					this.percentage = 0
+				}
+			},
+			handleSubmit(){
+				var self = this;
+				self.$refs.ruleForm.validate(function(valid){
+					if (valid) {
+						var params = {
+							'accountedit':true,
+							'formhash':'{FORMHASH}',
+							'uid':'$uid',
+							'email':self.ruleForm.email,
+							'nickname':self.ruleForm.nickname,
+							'username':self.ruleForm.username,
+							'phone':self.ruleForm.phone,
+							'weixinid':self.ruleForm.weixinid,
+							'password':self.ruleForm.password,
+							'password2':self.ruleForm.password2,
+							'themecolor':self.ruleForm.themecolor,
+						};
+						if(self.ruleForm.imgpath){
+							params['imgpath'] = self.ruleForm.imgpath;
+						}
+						$.post(MOD_URL+"&op=user&do=personal",params,function(res){
+							if(res.success){
+								// self.$message({
+								// 	message: '保存成功',
+								// 	type: 'success'
+								// });
+								window.location.reload();
+							}else{
+								self.$message.error(res.msg);
+							}
+						},'json');
+				    
+					} else {
+						self.$message.error('验证失败');
+						return false;
+					}
+				});
+			}
+		},
+		mounted() {}
+	})
+</script>
+
+<!--{template frame/footer_simple}-->
