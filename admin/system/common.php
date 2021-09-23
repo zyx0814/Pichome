@@ -113,7 +113,7 @@ if($operation == 'getApp'){//获取当前用户应用
 	left join %t s on s.uid = u.uid and s.skey=%swhere u.uid =%d",
 	array('user','user_setting','headerColor',$uid));
 		if($udata['avatarstatus'] == 1){
-			$userData['icon'] = 'avatar.php?uid='.$udata['uid'];
+			$userData['icon'] = 'avatar.php?uid='.$udata['uid'].'&random='.VERHASH;
 		}elseif($udata['svalue']){
 			$userData['firstword'] = strtoupper(new_strsubstr($udata['username'],1,''));
 			$userData['headerColor'] = $udata['svalue'];

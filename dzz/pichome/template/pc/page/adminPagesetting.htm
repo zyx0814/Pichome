@@ -1,0 +1,198 @@
+<!--{template pc/frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/admin.css?{VERHASH}"/>
+<!--{template pc/frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="auto" style="padding: 0;z-index: 10;">
+			<page-header :isscreenshow="false"></page-header>
+		</el-header>
+		<el-container>
+		    <el-aside width="260px">
+				<el-menu>
+				    <el-menu-item @click="handleRouter('basic')">
+						<span slot="title">基本信息</span>
+				    </el-menu-item>
+					<el-menu-item @click="handleRouter('loginpage')">
+						<span slot="title">登录页设置</span>
+					</el-menu-item>
+					<el-menu-item class="is-active">
+						<span slot="title">界面设置</span>
+					</el-menu-item>
+					<el-menu-item @click="handleRouter('fileterset')">
+						<span slot="title">筛选器设置</span>
+					</el-menu-item>
+				</el-menu>
+			</el-aside>
+		    <el-main>
+				<div class="page-content">
+					<div id="center_title">界面设置</div>
+					<el-scrollbar class="page-component__scroll">
+						<div class="content" style="padding: 16px 25px;">
+							<el-form ref="form" :model="formdata" label-width="200px">
+								<el-form-item label="默认主题色：">
+									<div class="theme-block" v-for="item in themes" @click="handleColor(item.val)">
+										<el-tooltip class="item" effect="dark" :content="item.txt" placement="bottom">
+											<div class="bg" :class="item.val==formdata.pichomepagesetting.theme?'active':''" :style="item.color">
+												<div class="triangle"></div>
+												<i class="icon el-icon-check"></i>
+											</div>
+										</el-tooltip>
+									</div>
+								</el-form-item>
+								<el-form-item label="默认布局：">
+									<el-radio-group v-model="formdata.pichomepagesetting.layout">
+									    <el-radio border label="waterFall">瀑布流</el-radio>
+									    <el-radio border label="rowGrid">自适应</el-radio>
+										<el-radio border label="imageList">网格</el-radio>
+									</el-radio-group>
+								</el-form-item>
+								<el-form-item label="默认显示信息：">
+									<el-checkbox-group v-model="formdata.pichomepagesetting.show">
+										<el-checkbox border label="name" name="type">文件名</el-checkbox>
+										<el-checkbox border label="tagging" name="type">标注数</el-checkbox>
+										<el-checkbox border label="extension" name="type">扩展名</el-checkbox>
+										<el-checkbox border label="other" name="type">其它信息</el-checkbox>
+									</el-checkbox-group>
+								</el-form-item>
+								<el-form-item v-if="formdata.pichomepagesetting.show.indexOf('other')>-1" label="其它信息：">
+									<el-radio-group v-model="formdata.pichomepagesetting.other">
+										<el-radio border label="size">尺寸</el-radio>
+										<el-radio border label="filesize">文件大小</el-radio>
+										<el-radio border label="tag">标签</el-radio>
+										<el-radio border label="grade">评分</el-radio>
+										<el-radio border label="btime">添加时间</el-radio>
+										<el-radio border label="dateline">修改时间</el-radio>
+										<el-radio border label="mtime">创建日期</el-radio>
+									</el-radio-group>
+								</el-form-item>
+								<el-form-item label="默认排序方式：">
+									<el-radio-group v-model="formdata.pichomepagesetting.sort">
+									    <el-radio border label="2">添加日期</el-radio>
+									    <el-radio border label="3">修改日期</el-radio>
+										<el-radio border label="1">创建日期</el-radio>
+										<el-radio border label="4">标题</el-radio>
+										<el-radio border label="8">文件大小</el-radio>
+										<el-radio border label="5">尺寸</el-radio>
+										<el-radio border label="6">评分</el-radio>
+										<el-radio border label="7">时长</el-radio>
+									</el-radio-group>
+								</el-form-item>
+								<el-form-item label="默认排序：">
+									<el-radio-group v-model="formdata.pichomepagesetting.desc">
+									    <el-radio border label="asc">升序</el-radio>
+									    <el-radio border label="desc">降序</el-radio>
+									</el-radio-group>
+								</el-form-item>
+								<el-form-item label="默认打开文件窗口方式：">
+									<el-radio-group v-model="formdata.pichomepagesetting.opentype">
+									    <el-radio border label="new">新窗口</el-radio>
+									    <el-radio border label="current">当前窗口</el-radio>
+									</el-radio-group>
+								</el-form-item>
+								<el-form-item>
+									<el-button type="primary" @click="handleSubmit" :loading="btnloading">保存更改</el-button>
+								</el-form-item>
+							</el-form>
+						</div>
+					</el-scrollbar>
+				</div>
+						
+			</el-main>
+		  </el-container>
+	</el-container>
+</div>
+<!--{template pc/components/headerAdmin/index}-->
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			return {
+				btnloading:false,
+				themes:[
+					{txt:'自动(依系统设置)',color:'',val:''},
+					{txt:'白色',color:'background:#D0D0D0',val:'white'},
+					{txt:'浅灰色',color:'background:#808080',val:'lightgrey'},
+					{txt:'深灰色',color:'background:#444444',val:'darkgrey'},
+					{txt:'黑色',color:'background:#333333',val:'black'},
+					{txt:'深蓝色',color:'background:#2A356D',val:'navyblue'},
+					{txt:'紫色',color:'background:#463275',val:'purple'},
+				],
+				formdata: {
+					pichomepagesetting:{
+						theme: '',
+						layout: 'waterFall',
+						show: [],
+						other:'btime',
+						sort: '2',
+						desc: 'desc',
+						opentype:'new'
+					}
+				}
+			}
+		},
+		created() {
+			var params = {
+				theme: '$setting[pichomepagesetting][theme]',
+				layout: '$setting[pichomepagesetting][layout]',
+				show: '$setting[pichomepagesetting][show]',
+				other:'$setting[pichomepagesetting][other]',
+				sort: '$setting[pichomepagesetting][sort]',
+				desc: '$setting[pichomepagesetting][desc]',
+				opentype: '$setting[pichomepagesetting][opentype]',
+			};
+			var oldshow = params.show;
+			var newshow = [];
+			var shows = ['name','tagging','extension','other']
+			if(oldshow){
+				var arr = oldshow.split(',');
+				for(var t in arr){
+					if(shows.indexOf(arr[t])>-1){
+						newshow.push(arr[t])
+					}
+				}
+			}
+			var Newparams = {
+				theme: params.theme,
+				layout: params.layout?params.layout:'waterFall',
+				show: newshow,
+				other:params.other?params.other:'btime',
+				sort: params.sort?params.sort:'2',
+				desc: params.desc?params.desc:'desc',
+				opentype: params.opentype?params.opentype:'new',
+			};
+			this.formdata.pichomepagesetting = Newparams;
+		},
+		methods: {
+			handleColor(val){
+				this.formdata.pichomepagesetting.theme = val;
+			},
+			handleRouter(type){
+				window.location.href = MOD_URL+'&op=admin&do='+type;
+			},
+			handleSubmit() {
+				var self = this;
+				self.btnloading = true;
+				var param = JSON.parse(JSON.stringify(self.formdata));
+				param.pichomepagesetting.show = param.pichomepagesetting.show.join(',');
+				$.post(MOD_URL+'&op=admin&do=pagesetting',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					settingnew:param,
+				},function(data){
+					if(data){
+						self.$message({
+							type:'success',
+							message:'保存成功'
+						});
+					}else{
+						self.$message.error('保存失败');
+					}
+					self.btnloading = false;
+				},'json');
+			}
+		},
+		mounted() {}
+	})
+</script>
+
+<!--{template pc/frame/footer_simple}-->

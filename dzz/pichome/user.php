@@ -112,7 +112,7 @@
             $uid = getglobal('uid');
             $userdata = C::t('user')->fetch($uid);
             $theme = GetThemeColor();
-            include template('page/adminPersonal');
+            include template('pc/page/adminPersonal');
         }
     }
     elseif ($do == 'uploadimg') {//上传用户头像

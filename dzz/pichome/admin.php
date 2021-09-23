@@ -26,7 +26,7 @@
 				if (!file_exists($waterfilepath)) {
 					$waterfilepath = htmlspecialchars;
 				}
-				 include template('page/adminBasic');
+				 include template('pc/page/adminBasic');
 			}
            
         }
@@ -46,7 +46,7 @@
             exit(json_encode(array('success' => true)));
         } else {
 			$waterfilepath = $_G['setting']['attachurl'] . 'sitelogo/sitelogo.png';
-            include template('page/adminPagesetting');
+            include template('pc/page/adminPagesetting');
         }
     } elseif ($do == 'loginpage') {//登录页设置
         if (submitcheck('settingsubmit')) {
@@ -71,7 +71,7 @@
             updatesetting($setting, $settingnew);
             exit(json_encode(array('success' => true)));
         } else {
-            include template('page/adminLoginpage');
+            include template('pc/page/adminLoginpage');
             
         }
     } elseif ($do == 'fileterset') {//筛选项设置
@@ -91,7 +91,7 @@
 			}else{
 				$data = json_encode(array());
 			}
-            include template('page/adminFileterset');
+            include template('pc/page/adminFileterset');
         }
     }
     function updatesetting($setting, $settingnew){

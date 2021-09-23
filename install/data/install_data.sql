@@ -44,15 +44,11 @@ INSERT INTO `dzz_hooks` (`id`, `app_market_id`, `name`, `description`, `type`, `
 (20, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0);
 
 
-INSERT INTO `dzz_connect` VALUES('阿里云存储', '', '', 'storage', 'ALIOSS', '', 2, 'connect_storage', '', 0);
-INSERT INTO `dzz_connect` VALUES('企业盘', '', '', 'local', 'dzz', '', 2, '', '', -2);
-INSERT INTO `dzz_connect` VALUES('Qcos', '', '', 'storage', 'QCOS', '', 2, 'connect_storage', '', 0);
 
 --
 -- 转存表中的数据 `dzz_local_storage`
 --
 
-INSERT INTO `dzz_local_storage` VALUES(1, '服务器磁盘', 'dzz', 1, '', 0, 0, 0, 0, 0, 0);
 
 --
 -- 转存表中的数据 `dzz_usergroup`
@@ -123,7 +119,7 @@ INSERT INTO `dzz_setting` VALUES('boardlicensed', '0');
 INSERT INTO `dzz_setting` VALUES('leavealert', '0');
 INSERT INTO `dzz_setting` VALUES('bbclosed', '0');
 INSERT INTO `dzz_setting` VALUES('closedreason', '网站升级中....');
-INSERT INTO `dzz_setting` VALUES('sitename', 'PicHome');
+INSERT INTO `dzz_setting` VALUES('sitename', 'dzz');
 INSERT INTO `dzz_setting` VALUES('dateconvert', '1');
 INSERT INTO `dzz_setting` VALUES('allowshare', '1');
 
@@ -163,7 +159,7 @@ INSERT INTO `dzz_setting` VALUES('defaultdepartment', '1');
 
 INSERT INTO `dzz_setting` VALUES ('pichomefilterfileds', 'a:12:{i:0;a:3:{s:3:\"key\";s:3:\"tag\";s:4:\"text\";s:6:\"标签\";s:7:\"checked\";s:1:\"1\";}i:1;a:3:{s:3:\"key\";s:5:\"color\";s:4:\"text\";s:6:\"颜色\";s:7:\"checked\";s:1:\"1\";}i:2;a:3:{s:3:\"key\";s:4:\"link\";s:4:\"text\";s:6:\"链接\";s:7:\"checked\";s:1:\"1\";}i:3;a:3:{s:3:\"key\";s:4:\"desc\";s:4:\"text\";s:6:\"注释\";s:7:\"checked\";s:1:\"1\";}i:4;a:3:{s:3:\"key\";s:8:\"duration\";s:4:\"text\";s:6:\"时长\";s:7:\"checked\";s:1:\"1\";}i:5;a:3:{s:3:\"key\";s:4:\"size\";s:4:\"text\";s:6:\"尺寸\";s:7:\"checked\";s:1:\"1\";}i:6;a:3:{s:3:\"key\";s:3:\"ext\";s:4:\"text\";s:6:\"类型\";s:7:\"checked\";s:1:\"1\";}i:7;a:3:{s:3:\"key\";s:5:\"shape\";s:4:\"text\";s:6:\"形状\";s:7:\"checked\";s:1:\"1\";}i:8;a:3:{s:3:\"key\";s:5:\"grade\";s:4:\"text\";s:6:\"评分\";s:7:\"checked\";s:1:\"1\";}i:9;a:3:{s:3:\"key\";s:5:\"btime\";s:4:\"text\";s:12:\"添加时间\";s:7:\"checked\";s:1:\"1\";}i:10;a:3:{s:3:\"key\";s:8:\"dateline\";s:4:\"text\";s:12:\"修改日期\";s:7:\"checked\";s:1:\"1\";}i:11;a:3:{s:3:\"key\";s:5:\"mtime\";s:4:\"text\";s:12:\"创建日期\";s:7:\"checked\";s:1:\"1\";}}');
 INSERT INTO `dzz_setting` VALUES ('overt', '1');
-INSERT INTO `dzz_setting` VALUES ('pichomepagesetting', 'a:6:{s:5:\"theme\";s:0:\"\";s:6:\"layout\";s:9:\"waterFall\";s:4:\"show\";s:16:\"name,other\";s:5:\"other\";s:5:\"mtime\";s:4:\"sort\";s:1:\"1\";s:4:\"desc\";s:4:\"desc\";}');
+INSERT INTO `dzz_setting` VALUES ('pichomepagesetting', 'a:7:{s:5:\"theme\";s:0:\"\";s:6:\"layout\";s:9:\"waterFall\";s:4:\"show\";s:10:\"name,other\";s:5:\"other\";s:5:\"mtime\";s:4:\"sort\";s:1:\"1\";s:4:\"desc\";s:4:\"desc\";s:8:\"opentype\";s:3:\"new\";}');
 
 -- 转存表中的数据 `dzz_imagetype`
 --

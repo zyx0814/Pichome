@@ -857,7 +857,7 @@
         if ($appid) {
             if ($data = DB::fetch_first("select * from %t where appid=%s ", array('pichome_vapp', $appid))) {
                 $data['filter'] = unserialize($data['filter']);
-                if($data['filter']){
+                // if($data['filter']){
                     foreach ($data['filter'] as $k => $v) {
                         if ($v['key'] == 'tag' && $v['chacked'] == 1) {
                             if (isset($v['group'])) {
@@ -875,21 +875,21 @@
                     }
                     $pichomefilterfileds = $data['filter'];
                     exit(json_encode(array('success' => true, 'data' => $pichomefilterfileds)));
-                }else{
-                    if (isset($setting['pichomefilterfileds'])) {
-                        exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'])));
-                    } else {
-                        $setting = C::t('setting')->fetch_all('pichomefilterfileds');
-                        exit(json_encode(array('success' => true, 'data' =>$setting['pichomefilterfileds'])));
-                    }
-                }
+                // }else{
+                //     if (isset($setting['pichomefilterfileds'])) {
+                //         exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'])));
+                //     } else {
+                //         $setting = C::t('setting')->fetch_all('pichomefilterfileds');
+                //         exit(json_encode(array('success' => true, 'data' =>$setting['pichomefilterfileds'])));
+                //     }
+                // }
                 
             } else {
                 exit(json_encode(array('error' => true)));
             }
         } else {
-            if (isset($setting['pichomefilterfileds'])) {
-                exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'])));
+            if (isset($_G['setting']['pichomefilterfileds'])) {
+                exit(json_encode(array('success' => true, 'data' => $_G['setting']['pichomefilterfileds'])));
             } else {
                 $setting = C::t('setting')->fetch_all('pichomefilterfileds');
                 exit(json_encode(array('success' => true, 'data' =>$setting['pichomefilterfileds'])));

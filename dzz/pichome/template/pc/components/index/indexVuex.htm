@@ -1,0 +1,534 @@
+<script type="text/javascript">
+	var VuexStore = new Vuex.Store({
+		state: {
+			Uid:'$_G[uid]',
+			FirstLoading:true,
+			appid:'',
+			header:{
+				information:{
+					show:[],
+					other:'',
+					layout:'',
+					opentype:'',
+					opentype:''
+				}
+			},
+			ScreenData:[],
+			ShowScreen:0,
+			imageLoading:false,
+			imgdatas:[],
+			shapeData:[
+				{val:'7',name:'方图'},
+				{val:'8',name:'横图'},
+				{val:'5',name:'细长横图'},
+				{val:'6',name:'细长竖图'},
+				{val:'9',name:'竖图'},
+				{val:'1',name:'4:3'},
+				{val:'2',name:'3:4'},
+				{val:'3',name:'16:9'},
+				{val:'4',name:'9:16'}
+			],
+			Params:{
+				classify:'',//分类
+				tag:'',//标签
+				tagrelative:'',//标签逻辑
+				color:'',//颜色
+				persion:50,//颜色精确度
+				link:'',//链接
+				linkval:'',//链接文字
+				desc:'',//注释
+				descval:'',//注释文字
+				duration:'',//时长
+				dunit:'',//时长单位
+				wsize:'',//尺寸宽
+				hsize:'',//尺寸高
+				ext:'',//类型
+				shape:'',//形状
+				shapesize:'',//形状自定义
+				grade:'',//评分
+				btime:'',//添加时间
+				dateline:'',//修改日期
+				mtime:'',//创建日期
+			},
+			classifyInit:'',
+			ParamsTagData:[],
+			ParamsInit:{
+				tag:[],
+			},
+			imgParameterInit:{
+				asc: "desc",
+				order: "1",
+				page: 1,
+			},
+			imgParameter:{
+				asc: "desc",
+				keyword: "",
+				order: "1",
+				page: 1,
+				perpage: 50,
+				total: 0,
+				totalpage:0
+			},
+			ScrollAppend:false,
+			colors:['#CCF3FC','#CEDFFC','#C1B9FC','#D7B9FC','#E8C6DB','#F0CED1','#F4D5CC','#F8E3CB','#F9E7CB','#FEF6D5','#F9F7D4','#E0E9CA','#A0E7F7','#A2C1F7','#998CF8','#BC8CF8','#DBA3C5','#E4A9AE','#EBB4A5','#F1CCA1','#F2D2A1','#FAEAA8','#F1EDAA','#CCDBA7','#73DCF4','#76A4F4','#7260F5','#A360F5','#D07FB1','#DB838B','#E3947D','#ECB577','#EEBF76','#F5DD7D','#ECE681','#BAD083','#4AD1F0','#4C88F0','#4E38F0','#8A38F0','#C75A9D','#D45C67','#DE7354','#E8A04D','#EBAC4B','#F0D154','#E8E056','#A9C75F','#23C5EB','#256EEB','#2B11EB','#7311EB','#C1358B','#CF3643','#DB532B','#E78B22','#EA9B20','#EBC62D','#E6DC2C','#99C03A','#00B8E3','#0054E5','#1900D2','#5E00D2','#AA2176','#C21827','#D0380C','#DE7700','#DF8800','#E6BA07','#E6D902','#85AD23','#0097BA','#0045BC','#1400A9','#4C00A9','#8D165F','#A20F1C','#AE2B05','#B56100','#B66F00','#C49D00','#BEB400','#6D8F18','#007793','#003794','#100082','#3A0082','#6E0E49','#820813','#8B2000','#8E4C00','#8F5700','#9C7E00','#978F00','#55710F','#00586D','#00296F','#0B005D','#2A005D','#4F0834','#61030C','#661700','#693800','#6A4000','#765F00','#716B00','#3D5309','#FFFFFF','#EAEAEA','#D5D5D5','#C0C0C0','#AAAAAA','#959595','#808080','#6B6B6B','#565656','#414141','#2B2B2B','#161616'],
+		},
+		mutations: {
+			SetFirstLoading(state){//第一次加载
+				state.FirstLoading = false;
+			},
+			SetAppid(state,val){//设置appid
+				state.appid = val;
+			},
+			SetScrollAppend(state,val){//图片加载模式
+				state.ScrollAppend = val;
+			},
+			SetShapeData(state,val){//设置形状数据
+				state.shapeData = val;
+			},
+			SetParamsInit(state,item){//设置初始化筛选参数
+				state.ParamsInit[item.key] = item.val;
+			},
+			SetParams(state,item){//设置筛选参数
+				state.Params[item.key] = item.val;
+			},
+			SetParamsTagData(state,val){//设置标签分类筛选值
+				state.ParamsTagData = val;
+			},
+			SetimageLoading(state,val){//设置图片时的loading
+				state.imageLoading = val;
+			},
+			seTimgdatas(state,val){//设置图片数据
+				if(val.type == 'scroll'){
+					state.imgdatas.push.apply(state.imgdatas,val.data);
+				}else{
+					state.imgdatas = val.data;
+				}
+			},
+			SetShowScreen(state,val){//设置筛选显示或者隐藏
+				state.ShowScreen = val;
+			},
+			seTHeader_Information_show(state,val){
+				var index = state.header.information.show.indexOf(val);
+				if(index>-1){
+					state.header.information.show.splice(index,1)
+				}else{
+					state.header.information.show.push(val);
+				}
+			},
+			seTHeader_Information_show_init(state,val){
+				state.header.information.show = val;
+			},
+			seTHeader_Information_other(state,val){
+				state.header.information.other = val;
+			},
+			seTHeader_Information_Layout(state,val){//设置图片显示方式
+				state.header.information.layout = val;
+			},
+			seTHeader_Information_Opentype(state,val){//设置图片打开方式
+				state.header.information.opentype = val;
+			},
+			SetimgParameter(state,val){//设置图片参数
+				state.imgParameter[val.key] = val.val;
+			},
+			SetimgParameterInit(state,val){//设置图片默认参数
+				state.imgParameterInit[val.key] = val.val;
+			},
+			SetScreenData(state,val){//设置筛选显示数据
+				state.ScreenData = val;
+			},
+			SetclassifyInit(state,val){//设置分类名称
+				state.classifyInit = val;
+			},
+		},
+		getters:{
+			GetUid(state){//获取uid
+				return state.Uid;
+			},
+			GetFirstLoading(state){//第一次加载
+				return state.FirstLoading;
+			},
+			GetAppid(state){//获取appid
+				return state.appid;
+			},
+			GetScrollAppend(state){//获取图片获取模式
+				return state.ScrollAppend;
+			},
+			GetParamsInit(state){//获取初始化参数
+				return state.ParamsInit;
+			},
+			GetParams(state){//获取参数
+				return state.Params;
+			},
+			GetParamsTagData(state){//获取标签分类筛选值
+				return state.ParamsTagData;
+			},
+			Getimgdatas(state){
+				return state.imgdatas;
+			},
+			GetColors(state){//获取颜色
+				return state.colors;
+			},
+			Getinformation_layout(state){//获取图片显示方式
+				return state.header.information.layout;
+			},
+			Getinformation_show(state){//获取图片显示内容
+				return state.header.information.show;
+			},
+			Getinformation_other(state){//获取图片显示内容
+				return state.header.information.other;
+			},
+			Getinformation_Opentype(state){//获取图片打开方式
+				return state.header.information.opentype;
+			},
+			GetimgParameter(state){//获取图片排序方式
+				return state.imgParameter;
+			},
+			GetimgParameterInit(state){//获取图片默认排序方式
+				return state.imgParameterInit;
+			},
+			GetimageLoading(state){//获取图片时的loading
+				return state.imageLoading;
+			},
+			GetShowScreen(state){//获取筛选显示或者隐藏
+				return state.ShowScreen;
+			},
+			GetShapeData(state){//获取形状数据
+				return state.shapeData;
+			},
+			GetScreenData(state){//获取筛选的数据
+				return state.ScreenData;
+			},
+			GetclassifyInit(state){//获取分类名称
+				return state.classifyInit;
+			},
+		},
+		
+		actions:{
+			GetFilelist({commit, state, dispatch},type){
+				commit('SetimageLoading',true);
+				var params = {
+					appid:state.appid,
+					asc: state.imgParameter.asc,
+					keyword: state.imgParameter.keyword,
+					order: state.imgParameter.order,
+					page: state.imgParameter.page,
+					perpage: state.imgParameter.perpage,
+				};
+				if(type == 'scroll'){
+					commit('SetScrollAppend',true);
+				}else{
+					commit('SetScrollAppend',false);
+					commit('seTimgdatas',{
+						type:'',
+						data:[]
+					});
+				}
+				for(var p in state.Params){
+					if(state.Params[p]){
+						if(p=='grade'){
+							if(state.Params[p].indexOf('未评分')>-1){
+								var farr = state.Params[p].split(',');
+								if(farr.length){
+									farr.splice(farr.indexOf('未评分'),1);
+								}
+								farr.push(0);
+								params[p] = farr.join(',');
+							}else{
+								params[p] = state.Params[p];
+							}
+						}else if(p=='shape'){
+							var shape = [];
+							var fshape = state.Params[p].split(',');
+							var shapeData = state.shapeData;
+							for(var s in fshape){
+								for(var b in shapeData){
+									if(fshape[s] == shapeData[b].name){
+										shape.push(shapeData[b].val);
+									}
+								}
+							}
+							params[p] = shape.join(',');
+						}else if(p=='btime' || p=='mtime' || p=='dateline'){
+							var len = state.Params[p].split('_');
+							if(len.length>1){
+								params[p] = state.Params[p];
+							}else{
+								params[p] = GetDateVal(state.Params[p]);
+							}
+						}else if(p=='persion'){
+							if(params['color']){
+								params[p] = state.Params[p];
+							}
+						}else{
+							params[p] = state.Params[p];
+						}
+						
+					
+					}
+				}
+				if(params && params.classify){
+					params['fids'] = params.classify;
+					delete params.classify;
+				}
+				$.post(MOD_URL+'&op=filelist&operation=filelist',params,function(data){
+					var value = data.data;
+					var ImgData = [];
+					for(var x in value.data){
+						var xitem = value.data[x];
+						xitem['icondata'] = xitem['icondata'];
+						xitem['realpath'] = xitem['realpath'];
+						ImgData.push(xitem);
+					}
+					commit('seTimgdatas',{
+						type:type,
+						data:ImgData
+					});
+					// commit('SetAppid',value.appid);
+					for(var i in value.param){
+						if(i == 'tagdata'){
+							if(state.ParamsInit.tag && state.ParamsInit.tag.length == 0){
+								if(value.param[i] && value.param[i].length){
+									commit('SetParamsInit',{key:'tag',val:value.param[i]});
+								}
+							}
+							
+						}else if(i == 'folderdata'){
+							if(!state.classifyInit){
+								var txts = [];
+								for(var t in value.param[i]){
+									txts.push(value.param[i][t])
+								}
+								commit('SetclassifyInit',txts.join(','));
+							}
+						}else{
+							var str = {
+								key:i,
+								val:value.param[i]
+							};
+						}
+						commit('SetimgParameter',str);
+					}
+					if(parseInt(value.param.page)>1){
+						commit('SetimgParameter',{
+							key:'totalpage',
+							val: Math.ceil(value.param.total / value.param.perpage)
+						});
+					}else{
+						var ftotal = Math.ceil(value.param.total / value.param.perpage);
+						commit('SetimgParameter',{
+							key:'totalpage',
+							val: ftotal<1?1:ftotal
+						});
+					}
+					commit('SetimageLoading',false);
+					if(state.FirstLoading){
+						dispatch('GetScreen');
+						setTimeout(function(){
+							commit('SetFirstLoading');
+						},1000)
+					}
+					return false;
+					
+				},'json');
+				return false;
+			},
+			GetHashParams({commit, state, dispatch}){
+				var arr = (location.hash || "").replace(/^\?/,'').split("&");
+				for(var i=0; i<arr.length; i++){
+					var data = arr[i].split("=");
+					if(data.length == 2){
+						if(i==0){
+							data[0]=data[0].replace("#","");
+						}
+						switch(data[0]){
+							case 'appid':
+								commit('SetAppid',data[1]);
+							break;
+							case 'keyword':
+								commit('SetimgParameter',{key:'keyword',val:decodeURI(data[1])});
+							break;
+							case 'asc':
+							case 'page':
+							case 'order':
+								commit('SetimgParameter',{key:data[0],val:data[1]});
+							break;
+							case 'grade':
+							case 'shape':
+							case 'btime':
+							case 'mtime':
+							case 'dateline':
+								commit('SetParams',{key:data[0],val:decodeURI(data[1])});
+							break;
+							default:
+								commit('SetParams',{key:data[0],val:data[1]});
+						}
+					}
+				}
+				dispatch('GetFilelist');
+			},
+			handleHash({commit, state, dispatch},type){
+				var search = state.imgParameter;
+				var screen = state.Params;
+				var str = '';
+				var status = [];
+				if(state.appid){
+					str += 'appid='+state.appid;
+				}
+				if(search.keyword){
+					if(str){
+						str += '&keyword='+search.keyword;
+					}else{
+						str += 'keyword='+search.keyword;
+					}
+				}
+				for(var i in screen){
+					if(i == 'link'&& parseInt(screen[i])<1){
+						status.push(i)
+					}
+					if(i == 'desc'&& parseInt(screen[i])<1){
+						status.push(i)
+					}
+					if(i == 'duration'&& !screen[i]){
+						status.push(i)
+					}
+					if(i == 'color'&& !screen[i]){
+						status.push(i)
+					}
+					if(screen[i]){
+						if(i=='linkval' && status.indexOf('link')>-1){
+							continue;
+						}
+						if(i=='descval' && status.indexOf('desc')>-1){
+							continue;
+						}
+						if(i=='dunit' && status.indexOf('duration')>-1){
+							continue;
+						}
+						if(i=='persion' && status.indexOf('color')>-1){
+							continue;
+						}
+						if(str){
+							str += '&'+i+'='+screen[i];
+						}else{
+							str += i+'='+screen[i];
+						}
+					}
+				}
+				
+				if(type == 'scroll'){
+					commit('SetimgParameter',{key:'page',val:parseInt(search.page)+1});
+				}else{
+					$('.el-scrollbar__wrap').scrollTop(0)
+					commit('SetimgParameter',{key:'page',val:1});
+				}
+				var imgParameterInit = state.imgParameterInit;
+				if(search.order != imgParameterInit.order){
+					if(str){
+						str += '&order='+search.order;
+					}else{
+						str += 'order='+search.order;
+					}
+				}
+				if(search.asc != imgParameterInit.asc){
+					if(str){
+						str += '&asc='+search.asc;
+					}else{
+						str += 'asc='+search.asc;
+					}
+				}
+				// if(search.page != imgParameterInit.page){
+				// 	if(str){
+				// 		str += '&page='+search.page;
+				// 	}else{
+				// 		str += 'page='+search.page;
+				// 	}
+				// }
+				if(!state.FirstLoading){
+					window.location.hash = str;
+					dispatch('GetFilelist',type);
+				}
+				
+			},
+			GetScreen({commit, state, dispatch}){
+				var param = {
+					appid:state.appid
+				};
+				$.post(MOD_URL+'&op=ajax&operation=getscreen',param,function(json){
+					var arr = [];
+					if(json.success){
+						for(var i in json.data){
+							var item = json.data[i];
+							if(parseInt(item.checked)){
+								if(item.key=='tag'){
+									item.showtype = parseInt(item.showtype)
+									if(item.showtype){
+										var group = [];
+										for(var t in item.group){
+											if(parseInt(item.group[t].checked)){
+												group.push(item.group[t]);
+											}
+										}
+										commit('SetParamsTagData',group);
+										arr.push(item);
+									}else{
+										arr.push(item);
+									}
+									
+								}else{
+									
+									arr.push(item);
+								}
+							}
+						}
+					}
+					commit('SetScreenData',arr)
+				},'json');
+			},
+			SetShow({commit, state, dispatch}){
+				var param = {
+					showfileds:state.header.information.show.join(','),
+					other:state.header.information.other
+				};
+				var self = pvue;
+				$.post(MOD_URL+'&op=ajax&operation=setshow',param,function(json){
+					if(json.success){
+						
+					}else{
+						self.$message.error('数据失败')
+					}
+				},'json')
+			},
+			SetSort({commit, state, dispatch}){
+				var str = [
+							{key:1,val:'添加时间',field:'btime'},
+							{key:3,val:'修改时间',field:'dateline'},
+							{key:2,val:'创建日期',field:'mtime'},
+							{key:4,val:'标题',field:'name'},
+							{key:8,val:'文件大小',field:'filesize'},
+							{key:5,val:'尺寸',field:'size'},
+							{key:6,val:'评分',field:'grade'},
+							{key:7,val:'时长',field:'duration'},
+						];
+				var sortfiles = '';
+				for(var x in str){
+					if(str[x].key == parseInt(state.imgParameter.order)){
+						sortfiles = str[x].field;
+					}
+				}
+				var param = {
+					sortfiled:sortfiles,
+					sort:state.imgParameter.asc
+				};
+				var self = pvue;
+				$.post(MOD_URL+'&op=ajax&operation=setsort',param,function(json){
+					if(json.success){
+						
+					}else{
+						self.$message.error('数据失败')
+					}
+				},'json')
+			},
+		}
+	})
+	
+</script>

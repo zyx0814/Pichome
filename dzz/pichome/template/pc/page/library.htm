@@ -1,0 +1,522 @@
+<!--{template pc/frame/header_simple_start}-->
+<script type="text/javascript" src="{MOD_PATH}/js/pc/plug/sortable.min.js?{VERHASH}"></script>
+<style type="text/css">
+	.lbox{
+		padding: 30px 0;
+		/* text-align:center; */
+	}
+	.lbox .block{
+		width: 202px;
+		display: inline-block;
+		margin-right: 35px;
+	}
+	.lbox .block .images{
+		width: 202px;
+		height: 202px;
+		overflow: hidden;
+		border-radius: 4px;
+		position: relative;
+	}
+	.lbox .block .images .img-bg{
+		float: left;
+		width: 100px;
+		height: 100px;
+		margin-right: 2px;
+		margin-bottom: 2px;
+		background-color: var(--content-imgbg);
+	}
+	.lbox .block .images .img-bg:nth-child(even){
+		margin-right: 0;
+	}
+	.lbox .block .images .img-bg:nth-child(3),
+	.lbox .block .images .img-bg:nth-child(4){
+		margin-bottom: 0;
+	}
+
+	.lbox .block .images .bg{
+		display: none;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		justify-content: center;
+		align-items: center;
+		background: rgb(0,0,0,0.5);
+	}
+	
+	.lbox .block .images:hover .bg{
+		display: flex;
+	}
+	.lbox .block .images .progress{
+		position: absolute;
+		left: 0;
+		top: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		height: 100%;
+		padding: 0 10px;
+		background: rgb(0,0,0,0.5);
+	}
+	.lbox .block .images .progress .el-progress{
+		width: 100%;
+	}
+	.lbox .block .images .bg .op{
+		text-align: center;
+		cursor: pointer;
+		color: #FFFFFF;
+		opacity: 0.7;
+	}
+	.lbox .block .images .bg .op:hover{
+		opacity: 1;
+	}
+	.lbox .block .images .bg .op .icon{
+		display: block;
+		font-size: 19px;
+		margin-bottom: 5px;
+	}
+	.lbox .block .name{
+		font-size: 16px;
+		color: var(--content-textHover);
+		padding: 15px 0 8px;
+	}
+	.lbox .block .message{
+		color: var(--content-text);
+		font-size: 14px;
+	}
+	.lbox .block .message .left{
+		float: left;
+	}
+	.lbox .block .message .right{
+		float: right;
+	}
+	.SortableBox{
+		padding-top: 10px;
+	}
+	.SortableBox .sortable-list{
+		margin-bottom: 8px;
+		line-height: 26px;
+	}
+	[v-cloak]{
+	    display: none;
+	}
+	.el-progress-bar__inner{
+		transition: none;
+	}
+/* 	.SortableBox .sortable-list .el-checkbox{
+		min-width: 120px;
+	} */
+</style>
+<!--{template pc/frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="70px" style="padding: 0;z-index: 10;">
+			<page-header></page-header>
+		</el-header>
+		<el-main>
+			<div class="page-content">
+				<el-scrollbar class="page-component__scroll">
+					<div class="content" style="padding: 26px 16px;">
+						<h1 style="text-align: center;color: var(--content-textHover);">库 设 置</h1>
+						<div class="lbox" v-if="dataList.length">
+							<div class="block" v-for="(item,index) in dataList">
+								<div class="images">
+									<template v-if="item.resources">
+										<div class="img-bg" v-for="ritem in item.resources">
+											<el-image
+											      style="width: 100%; height: 100%"
+											      :src="ritem.icondata"
+											      fit="cover"></el-image>
+										</div>
+									</template>
+									<template v-else>
+										<div class="img-bg"></div>
+										<div class="img-bg"></div>
+										<div class="img-bg"></div>
+										<div class="img-bg"></div>
+									</template>
+									<div class="progress" v-if="parseInt(item.state)==0">
+										<div style="width: 100%;text-align: center;">
+											<el-button type="primary" size="mini" @click="handleImport(index,item.appid)">点击导入</el-button>
+										</div>
+									</div>
+									<div class="progress" v-else-if="parseInt(item.state)==1">
+										<div style="width: 100%;">
+											<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入中...</p>
+											<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
+										</div>
+									</div>
+									<div class="progress" v-else-if="parseInt(item.state)==2">
+										<div style="width: 100%;">
+											<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入完成，校验中...</p>
+											<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
+										</div>
+									</div>
+									<div v-else class="bg">
+										<span class="op" @click="handleLook(item.appid)" style="margin-right: 25px;"><i class="el-icon-view icon"></i>查看</span>
+										<span class="op" @click="handleRefresh(index,item.appid)" style="margin-right: 25px;"><i class="el-icon-refresh icon"></i>更新</span>
+										<span class="op" @click="handleSetting(item.appid,item.appname)"><i class="el-icon-edit icon"></i>设置</span>
+									</div>
+								</div>
+								<p class="name" v-cloak>{{item.appname}}</p>
+								<div class="message clearfix">
+									<span class="left" v-cloak>{{item.filenum}}个文件</span>
+<!-- 									<span class="right">
+										<template v-if="parseInt(item.personal)==1">
+											<el-link :underline="false" type="primary">私有</el-link>
+										</template>
+										<template v-else>
+											<el-link :underline="false" type="danger">公开</el-link>
+										</template>
+									</span> -->
+								</div>
+							</div>
+						</div>
+					</div>	
+				</el-scrollbar>
+			</div>
+			<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false" @opened="handleAfterSetting">
+				<el-form :model="formdta" label-width="100px">
+<!-- 					<el-form-item label="开放权限：">
+					    <el-radio-group v-model="formdta.personal">
+							<el-radio :label="0">公开</el-radio>
+							<el-radio :label="1">私有</el-radio>
+					    </el-radio-group>
+					</el-form-item> -->
+					<el-form-item label="开放分享：">
+					    <el-switch v-model="formdta.share" active-value="1" inactive-value="0"></el-switch>
+					</el-form-item>
+					<el-form-item label="开放下载：">
+					      <el-switch v-model="formdta.download" active-value="1" inactive-value="0"></el-switch>
+					</el-form-item>
+					<el-form-item label="筛选器：">
+						<div class="SortableBox LabelBox clearfix" ref="SortableScreen">
+							<div v-for="(item,index) in newscreens" :key="item.key" class="sortable-list">
+								<el-checkbox v-model="formdta.screen" :label="item.key" v-cloak>{{item.text}}</el-checkbox>
+								<template v-if="item.key=='tag'">
+									<template v-if="formdta.screen.indexOf('tag')>-1">
+										<el-radio v-model="formdta.type" :label="0">默认</el-radio>
+										<el-radio v-model="formdta.type" :label="1">展示分类</el-radio>
+										<div v-show="formdta.type==1" class="SortableBox GroupBox clearfix" ref="SortableClassif" style="padding-left: 24px;">
+											<div v-for="fitem in newClassfiy" :key="fitem.cid" class="sortable-list">
+												<el-checkbox v-model="formdta.classif" :label="fitem.cid" v-cloak>{{fitem.catname}}</el-checkbox>
+											</div>
+										</div>
+									</template>
+									
+								</template>
+							</div>
+						</div>
+						
+					</el-form-item>
+			    </el-form>
+			    <div slot="footer" class="dialog-footer">
+			      <el-button @click="dialog.Visible = false">取 消</el-button>
+			      <el-button type="primary" @click="handleSubmit">确 定</el-button>
+			    </div>
+			</el-dialog>
+		</el-main>
+	</el-container>
+</div>
+<!--{template pc/components/headerAdmin/index}-->
+<!-- 0未导入,1导入中,2校验中,3完成 -->
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			return {
+				dialog:{
+					title:'',
+					Visible:false,
+				},
+				formdta:{
+					appid:'',
+					share:'0',
+					download:'0',
+					screen:[],
+					classif:[],
+					type:0
+				},
+				dataList:[],
+				timelist:{},
+				screens:[
+					{key:'classify',text:'分类',checked:0},
+					{key:'tag',text:'标签',checked:0,showtype:0},
+					{key:'color',text:'颜色',checked:0},
+					{key:'link',text:'链接',checked:0},
+					{key:'desc',text:'注释',checked:0},
+					{key:'duration',text:'时长',checked:0},
+					{key:'size',text:'尺寸',checked:0},
+					{key:'ext',text:'类型',checked:0},
+					{key:'shape',text:'形状',checked:0},
+					{key:'grade',text:'评分',checked:0},
+					{key:'btime',text:'添加时间',checked:0},
+					{key:'dateline',text:'修改日期',checked:0},
+					{key:'mtime',text:'创建日期',checked:0},
+				],
+				newscreens:[],
+				newClassfiy:[]
+			}
+		},
+		watch:{
+			'formdta.type':{
+				handler(val){
+					var self = this;
+					if(val&&self.newClassfiy&&self.newClassfiy.length){
+						this.$nextTick(function(){
+							var el = self.$refs.SortableClassif[0];
+							var ops = {
+								animation: 200,
+								onEnd: function ({ newIndex, oldIndex }) {
+									var val = self.newClassfiy[oldIndex]
+									self.newClassfiy.splice(oldIndex, 1)
+									self.newClassfiy.splice(newIndex, 0, val)
+								}};
+							Sortable.create(el, ops);
+						})
+						
+					}
+				},
+				deep:true
+			}
+		},
+		created() {
+			this.handleCheckexport();
+		},
+		methods:{
+			handleSubmit(){
+				var self = this;
+				var filter = [];
+				for(var c in self.newscreens){
+					var citem = self.newscreens[c];
+					if(self.formdta.screen.indexOf(citem.key)>-1){
+						citem.checked = 1;
+					}else{
+						citem.checked = 0;
+					}
+					if(citem.key == 'tag'){
+						if(self.formdta.type==1){
+							citem.showtype = 1;
+							citem['group'] = [];
+							for(var g in self.newClassfiy){
+								var gitem = self.newClassfiy[g];
+								if(self.formdta.classif.indexOf(gitem.cid)>-1){
+									gitem['checked']=1;
+								}else{
+									gitem['checked']=0;
+								}
+								citem['group'].push(gitem);
+							}
+						}else{
+							citem.showtype = 0;
+						}
+					}
+					filter.push(citem);
+				}
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appid:self.formdta.appid,
+					share:self.formdta.share,
+					download:self.formdta.download,
+					filter:filter
+				};
+				$.post(MOD_URL+'&op=library&operation=fetch',param,function(data){
+					self.dialog.Visible = false;
+					if(data.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+					}else{
+						self.$message.error('设置失败');
+					}
+				},'json');
+			},
+			handleSetting(appid,title){
+				var self = this;
+				this.dialog.title = '设置'+title+'库';
+				this.newscreens = [];
+				this.newClassfiy = [];
+				$.post(MOD_URL+'&op=library&operation=fetch',{
+					appid:appid
+				},function(data){
+					if(data.success){
+						var fscreen = [];
+						var fclassif = [];
+						var fclassif1 = [];
+						var ftype = 0;
+						if(data.data.filter){
+							for(var fi in data.data.filter){
+								var fiitem = data.data.filter[fi];
+								var fstr = {
+									key:fiitem.key,
+									text:fiitem.text,
+									checked:parseInt(fiitem.checked),
+								};
+								if(fstr.checked){
+									fscreen.push(fstr.key)
+								}
+								if(fstr.key=='tag'){
+									self.formdta.type = parseInt(fstr.showtype);
+									if(fstr.checked&&fiitem.group){
+										ftype = 1;
+										for(var b in fiitem.group){
+											var bitem = fiitem.group[b];
+											for(var n in data.catdata){
+												var nitem = data.catdata[n];
+												if(bitem.cid == nitem.cid){
+													if(parseInt(bitem.checked)){
+														fclassif.push(nitem.cid);
+													}
+													self.newClassfiy.push(nitem);
+													fclassif1.push(nitem.cid);
+												}
+											}
+										}
+										if(data.catdata.length>fclassif1.length){
+											for(var n in data.catdata){
+												var nitem = data.catdata[n];
+												if(fclassif1.indexOf(nitem.cid)<0){
+													self.newClassfiy.push(nitem);
+												}
+											}
+										}
+									}else{
+										self.newClassfiy = data.catdata;
+									}
+									
+								}
+								self.newscreens.push(fstr);
+							}
+						}else{
+							self.newClassfiy = data.catdata;
+							self.newscreens = self.screens;
+						}
+						
+						self.dialog.Visible = true;
+						self.formdta = {
+							appid:appid,
+							share:data.data.share,
+							download:data.data.download,
+							screen:fscreen,
+							classif:fclassif,
+							type:ftype
+						};
+					}else{
+						self.$message.error('数据获取失败');
+					}
+				},'json');
+			},
+			handleAfterSetting(){
+				var self = this;
+				var el = self.$refs.SortableScreen;
+				var ops = {
+					animation: 200,
+					onEnd: function ({ newIndex, oldIndex }) {
+						var val = self.newscreens[oldIndex]
+						self.newscreens.splice(oldIndex, 1)
+						self.newscreens.splice(newIndex, 0, val)
+					}};
+				
+				Sortable.create(el, ops);
+				
+				
+			},
+			handleLook(appid){
+				window.open(MOD_URL+'#appid='+appid);
+			},
+			handleRefresh(index,appid){
+				var self = this;
+				// if(!self.dataList[index]['time']){
+					$.post(MOD_URL+'&op=exportfile&appid='+appid);
+					self.dataList[index].state = 1;
+					self.dataList[index].percent = 0;
+					self.handleRefreshLoading(index,appid);
+				// }
+				
+			},
+			handleimplement(index,appid){
+				var self = this;
+				if(!self.dataList[index]['time']){
+					$.post(MOD_URL+'&op=exportfile&appid='+appid);
+					self.dataList[index].state = 1;
+					self.handleRefreshLoading(index,appid);
+				}
+				
+			},
+			handleRefreshLoading(index,appid){
+				var self = this;
+				if(self.dataList[index]){
+					self.dataList[index]['time'] = setInterval(function(){
+						$.post(MOD_URL+'&op=library&operation=fetch',{
+							appid:appid
+						},function(data){
+							if(data.success){
+								if(parseInt(data.data.state)==3){
+									clearInterval(self.dataList[index]['time']);
+									self.dataList[index].percent = 100;
+									setTimeout(function(){
+										self.dataList[index].filenum = data.data.filenum;
+										self.dataList[index].percent = parseInt(data.data.percent);
+										self.dataList[index].state = parseInt(data.data.state);
+										self.dataList[index].lastid = data.data.lastid;
+										self.$message({
+											type:'success',
+											message:data.data.appname+' 更新完成'
+										},500);
+									},500);
+								}else{
+									if(parseInt(data.data.state) != self.dataList[index]['state']){
+										self.dataList[index].percent = 100;
+									}
+									self.dataList[index].filenum = data.data.filenum;
+									self.dataList[index].percent = parseInt(data.data.percent);
+									self.dataList[index].state = parseInt(data.data.state);
+									if(self.dataList[index].state==0){
+										clearInterval(self.dataList[index]['time']);
+										self.$message.error('更新中断，请刷新重试');
+									}
+								}
+							}else{
+								clearInterval(self.dataList[index]['time']);
+								self.$message.error('数据获取失败');
+							}
+						},'json');
+					},2000);
+				}
+				
+				
+			},
+			GetData(){
+				var self = this;
+				$.post(MOD_URL+'&op=library&operation=getdata',function(data){
+					self.dataList = data.data;
+					for(var i in self.dataList){
+						if(parseInt(self.dataList[i].state) == 1){
+							self.handleimplement(i,self.dataList[i].appid)
+						}
+					}
+					
+				},'json');
+			},
+			handleImport(index,appid){
+				this.handleimplement(index,appid)
+			},
+			handleCheckexport(){
+				var self = this;
+				$.get(MOD_URL+'&op=checkexport',function(){
+					self.GetData();
+				});
+			},
+			
+		},
+		mounted() {
+			
+		}
+	})
+</script>
+
+<!--{template pc/frame/footer_simple}-->

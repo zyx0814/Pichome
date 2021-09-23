@@ -1,0 +1,474 @@
+<template id="PageHeader">
+	<div>
+		<div id="top_header">
+			<div class="header-content">
+				<a class="h-left" href="{MOD_URL}">
+					<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+					<span class="text">$_G['setting'][sitename]</span>
+				</a>
+				<div class="h-center">
+					<div class="result-section">
+						<div class="library-classification" v-if="librarys.length>1">
+							<span class="el-dropdown-link block" @click="handleRefreshLibrary">
+								<span>{{librarysName}}</span>
+							</span>
+							<el-dropdown trigger="click" placement="bottom" @command="handlelibrary">
+								<i class="el-icon-caret-bottom el-icon--right" style="cursor: pointer;"></i>
+								<el-dropdown-menu slot="dropdown" class="database-box">
+									<el-dropdown-item command="">
+										<i class="ri-database-2-line icon"></i>全部库
+									</el-dropdown-item>
+									<el-dropdown-item v-for="(item, index) in librarys" :command="item.appid">
+										<i class="ri-database-2-line icon"></i>{{item.appname}}
+									</el-dropdown-item>
+								</el-dropdown-menu>
+							</el-dropdown>
+						</div>
+						<div class="input-box" :class="librarys.length<2?'radius':''">
+							<div class="InputKeyword" @click="ShowPopoverSearch">
+								<div class="el-popover-search">
+									<el-input class="search-keyword" @input="handleKeywordInput" v-model="keyword" clearable></el-input>
+									<div style="padding: 0px 15px;">
+										<el-divider></el-divider>
+									</div>
+									<el-scrollbar class="page-component__scroll" :style="{height: popoverSearch.height+'px'}">
+										<div v-if="keyword" class="association">
+											<ul class="field-select-box dzz-dropdown-menu">
+												<li class="dzz-dropdown-menu__item single" v-for="item in popoverSearch.keywordList" @click="handleKeywordList(item)">{{item}}</li> 
+											</ul>
+										</div>
+										<div v-else class="popover-search">
+											<div class="recent-search" v-if="popoverSearch.recenttag.length">
+												<p class="title">最近搜索
+													<!-- <i class="ri-close-circle-fill icon" @click="delRecentSearch"></i> -->
+												</p>
+												<ul class="recent-search-txt clearfix">
+													<li class="txt" v-for="item in popoverSearch.recenttag" @click.stop="handleSearchRecent(item)">{{item}}</li>
+												</ul>
+											</div>
+											<div class="hot-tags">
+												<p class="title">热门搜索</p>
+												<ul class="tags-img">
+													<li class="img-list" v-for="item in popoverSearch.hottags" @click.stop="handleSearchRecent(item.keyword)">
+														<div class="img" :style="{backgroundImage: 'url('+item.icondata+')'}"></div>
+														<div class="bg"></div>
+														<div class="txt">
+															<span>{{item.keyword}}</span>
+														</div>
+													</li>
+												</ul>
+											</div>
+										</div>
+									</el-scrollbar>
+								</div>
+								<!--{template pc/components/headerindex/searchScreen}-->
+							</div>
+						</div>
+						
+					</div>
+				</div>
+				<div class="h-right">
+					<div class="r-option">
+						<headerright></headerright>
+						<!--{if $_G[uid]}-->
+						<el-dropdown trigger="click" @command="handleavatar">
+							<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
+							<el-dropdown-menu slot="dropdown" style="width: 165px;">
+								<el-dropdown-item command="personal">个人设置</el-dropdown-item>
+								<el-dropdown-item command="help">帮助文档</el-dropdown-item>
+								<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+								<el-divider></el-divider>
+								<el-dropdown-item command="setting">站点设置</el-dropdown-item>
+								<el-dropdown-item command="library">库设置</el-dropdown-item>
+								<el-dropdown-item command="system">
+									<span style="position: relative;">
+										系统工具
+										<!--{if $_G['setting']['upgrade']}-->
+										<div class="tip" style="width: 7px;height: 7px;border-radius: 50%;background: red;position: absolute;left: -13px;top: 0;bottom: 0;margin: auto;"></div>
+										<!--{/if}-->
+									</span>
+								</el-dropdown-item>
+								<el-divider></el-divider>
+								<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
+								<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+							</el-dropdown-menu>
+						</el-dropdown>
+						<!--{else}-->
+						<el-button type="primary" size="mini" @click="GoLogin">登录</el-button>
+						<!--{/if}-->
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!--{template pc/components/headerindex/screen}-->
+
+	</div>
+
+</template>
+<template id="PageHeaderRight">
+	<div>
+		<div v-if="ScreenData.length" class="right-block" :class="IsShowScreen>0?'active':''" @click="handleShowScreen(IsShowScreen>0?0:1)">
+			<i class="ri-filter-2-fill"></i>
+		</div>
+		<el-dropdown trigger="click" :hide-on-click="false">
+			<div class="right-block">
+				<i class="ri-arrow-up-down-fill"></i>
+			</div>
+			<el-dropdown-menu class="display-mode" slot="dropdown">
+				<el-dropdown-item>
+					<div class="item-txt">显示信息<i class="el-icon-caret-right suffix"></i></div>
+					<el-dropdown-menu class="child-dropdown">
+						<template v-for="item in InformationDisplayData">
+							<el-dropdown-item :class="InformationShow.indexOf(item.key)>-1?'active':''">
+								<div class="item-txt" @click="handleDisplay('show',item.key)"><i class="el-icon-check prefix"></i>{{item.val}}</div>
+							</el-dropdown-item>
+							<template v-if="item.children && item.children.length">
+								<el-divider></el-divider>
+								<el-dropdown-item 
+									v-for="fitem in item.children" 
+									:disabled="InformationShow.indexOf('other')>-1?false:true"
+									:class="InformationShow.indexOf('other')>-1&&InformationOther==fitem.key?'active':''">
+									<div class="item-txt" @click="handleDisplay('other',fitem.key)"><i class="el-icon-check prefix"></i>{{fitem.val}}</div>
+								</el-dropdown-item>
+							</template>
+						</template>
+					</el-dropdown-menu>
+				</el-dropdown-item>
+				<el-dropdown-item>
+					<div class="item-txt">排序方式<i class="el-icon-caret-right suffix"></i></div>
+					<el-dropdown-menu class="child-dropdown">
+						<el-dropdown-item 
+							v-for="item in InformationSortyData"
+							:class="parseInt(imgParameter.order)==parseInt(item.key)?'active':''">
+							<div class="item-txt" @click="handleSort('order',item.key)"><i class="el-icon-check prefix"></i>{{item.val}}</div>
+						</el-dropdown-item>
+						<el-divider></el-divider>
+						<el-dropdown-item :class="imgParameter.asc=='asc'?'active':''">
+							<div class="item-txt" @click="handleSort('asc','asc')"><i class="el-icon-check prefix"></i>升序</div>
+						</el-dropdown-item>
+						<el-dropdown-item :class="imgParameter.asc=='desc'?'active':''">
+							<div class="item-txt" @click="handleSort('asc','desc')"><i class="el-icon-check prefix"></i>降序</div>
+						</el-dropdown-item>
+					</el-dropdown-menu>
+				</el-dropdown-item>
+				<el-divider></el-divider>
+				<el-dropdown-item :class="GetLayout=='waterFall'?'active':''">
+					<div class="item-txt" @click="handleLayout('waterFall')"><i class="el-icon-check prefix"></i>瀑布流</div>
+				</el-dropdown-item>
+				<el-dropdown-item :class="GetLayout=='rowGrid'?'active':''">
+					<div class="item-txt" @click="handleLayout('rowGrid')"><i class="el-icon-check prefix"></i>自适应</div>
+				</el-dropdown-item>
+				<el-dropdown-item :class="GetLayout=='imageList'?'active':''">
+					<div class="item-txt" @click="handleLayout('imageList')"><i class="el-icon-check prefix"></i>网格</div>
+				</el-dropdown-item>
+			</el-dropdown-menu>
+		</el-dropdown>
+	</div>
+</template>
+<script type="text/javascript">
+	Vue.component('page-header', {
+		name:'PageHeader',
+		template: '#PageHeader',
+		props: [],
+		data: function() {
+			return {
+				AboutVersion:'$_G[setting][version]',
+				sitelogoPath:'$sitelogoPath',
+				keyword:'',
+				timer:'',
+				isSearch:true,
+				filterText:'',
+				librarys:$apps,
+				librarysName:'全部库',
+				
+				defaultProps: {
+					children:'children',
+					label:'fname',
+				},
+				popoverSearch:{
+					hottags:[],
+					recenttag:[],
+					keywordList:[],
+					width:0,
+					height:0
+				},
+				
+				classify:{
+					folderdatanum:[],
+					hotsearchnum:[],
+					text:'',
+				},
+				tagData:{//标签数据
+					alltagdata:{
+						alltagdata:[],
+						catdata:[]
+					},
+					Rightdata:[],
+					checkedsFid:'all',
+					checkedsId:[],
+					checkedstxt:'',
+					tagrelative:'1',
+					search:''
+				},
+				paramsTag:{},
+				modelParamsTag:{},
+				colors:{
+					color:'',
+					persion:50
+				},
+				link:{
+					link:'',
+					val:''
+				},
+				desc:{
+					desc:'',
+					val:''
+				},
+				duration:{
+					start:'',
+					end:'',
+					dunit:'s'
+				},
+				wsize:{
+					start:'',
+					end:''
+				},
+				hsize:{
+					start:'',
+					end:''
+				},
+				ext:{
+					val:[],
+					height:0,
+					data:[]
+				},
+				shape:{
+					shape:[],
+					custom:false,
+					width:'',
+					height:'',
+					txt:'',
+					data:[],
+				},
+				grade:{
+					grade:[],
+					data:[]
+				},
+				btime:{
+					btime:'',
+					datelinepicker:[],
+					data:[],
+				},
+				mtime:{
+					mtime:'',
+					datelinepicker:[],
+					data:[],
+				},
+				dateline:{
+					dateline:'',
+					datelinepicker:[],
+					data:[],
+				},
+				FirstLoad:true
+			}
+		},
+		watch:headerWatch,
+		computed:{
+			GetColors(){
+				return VuexStore.getters.GetColors;
+			},
+			IsShowScreen(){
+				return VuexStore.getters.GetShowScreen;
+			},
+			GetParamsInit(){
+				return VuexStore.getters.GetParamsInit;
+			},
+			GetParams(){
+				return VuexStore.getters.GetParams;
+			},
+			GetimgParameter(){
+				return VuexStore.getters.GetimgParameter;
+			},
+			GetAppid(){
+				return VuexStore.getters.GetAppid;
+			},
+			shapeData(){
+				return VuexStore.getters.GetShapeData;
+			},
+			ParamsTagData(){
+				return VuexStore.getters.GetParamsTagData;
+			},
+			ScreenData(){
+				return VuexStore.getters.GetScreenData;
+			},
+			GetFirstLoading(){
+				return VuexStore.getters.GetFirstLoading;
+			},
+			GetclassifyInit(){
+				return VuexStore.getters.GetclassifyInit;
+			}
+		},
+		created() {
+			this.GetHashParams();
+			this.handleSearchresize();
+		},
+		methods:$.extend({},headerMethods,{
+			OutLogin(){
+				this.$confirm('您确定要注销登录?', '提示', {
+				          confirmButtonText: '确定',
+				          cancelButtonText: '取消',
+				          type: 'warning'
+				        }).then(() => {
+				         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
+				         		window.location.reload();
+				         	});
+				        }).catch(() => {
+				                   
+				        });
+			},
+		}),
+		mounted() {
+			var self = this;
+			$(document).click(function(e){
+				if($('.InputKeyword').hasClass('focus')){
+					if($(e.target) == $('.InputKeyword') || $(e.target).closest('.InputKeyword').length){
+						return false;
+					}else{
+						$('.InputKeyword').removeClass('focus')
+					}
+				}
+			});
+			$(".txtScroll-box").resize(function(){
+			    self.handleSearchresize();
+			});
+			$(".txtScroll").resize(function(){
+			    self.handleSearchresize();
+			});
+		},
+		components:{
+			headerright:{
+				template: '#PageHeaderRight',
+				data: function() {
+					return {
+						InformationDisplayData:[
+							{key:'name',val:'名称'},
+							{key:'tagging',val:'标注数'},
+							{key:'extension',val:'扩展名'},
+							{key:'other',val:'其它信息',children:[
+								{key:'size',val:'尺寸'},
+								{key:'filesize',val:'文件大小'},
+								{key:'tag',val:'标签'},
+								{key:'grade',val:'评分'},
+								{key:'btime',val:'添加时间'},
+								{key:'dateline',val:'修改时间'},
+								{key:'mtime',val:'创建日期'},
+							]},
+						],
+						InformationSortyData:[
+							{key:1,val:'添加时间',field:'btime'},
+							{key:3,val:'修改时间',field:'dateline'},
+							{key:2,val:'创建日期',field:'mtime'},
+							{key:4,val:'标题',field:'name'},
+							{key:8,val:'文件大小',field:'filesize'},
+							{key:5,val:'尺寸',field:'size'},
+							{key:6,val:'评分',field:'grade'},
+							{key:7,val:'时长',field:'duration'},
+						]
+					}
+				},
+				computed:{
+					GetAppid(){
+						return VuexStore.getters.GetAppid;
+					},
+					IsShowScreen(){
+						return VuexStore.getters.GetShowScreen;
+					},
+					InformationOther(){
+						return VuexStore.getters.Getinformation_other;
+					},
+					InformationShow(){
+						return VuexStore.getters.Getinformation_show;
+					},
+					imgParameter(){
+						return VuexStore.getters.GetimgParameter;
+					},
+					GetLayout(){
+						return VuexStore.getters.Getinformation_layout;
+					},
+					ScreenData(){
+						return VuexStore.getters.GetScreenData;
+					},
+				},
+				created() {
+					
+				},
+				methods:{
+					handleDisplay(type,val){//页面显示信息
+						if(type == 'show'){
+							VuexStore.commit('seTHeader_Information_show', val);
+							<!--{if !$_G[uid]}-->
+							sessionStorage.setItem('InformationShow',this.InformationShow.join(','));
+							<!--{/if}-->
+						}else{
+							VuexStore.commit('seTHeader_Information_other', val);
+							<!--{if !$_G[uid]}-->
+							sessionStorage.setItem('InformationOther',val);
+							<!--{/if}-->
+						}
+						<!--{if $_G[uid]}-->
+						VuexStore.dispatch('SetShow');
+						<!--{/if}-->
+					},
+					handleSort(key,val){//排序方式
+						var str = {
+							key:key,
+							val:val
+						};
+						VuexStore.commit('SetimgParameter', str);
+						<!--{if $_G[uid]}-->
+						VuexStore.dispatch('SetSort');
+						<!--{else}-->
+						sessionStorage.setItem(key,val);
+						<!--{/if}-->
+						VuexStore.dispatch('handleHash');
+					},
+					handleLayout(val){//显示方式
+						VuexStore.commit('seTHeader_Information_Layout', val);
+						<!--{if $_G[uid]}-->
+						$.post('{MOD_URL}&op=ajax&operation=setlayout',{
+							layout:val
+						},function(data){
+							
+						},'json');
+						<!--{else}-->
+						sessionStorage.setItem('Layout',val);
+						<!--{/if}-->
+					},
+					handleShowScreen(val){//设置筛选显示或隐藏
+						VuexStore.commit('SetShowScreen',val);
+						<!--{if $_G[uid]}-->
+						$.post('{MOD_URL}&op=ajax&operation=screensetting',{
+							settingsubmit:true,
+							formhash:'{FORMHASH}',
+							screen:val
+						},function(data){
+							
+						},'json');
+						<!--{else}-->
+							var appid = this.GetAppid;
+							if(!appid){
+								appid = 'all';
+							}
+							sessionStorage.setItem('showscreen_'+appid,val);
+						<!--{/if}-->
+					},
+				},
+				mounted() {
+					
+				},
+			}
+		}
+	});
+
+</script>

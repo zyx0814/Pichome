@@ -80,6 +80,6 @@
     }
     else{
         $theme = GetThemeColor();
-        include template('page/library');
+        include template('pc/page/library');
     }
 	

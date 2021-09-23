@@ -15,10 +15,13 @@
         private $uid = 0;//用户id
         private $username = null;//用户名
         private $filenum = 0;//总文件数
-        private $isexportnum = 0;//已导入文件数
-        private $mjsondir =   DZZ_ROOT.'data/attachment/cache/';
+        private $checkpage = 1;
+        private $checklimit = 100;
+        private $checknum = 0;
         private $eagledir =DZZ_ROOT.'library';
         private $exportstatus = 0;
+        private $donum = 0;
+        private $lastid = '';
     
         public function __construct($data = array())
         {
@@ -28,7 +31,9 @@
             $this->uid = $data['uid'];
             $this->username = $data['username'];
             $this->exportstatus = ($data['status'] == 1) ? 1:0;
+           // $this->donum = $data['donum'];
             $this->eagledir = str_replace(BS,'/',$this->eagledir);
+            $this->lastid = $data['lastid'];
         }
         
         public function exportAloneFile($rid,$force = 0)
@@ -183,255 +188,271 @@
             return true;
         }
         
-        //创建json文件，以便于之后对比
-        public function createmjson($jsonfile, $mjsonpath)
-        {
-            /*  $handle = fopen($jsonfile, 'rb');
-              while (!feof($handle)) {
-                  $fileContent = fread($handle, 8192);
-                  if (file_put_contents($mjsonpath, $fileContent, FILE_APPEND) === false) {
-                      return false;
-                  }
-                  unset($fileContent);
-              }*/
-            file_put_contents($mjsonpath, file_get_contents($jsonfile));
-            return true;
-        }
         
         public function execExport($force = false)
         {
-            if($this->exportstatus == 1) return;
-            //原json文件
-            $mjsonpath = $this->mjsondir .md5($this->path) . '.json';
-            
-            //当前文件信息json文件
-            $mjsonfile = $this->eagledir . BS . $this->path . '/mtime.json';
-            $filedata = file_get_contents($mjsonfile);
-            //获取文件信息
-            $filedata = json_decode($filedata, true);
-            
-            //文件总数
-            $this->filenum = $filedata['all'];
-            unset($filedata['all']);
-            //当前json文件id数据
-            $fileids = array_keys($filedata);
-            //上次json文件id数据
-            $ofileids = [];
-            //原有json文件数据
-            if (file_exists($mjsonpath)) {
-                $ofiledata = file_get_contents($mjsonpath);
-                //获取文件信息
-                $ofiledata = json_decode($ofiledata, true);
-                unset($ofiledata['all']);
-                $ofileids = array_keys($ofiledata);
-            }
-            //如果之前有json文件数据存储，则对比多余的执行删除
-            if (!empty($ofileids)) {
-                //获取原来有，现在没有的数据并删除
-                $delids = array_diff($ofileids, $fileids);
-                $delrids = [];
-                foreach ($delids as $id) {
-                    $delrids[] = $id . $this->appid;
-                }
-                if(!empty($delrids)) C::t('pichome_resources')->delete_by_rid($delrids);
-                
-            }
-            $vappdata = C::t('pichome_vapp')->fetch($this->appid);
-            
-            //如果存在最后更新的id值视为更新中断，从该id开始更新
-            if($vappdata['lastid']){
-                //获取该id值位于数组中的位置
-                $index = array_search($vappdata['lastid'],$fileids);
-                //从当前索引位置截取数组中的值，忽略已经处理过的值
-                $filedata = array_slice($filedata,$index);
-            }
-            
-            
-            //运行导入
-            foreach ($filedata as $k => $v) {
-                $currentindex = array_search($k,$fileids);
-                $percent = round(($currentindex/$this->filenum)*100);
-                //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
-                C::t('pichome_vapp')->update($this->appid,array('lastid'=>$k,'percent'=>$percent,'state'=>1));
-                $tmppath =$this->eagledir .BS. $this->path . BS . 'images' . BS . $k . '.info';
-                //文件信息文件路径
-                $metadatajsonfile = $tmppath . BS . 'metadata.json';
-                //组合文件id
-                $rid = $k . $this->appid;
-                
-                $data = C::t('pichome_resources')->fetch($rid);
-                
-                //查询文件表是否有对应记录
-                if ($data ) {
-                    //json文件不存在时删除文件，此情形基本不会出现(文件更新时，mtime会对应发生变化)
-                    if (!file_exists($metadatajsonfile)) {
-                        //删除文件
-                        C::t('pichome_resources')->delete_by_rid($rid);
-                        continue;
-                    }
-                    elseif ($force || $data['dateline'] < $v) {//当文件最后更新时间小于eagle时间时，需处理标签，颜色，目录等信息
-                        
-                        //获取文件信息数据
-                        $metadata = file_get_contents($metadatajsonfile);
-                        $filemetadata = json_decode($metadata, true);
-                        $p = new Encode_Core();
-                        $charset = $p->get_encoding($tmppath);
-                        if(CHARSET != $charset)$filemetadataname= diconv($filemetadata['name'],CHARSET,$charset);
-                        //文件名称
-                        $filename = $filemetadataname . '.' . $filemetadata['ext'];
-                        //缩略图名称
-                        $thumbname = $filemetadataname . '_thumbnail.png';
-                        //文件路径
-                        $file = $tmppath . BS . $filename;
-                        //缩略图路径
-                        $thumbfile = $tmppath . BS . $thumbname;
-                        //检查md5是否发生变化
-                        $filemd5 = md5_file($file);
-                        //如果md5发生变化则删除原数据，重新导入
-                        if ($data['md5'] != $filemd5) {
-                            C::t('pichome_resources')->delete_by_rid($rid);
-                            $filemetadata['filename'] = $filemetadata['name'];
-                            $filemetadata['file'] = $file;
-                            $filemetadata['thumbfile'] = $thumbfile;
-                            $filemetadata['md5'] = $filemd5;
-                            $filemetadata['rid'] = $rid;
-                            $filemetadata['dateline'] = $v;
-                            $this->exportfile($filemetadata);
+            if($this->exportstatus > 0 && $this->exportstatus<3 ) return ;
+            C::t('pichome_vapp')->update($this->appid,array('state'=>1,'donum'=>0,'percent'=>0));
+            $filedir = $this->eagledir . '/' . $this->path.'/images';
+            if ($dch = opendir($filedir)) {
+                while (($file = readdir($dch)) != false) {
+                    if ($file != '.' && $file != '..') {
+                        $filePath = $filedir . '/' . $file;
+                        if (is_dir($filePath) && file_exists($filePath.'/metadata.json')) {
+                            $this->filenum++;
                         }
-                        else {
-                            //查询原数据中的属性信息
-                            $attrdata = C::t('pichome_resources_attr')->fetch($rid);
-                            //信息表数据记录
-                            $setarr = [];
-                            //检查标签变化
-                            //标签数据
-                            $tags = $filemetadata['tags'];
-                            //现有标签
-                            $tagids = [];
-                            //原有标签
-                            $oldtids=[];
-                            if ($attrdata['tag']) $oldtids = explode(',', $attrdata['tag']);
-                            if (!empty($tags)) {
-                                $tagids = $this->addtag($tags);
-                                $setarr['tag'] = implode(',',$tagids);
-                            }
-                            $addtags = array_diff($tagids,$oldtids);
-                            $deltags = array_diff($oldtids,$tagids);
-    
-                            if(!empty($deltags))C::t('pichome_resourcestag')->delete_by_ridtid($rid,$deltags);
-                            foreach($addtags as $tid){
-                                $rtag = ['appid' => $this->appid, 'rid' => $rid, 'tid' => $tid];
-                                C::t('pichome_resourcestag')->insert($rtag);
-                            }
-                            
-                            //检查标注变化
-                            if (isset($filemetadata['comments'])) {
-                                $cids = [];
-                                foreach ($filemetadata['comments'] as $commentval) {
-                                    $tcommentval['id'] = $commentval['id'] . $this->appid;
-                                    $tentval['appid'] = $this->appid;
-                                    $tcommentval['rid'] = $rid;
-                                    $tcommentval['x'] = number_format($commentval['x'], 2);
-                                    $tcommentval['y'] = number_format($commentval['y'], 2);
-                                    C::t('pichome_comments')->insert($tcommentval);
-                                    $cids[] = $tcommentval['id'];
-                                }
-                                $ocids = C::t('pichome_comments')->fetch_id_by_rid($rid);
-                                $delcids = array_diff($ocids, $cids);
-                                if (!empty($delcids)) C::t('pichome_comments')->delete($delcids);
-                            } else {
-                                C::t('pichome_comments')->delete_by_rid($rid);
-                            }
-                            
-                            $filename = $filemetadata['name'] . '.' . $filemetadata['ext'];
-                            //检查reources数据变化
-                            $resourcesarr = [
-                                'name' => $filename,
-                                'dateline' => $v,
-                                'isdelete' => $filemetadata['isDeleted'],
-                                'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0
-                            ];
-                            $file = str_replace(BS,'/',$file);
-                            $attachment = str_replace($this->eagledir .'/', '', $file);
-                            $path = str_replace(BS, '/', $attachment);
-                            if (!file_exists($thumbfile)) {
-                                $thumb = (file_exists($filemetadata['thumbfile'])) ? 1 : 0;
-                            } else {
-                                $thumb = 1;
-                            }
-                            $setarr['path'] = $path;
-                            $resourcesarr['hasthumb'] = $thumb;
-                            $resourcesarr['rid'] = $rid;
-                            C::t('pichome_resources')->insert($resourcesarr);
-                            $rfids = [];
-                            
-                            //检查目录变化
-                            foreach ($filemetadata['folders'] as $fv) {
-                                $fid = $fv . $this->appid;
-                                if (!C::t('pichome_folder')->check_password_byfid($fid)) {
-                                    $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
-                                    
-                                    $rfids[] = C::t('pichome_folderresources')->insert($frsetarr);
-                                } else {
+                    }
+                }
+                closedir($dch);
+            }else{
+                C::t('pichome_vapp')->update($this->appid,array('state'=>0));
+                return array('error' => 'Read Dir Failer');
+            }
+            if ($dh = opendir($filedir)) {
+                while (($file = readdir($dh)) != false) {
+                    if ($file != '.' && $file != '..') {
+                        $filePath = $filedir . '/' . $file;
+                        if (is_dir($filePath) && file_exists($filePath.'/metadata.json')) {
+                            $id = str_replace('.info','',$file);
+                            //组合文件id
+                            $rid = $id . $this->appid;
+                          //文件路径
+                            $tmppath =$filePath;
+                            //文件信息文件路径
+                            $metadatajsonfile = $tmppath . BS . 'metadata.json';
+                           
+                            $data = C::t('pichome_resources')->fetch($rid);
+                            //获取json文件最后修改时间
+                            $lastdate = filemtime($metadatajsonfile);
+                            //查询文件表是否有对应记录
+                            if ($data ) {
+                                //json文件不存在时删除文件，此情形基本不会出现(文件更新时，mtime会对应发生变化)
+                                if (!file_exists($metadatajsonfile)) {
+                                    //删除文件
+                                    C::t('pichome_resources')->delete_by_rid($rid);
                                     continue;
                                 }
-                            }
-                            $orfids = C::t('pichome_folderresources')->fetch_id_by_rid($rid);
-                            $delrfids = array_diff($orfids, $rfids);
-                            C::t('pichome_folderresources')->delete($delrfids);
-                            //尝试更新属性表数据
-                            $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
-                            //描述数据
-                            $setarr['desc'] = $filemetadata['annotation'] ? htmlspecialchars($filemetadata['annotation']) : '';
-                            if ($filemetadata['duration']) $setarr['duration'] = number_format($filemetadata['duration'], 2);
-                            $setarr['rid'] = $rid;
-                            C::t('pichome_resources_attr')->insert($setarr);
-                            
-                        }
+                                elseif ($force || ($data['lastdate']< $lastdate)) {//当文件最后更新时间小于eagle时间时，需处理标签，颜色，目录等信息
+                                    //获取文件信息数据
+                                    $metadata = file_get_contents($metadatajsonfile);
+                                    $filemetadata = json_decode($metadata, true);
+                                    $p = new Encode_Core();
+                                    $charset = $p->get_encoding($tmppath);
+                                    if(CHARSET != $charset)$filemetadataname= diconv($filemetadata['name'],CHARSET,$charset);
+                                    //文件名称
+                                    $filename = $filemetadataname . '.' . $filemetadata['ext'];
+                                    //缩略图名称
+                                    $thumbname = $filemetadataname . '_thumbnail.png';
+                                    //文件路径
+                                    $file = $tmppath . BS . $filename;
+                                    //缩略图路径
+                                    $thumbfile = $tmppath . BS . $thumbname;
+                                    //检查md5是否发生变化
+                                    $filemd5 = md5_file($file);
+                                    //如果md5发生变化则删除原数据，重新导入
+                                    if ($data['md5'] != $filemd5) {
+                                        C::t('pichome_resources')->delete_by_rid($rid);
+                                        $filemetadata['filename'] = $filemetadata['name'];
+                                        $filemetadata['file'] = $file;
+                                        $filemetadata['thumbfile'] = $thumbfile;
+                                        $filemetadata['md5'] = $filemd5;
+                                        $filemetadata['rid'] = $rid;
+                                        $filemetadata['dateline'] = $filemetadata['mtime'];
+                                        $filemetadata['lastdate'] = $lastdate;
+                                        $this->exportfile($filemetadata);
+                                    }
+                                    else {
+                                        //查询原数据中的属性信息
+                                        $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+                                        //信息表数据记录
+                                        $setarr = [];
+                                        //检查标签变化
+                                        //标签数据
+                                        $tags = $filemetadata['tags'];
+                                        //现有标签
+                                        $tagids = [];
+                                        //原有标签
+                                        $oldtids=[];
+                                        if ($attrdata['tag']) $oldtids = explode(',', $attrdata['tag']);
+                                    
+                                        if (!empty($tags)) {
+                                            $tagids = $this->addtag($tags);
+                                            $setarr['tag'] = implode(',',$tagids);
+                                        }
+                                        $addtags = array_diff($tagids,$oldtids);
+                                        $deltags = array_diff($oldtids,$tagids);
+                                        
+                                        if(!empty($deltags))C::t('pichome_resourcestag')->delete_by_ridtid($rid,$deltags);
+                                        foreach($addtags as $tid){
+                                            $rtag = ['appid' => $this->appid, 'rid' => $rid, 'tid' => $tid];
+                                            C::t('pichome_resourcestag')->insert($rtag);
+                                        }
+                
+                                        //检查标注变化
+                                        if (isset($filemetadata['comments'])) {
+                                            $cids = [];
+                                            foreach ($filemetadata['comments'] as $commentval) {
+                                                $tcommentval['id'] = $commentval['id'] . $this->appid;
+                                                $tentval['appid'] = $this->appid;
+                                                $tcommentval['rid'] = $rid;
+                                                $tcommentval['x'] = number_format($commentval['x'], 2);
+                                                $tcommentval['y'] = number_format($commentval['y'], 2);
+                                                try{
+                                                    C::t('pichome_comments')->insert($tcommentval);
+                                                }catch (Exception $e){
+                                                
+                                                }
+                                                $cids[] = $tcommentval['id'];
+                                            }
+                                            $ocids = C::t('pichome_comments')->fetch_id_by_rid($rid);
+                                            $delcids = array_diff($ocids, $cids);
+                                            if (!empty($delcids)) C::t('pichome_comments')->delete($delcids);
+                                        } else {
+                                            C::t('pichome_comments')->delete_by_rid($rid);
+                                        }
+                
+                                        $filename = $filemetadata['name'] . '.' . $filemetadata['ext'];
+                                        //检查reources数据变化
+                                        $resourcesarr = [
+                                            'name' => $filename,
+                                            'dateline' => $filemetadata['lastModified'],
+                                            'isdelete' => $filemetadata['isDeleted'],
+                                            'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0,
+                                            'lastdate'=>$lastdate
+                                        ];
+                                        $file = str_replace(BS,'/',$file);
+                                        $attachment = str_replace($this->eagledir .'/', '', $file);
+                                        $path = str_replace(BS, '/', $attachment);
+                                        if (!file_exists($thumbfile)) {
+                                            $thumb = (file_exists($filemetadata['thumbfile'])) ? 1 : 0;
+                                        } else {
+                                            $thumb = 1;
+                                        }
+                                        $setarr['path'] = $path;
+                                        $resourcesarr['hasthumb'] = $thumb;
+                                        $resourcesarr['rid'] = $rid;
+                                        C::t('pichome_resources')->insert($resourcesarr);
+                                        $rfids = [];
+                
+                                        //检查目录变化
+                                        foreach ($filemetadata['folders'] as $fv) {
+                                            $fid = $fv . $this->appid;
+                                            if (!C::t('pichome_folder')->check_password_byfid($fid)) {
+                                                $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
                         
+                                                $rfids[] = C::t('pichome_folderresources')->insert($frsetarr);
+                                            } else {
+                                                continue;
+                                            }
+                                        }
+                                        $orfids = C::t('pichome_folderresources')->fetch_id_by_rid($rid);
+                                        $delrfids = array_diff($orfids, $rfids);
+                                        C::t('pichome_folderresources')->delete($delrfids);
+                                        //尝试更新属性表数据
+                                        $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
+                                        //描述数据
+                                        $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
+                                        if ($filemetadata['duration']) $setarr['duration'] = number_format($filemetadata['duration'], 2);
+                                        $setarr['rid'] = $rid;
+                                        C::t('pichome_resources_attr')->insert($setarr);
+                                    }
+                                }
+                                else{
+                                    $this->donum += 1;
+                                    $percent = round(($this->donum/$this->filenum)*100);
+                                    //防止因获取文件总个数不准确百分比溢出
+                                    $percent = ($percent > 100) ? 100:$percent;
+                                    //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
+                                    C::t('pichome_vapp')->update($this->appid,array('lastid'=>$id,'percent'=>$percent,'donum'=>$this->donum,'state'=>1));
+                                   continue;
+                                }
+                            }
+                            else {//如果没有记录，则为新导入文件
+                                if (!file_exists($metadatajsonfile)) {
+                                    $this->filenum -= 1;
+                                    continue;
+                                }
+                                //获取文件信息数据
+                                $metadata = file_get_contents($metadatajsonfile);
+                                $filemetadata = json_decode($metadata, true);
+                                //文件目录信息
+                                $filefolders = $filemetadata['folders'];
+                                //如果目录含有密码则不导入数据直接跳过
+                                $haspassword = C::t('pichome_folder')->check_haspasswrod($filefolders, $this->appid);
+        
+                                if ($haspassword) continue;
+                                $p = new Encode_Core();
+                                $charset = $p->get_encoding($tmppath);
+                                if(CHARSET != $charset)$filemetadataname= diconv($filemetadata['name'],CHARSET,$charset);
+                                $filename =$filemetadataname . '.' . $filemetadata['ext'];
+                                $thumbname = $filemetadataname . '_thumbnail.png';
+        
+                                $file = $tmppath . BS . $filename;
+                                $thumbfile = $tmppath . BS . $thumbname;
+                                $filemd5 = md5_file($file);
+                                $filemetadata['filename'] = $filemetadata['name'];
+                                $filemetadata['file'] = $file;
+                                $filemetadata['thumbfile'] = $thumbfile;
+                                $filemetadata['md5'] = $filemd5;
+                                $filemetadata['rid'] = $rid;
+                                $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime']:$filemetadata['modificationTime'];
+                                $filemetadata['btime'] = $filemetadata['btime'] ? $filemetadata['btime']:$filemetadata['modificationTime'];
+                                $filemetadata['dateline'] = $filemetadata['lastModified'];
+                                $filemetadata['lastdate'] = $lastdate;
+                                $this->exportfile($filemetadata);
+                            }
+                            $this->donum += 1;
+                            $percent = round(($this->donum/$this->filenum)*100);
+                            //防止因获取文件总个数不准确百分比溢出
+                            $percent = ($percent > 100) ? 100:$percent;
+                            //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
+                           C::t('pichome_vapp')->update($this->appid,array('lastid'=>$id,'percent'=>$percent,'donum'=>$this->donum,'state'=>1));
+                        }
                     }
                 }
-                else {//如果没有记录，则为新导入文件
-                    if (!file_exists($metadatajsonfile)) {
-                        $this->filenum -= 1;
-                        continue;
-                    }
-                    //获取文件信息数据
-                    $metadata = file_get_contents($metadatajsonfile);
-                    $filemetadata = json_decode($metadata, true);
-                    //文件目录信息
-                    $filefolders = $filemetadata['folders'];
-                    //如果目录含有密码则不导入数据直接跳过
-                    $haspassword = C::t('pichome_folder')->check_haspasswrod($filefolders, $this->appid);
-                    
-                    if ($haspassword) continue;
-                    $p = new Encode_Core();
-                    $charset = $p->get_encoding($tmppath);
-                    if(CHARSET != $charset)$filemetadataname= diconv($filemetadata['name'],CHARSET,$charset);
-                    $filename =$filemetadataname . '.' . $filemetadata['ext'];
-                    $thumbname = $filemetadataname . '_thumbnail.png';
-                    
-                    //echo $charset;die;
-                    $file = $tmppath . BS . $filename;
-                    $thumbfile = $tmppath . BS . $thumbname;
-                    $filemd5 = md5_file($file);
-                    $filemetadata['filename'] = $filemetadata['name'];
-                    $filemetadata['file'] = $file;
-                    $filemetadata['thumbfile'] = $thumbfile;
-                    $filemetadata['md5'] = $filemd5;
-                    $filemetadata['rid'] = $rid;
-                    $filemetadata['dateline'] = $v;
-                    
-                    $this->exportfile($filemetadata);
-                }
+                closedir($dh);
+            }else{
+                C::t('pichome_vapp')->update($this->appid,array('state'=>0));
+                return array('error' => 'Read Dir Failer');
             }
-            //更新存储json文件
-            $this->createmjson($mjsonfile,$mjsonpath);
-            C::t('pichome_vapp')->update($this->appid,array('lastid'=>'','percent'=>100,'filenum'=>$this->filenum,'state'=>2));
+            //更改状态为校验
+            C::t('pichome_vapp')->update($this->appid,array('lastid'=>'','percent'=>100,'filenum'=>$this->filenum,'donum'=>0,'state'=>2));
+            $total = DB::result_first("select count(rid) from %t where appid = %s ",array('pichome_resources',$this->appid));
+            //校验文件
+            $this->check_file($total);
             return array('success' => true);
             
         }
-        
+        public function check_file($total){
+            
+            $limitsql = ($this->checkpage -1)*$this->checklimit.','.$this->checklimit;
+            $delrids = [];
+            $data = DB::fetch_all("select rid from %t where appid = %s order by lastdate asc limit $limitsql ",array('pichome_resources',$this->appid));
+            if(empty($data))  {
+                C::t('pichome_vapp')->update($this->appid,array('percent'=>100,'state'=>3));
+                return true;
+            }
+            foreach ( $data as $v){
+                $id = str_replace($this->appid,'',$v['rid']);
+                $filejson = $this->eagledir . '/' . $this->path.'/images/'.$id.'.info/metadata.json';
+                if(!file_exists($filejson)){
+                    $delrids[] = $v['rid'];
+                }
+                $this->checknum += 1;
+                $percent = round(( $this->checknum/$total)*100);
+                //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
+                C::t('pichome_vapp')->update($this->appid,array('percent'=>$percent,'state'=>2));
+            }
+            if(!empty($delrids)){
+                //如果有需要删除的，删除后，则重新查询上一页数据
+                C::t('pichome_resources')->delete_by_rid($delrids);
+                $ctotal = DB::result_first("select count(rid) from %t where appid = %s ",array('pichome_resources',$this->appid));
+                if($ctotal)$this->check_file($total);
+            }else{
+                $this->checkpage += 1;
+                $this->check_file($total);
+            }
+        }
         public function exportfile($filemetadata)
         {
             $rid = $filemetadata['rid'];
@@ -470,7 +491,6 @@
             ];
             //插入文件表数据
             if (C::t('pichome_resources')->insert($resourcesarr)) {
-                
                 //插入目录关联表数据
                 foreach ($filemetadata['folders'] as $fv) {
                     $fid = $fv . $this->appid;
@@ -517,12 +537,14 @@
                 //链接数据
                 $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
                 //描述数据
-                $setarr['desc'] = $filemetadata['annotation'] ? htmlspecialchars($filemetadata['annotation']) : '';
+                $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
                 $setarr['rid'] = $rid;
                 $setarr['appid'] = $this->appid;
                 $setarr['path'] = $path;
                 //插入数据
                 C::t('pichome_resources_attr')->insert($setarr);
+            }else{
+                runlog('eagleexport',$rid);
             }
         }
         

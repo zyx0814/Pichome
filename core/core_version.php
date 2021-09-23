@@ -11,8 +11,8 @@ if(!defined('IN_OAOOA')) {
 }
 
 if(!defined('CORE_VERSION')) {
-	define('CORE_VERSION', 'beta1');
+	define('CORE_VERSION', 'beta1.1');
 	define('CORE_VERSION_LEVEL', 'Pichome');
-	define('CORE_RELEASE', '20210820');
-	define('CORE_FIXBUG' , '01000000');
+	define('CORE_RELEASE', '20210923');
+	define('CORE_FIXBUG' , '01100000');
 }

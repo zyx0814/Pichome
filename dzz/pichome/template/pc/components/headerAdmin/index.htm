@@ -1,0 +1,121 @@
+<template id="PageHeader">
+	<div>
+		<div id="top_header">
+			<div class="header-content">
+				<a class="h-left" href="{MOD_URL}">
+					<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+					<span class="text">$_G['setting'][sitename]</span>
+				</a>
+				<div class="h-center">
+				</div>
+				<div class="h-right">
+					<div class="r-option">
+						<el-dropdown v-cloak trigger="click" @command="handleavatar">
+							<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
+							<el-dropdown-menu slot="dropdown" style="width: 165px;">
+								<el-dropdown-item command="personal">个人设置</el-dropdown-item>
+								<el-dropdown-item command="help">帮助文档</el-dropdown-item>
+								<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+								<el-divider></el-divider>
+								<el-dropdown-item command="setting">站点设置</el-dropdown-item>
+								<el-dropdown-item command="library">库设置</el-dropdown-item>
+								<el-dropdown-item command="system">系统工具</el-dropdown-item>
+								<el-divider></el-divider>
+								<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
+								<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+							</el-dropdown-menu>
+						</el-dropdown>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script type="text/javascript">
+	Vue.component('page-header', {
+		template: '#PageHeader',
+		data: function() {
+			return {
+			}
+		},
+		computed:{
+
+		},
+		created() {
+		},
+		methods:{
+			handleavatar(type) {//头像点击
+				switch(type){
+					case 'personal':
+						window.location.href = MOD_URL + '&op=user&do=personal';
+					break;
+					case 'help':
+						window.open('https://www.yuque.com/pichome');
+					break;
+					case 'problem':
+						window.open('https://support.qq.com/products/340252');
+					break;
+					case 'setting':
+						window.location.href = MOD_URL + '&op=admin&do=basic';
+					break;
+					case 'library':
+						window.location.href = MOD_URL + '&op=library';
+					break;
+					case 'about':
+						this.$alert(
+						`<div class="aboutlogo">
+							<img src="`+MOD_PATH+`/image/phlogo.png" alt="">
+						</div>
+						<div class="aboutmessage">
+							<div class="aboutlist">
+								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版本信息：</span><span class="mes">$_G[setting][version] <a class="update" href="javascript:;">检查更新</a></span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>
+							</div>
+						</div>`,
+						'',
+						{
+							customClass:'aboutPichome',
+							showClose:false,
+							showConfirmButton:false,
+							dangerouslyUseHTMLString: true,
+							closeOnClickModal:true
+						});
+					break;
+					case 'OutLogin':
+						this.$confirm('您确定要注销登录?', '提示', {
+						          confirmButtonText: '确定',
+						          cancelButtonText: '取消',
+						          type: 'warning'
+						        }).then(() => {
+						         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
+						         		window.location.reload();
+						         	});
+						        }).catch(() => {
+						                   
+						        });
+					break;
+					case 'system':
+						window.open(SITEURL+'admin.php?mod=system');
+					break;
+				}
+				
+			},
+		},
+		mounted() {
+
+		},
+		components:{
+
+		}
+	});
+
+</script>

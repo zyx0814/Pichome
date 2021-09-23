@@ -11,6 +11,7 @@
     if (!defined('IN_OAOOA')) {//所有的php文件必须加上此句，防止被外部调用
         exit('Access Denied');
     }
+    $ismobile = helper_browser::ismobile();
     
     $overt = getglobal('setting/overt');
     if(!$overt && !$overt = C::t('setting')->fetch('overt')){
@@ -55,4 +56,9 @@
     }
     
     $pagesetting = json_encode($pagesetting);
-    include template('page/index');
+	if ($ismobile) {
+	    include template('mobile/page/index');
+	} else {
+		include template('pc/page/index');
+	}
+    

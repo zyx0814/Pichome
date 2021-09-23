@@ -28,4 +28,4 @@ foreach($resourcesdata['foldernames'] as $fval){
 $resourcesdata['foldernames'] = json_encode($foldernames);
 
 $theme = GetThemeColor();
-include template('page/share');
+include template('pc/page/share');

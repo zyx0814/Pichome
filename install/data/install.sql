@@ -1004,6 +1004,7 @@ CREATE TABLE `dzz_pichome_resources` (
   `isdelete` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否为删除状态',
   `btime` bigint(13) UNSIGNED NOT NULL COMMENT '添加时间',
   `md5` char(32) NOT NULL DEFAULT '' COMMENT '文件md5值',
+  `lastdate` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '最后更改时间',
   PRIMARY KEY (`rid`),
   KEY `appid` (`appid`),
   KEY `appid_2` (`appid`,`isdelete`) USING BTREE
@@ -1083,21 +1084,22 @@ CREATE TABLE `dzz_pichome_tagrelation` (
 DROP TABLE IF EXISTS `dzz_pichome_vapp`;
 CREATE TABLE `dzz_pichome_vapp` (
   `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
-  `uid` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户id',
+  `uid` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '用户id',
   `username` char(30) NOT NULL DEFAULT '' COMMENT '用户名',
   `appname` varchar(255) NOT NULL DEFAULT '',
-  `personal` tinyint(1) UNSIGNED NOT NULL DEFAULT '1' COMMENT '0公开，1私有',
+  `personal` tinyint(1) unsigned NOT NULL DEFAULT '1' COMMENT '0公开，1私有',
   `path` blob NOT NULL COMMENT '对应目录路径',
-  `dateline` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '更新时间',
+  `dateline` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '更新时间',
   `extra` text COMMENT '拓展数据',
-  `perm` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '权限值',
- `filenum` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '文件个数',
+  `perm` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '权限值',
+  `filenum` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '文件个数',
   `lastid` char(13) DEFAULT '' COMMENT '最后执行位置id',
   `percent` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '导入百分比',
-  `state` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '0，未导入，1导入中，2导入完成',
+  `state` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '0，未导入，1导入中，2检校，3完成',
   `filter` text COMMENT '筛选项',
   `share` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '分享是否开放',
   `download` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '是否开放下载',
+  `donum` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '已导入文件数',
   PRIMARY KEY (`appid`)
 ) ENGINE=MyISAM;
 
