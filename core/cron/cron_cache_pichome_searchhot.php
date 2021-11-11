@@ -2,7 +2,7 @@
     if(!defined('IN_OAOOA')) {
         exit('Access Denied');
     }
-    gnore_user_abort(true);
+    ignore_user_abort(true);
     @set_time_limit(0);
     $percachename = 'pichome_searchhot';
     $alldata = C::t('pichome_searchrecent')->fetch_hotkeyword_by_appid();

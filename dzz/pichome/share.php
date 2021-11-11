@@ -26,6 +26,11 @@ foreach($resourcesdata['foldernames'] as $fval){
 	$foldernames[] = $fval;
 }
 $resourcesdata['foldernames'] = json_encode($foldernames);
-
 $theme = GetThemeColor();
-include template('pc/page/share');
+$ismobile = helper_browser::ismobile();
+
+if (($ismobile)) {
+	include template('mobile/page/share');
+} else {
+	include template('pc/page/share');
+}

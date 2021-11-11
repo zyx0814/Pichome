@@ -384,6 +384,14 @@
 	background: var(--header-textHover);
 	color: var(--header-active);
 }
+.screen-box .field-single .screen-show-val{
+	display: inline-block;
+	max-width: 160px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+}
 .screen-box .field-single .icon {
 	vertical-align: bottom;
 	font-size: 17px;
@@ -928,7 +936,6 @@
 	height: 100%;
 	cursor: zoom-in;
 }
-
 .each-piece .backg.border {
 	border: 1px solid var(--border-color-base);
 	background-color: var(--content-imgbg);
@@ -1377,6 +1384,11 @@
     margin-left: auto;
     margin-right: auto;
     z-index: 10;
+}
+.img-loading.center{
+    top: 0;
+    bottom: 0;
+    margin: auto;
 }
 .img-loading span{
 	margin-right: 8px;

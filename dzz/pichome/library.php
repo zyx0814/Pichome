@@ -21,6 +21,11 @@
                 $data['path'] = urlencode($data['path']);
                 $data['filter'] = unserialize($data['filter']);
                 $catdata = C::t('pichome_taggroup')->fetch_by_appid($appid);
+                if(($data['state'] ==1))  {
+                    dfsockopen(getglobal('localurl'). 'index.php?mod=pichome&op=exportfile&appid='.$appid,0, '', '', false, '', 1);
+                }elseif($data['state'] == 2){
+                    dfsockopen(getglobal('localurl'). 'index.php?mod=pichome&op=exportfilecheck&appid='.$appid,0, '', '', false, '', 1);
+                }
                 exit(json_encode(array('success' => true, 'data' => $data,'catdata'=>$catdata)));
             }else{
                 exit(json_encode(array('error' => true)));

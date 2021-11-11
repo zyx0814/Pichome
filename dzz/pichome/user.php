@@ -8,6 +8,7 @@
     $do = isset($_GET['do']) ? trim($_GET['do']) : '';
     require_once libfile('function/user', '', 'user');
     $user = C::t('user')->get_user_by_uid($uid);
+	$ismobile = helper_browser::ismobile();
   if(empty($user['avatarstatus']) && dzz_check_avatar($_G['uid'], 'middle')) {
         C::t('user')->update($_G['uid'], array('avatarstatus'=>'1'));
     }
@@ -17,11 +18,17 @@
             $user = C::t('user')->fetch_by_uid($uid);
             if (!$uid) exit(json_encode(array('error' => true, 'msg' => '用户不存在')));
             if(isset($_GET['imgpath'])){
-                $base64img = base64EncodeImage($_GET['imgpath']);
-                if(upbase64($base64img,$uid)){
-                    @unlink($_GET['imgpath']);
-                }
+				if($ismobile){
+					upbase64(trim($_GET['imgpath']),$uid);
+				}else{
+					$base64img = base64EncodeImage($_GET['imgpath']);
+					if(upbase64($base64img,$uid)){
+					    @unlink($_GET['imgpath']);
+					}
+				}
+                
             }
+
             //用户名验证
             $username = trim($_GET['username']);
             if (empty($username)) {
@@ -112,7 +119,13 @@
             $uid = getglobal('uid');
             $userdata = C::t('user')->fetch($uid);
             $theme = GetThemeColor();
-            include template('pc/page/adminPersonal');
+			
+			if ($ismobile) {
+			    include template('mobile/page/personal');
+			} else {
+				include template('pc/page/adminPersonal');
+			}
+            
         }
     }
     elseif ($do == 'uploadimg') {//上传用户头像
@@ -172,13 +185,12 @@
     }
     function upBase64($base64Data, $uid)
     {
-        $img = base64_decode(str_replace('data:image/png;base64,', '', $base64Data));
+        $img = base64_decode(str_replace(array('data:image/png;base64,','data:image/jpeg;base64,','data:image/gif;base64,','data:image/jpg;base64,'), '', $base64Data));
         $temp = getglobal('setting/attachdir') . 'cache/' . random(5) . '.png';
         //移动文件
         if (!(file_put_contents($temp, $img))) { //移动失败
             return false;
         } else { //移动成功,生成3种尺寸头像
-            
             $home = get_home($uid);
             if (!is_dir(DZZ_ROOT . './data/avatar/' . $home)) {
                 set_home($uid, DZZ_ROOT . './data/avatar/');

@@ -194,40 +194,66 @@ var headerMethods = {
 		if (!value) return true;
 		return data.fname.indexOf(value) !== -1;
 	},
+	
 	handleCheck(Node,data){//分类点击操作
-		if(data.checkedKeys && data.checkedKeys.length){
+		var self = this;
+		var status = true;
+	
+		if(data.checkedKeys.indexOf(Node.fid)>-1){
+			status = true;
+		}else{
+			status = false;
+		}
+		if(Node.children){
+			this.classify.childFids = [];
+			this.handleClassifyForEach(Node.children);
+			for(var f in this.classify.childFids){
+				self.$refs.tree[0].setChecked(this.classify.childFids[f],status);
+			}
+		}
+		var itemNode = self.$refs.tree[0].getCheckedNodes();
+		var checkedFids = [];
+		var checkedTexts = [];
+		if(itemNode.length){
+			for(var i in itemNode){
+				checkedFids.push(itemNode[i].fid);
+				checkedTexts.push(itemNode[i].fname);
+			}
 			var str = {
 				key:'classify',
-				val:data.checkedKeys.join(',')
+				val:checkedFids.join(',')
 			};
-			var texts = [];
-			for(var i in data.checkedNodes){
-				texts.push(data.checkedNodes[i].fname);
-			}
-			this.classify.text = texts.join(',');
+			this.classify.text = checkedTexts.join(',');
 			VuexStore.commit('SetParams', str);
 			VuexStore.dispatch('handleHash');
 		}else{
 			this.handleClickDelete('classify');
 		}
-		
-		// if(data.checkedKeys.length && data.checkedKeys.indexOf(Node.fid)>-1){
-		// 	this.Addkeyword(this.GetAppid,Node.fname,2);
-		// }
+		if(data.checkedKeys.length && data.checkedKeys.indexOf(Node.fid)>-1){
+			this.Addkeyword(this.GetAppid,Node.fname,2);
+		}
 		
 		
 	},
-	handleShowclassify(){//分类打开时设置默认选中项
-		var self = this;
-		if(this.GetParams.classify){
-			self.$refs.tree[0].setCheckedKeys(this.GetParams.classify.split(','));
+	handleClassifyForEach(item){//分类寻找子节点
+		for(var i in item){
+			this.classify.childFids.push(item[i].fid);
+			if(item[i].children){
+				this.handleClassifyForEach(item[i].children);
+			}
 		}
+	},
+	handleShowafteclassify(){//分类打开时设置默认选中项
+		var self = this;
+		self.classify.loading=true
+		self.classify.DefaultFids = this.GetParams.classify.split(',');
 		var params = {};
 		if(this.GetAppid){
 			params['appid'] = this.GetAppid;
 		}
 		jQuery.post(MOD_URL+'&op=ajax&operation=getsearchfolder',params,function(data){
 			self.classify.folderdatanum = data.folderdatanum;
+			self.classify.loading=false;
 		},'json')
 	},
 	handlehotsearchnum(item){//分类点击历史搜索文字
@@ -242,50 +268,6 @@ var headerMethods = {
 		});
 	},
 	
-	// GetHashParams(){
-	// 	var arr = (location.hash || "").replace(/^\?/,'').split("&");
-	// 	var params = {};
-	// 	var appid = '';
-	// 	for(var i=0; i<arr.length; i++){
-	// 		var data = arr[i].split("=");
-	// 		if(data.length == 2){
-	// 			if(i==0){
-	// 				data[0]=data[0].replace("#","");
-	// 			}
-	// 			switch(data[0]){
-	// 				case 'keyword':
-	// 					this.keyword = decodeURI(data[1]);
-	// 				break;
-	// 				case 'appid':
-	// 					appid = data[1];
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-		
-	// 	if(appid){
-	// 		if(this.librarys && this.librarys.length){
-	// 			var appname = '全部库';
-	// 			for(var i in this.librarys){
-	// 				if(this.librarys[i].appid == appid){
-	// 					appname = this.librarys[i].appname;
-	// 				}
-	// 			}
-	// 			this.librarysName = appname;
-	// 		}else{
-	// 			this.librarysName = '全部库';
-	// 		}
-	// 		VuexStore.dispatch('GetHashParams');
-	// 		this.GetClassify(appid);
-	// 	}else{
-	// 		if(this.librarys && this.librarys.length == 1){
-	// 			VuexStore.commit('SetAppid',this.librarys[0].appid);
-	// 			this.GetClassify(this.librarys[0].appid);
-	// 		}
-	// 		this.librarysName = '全部库';
-	// 		VuexStore.dispatch('GetHashParams');
-	// 	}
-	// },
 	handleavatar(type) {//头像点击
 		switch(type){
 			case 'personal':
@@ -340,11 +322,6 @@ var headerMethods = {
 		}
 		return false;
 	},
-	
-	
-	
-	
-	
 	handleScreenTime(type,val){
 		if(type=='btime'){
 			if(this.btime.btime == val){
@@ -383,18 +360,30 @@ var headerMethods = {
 		}
 	},
 	handleClickLeftTag(fid){//标签左侧点击
-		this.tagData.checkedsFid = fid;
-		window.sessionStorage.setItem("tagfid",fid);
-		if(fid == 'all'){
-			this.tagData.Rightdata = this.tagData.alltagdata.alltagdata;
-		}else{
-			if(this.tagData.alltagdata.catdata && this.tagData.alltagdata.catdata[fid]){
-				this.tagData.Rightdata = this.tagData.alltagdata.catdata[fid].tdatas;
-			}else{
-				this.tagData.Rightdata = [];
-			}
-			
+		var self = this;
+		if(this.tagData.checkedsFid == fid){
+			return false;
 		}
+		$('.scrollbarTag .el-scrollbar__wrap')[0].scrollTop = 0;
+		window.sessionStorage.setItem("tagfid",fid);
+		this.tagData.checkedsFid = fid;
+		this.tagData.alltagdata.catdata[fid].loading = true;
+		this.tagData.alltagdata.catdata[fid].finish = false;
+		this.tagData.alltagdata.catdata[fid].page = 1;
+		var data = this.GetScreenData('tag');
+		var alltagdata = data.alltagdata;
+		var tagval = [];
+		for(var g in alltagdata){
+			tagval.push({
+				num:alltagdata[g].num,
+				tagname:alltagdata[g].tagname,
+				tid:parseInt(g),
+			})
+		}
+		
+		this.tagData.alltagdata.catdata[fid].tdatas = tagval;
+		this.tagData.alltagdata.catdata[fid].loading = false;
+		this.tagData.alltagdata.catdata[fid].finish = data.finish;
 	},
 	handleClickLeftlogic(value){//标签右侧逻辑点击
 		if(this.tagData.checkedsId.length){
@@ -405,25 +394,25 @@ var headerMethods = {
 	},
 	
 	handleClickRightTag(val){//标签右侧点击
-		if(this.tagData.checkedsId.length){
+		if(val.length){
 			var newVal = [];
 			var keyword = '';
-			var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+			var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
 			for(var i in data){
 				var item = data[i];
-				if(this.tagData.checkedsId.indexOf(item.tid)>-1){
+				if(val.indexOf(item.tid)>-1){
 					newVal.push(item.tagname);
 				}
 				if(val==data[i].tid){
 					keyword = item.tagname;
 				}
 			}
-			VuexStore.commit('SetParams',{key:'tag',val:this.tagData.checkedsId.join(',')});
+			VuexStore.commit('SetParams',{key:'tag',val:val.join(',')});
 			VuexStore.commit('SetParams',{key:'tagrelative',val:this.tagData.tagrelative});
 			VuexStore.dispatch('handleHash');
 			this.tagData.checkedstxt = newVal.join(',');
 			var self = this;
-			if(this.tagData.checkedsId.indexOf(val)>-1 && keyword){
+			if(val.indexOf(val)>-1 && keyword){
 				$.post(MOD_URL+'&op=ajax&operation=addsearch',{
 					appid:self.GetAppid,
 					keyword:keyword,
@@ -435,64 +424,81 @@ var headerMethods = {
 		}
 	},
 	handleClickRightGroupTag(cid,tid){//标签右侧点击
-		if(this.modelParamsTag[cid].data.length){
+		var findex = this.tagData.checkedsId.indexOf(tid);
+		if(findex>-1){
+			this.tagData.checkedsId.splice(findex,1);
+		}else{
+			this.tagData.checkedsId.push(tid);
+		}
+		if(this.modelParamsTag[cid].value.length){
 			var arr = [];
 			var texts = [];
-			for(var i in this.modelParamsTag){
-				arr.push.apply(arr,this.modelParamsTag[i].data);
-			}
-			for(var x in this.paramsTag[cid].oldVal){
-				var val = this.paramsTag[cid].oldVal[x];
-				if(this.modelParamsTag[cid].data.indexOf(val.tid)>-1){
+			for(var x in this.modelParamsTag[cid].data){
+				var val = this.modelParamsTag[cid].data[x];
+				if(this.modelParamsTag[cid].value.indexOf(val.tid)>-1){
 					texts.push(val.tagname);
 				}
 			}
 			this.modelParamsTag[cid].text = texts.join(',');
-			VuexStore.commit('SetParams',{key:'tag',val:arr.join(',')});
+			VuexStore.commit('SetParams',{key:'tag',val:this.tagData.checkedsId.join(',')});
 			VuexStore.dispatch('handleHash');
 		}else{
 			this.handleClickDelete('grouptag',cid);
 		}
 	},
 	handleRightTagSearch(val){//标签右侧搜索
-		var tagfid = window.sessionStorage.getItem("tagfid");
-		if(tagfid == 'all'){
-			var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
-		}else{
-			if(this.tagData.alltagdata.catdata && this.tagData.alltagdata.catdata[tagfid]){
-				var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[tagfid].tdatas));
-			}else{
-				var data = [];
-			}
+		$('.scrollbarTag .el-scrollbar__wrap')[0].scrollTop = 0;
+		var tagfid = this.tagData.checkedsFid;
+		this.tagData.alltagdata.catdata[tagfid].finish = false;
+		this.tagData.alltagdata.catdata[tagfid].page = 1;
+		this.tagData.alltagdata.catdata[tagfid].loading = true;
+		var data = this.GetScreenData('tag');
+
+		var alltagdata = data.alltagdata;
+		var tagval = [];
+		for(var g in alltagdata){
+			tagval.push({
+				num:alltagdata[g].num,
+				tagname:alltagdata[g].tagname,
+				tid:parseInt(g),
+			})
 		}
-		if(val){
-			var newObj = [];
-			for(var i in data){
-				var item = data[i];
-				if(item.tagname.indexOf(val)>-1){
-					newObj.push(item);
-				}
-			}
-			this.tagData.Rightdata = newObj;
-		}else{
-			this.tagData.Rightdata = data;
-		}
+		this.tagData.alltagdata.catdata[tagfid].finish = data.finish;
+		this.tagData.alltagdata.catdata[tagfid].tdatas = tagval;
+		this.tagData.alltagdata.catdata[tagfid].loading = false;
 	},
-	handleRightGroupTagSearch(cid){//标签右侧搜索
+	handleRightGroupTagSearch(cid,index){//标签组右侧搜索
 		var keyword =  this.modelParamsTag[cid].search;
-		var data = JSON.parse(JSON.stringify(this.paramsTag[cid].oldVal));
-		if(keyword){
-			var newObj = [];
-			for(var i in data){
-				var item = data[i];
-				if(item.tagname.indexOf(keyword)>-1){
-					newObj.push(item);
-				}
+		this.$refs['scrollbarTag'+cid][0].wrap.scrollTop = 0;
+		this.modelParamsTag[cid].finish = false;
+		this.modelParamsTag[cid].page = 1;
+		this.modelParamsTag[cid].loading = true;
+		var data = this.GetScreenData('grouptag',cid);
+		var str = {
+			index:index,
+			val:true
+		};
+		VuexStore.commit('SetParamsTagDataLoading',str);
+		this.modelParamsTag[cid].data = [];
+		var arr = [];index
+		var alltagdata = JSON.parse(JSON.stringify(data.alltagdata));
+		for(var g in alltagdata){
+			var tstr = {
+				num:alltagdata[g].num,
+				tagname:alltagdata[g].tagname,
+				tid:parseInt(g),
 			}
-			this.paramsTag[cid].newVal = newObj;
-		}else{
-			this.paramsTag[cid].newVal = data;
+			arr.push(tstr);
 		}
+		this.modelParamsTag[cid].data = arr;
+		this.modelParamsTag[cid].finish = data.finish;
+		this.modelParamsTag[cid].loading = false;
+		var str = {
+			index:index,
+			val:false
+		};
+		VuexStore.commit('SetParamsTagDataLoading',str);
+
 	},
 	handleLink(type){//链接改变
 		if(type != this.link.link){
@@ -596,49 +602,108 @@ var headerMethods = {
 		VuexStore.commit('SetParams',{key:'dunit',val:value});
 		VuexStore.dispatch('handleHash');
 	},
-	handleShowPopover(type,cid){//弹窗显示
+	handleShowPopover(type,index){
 		if(type == 'grouptag'){
-			var data = this.GetScreenData(type,cid);
+			var str = {
+				index:index,
+				val:true
+			};
+			VuexStore.commit('SetParamsTagDataLoading',str);
+		}else if(type == 'tag'){
+			this.tagData.loading = true;
 		}else{
-			var data = this.GetScreenData(type);
+			this[type].loading = true;
+		}
+		
+	},
+	handleHideafterPopover(type){
+		if(type == 'tag'){
+			this.tagData.alltagdata.catdata = {};
+		}
+	},
+
+	handleShowafterPopover(type,cid,index,newdata){//弹窗显示
+		var self = this;
+		if(type == 'tag' && !$.isEmptyObject(this.tagData.alltagdata.catdata) && self.tagData.alltagdata.catdata[self.tagData.checkedsFid]){
+			self.tagData.alltagdata.catdata[self.tagData.checkedsFid].page = 1;
+		}
+		if(!newdata){
+			if(type == 'grouptag'){
+				self.modelParamsTag[cid].page = 1;
+				var data = this.GetScreenData(type,cid);
+			}else{
+				var data = this.GetScreenData(type);
+			}
+		}else{
+			var data = newdata;
+		}
+		if(!data){
+			if(this.$refs.ScreenPopoverRef && this.$refs.ScreenPopoverRef.length){
+				for(var s in this.$refs.ScreenPopoverRef){
+					if(this.$refs.ScreenPopoverRef[s].showPopper){
+						this.$refs.ScreenPopoverRef[s].showPopper = false;
+					}
+				}
+			}
+			this.$message.error('获取数据失败');
+			return false;
 		}
 		switch(type){
 			case 'grouptag'://标签弹窗显示
-				if(this.paramsTag[cid]){
-					this.paramsTag[cid] = [];
+				if(this.modelParamsTag[cid]){
+					this.modelParamsTag[cid].data = [];
 					var arr = [];
-					var arr1 = [];
-					for(var i in data){
-						arr.push(data[i]);
-						arr1.push(data[i]);
+					var alltagdata = JSON.parse(JSON.stringify(data.alltagdata));
+					for(var g in alltagdata){
+						var tstr = {
+							num:alltagdata[g].num,
+							tagname:alltagdata[g].tagname,
+							tid:parseInt(g),
+						}
+						arr.push(tstr);
 					}
-					this.paramsTag[cid].newVal = arr;
-					this.paramsTag[cid].oldVal = arr1;
+					this.modelParamsTag[cid].data = arr;
+					this.modelParamsTag[cid].finish = data.finish;
 				}
 			break;
 			case 'tag'://标签弹窗显示
 				var alltagdata = JSON.parse(JSON.stringify(data.alltagdata));
 				var catdata = JSON.parse(JSON.stringify(data.catdata));
-				this.tagData.alltagdata = {
-					alltagdata:alltagdata,
-					catdata:catdata
+				var fcatdata = {};
+				var tagval = [];
+				for(var g in alltagdata){
+					tagval.push({
+						num:alltagdata[g].num,
+						tagname:alltagdata[g].tagname,
+						tid:parseInt(g),
+					})
+				}
+				fcatdata['all'] = {
+					catname:'全部',
+					num :'',
+					page:1,
+					loading:true,
+					valloading:false,
+					finish:self.tagData.checkedsFid == 'all'?data.finish:false,
+					tdatas:self.tagData.checkedsFid == 'all'?tagval:[],
 				};
-				if(this.GetAppid){
-					var tagfid = window.sessionStorage.getItem("tagfid");
-					if(tagfid){
-						if(tagfid == 'all'){
-							this.tagData.Rightdata = alltagdata;
-						}else{
-							if(catdata && catdata[tagfid]){
-								this.tagData.Rightdata = catdata[tagfid].tdatas;
-							}else{
-								this.tagData.Rightdata = [];
-							}
+				if(catdata){
+					for(var t in catdata){
+						fcatdata[catdata[t].cid]= {
+							catname:catdata[t].catname,
+							num :catdata[t].num,
+							page:1,
+							loading:true,
+							valloading:false,
+							finish:self.tagData.checkedsFid == catdata[t].cid?data.finish:false,
+							tdatas: self.tagData.checkedsFid == catdata[t].cid?tagval:[],
 						}
 					}
-				}else{
-					this.tagData.Rightdata = alltagdata;
+					this.GetScreenDatanum();
 				}
+				this.tagData.alltagdata.catdata = fcatdata;
+				self.tagData.alltagdata.catdata[self.tagData.checkedsFid].loading = false;
+				this.handleScrollbarTag();
 			break;
 			case 'ext'://类型弹窗显示
 				if(data){
@@ -696,6 +761,73 @@ var headerMethods = {
 				}
 			break;
 		}
+		if(!newdata){
+			if(type == 'grouptag'){
+				var str = {
+					index:index,
+					val:false
+				};
+				VuexStore.commit('SetParamsTagDataLoading',str);
+				this.handleScrollbarTag(cid);
+			}else if(type == 'tag'){
+				this.tagData.loading = false;
+			}else{
+				this[type].loading = false;
+			}
+		}
+		
+	},
+	handleScrollbarTag(cid){
+		var self = this;
+		if(cid){
+			$(this.$refs['scrollbarTag'+cid][0].wrap).unbind('scroll');
+			$(this.$refs['scrollbarTag'+cid][0].wrap).bind('scroll',function(){
+				var loading = self.modelParamsTag[cid].loading;
+				var finish =  self.modelParamsTag[cid].finish;
+				if(!finish && !loading && this.scrollHeight-100 < $(this).scrollTop()+this.clientHeight){
+					self.modelParamsTag[cid].loading = true;
+					self.modelParamsTag[cid].page += 1;
+					var json = self.GetScreenData('grouptag',cid);
+					var alltagdata = JSON.parse(JSON.stringify(json.alltagdata));
+					for(var g in alltagdata){
+						self.modelParamsTag[cid].data.push({
+							num:alltagdata[g].num,
+							tagname:alltagdata[g].tagname,
+							tid:parseInt(g),
+						})
+					}
+					self.modelParamsTag[cid].loading = false;
+					self.modelParamsTag[cid].finish = json.finish;
+					
+				}
+			});
+		}else{
+			if(this.$refs.scrollbarTag && this.$refs.scrollbarTag.length){
+				$('.scrollbarTag .el-scrollbar__wrap')[0].scrollTop = 0;
+				$('.scrollbarTag .el-scrollbar__wrap').unbind('scroll');
+				$('.scrollbarTag .el-scrollbar__wrap').bind('scroll',function(){
+					var valloading = self.tagData.alltagdata.catdata[self.tagData.checkedsFid].valloading;
+					var finish = self.tagData.alltagdata.catdata[self.tagData.checkedsFid].finish;
+					if(!finish && !valloading && this.scrollHeight-100 < $(this).scrollTop()+this.clientHeight){
+						self.tagData.alltagdata.catdata[self.tagData.checkedsFid].valloading = true;
+						self.tagData.alltagdata.catdata[self.tagData.checkedsFid].page += 1;
+						var json = self.GetScreenData('tag');
+						var alltagdata = JSON.parse(JSON.stringify(json.alltagdata));
+						for(var g in alltagdata){
+							self.tagData.alltagdata.catdata[self.tagData.checkedsFid].tdatas.push({
+								num:alltagdata[g].num,
+								tagname:alltagdata[g].tagname,
+								tid:parseInt(g),
+							})
+						}
+						self.tagData.alltagdata.catdata[self.tagData.checkedsFid].valloading = false;
+						self.tagData.alltagdata.catdata[self.tagData.checkedsFid].finish = json.finish;
+						
+					}
+				});
+			}
+		}
+		
 	},
 	handleClickDelete(type,cid){//清除标签选项
 		var self = this;
@@ -715,7 +847,9 @@ var headerMethods = {
 			}
 			if(this.classify.text){
 				this.classify.text = '';
-				this.$refs.tree[0].setCheckedKeys([])
+				if(this.$refs.tree && this.$refs.tree.length){
+					this.$refs.tree[0].setCheckedKeys([]);
+				}
 				VuexStore.commit('SetParams',{key:'classify',val:''});
 			}
 			if(this.colors.color){
@@ -774,6 +908,7 @@ var headerMethods = {
 					val:[],
 					height:this.ext.height,
 					data:this.ext.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'ext',val:''});
 			}
@@ -784,7 +919,8 @@ var headerMethods = {
 					width:this.shape.width,
 					height:this.shape.height,
 					txt:'',
-					data:this.shape.data
+					data:this.shape.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'shape',val:''});
 				VuexStore.commit('SetParams',{key:'shapesize',val:''});
@@ -794,6 +930,7 @@ var headerMethods = {
 				this.grade = {
 					grade:[],
 					data:this.grade.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'grade',val:''});
 			}
@@ -802,7 +939,8 @@ var headerMethods = {
 				this.btime = {
 					btime:'',
 					datelinepicker:[],
-					data:this.btime.data
+					data:this.btime.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'btime',val:''});
 			}
@@ -811,7 +949,8 @@ var headerMethods = {
 				this.dateline = {
 					dateline:'',
 					datelinepicker:[],
-					data:this.dateline.data
+					data:this.dateline.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'dateline',val:''});
 			}
@@ -820,7 +959,8 @@ var headerMethods = {
 				this.mtime = {
 					mtime:'',
 					datelinepicker:[],
-					data:this.mtime.data
+					data:this.mtime.data,
+					loading:true
 				};
 				VuexStore.commit('SetParams',{key:'mtime',val:''});
 			}
@@ -832,26 +972,22 @@ var headerMethods = {
 				this.tagData.tagrelative = '1';
 				VuexStore.commit('SetParams',{key:'tag',val:''});
 				VuexStore.commit('SetParams',{key:'tagrelative',val:''});
-				if(this.tagData.checkedsFid == 'all'){
-					var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
-					this.tagData.Rightdata = data;
-				}else{
-					var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
+				// if(this.tagData.checkedsFid == 'all'){
+				// 	var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+				// 	this.tagData.Rightdata = data;
+				// }else{
+					// var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
 					
-					this.tagData.Rightdata = data;
-				}
+					// this.tagData.Rightdata = data;
+				// }
 			}
-			
 			if(!$.isEmptyObject(this.modelParamsTag)){
 				for(var t in this.modelParamsTag){
-					this.modelParamsTag[t] = {
-						search:'',
-						text:'',
-						data:[]
-					};
+					this.modelParamsTag[t].search = '';
+					this.modelParamsTag[t].text = '';
+					this.modelParamsTag[t].value = [];
 				}
-				var fata = JSON.parse(JSON.stringify(this.paramsTag[t].oldVal));
-				this.paramsTag[t].newVal = fata;
+				this.tagData.checkedsId = [];
 				VuexStore.commit('SetParams',{key:'tag',val:''});
 			}
 			
@@ -871,13 +1007,13 @@ var headerMethods = {
 					VuexStore.commit('SetParams',{key:'tag',val:''});
 					VuexStore.commit('SetParams',{key:'tagrelative',val:''});
 					
-					if(this.tagData.checkedsFid == 'all'){
-						var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
-						this.tagData.Rightdata = data;
-					}else{
-						var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
-						this.tagData.Rightdata = data;
-					}
+					// if(this.tagData.checkedsFid == 'all'){
+					// 	var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.alltagdata));
+					// 	this.tagData.Rightdata = data;
+					// }else{
+					// 	var data = JSON.parse(JSON.stringify(this.tagData.alltagdata.catdata[this.tagData.checkedsFid].tdatas));
+					// 	this.tagData.Rightdata = data;
+					// }
 				break;
 				case 'color':
 					var colors = {
@@ -890,7 +1026,10 @@ var headerMethods = {
 				break;
 				case 'classify':
 					this.classify.text = '';
-					this.$refs.tree[0].setCheckedKeys([])
+					if(this.$refs.tree && this.$refs.tree.length){
+						this.$refs.tree[0].setCheckedKeys([]);
+					}
+					
 					VuexStore.commit('SetParams',{key:'classify',val:''});
 				break;
 				
@@ -935,7 +1074,8 @@ var headerMethods = {
 					this.ext = {
 						val:[],
 						height:this.ext.height,
-						data:this.ext.data
+						data:this.ext.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'ext',val:''});
 				break;
@@ -945,7 +1085,8 @@ var headerMethods = {
 						width:this.shape.width,
 						height:this.shape.height,
 						txt:'',
-						data:this.shape.data
+						data:this.shape.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'shape',val:''});
 					VuexStore.commit('SetParams',{key:'shapesize',val:''});
@@ -953,7 +1094,8 @@ var headerMethods = {
 				case 'grade':
 					this.grade = {
 						grade:[],
-						data:this.grade.data
+						data:this.grade.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'grade',val:''});
 				break;
@@ -961,7 +1103,8 @@ var headerMethods = {
 					this.btime = {
 						btime:'',
 						datelinepicker:[],
-						data:this.btime.data
+						data:this.btime.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'btime',val:''});
 				break;
@@ -969,7 +1112,8 @@ var headerMethods = {
 					this.mtime = {
 						mtime:'',
 						datelinepicker:[],
-						data:this.mtime.data
+						data:this.mtime.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'mtime',val:''});
 				break;
@@ -977,7 +1121,8 @@ var headerMethods = {
 					this.dateline = {
 						dateline:'',
 						datelinepicker:[],
-						data:this.dateline.data
+						data:this.dateline.data,
+						loading:false
 					};
 					VuexStore.commit('SetParams',{key:'dateline',val:''});
 				break;
@@ -985,17 +1130,13 @@ var headerMethods = {
 					var tags = [];
 					for(var t in this.modelParamsTag){
 						if(t!=cid){
-							tags.push.apply(tags,this.modelParamsTag[t].data);
+							tags.push.apply(tags,this.modelParamsTag[t].value);
 						}
 					}
 					VuexStore.commit('SetParams',{key:'tag',val:tags.join(',')});
-					this.modelParamsTag[cid] = {
-						search:'',
-						text:'',
-						data:[]
-					};
-					var fata = JSON.parse(JSON.stringify(this.paramsTag[cid].oldVal));
-					this.paramsTag[cid].newVal = fata;
+					this.modelParamsTag[cid].search = '';
+					this.modelParamsTag[cid].text = '';
+					this.modelParamsTag[cid].value = [];
 				break;
 				
 			}
@@ -1016,8 +1157,29 @@ var headerMethods = {
 		var str = {
 			skey:type
 		};
+		
 		if(type == 'grouptag'){
+			str['skey']='tag';
 			str['cid']=cid;
+			str['page'] = self.modelParamsTag[cid].page;
+			
+			if(self.modelParamsTag[cid].search){
+				str['tagkeyword'] = self.modelParamsTag[cid].search;
+			}
+			
+		}
+		if(type == 'tag'){
+			if(self.tagData.checkedsFid == 'all'){
+				str['cid'] =0;
+			}else{
+				str['cid'] = self.tagData.checkedsFid;
+			}
+			if(self.tagData.alltagdata.catdata[self.tagData.checkedsFid]){
+				str['page'] = self.tagData.alltagdata.catdata[self.tagData.checkedsFid].page;
+			}
+			if(self.tagData.search){
+				str['tagkeyword'] = self.tagData.search;
+			}
 		}
 		if(this.GetAppid){
 			str['appid'] = this.GetAppid;
@@ -1076,23 +1238,115 @@ var headerMethods = {
 		var vtag = [];
 		for(var t in this.modelParamsTag){
 			if(t!=cid){
-				vtag.push.apply(vtag,this.modelParamsTag[t].data);
+				vtag.push.apply(vtag,this.modelParamsTag[t].value);
 			}
 		}
 		if(vtag.length){
 			str['tag'] = vtag.join(',');
 		}
 		$.ajax({
-			url : MOD_URL+'&op=ajax&operation=searchmenu_num',
-			type : "post",
-			data : str,
-			async : false,
-			dataType: "json",
-			success : function(data) {
+			'url' : MOD_URL+'&op=ajax&operation=searchmenu_num',
+			'type' : "post",
+			'data' : str,
+			'async' : false,
+			'dataType': "json",
+			'success' : function(data) {
 				param = data;
 			}
 		});
 		return param;
+	},
+	GetScreenDatanum(){
+		var self = this;
+		var type = 'tag';
+		var str = {
+			skey:'tag'
+		};
+
+		if(this.GetAppid){
+			str['appid'] = this.GetAppid;
+		}
+		if(this.GetimgParameter && this.GetimgParameter.keyword){
+			str['keyword'] = this.GetimgParameter.keyword;
+		}
+		var Params = this.GetParams;
+		for(var p in Params){
+			if(p==type){
+				continue;
+			}
+			if(type == 'shape' && p =='shapesize'){
+				continue;
+			}
+			if(Params[p]){
+				if(p=='classify'){
+					str['fids'] = Params[p];
+				}else if(p=='grade'){
+					if(Params[p].indexOf('未评分')>-1){
+						var farr = Params[p].split(',');
+						if(farr.length){
+							farr.splice(farr.indexOf('未评分'),1);
+						}
+						farr.push(0);
+						str[p] = farr.join(',');
+					}else{
+						str[p] = Params[p];
+					}
+					
+				}else if(p=='shape'){
+					var shape = [];
+					var fshape = Params[p].split(',');
+					var shapeData = this.shapeData;
+					for(var s in fshape){
+						for(var b in shapeData){
+							if(fshape[s] == shapeData[b].name){
+								shape.push(shapeData[b].val);
+							}
+						}
+					}
+					str[p] = shape.join(',');
+				}else if(p=='btime' || p=='mtime' || p=='dateline'){
+					var len = Params[p].split('_');
+					if(len.length>1){
+						str[p] = Params[p];
+					}else{
+						str[p] = GetDateVal(Params[p]);
+					}
+				}else{
+					str[p] = Params[p];
+				}
+			}
+			
+		}
+		var vtag = [];
+		for(var t in this.modelParamsTag){
+			if(t!=cid){
+				vtag.push.apply(vtag,this.modelParamsTag[t].value);
+			}
+		}
+		if(vtag.length){
+			str['tag'] = vtag.join(',');
+		}
+		$.ajax({
+			'url' : MOD_URL+'&op=ajax&operation=search_menu',
+			'type' : "post",
+			'data' : str,
+			'dataType': "json",
+			'success' : function(data) {
+				if(data.catdata){
+					var catdata = data.catdata;
+					for(var g in catdata){
+						var item = catdata[g];
+						if(parseInt(item.cid) == 0){
+							self.tagData.alltagdata.catdata['all']['num'] = item.num;
+						}else if(parseInt(item.cid) == -1){
+							self.tagData.alltagdata.catdata[-1]['num'] = item.num;
+						}else{
+							self.tagData.alltagdata.catdata[item.cid]['num'] = item.num;
+						}
+					}
+				}
+			}
+		});
 	},
 	GetHashParams(){
 		var arr = (location.hash || "").replace(/^\?/,'').split("&");

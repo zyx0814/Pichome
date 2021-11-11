@@ -431,7 +431,7 @@
 			handleRefresh(index,appid){
 				var self = this;
 				// if(!self.dataList[index]['time']){
-					$.post(MOD_URL+'&op=exportfile&appid='+appid);
+					$.post(MOD_URL+'&op=initexport&appid='+appid);
 					self.dataList[index].state = 1;
 					self.dataList[index].percent = 0;
 					self.handleRefreshLoading(index,appid);
@@ -441,7 +441,7 @@
 			handleimplement(index,appid){
 				var self = this;
 				if(!self.dataList[index]['time']){
-					$.post(MOD_URL+'&op=exportfile&appid='+appid);
+					$.post(MOD_URL+'&op=initexport&appid='+appid);
 					self.dataList[index].state = 1;
 					self.handleRefreshLoading(index,appid);
 				}
@@ -475,10 +475,10 @@
 									self.dataList[index].filenum = data.data.filenum;
 									self.dataList[index].percent = parseInt(data.data.percent);
 									self.dataList[index].state = parseInt(data.data.state);
-									if(self.dataList[index].state==0){
+									/*if(self.dataList[index].state==0){
 										clearInterval(self.dataList[index]['time']);
 										self.$message.error('更新中断，请刷新重试');
-									}
+									}*/
 								}
 							}else{
 								clearInterval(self.dataList[index]['time']);
@@ -495,7 +495,7 @@
 				$.post(MOD_URL+'&op=library&operation=getdata',function(data){
 					self.dataList = data.data;
 					for(var i in self.dataList){
-						if(parseInt(self.dataList[i].state) == 1){
+						if(parseInt(self.dataList[i].state) == 1 || parseInt(self.dataList[i].state) == 2){
 							self.handleimplement(i,self.dataList[i].appid)
 						}
 					}

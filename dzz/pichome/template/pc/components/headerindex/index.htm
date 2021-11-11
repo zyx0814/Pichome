@@ -27,7 +27,7 @@
 						<div class="input-box" :class="librarys.length<2?'radius':''">
 							<div class="InputKeyword" @click="ShowPopoverSearch">
 								<div class="el-popover-search">
-									<el-input class="search-keyword" @input="handleKeywordInput" v-model="keyword" clearable></el-input>
+									<el-input class="search-keyword" @input="handleKeywordInput" v-model="keyword" clearable placeholder=""></el-input>
 									<div style="padding: 0px 15px;">
 										<el-divider></el-divider>
 									</div>
@@ -195,9 +195,12 @@
 				},
 				
 				classify:{
+					childFids:[],
+					DefaultFids:[],
 					folderdatanum:[],
 					hotsearchnum:[],
 					text:'',
+					loading:true
 				},
 				tagData:{//标签数据
 					alltagdata:{
@@ -209,7 +212,8 @@
 					checkedsId:[],
 					checkedstxt:'',
 					tagrelative:'1',
-					search:''
+					search:'',
+					loading:true
 				},
 				paramsTag:{},
 				modelParamsTag:{},
@@ -241,7 +245,8 @@
 				ext:{
 					val:[],
 					height:0,
-					data:[]
+					data:[],
+					loading:true
 				},
 				shape:{
 					shape:[],
@@ -250,25 +255,30 @@
 					height:'',
 					txt:'',
 					data:[],
+					loading:true
 				},
 				grade:{
 					grade:[],
-					data:[]
+					data:[],
+					loading:true
 				},
 				btime:{
 					btime:'',
 					datelinepicker:[],
 					data:[],
+					loading:true
 				},
 				mtime:{
 					mtime:'',
 					datelinepicker:[],
 					data:[],
+					loading:true
 				},
 				dateline:{
 					dateline:'',
 					datelinepicker:[],
 					data:[],
+					loading:true
 				},
 				FirstLoad:true
 			}
@@ -310,6 +320,12 @@
 			}
 		},
 		created() {
+			var tagfid = window.sessionStorage.getItem("tagfid");
+			if(tagfid){
+				this.tagData.checkedsFid = tagfid;
+			}else{
+				this.tagData.checkedsFid = 'all';
+			}
 			this.GetHashParams();
 			this.handleSearchresize();
 		},

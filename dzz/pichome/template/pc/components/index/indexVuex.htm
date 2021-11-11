@@ -94,6 +94,9 @@
 			SetParamsTagData(state,val){//设置标签分类筛选值
 				state.ParamsTagData = val;
 			},
+			SetParamsTagDataLoading(state,val){//设置标签分类loading
+				state.ParamsTagData[val.index]['loading'] = val.val;
+			},
 			SetimageLoading(state,val){//设置图片时的loading
 				state.imageLoading = val;
 			},
@@ -286,12 +289,13 @@
 					// commit('SetAppid',value.appid);
 					for(var i in value.param){
 						if(i == 'tagdata'){
-							if(state.ParamsInit.tag && state.ParamsInit.tag.length == 0){
-								if(value.param[i] && value.param[i].length){
-									commit('SetParamsInit',{key:'tag',val:value.param[i]});
+							if(state.FirstLoading){
+								if(state.ParamsInit.tag && state.ParamsInit.tag.length == 0){
+									if(value.param[i] && value.param[i].length){
+										commit('SetParamsInit',{key:'tag',val:value.param[i]});
+									}
 								}
 							}
-							
 						}else if(i == 'folderdata'){
 							if(!state.classifyInit){
 								var txts = [];
@@ -418,7 +422,7 @@
 				if(type == 'scroll'){
 					commit('SetimgParameter',{key:'page',val:parseInt(search.page)+1});
 				}else{
-					$('.el-scrollbar__wrap').scrollTop(0)
+					jQuery('.body_scroll>.el-scrollbar__wrap').scrollTop(0)
 					commit('SetimgParameter',{key:'page',val:1});
 				}
 				var imgParameterInit = state.imgParameterInit;
@@ -465,6 +469,7 @@
 										var group = [];
 										for(var t in item.group){
 											if(parseInt(item.group[t].checked)){
+												item.group[t]['loading'] = true;
 												group.push(item.group[t]);
 											}
 										}
@@ -494,7 +499,7 @@
 					if(json.success){
 						
 					}else{
-						self.$message.error('数据失败')
+						self.$message.error('显示信息数据保存失败')
 					}
 				},'json')
 			},
@@ -519,7 +524,6 @@
 					sortfiled:sortfiles,
 					sort:state.imgParameter.asc
 				};
-				var self = pvue;
 				$.post(MOD_URL+'&op=ajax&operation=setsort',param,function(json){
 					if(json.success){
 						

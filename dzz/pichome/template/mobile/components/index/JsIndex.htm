@@ -1,0 +1,272 @@
+<van-nav-bar class="header-top" :class="ParamFooter.IsShow=='up'?'':'headerhide'" title="" left-text="" left-arrow>
+	<template #left>
+		<div class="pic-logo" slot="left">
+			<a class="h-left" href="$_G[siteurl]">
+				<img src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" alt="">
+				<span class="text">$_G['setting'][sitename]</span>
+			</a>
+		</div>
+	</template>
+	<template #right>
+		<van-dropdown-menu>
+			<van-dropdown-item @change="ChangeLibrary" v-model="ParamLibrary.activeId" :options="ParamLibrary.fdata" />
+		</van-dropdown-menu>
+		
+	</template>
+</van-nav-bar>
+<div class="pic-container">
+	<!--{template mobile/components/index/JsImages}-->
+</div>
+
+<footer class="pic-toolbar" :class="ParamFooter.IsShow=='up'?'footershow':'footerhide'">
+	<div class="tabbar">
+		<template v-for="item in ParamFooter.data">
+			<template v-if="item.show">
+				<template v-if="item.type == 'user'">
+					<div class="tab-item" @click="MyPopupVisible=true">
+						<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
+					</div>
+				</template>
+				<template v-else>
+					<div class="tab-item" @click="handleFooterClick(item.type)">
+						<i :class="item.icon" style="position: relative;">
+							<template v-if="item.type == 'search'">
+								<div v-if="ParamSearch.keyword" class="van-info van-info--dot van-sidebar-item__info"></div>
+							</template>
+							<template v-else-if="item.type == 'screen'">
+								<div v-if="ParamScreen.ActiveNum" class="van-info van-info--dot van-sidebar-item__info"></div>
+							</template>
+						</i>
+					</div>
+				</template>
+			</template>
+
+			
+		</template>
+	</div>
+</footer>
+<!--{template mobile/components/index/JsCommon}-->
+<!--{template mobile/components/index/JsSearch}-->
+<!--{template mobile/components/index/JsSort}-->
+<!--{template mobile/components/index/JsScreen}-->
+<!--{template mobile/components/index/JsMy}-->
+<script type="text/javascript">
+	Vue.component('screenclassify', {
+		template: `<van-collapse v-model="parammodel.activeNames" :border="false">
+						<van-collapse-item v-for="item in paramdata" :key="item.fid" :name="item.fid" disabled  :class="{'active':parammodel.value.indexOf(item.fid)>-1}" :ref="'collapse_'+item.fid">
+							<template #title>
+								<div  @click.stop="ScreenClassifyClick(item)">
+									{{item.fname}}
+								</div>
+							</template>
+							<template #right-icon>
+								<template v-if="item.children && item.children.length">
+									<i @click.stop="ScreenClassifyToggle(item.fid)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
+								</template>
+								<template v-else>
+									<div style="width: 20px;"></div>
+								</template>
+							</template>
+							<template v-if="item.children && item.children.length">
+								<screenclassify :parammodel="parammodel" :paramdata="item.children" @screenclassifychange="screenclassifychange"></screenclassify>
+							</template>
+						</van-collapse-item>
+					</van-collapse>`,
+		props:['paramdata','parammodel'],
+		data: function() {
+			return {}
+		},
+		created() {
+		},
+		methods:{
+			ScreenClassifyClick(item){
+				var self = this;
+				var index = this.parammodel.value.indexOf(item.fid);
+				if(index> -1){
+					this.parammodel.value.splice(index,1);
+					this.ScreenClassifyChild(item.children,'del');
+				}else{
+					this.parammodel.value.push(item.fid);
+					this.ScreenClassifyChild(item.children,'add');
+				}
+				self.$emit('screenclassifychange');
+			},
+			ScreenClassifyChild(item,type){
+				var classify = this.parammodel.value;
+				for(var i in item){
+					var fitem = item[i];
+					var index = classify.indexOf(fitem.fid);
+					if(type == 'add'){
+						if(index<0){
+							classify.push(fitem.fid)
+						}
+					}else{
+						if(index>-1){
+							classify.splice(index,1);
+						}
+					}
+					if(fitem.children && fitem.children.length){
+						this.ScreenClassifyChild(fitem.children,type);
+					}
+				}
+			},
+			screenclassifychange(){
+				var self = this;
+				self.$emit('screenclassifychange');
+			},
+			ScreenClassifyToggle(fid){
+				var self = this;
+				if(self.$refs['collapse_'+fid] && self.$refs['collapse_'+fid].length){
+					self.$refs['collapse_'+fid][0].toggle();
+				}
+			},
+		},
+		mounted() {
+		},
+	});
+	
+	new Vue({
+		el: '#dzzoffice',
+		data: function() {
+			return $.extend({},MyData,SearchData,SortData,ImagesData,ScreenData,{
+				ParamFooter:{
+					IsShow:'up',
+					data:{
+						clear:{type:'clear',icon:'icon ri-brush-3-line',show:false},
+						search:{type:'search',icon:'icon ri-search-line',show:true},
+						screen:{type:'screen',icon:'icon ri-filter-2-fill',show:false},
+						sort:{type:'sort',icon:'icon ri-arrow-up-down-fill',show:true},
+						user:{type:'user',icon:'',show:true}
+					}
+				},
+				ParamDataInit:{
+					appid:'',
+					keyword:'',
+					asc: "desc",
+					order: 1,
+					page: 1,
+					classify:'',
+					tag:'',
+					color:'',
+					link:'',
+					desc:'',
+					duration:'',
+					wsize:'',
+					hsize:'',
+					ext:'',
+					shape:'',
+					shapesize:'',
+					grade:'',
+					btime:'',
+					dateline:'',
+					mtime:''
+				},
+				ParamData:{},
+				ParamBasic:{
+					page: 1,
+					perpage: 50,
+					total: 0,
+					totalpage:0,
+				},
+				ParamLibrary:{
+					activeId:'',
+					data:$apps || [],
+					fdata:[]
+				},
+			});
+		},
+		watch: $.extend({},ImagesWatchJs,{
+			
+		}),
+		computed: {
+	
+		},
+		created() {
+			var pagesetting = $pagesetting;
+			console.log(pagesetting)
+			if(pagesetting){
+				var show = [];
+				<!--{if $_G[uid]}-->
+				if(pagesetting.show){
+					show = pagesetting.show.split(',');
+				}
+				<!--{else}-->
+				var fshow = sessionStorage.getItem('InformationShow');
+				if(fshow){
+					show = fshow.split(',');
+				}else{
+					if(pagesetting.show){
+						show = pagesetting.show.split(',');
+					}
+				}
+				<!--{/if}-->
+				<!--{if $_G[uid]}-->
+				var other = pagesetting.other;
+				var Layout = pagesetting.layout;
+				var order = parseInt(pagesetting.sort);
+				var asc =  pagesetting.desc;
+				<!--{else}-->
+				var other = sessionStorage.getItem('InformationOther');
+				if(!other){
+					other = pagesetting.other;
+				}
+				var Layout = sessionStorage.getItem('Layout');
+				if(!Layout){
+					Layout = pagesetting.layout;
+				}
+				
+				var order = sessionStorage.getItem('order');
+				if(!order){
+					order = parseInt(pagesetting.sort);
+				}
+				var asc = sessionStorage.getItem('asc');
+				if(!asc){
+					asc =  pagesetting.desc;
+				}
+				<!--{/if}-->
+				this.ParamSort.showinformation.value = show;
+				this.ParamSort.otherinformation.value = other || 'btime';
+				this.ParamSort.layout.value = Layout || 'waterFall';
+				this.ParamSort.Sorttype.value = order || 1;
+				this.ParamSort.sortorder.value = asc || 'desc';
+				
+				this.ParamDataInit.order = order || 1;
+				this.ParamDataInit.asc = asc || 'desc';
+			}
+			this.StartData();
+		},
+		methods:$.extend({},CommonJs,SearchJs,MyJs,ScreenJs,SortJs,ImagesJs,{
+			StartData(){
+				this.CommonLibrary();
+			},
+			ChangeLibrary(val){//库改变
+				if(val){
+					window.location.hash = '#appid='+val;
+				}else{
+					window.location.hash = '';
+				}
+				window.location.reload();
+			},
+			handleFooterClick(type){
+				if(type == 'search'){
+					this.ParamSearch.PopupVisible = true;
+				}else if(type == 'screen'){
+					this.ParamScreen.PopupVisible = true;
+				}else if(type == 'sort'){
+					this.ParamSort.PopupVisible = true;
+				}else if(type == 'clear'){
+					this.ParamSearch.keyword = '';
+					this.ScreenReset();
+					this.CommonSetFooterBadge();
+					this.CommonhandleHash();
+				}
+			}
+			
+		}),
+		mounted() {
+			this.ImagesMounted();
+			// this.DetailMounted();
+		}
+	});
+	
+</script>

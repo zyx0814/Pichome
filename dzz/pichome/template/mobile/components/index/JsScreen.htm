@@ -1,0 +1,1603 @@
+<van-popup class="screen-popup footer-popup" v-model="ParamScreen.PopupVisible" round  position="bottom" style="height: 90%;padding-top: 10px;" @open="ScreenPopupOpen" @close="ScreenPopupClose">
+	<div class="vam-popup-title" v-if="ParamScreen.data[ParamScreen.LeftActive]" @click="ScreenPopupTitleClick">{{ParamScreen.data[ParamScreen.LeftActive].text}}</div>
+	<van-tree-select :items="ParamScreen.data" :main-active-index.sync="ParamScreen.LeftActive" @click-nav="ScreenLeftClick" height="100%">
+		<template #content>
+			<template v-if="ParamScreen.data[ParamScreen.LeftActive]">
+				<template v-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'tag'">
+						<template v-if="ParamScreen.data[ParamScreen.LeftActive]['grouptag']">
+							
+								<template v-if="ParamScreen.data[ParamScreen.LeftActive].loading">
+									<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+								</template>
+								<template v-else>
+									<div class="screen-item-box" style="padding-top: 40px;">
+										<div class="van-search-box">
+											<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.data[ParamScreen.LeftActive].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(ParamScreen.LeftActive,true)" maxlength="50" :clearable="false">
+												<template #right-icon>
+													<van-icon v-show="ParamScreen.data[ParamScreen.LeftActive].keyword" @click="ScreenTagClearKeyword(ParamScreen.LeftActive,true)" name="cross" />
+												</template>
+											</van-search>
+										</div>
+										<template v-if="ParamScreen.data[ParamScreen.LeftActive].searchloading">
+											<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+										</template>
+										<template v-else>
+											<div class="screen-item" style="position: relative;" :ref="'scrollbarTag_'+ParamScreen.data[ParamScreen.LeftActive].cid">
+												<template v-if="ParamScreen.data[ParamScreen.LeftActive].data && ParamScreen.data[ParamScreen.LeftActive].data.length">
+													<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
+														<van-cell-group>
+															<van-cell v-for="(fitem,index) in ParamScreen.data[ParamScreen.LeftActive].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+														</van-cell-group>
+													<!-- </van-checkbox-group> -->
+													<template v-if="!ParamScreen.data[ParamScreen.LeftActive].finish && ParamScreen.data[ParamScreen.LeftActive].scrollloading">
+														<div style="text-align: center;margin-top: 0.625rem;">
+															<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+														</div>
+													</template>
+												</template>
+												<template v-else>
+													<div class="notScreen">
+														<div>
+															<img src="{MOD_PATH}/image/notScreen.png" >
+															<div>没有筛选条件</div>
+														</div>
+													</div>
+												</template>
+											</div>
+										</template>
+										
+									</div>
+									
+								</template>
+							
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.tag.loading">
+								<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" text-color="var(--header-text)" vertical>加载中...</van-loading>
+							</template>
+							<template v-else>
+								<template v-if="ParamLibrary.activeId">
+									<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange" style="height: 100%;"> -->
+										<van-tabs v-model="ParamScreen.value.tag.tabActive" @change="ScreenTagTabsChange">
+											<van-tab v-for="item in ParamScreen.value.tag.data" v-key="item.cid" :name="item.cid">
+												<template #title>
+													<span>{{item.catname}}<span style="font-size: 14px;margin-left: 5px;" v-if="parseInt(item.num)">{{item.num}}</span></span>
+												</template>
+												<template v-if="item.loading">
+													<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+												</template>
+												<template v-else>
+													<div class="screen-item-box" style="padding-top: 40px;">
+														<div class="van-search-box">
+															<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="item.keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(item.cid)" maxlength="50" :clearable="false">
+																<template #right-icon>
+																	<van-icon v-show="item.keyword" @click="ScreenTagClearKeyword(item.cid)" name="cross" />
+																</template>
+															</van-search>
+														</div>
+														<template v-if="item.data && item.data.length">
+															<div class="screen-item screen-tag-Scroll" style="padding: 0;">
+																<template v-if="item.searchloading">
+																	<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+																</template>
+																<template v-else>
+																	<van-cell-group style="padding: 0 10px;">
+																		<van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+																		<!-- <van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
+																			<template #right-icon>
+																				<div class="num">{{fitem.num}}</div>
+																				<van-checkbox shape="square" disabled :name="fitem.tid" />
+																			</template>
+																		</van-cell> -->
+																	</van-cell-group>
+																	<template v-if="!item.finish && item.scrollloading">
+																		<div style="text-align: center;margin-top: 0.625rem;">
+																			<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+																		</div>
+																	</template>
+																</template>
+																
+															</div>
+														</template>
+														<template v-else>
+															<div class="notScreen">
+																<div>
+																	<img src="{MOD_PATH}/image/notScreen.png" >
+																	<div>没有筛选条件</div>
+																</div>
+															</div>
+														</template>
+													</div>
+												</template>
+												
+											</van-tab>
+										</van-tabs>
+									<!-- </van-checkbox-group> -->
+	
+								</template>
+								<template v-else>
+										<template v-if="ParamScreen.value.tag.data['all'].loading">
+											<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+										</template>
+										<template v-else>
+											<div class="screen-item-box" style="padding-top: 40px;">
+												<div class="van-search-box">
+													<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.value.tag.data['all'].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword('all')" maxlength="50" :clearable="false">
+														<template #right-icon>
+															<van-icon v-show="ParamScreen.value.tag.data['all'].keyword" @click="ScreenTagClearKeyword('all')" name="cross" />
+														</template>
+													</van-search>
+												</div>
+												<div class="screen-item screen-tag-Scroll">
+													<template v-if="ParamScreen.value.tag.data['all'].searchloading">
+														<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+													</template>
+													<template v-else>
+														<template v-if="!$.isEmptyObject(ParamScreen.value.tag.data)">
+															<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
+																<van-cell-group>
+																	<van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+																	<!-- <van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
+																		<template #right-icon>
+																			<div class="num">{{fitem.num}}</div>
+																			<van-checkbox shape="square" disabled :name="fitem.tid" />
+																		</template>
+																	</van-cell> -->
+																</van-cell-group>
+															<!-- </van-checkbox-group> -->
+															<template v-if="!ParamScreen.value.tag.data['all'].finish && ParamScreen.value.tag.data['all'].scrollloading">
+																<div style="text-align: center;margin-top: 0.625rem;">
+																	<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+																</div>
+															</template>
+														</template>
+														<template v-else>
+															<div class="notScreen">
+																<div>
+																	<img src="{MOD_PATH}/image/notScreen.png" >
+																	<div>没有筛选条件</div>
+																</div>
+															</div>
+														</template>
+													</template>
+													
+												</div>
+											</div>
+											
+										</template>
+										
+									
+								</template>
+							</template>
+							
+						</template>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'classify'">
+					<div class="screen-item ">
+						<template v-if="ParamScreen.value.classify.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.classify.data && ParamScreen.value.classify.data.length">
+								<div class="screen-classify-collapse">
+									<!-- ParamScreen.value.classify.value -->
+										<van-collapse v-model="ParamScreen.value.classify.activeNames" :border="false">
+											<van-collapse-item 
+											v-for="item in ParamScreen.value.classify.data" 
+											:key="item.fid" 
+											:name="item.fid" 
+											disabled 
+											:class="{'active':ParamScreen.value.classify.value.indexOf(item.fid)>-1}"
+											:ref="'collapse_'+item.fid">
+												<template #title>
+													<div  @click.stop="ScreenClassifyClick(item)">
+														{{item.fname}}
+													</div>
+												</template>
+												<template #right-icon>
+													<template v-if="item.children && item.children.length">
+														<i @click.stop="ScreenClassifyToggle(item.fid)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
+													</template>
+													<template v-else>
+														<div style="width: 20px;"></div>
+													</template>
+												</template>
+												<template v-if="item.children && item.children.length">
+													<screenclassify :parammodel="ParamScreen.value.classify" :paramdata="item.children" @screenclassifychange="screenclassifychange"></screenclassify>
+												</template>
+												
+											</van-collapse-item>
+										</van-collapse>
+								</div>
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'color'">
+					<div class="screen-item">
+						<div class="color-box">
+							<div class="color-input">
+								<div class="color-show" :class="!ParamScreen.value.color.value?'border':''" :style="{background:ParamScreen.value.color.value}"></div>
+								<van-field v-model.trim="ParamScreen.value.color.value" round clear-trigger="always" class="colorInput" @blur="ScreenColorInputBlur" @input="ScreenColorInput">
+									<template #right-icon>
+										<van-icon v-show="ParamScreen.value.color.value" @click="ScreenColorInputClear" name="cross" />
+									</template>
+								</van-field>
+							</div>
+							<div class="quick">
+								<template v-for="item in ParamScreen.value.color.defaultval">
+									<template v-if="item.toUpperCase() == '#FFFFFF' || item.toUpperCase() == '#FFF'">
+										<div class="quick-list-box">
+											<div class="quick-list" :style="{background: item,border: '1px solid var(--slider-line)'}" @click="ScreenColorClick(item)">
+												<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" color="#333333" />
+											</div>
+										</div>
+										
+									</template>
+									<template v-else>
+										<div class="quick-list-box">
+											<div class="quick-list" :style="{background: item}" @click="ScreenColorClick(item)">
+												<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" />
+											</div>
+										</div>
+									</template>
+								</template>
+							</div>
+							
+							<div class="color-slider" style="padding: 15px 0;">
+								<div style="white-space: nowrap;min-width: 80px;">精确度：{{ParamScreen.value.color.persion}}</div>
+								<div style="width: 100%;margin-left: 24px;margin-right: 15px;">
+									<van-slider v-model="ParamScreen.value.color.persion" />
+								</div>
+							</div>
+						</div>
+					</div>
+			
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'link'">
+					<div class="screen-item">
+						<van-radio-group v-model="ParamScreen.value.link.value" disabled>
+							<van-cell-group>
+								<van-cell title="有链接" clickable @click="ScreenlinkClick('1')">
+									<template #right-icon>
+										<van-radio name="1"></van-radio>
+									</template>
+								</van-cell>
+								<van-cell title="没有链接" clickable @click="ScreenlinkClick('0')">
+									<template #right-icon>
+										<van-radio name="0"></van-radio>
+									</template>
+								</van-cell>
+							</van-cell-group>
+						</van-radio-group>
+						<van-field v-if="ParamScreen.value.link.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.link.input" rows="3" autosize type="textarea" placeholder="请输入链接"></van-field>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'desc'">
+					<div class="screen-item">
+						<van-radio-group v-model="ParamScreen.value.desc.value" disabled>
+							<van-cell-group>
+								<van-cell title="有注释" clickable @click="ScreenDescClick('1')">
+									<template #right-icon>
+										<van-radio name="1"></van-radio>
+									</template>
+								</van-cell>
+								<van-cell title="没有注释" clickable  @click="ScreenDescClick('0')">
+									<template #right-icon>
+										<van-radio name="0"></van-radio>
+									</template>
+								</van-cell>
+							</van-cell-group>
+						</van-radio-group>
+						<van-field v-if="ParamScreen.value.desc.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.desc.input" rows="3" autosize type="textarea" placeholder="请输入注释"></van-field>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'duration'">
+					<div class="screen-item">
+						<van-cell-group class="screen-cell-input">
+							<van-field v-model.trim="ParamScreen.value.duration.start" placeholder="最小" @input="ScreenDurationChange" />
+						</van-cell-group>
+						<van-cell-group class="screen-cell-input">
+							<van-field v-model.trim="ParamScreen.value.duration.end" placeholder="最大" @input="ScreenDurationChange" />
+						</van-cell-group>
+						<van-row class="swip-row">
+							<van-col span="12">
+								<div class="swip" :class="ParamScreen.value.duration.unit=='s'?'active':''" @click="ParamScreen.value.duration.unit='s'">秒</div>
+							</van-col>
+							<van-col span="12">
+								<div class="swip" :class="ParamScreen.value.duration.unit=='m'?'active':''" @click="ParamScreen.value.duration.unit='m'">分</div>
+							</van-col>
+						</van-row>
+					</div>
+				</template>
+			
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'size'">
+					<div class="screen-item">
+						<div style="margin-bottom: 5px;">宽</div>
+						<van-row>
+							<van-col span="11">
+								<van-cell-group class="screen-cell-input">
+									<van-field v-model.trim="ParamScreen.value.size.wstart" placeholder="最小" @input="ScreenSizeChange" />
+								</van-cell-group>
+							</van-col>
+							<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
+							<van-col span="11">
+								<van-cell-group class="screen-cell-input">
+									<van-field v-model.trim="ParamScreen.value.size.wend" placeholder="最大" @input="ScreenSizeChange" />
+								</van-cell-group>
+							</van-col>
+						</van-row>
+						<div style="margin-bottom: 5px;">高</div>
+						<van-row>
+							<van-col span="11">
+								<van-cell-group class="screen-cell-input">
+									<van-field v-model.trim="ParamScreen.value.size.hstart" placeholder="最小" @input="ScreenSizeChange" />
+								</van-cell-group>
+							</van-col>
+							<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
+							<van-col span="11">
+								<van-cell-group class="screen-cell-input">
+									<van-field v-model.trim="ParamScreen.value.size.hend" placeholder="最大" @input="ScreenSizeChange" />
+								</van-cell-group>
+							</van-col>
+						</van-row>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'ext'">
+					<div class="screen-item" style="position: relative;">
+						<template v-if="ParamScreen.value.ext.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.ext.data && ParamScreen.value.ext.data.length">
+								<!-- <van-checkbox-group v-model="ParamScreen.value.ext.value" @change="ScreenExtChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.ext.data" clickable :key="index" :title="item.ext" @click="ScreenExtClick(item.ext)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.ext.value.indexOf(item.ext)>-1?'active':''"></van-cell>
+										<!-- <van-cell v-for="(item, index) in ParamScreen.value.ext.data" clickable :key="index" :title="item.ext" @click="ScreenExtClick(item.ext)">
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-checkbox shape="square" :name="item.ext" disabled />
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+								<!-- </van-checkbox-group> -->
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'shape'">
+					<div class="screen-item" style="position: relative;">
+						<template v-if="ParamScreen.value.shape.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.shape.data && ParamScreen.value.shape.data.length">
+								<!-- <van-checkbox-group v-model="ParamScreen.value.shape.value" @change="ScreenShapeChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.shape.value.indexOf(item.val)>-1?'active':''"></van-cell>
+										<!-- <van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)">
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-checkbox shape="square" :name="item.val" disabled />
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+								<!-- </van-checkbox-group> -->
+								<van-row v-if="ParamScreen.value.shape.value.indexOf('custom')>-1">
+									<van-col span="11">
+										<van-cell-group class="screen-cell-input">
+											<van-field v-model.trim="ParamScreen.value.shape.sizemin" @input="ScreenShapeCustomInput" />
+										</van-cell-group>
+									</van-col>
+									<van-col span="2" style="line-height: 44px;text-align: center;">:</van-col>
+									<van-col span="11">
+										<van-cell-group class="screen-cell-input">
+											<van-field v-model.trim="ParamScreen.value.shape.sizemax" @input="ScreenShapeCustomInput" />
+										</van-cell-group>
+									</van-col>
+								</van-row>
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'grade'">
+					<div class="screen-item">
+						<template v-if="ParamScreen.value.grade.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.shape.data && ParamScreen.value.grade.data.length">
+								<!-- <van-checkbox-group v-model="ParamScreen.value.grade.value" @change="ScreenGradeChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.grade.data" clickable :key="index" @click="ScreenGradeClick(item.grade)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.grade.value.indexOf(item.grade)>-1?'active':''">
+											<template #title>
+												<template v-if="item.grade">
+													<van-icon name="star" color="var(--header-text)" v-for="iitem in item.grade" />
+												</template>
+												<template v-else>未评分</template>
+											</template>
+										</van-cell>
+<!-- 										<van-cell v-for="(item, index) in ParamScreen.value.grade.data" clickable :key="index" @click="ScreenGradeClick(item.grade)">
+											<template #title>
+												<template v-if="item.grade">
+													<van-icon name="star" color="var(--header-text)" v-for="iitem in item.grade" />
+												</template>
+												<template v-else>未评分</template>
+											</template>
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-checkbox shape="square" :name="item.grade" disabled />
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+								<!-- </van-checkbox-group> -->
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+						
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'btime'">
+					<div class="screen-item">
+						<template v-if="ParamScreen.value.btime.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.btime.data && ParamScreen.value.btime.data.length">
+								<!-- <van-radio-group v-model="ParamScreen.value.btime.value" disabled @change="ScreenTimeChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.btime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('btime',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.btime.value==item.label?'active':''"></van-cell>
+										<!-- <van-cell v-for="(item, index) in ParamScreen.value.btime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('btime',item.label)">
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-radio :name="item.label"></van-radio>
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+									<template v-if="ParamScreen.value.btime.value == '自定义'">
+										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.btime.customvalue" readonly @click="ParamScreen.value.btime.calendar = true"></van-field>
+										<van-calendar title="添加时间" :min-date="ParamScreen.value.btime.minDate" v-model="ParamScreen.value.btime.calendar" type="range" :default-date="ParamScreen.value.btime.defaultdate" @confirm="ScreenBtimeCalendarConfirm" />
+									</template>
+								<!-- </van-radio-group> -->
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+						</template>
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'dateline'">
+					<div class="screen-item">
+						<template v-if="ParamScreen.value.dateline.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.dateline.data && ParamScreen.value.dateline.data.length">
+								<!-- <van-radio-group v-model="ParamScreen.value.dateline.value" disabled @change="ScreenTimeChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.dateline.value==item.label?'active':''"></van-cell>
+										<!-- <van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)">
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-radio :name="item.label"></van-radio>
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+									<template v-if="ParamScreen.value.dateline.value == '自定义'">
+										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.dateline.customvalue" readonly @click="ParamScreen.value.dateline.calendar = true"></van-field>
+										<van-calendar title="修改时间" :min-date="ParamScreen.value.dateline.minDate" v-model="ParamScreen.value.dateline.calendar" type="range" :default-date="ParamScreen.value.dateline.defaultdate" @confirm="ScreenDatelineCalendarConfirm" />
+									</template>
+								<!-- </van-radio-group> -->
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+						
+					</div>
+				</template>
+				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'mtime'">
+					<div class="screen-item">
+						<template v-if="ParamScreen.value.mtime.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<template v-if="ParamScreen.value.mtime.data && ParamScreen.value.mtime.data.length">
+								<!-- <van-radio-group v-model="ParamScreen.value.mtime.value" disabled @change="ScreenTimeChange"> -->
+									<van-cell-group>
+										<van-cell v-for="(item, index) in ParamScreen.value.mtime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('mtime',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.mtime.value==item.label?'active':''"></van-cell>
+										<!-- <van-cell v-for="(item, index) in ParamScreen.value.mtime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('mtime',item.label)">
+											<template #right-icon>
+												<div class="num">{{item.num}}</div>
+												<van-radio :name="item.label"></van-radio>
+											</template>
+										</van-cell> -->
+									</van-cell-group>
+									<template v-if="ParamScreen.value.mtime.value == '自定义'">
+										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.mtime.customvalue" readonly @click="ParamScreen.value.mtime.calendar = true"></van-field>
+										<van-calendar title="创建时间" :min-date="ParamScreen.value.mtime.minDate" v-model="ParamScreen.value.mtime.calendar" type="range" :default-date="ParamScreen.value.mtime.defaultdate" @confirm="ScreenMtimeCalendarConfirm" />
+									</template>
+								<!-- </van-radio-group> -->
+							</template>
+							<template v-else>
+								<div class="notScreen">
+									<div>
+										<img src="{MOD_PATH}/image/notScreen.png" >
+										<div>没有筛选条件</div>
+									</div>
+								</div>
+							</template>
+							
+						</template>
+						
+					</div>
+				</template>
+			</template>
+		</template>
+	</van-tree-select>
+	<div class="btn-bottom">
+		<van-row gutter="20">
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round plain type="primary" size="large" @click="ScreenReset">重置</van-button>
+		  </van-col>
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round type="info" size="large" @click="ScreenConfirm">确定</van-button>
+		  </van-col>
+		</van-row>
+
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var ScreenData = {
+		ParamScreen:{
+			PopupVisible:false,
+			ChangeVal:false,
+			LeftActive:0,
+			ActiveNum:'',
+			dataBadge:['classify','tag','ext','shape','grade'],
+			dataTypes:['classify','tag','color','link','desc','duration','size','ext','shape','grade','btime','dateline','mtime'],
+			data:[],
+			groupdata:{},
+			defaultval:{},
+			value:{
+				classify:{
+					loading:true,
+					data:[],
+					activeNames:[],
+					value:[]
+				},
+				tag:{
+					loading:true,
+					data:{},
+					value:[],
+					refreshval:{},
+					tabActive:'all'
+				},
+				color:{
+					defaultval:['#FFFFFF','#A0E7F7','#4AD1F0','#00B8E3','#007793','#D5D5D5','#998CF8','#4E38F0','#1900D2','#100082','#C0C0C0','#BC8CF8','#8A38F0','#5E00D2','#3A0082','#AAAAAA','#DBA3C5','#C75A9D','#AA2176','#6E0E49','#959595','#E4A9AE','#D45C67','#C21827','#820813','#808080','#EBB4A5','#DE7354','#D0380C','#8B2000','#565656','#F2D2A1','#EBAC4B','#DF8800','#8F5700','#161616','#CCDBA7','#A9C75F','#85AD23','#55710F'],
+					value:'',
+					persion:50,
+				},
+				link:{
+					value:'',
+					input:''
+				},
+				desc:{
+					value:'',
+					input:''
+				},
+				duration:{
+					start:'',
+					end:'',
+					unit:'s'
+				},
+				size:{
+					wstart:'',
+					wend:'',
+					hstart:'',
+					hend:'',
+				},
+				ext:{
+					loading:true,
+					value:[],
+					data:[]
+				},
+				shape:{
+					loading:true,
+					value:[],
+					sizemin:'',
+					sizemax:'',
+					data:[],
+					fdata:[
+						{val:7,name:'方图'},
+						{val:8,name:'横图'},
+						{val:5,name:'细长横图'},
+						{val:6,name:'细长竖图'},
+						{val:9,name:'竖图'},
+						{val:1,name:'4:3'},
+						{val:2,name:'3:4'},
+						{val:3,name:'16:9'},
+						{val:4,name:'9:16'}
+					]
+				},
+				grade:{
+					loading:true,
+					data:[],
+					value:[]
+				},
+				btime:{
+					loading:true,
+					calendar:false,
+					minDate:new Date(2010, 0, 1),
+					data:[],
+					value:'',
+					customvalue:'',
+					defaultdate:[]
+				},
+				dateline:{
+					loading:true,
+					calendar:false,
+					minDate:new Date(2010, 0, 1),
+					data:[],
+					value:'',
+					customvalue:'',
+					defaultdate:[]
+				},
+				mtime:{
+					loading:true,
+					calendar:false,
+					minDate:new Date(2010, 0, 1),
+					data:[],
+					value:'',
+					customvalue:'',
+					defaultdate:[]
+				}
+			}
+		}
+	};
+	var ScreenJs = {
+		ScreenPopupOpen(){
+			this.ScreenStorageValdata();
+			this.ScreenLeftClick(this.ParamScreen.LeftActive);
+		},
+		
+		ScreenStorageValdata(){
+			var param = {};
+			var data = JSON.parse(JSON.stringify(this.ParamScreen.value));
+			for(var i in data){
+				var item = data[i];
+				switch(i){
+					case 'classify':
+					case 'tag':
+					case 'ext':
+					case 'grade':
+					case 'color':
+						param[i] = item.value;
+					break;
+					case 'link':
+					case 'desc':
+						param[i] = {
+							value:item.value,
+							input:item.input
+						};
+					break;
+					case 'duration':
+						param[i] = {
+							start:item.start,
+							end:item.end,
+							unit:item.unit
+						}
+					break;
+					case 'size':
+						param[i] = {
+							wstart:item.wstart,
+							wend:item.wend,
+							hstart:item.hstart,
+							hend:item.hend
+						};
+					break;
+					case 'shape':
+						param[i] = {
+							value:item.value,
+							sizemin:item.sizemin,
+							sizemax:item.sizemax
+						};
+					break;
+					case 'btime':
+					case 'dateline':
+					case 'mtime':
+						param[i] = {
+							value:item.value,
+							customvalue:item.customvalue,
+						}
+					break;
+				}
+			}
+			this.ParamScreen.defaultval = param;
+		},
+		ScreenPopupTitleClick(){
+			this.ParamScreen.PopupVisible = false;
+		},
+		ScreenLeftClick(index){
+			var self = this;
+			var item = this.ParamScreen.data[index];
+			if(item.type == 'color' || item.type == 'link' || item.type == 'desc' || item.type == 'duration' || item.type == 'size'){
+				return false;
+			}
+			if(item.type == 'tag'){
+				if(item.grouptag){
+					item.loading = true;
+					item.page = 1;
+				}else{
+					if(!$.isEmptyObject(self.ParamScreen.value.tag.data)){
+						self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive].page = 1;
+						self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive].loading = true;
+					}
+					self.ParamScreen.value.tag.loading = true;
+				}
+			}else{
+				self.ParamScreen.value[item.type].loading = true;
+			}
+			switch(item.type){
+				case 'classify':
+				
+					self.ScreenGetdataClassify();
+				break;
+				case 'tag':
+					if(item.grouptag){
+						item.page = 1;
+						item.data = [];
+						var param = self.ScreenFinishingparameters();
+						self.ScreenGetdataText(param);
+					}else{
+						var param = self.ScreenFinishingparameters();
+						self.ScreenGetdataText(param);
+						// if(self.ParamLibrary.activeId){
+						// 	self.ScreenGetdataNum(param);
+						// }
+					}
+					
+				break;
+				case 'ext':
+				case 'shape':
+				case 'grade':
+				case 'btime':
+				case 'dateline':
+				case 'mtime':
+					var param = self.ScreenFinishingparameters();
+					self.ScreenGetdataText(param);
+				break;
+			}
+			
+		},
+		ScreenClassifyClick(item){
+			var index = this.ParamScreen.value.classify.value.indexOf(item.fid);
+			if(index> -1){
+				this.ParamScreen.value.classify.value.splice(index,1);
+				if(item.children && item.children.length){
+					this.ScreenClassifyChild(item.children,'del');
+				}
+				
+			}else{
+				this.ParamScreen.value.classify.value.push(item.fid);
+				if(item.children && item.children.length){
+					this.ScreenClassifyChild(item.children,'add');
+				}
+			}
+			this.screenclassifychange();
+		},
+		ScreenClassifyChild(item,type){
+			var classify = this.ParamScreen.value.classify.value;
+			for(var i in item){
+				var fitem = item[i];
+				var index = classify.indexOf(fitem.fid);
+				if(type == 'add'){
+					if(index<0){
+						classify.push(fitem.fid)
+					}
+				}else{
+					if(index>-1){
+						classify.splice(index,1);
+					}
+				}
+				if(fitem.children && fitem.children.length){
+					this.ScreenClassifyChild(fitem.children,type);
+				}
+			}
+		},
+		ScreenClassifyToggle(fid){
+			var self = this;
+			if(self.$refs['collapse_'+fid] && self.$refs['collapse_'+fid].length){
+				self.$refs['collapse_'+fid][0].toggle();
+			}
+		},
+		screenclassifychange(){
+			if(this.ParamScreen.value.classify.value && this.ParamScreen.value.classify.value.length){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.classify.value.length;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = '';
+			}
+		},
+		ScreenTagClick(val){
+			var index = this.ParamScreen.value.tag.value.indexOf(val);
+			if( index == -1){
+				this.ParamScreen.value.tag.value.push(val);
+			}else{
+				this.ParamScreen.value.tag.value.splice(index,1)
+			}
+			var item = this.ParamScreen.data[this.ParamScreen.LeftActive];
+			var arr = [];
+			var val = this.ParamScreen.value.tag.value;
+			if(item.grouptag){
+				var num = 0;
+				for(var i in val){
+					var id = val[i];
+					for(var t in item.data){
+						var titem = item.data[t];
+						if(parseInt(titem.tid) == parseInt(id)){
+							arr.push(id)
+							num += 1;
+						}
+					}
+				}
+				item.value = arr;
+				item.badge = num || '';
+			}else{
+				item.badge = val.length || '';
+			}
+		},
+		ScreenTagTabsChange(cid){
+			var self = this;
+			self.ParamScreen.value.tag.data[cid].page = 1;
+			self.ParamScreen.value.tag.data[cid].loading = true;
+			self.ParamScreen.value.tag.data[cid].data = [];
+			var ParamData = self.ScreenFinishingparameters();
+			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				var alltagdata = [];
+				for(var i in data.alltagdata){
+					var titem = data.alltagdata[i];
+					var str = {
+						tagname:titem.tagname,
+						num:titem.num,
+						tid:parseInt(i),
+					}
+					alltagdata.push(str);
+				}
+				self.ParamScreen.value.tag.data[cid].finish = data.finish;
+				self.ParamScreen.value.tag.data[cid].loading = false;
+				self.ParamScreen.value.tag.data[cid].data = alltagdata;
+				self.$nextTick(function(){
+					self.ScreenTagScroll();
+				});
+			},'json');
+		},
+		ScreenTagKeyword(cid,grouptag){
+			var self = this;
+			
+			if(grouptag){
+				if(!self.ParamScreen.data[cid]){
+					return false;
+				}
+			}else{
+				if(!self.ParamScreen.value.tag.data[cid]){
+					return false;
+				}
+			}
+			
+			if(grouptag){
+				var item = self.ParamScreen.data[cid];
+				self.$refs['scrollbarTag_'+item.cid].scrollTop = 0;
+			}else{
+				var item = self.ParamScreen.value.tag.data[cid];
+				$('.screen-tag-Scroll')[0].scrollTop = 0;
+			}
+			item.data = [];
+			item.page = 1;
+			item.searchloading = true;
+			var ParamData = self.ScreenFinishingparameters();
+			if(item.keyword){
+				ParamData['tagkeyword'] = item.keyword;
+			}
+			item.data = [];
+			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				var alltagdata = [];
+				for(var i in data.alltagdata){
+					var titem = data.alltagdata[i];
+					var str = {
+						tagname:titem.tagname,
+						num:titem.num,
+						tid:parseInt(i),
+					}
+					item.data.push(str);
+				}
+				item.finish = data.finish;
+				item.searchloading = false;
+			},'json');
+		},
+		ScreenTagClearKeyword(cid,grouptag){
+			if(grouptag){
+				this.ParamScreen.data[cid].keyword = '';
+			}else{
+				this.ParamScreen.value.tag.data[cid].keyword = '';
+			}
+			
+			this.ScreenTagKeyword(cid,grouptag);
+		},
+		ScreenTagScroll(cid){
+			var self = this;
+			if(cid){
+				var item = self.ParamScreen.data[self.ParamScreen.LeftActive];
+				$(self.$refs['scrollbarTag_'+cid]).unbind('scroll');
+				$(self.$refs['scrollbarTag_'+cid]).bind('scroll',function(){
+					if(!item.finish && !item.scrollloading && !item.searchloading && this.scrollHeight-100 < $(this).scrollTop()+this.clientHeight){
+						console.log(item.searchloading)
+						item.page += 1;
+						item.scrollloading = true;
+						var ParamData = self.ScreenFinishingparameters();
+						$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+							var alltagdata = [];
+							for(var i in data.alltagdata){
+								var titem = data.alltagdata[i];
+								var str = {
+									tagname:titem.tagname,
+									num:titem.num,
+									tid:parseInt(i),
+								}
+								item.data.push(str);
+							}
+							item.finish = data.finish;
+							item.scrollloading = false;
+						},'json');
+					}
+				});
+			}else{
+				
+				// if(self.ParamLibrary.activeId){
+				var item = self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive];
+				$('.screen-tag-Scroll').unbind('scroll');
+				$('.screen-tag-Scroll').bind('scroll',function(){
+					if(!item.finish && !item.scrollloading && !item.searchloading && this.scrollHeight-100 < $(this).scrollTop()+this.clientHeight){
+						item.page += 1;
+						item.scrollloading = true;
+						var ParamData = self.ScreenFinishingparameters();
+						if(item.keyword){
+							ParamData['tagkeyword'] = item.keyword;
+						}
+						$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+							var alltagdata = [];
+							for(var i in data.alltagdata){
+								var titem = data.alltagdata[i];
+								var str = {
+									tagname:titem.tagname,
+									num:titem.num,
+									tid:parseInt(i),
+								}
+								item.data.push(str);
+							}
+							item.finish = data.finish;
+							item.scrollloading = false;
+						},'json');
+					}
+				});
+			}
+			
+		},
+		ScreenColorClick(val){
+			var self = this;
+			if(this.ParamScreen.value.color.value.toUpperCase() != val.toUpperCase()){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+				this.ParamScreen.value.color.value = val.toUpperCase();
+				
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+				this.ParamScreen.value.color.value = '';
+			}
+		},
+		ScreenColorInput(val){
+			if(val){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+			}
+		},
+		ScreenColorInputClear(){
+			this.ParamScreen.value.color.value = '';
+			this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+		},
+		ScreenColorInputBlur(){
+			var val = this.ParamScreen.value.color.value;
+		},
+		ScreenlinkClick(val){
+			if(this.ParamScreen.value.link.value != val){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+				this.ParamScreen.value.link.value = val;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+				this.ParamScreen.value.link.value = '';
+			}
+		},
+		ScreenDescClick(val){
+			if(this.ParamScreen.value.desc.value != val){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+				this.ParamScreen.value.desc.value = val;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+				this.ParamScreen.value.desc.value = '';
+			}
+		},
+		ScreenDurationChange(val){
+			if(this.ParamScreen.value.duration.start || this.ParamScreen.value.duration.end){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+			}
+		},
+		ScreenSizeChange(){
+			if(this.ParamScreen.value.size.wstart || this.ParamScreen.value.size.wend || this.ParamScreen.value.size.hstart || this.ParamScreen.value.size.hend){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+			}
+		},
+		ScreenExtClick(val){
+			var index = this.ParamScreen.value.ext.value.indexOf(val);
+			if( index == -1){
+				this.ParamScreen.value.ext.value.push(val);
+			}else{
+				this.ParamScreen.value.ext.value.splice(index,1)
+			}
+			if(this.ParamScreen.value.ext.value && this.ParamScreen.value.ext.value.length){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.ext.value.length;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = '';
+			}
+		},
+
+		ScreenShapeClick(val){
+			var index = this.ParamScreen.value.shape.value.indexOf(val);
+			if( index == -1){
+				this.ParamScreen.value.shape.value.push(val);
+			}else{
+				this.ParamScreen.value.shape.value.splice(index,1)
+			}
+			if(this.ParamScreen.value.shape.value && this.ParamScreen.value.shape.value.length){
+				var len = this.ParamScreen.value.shape.value.length;
+				if(this.ParamScreen.value.shape.value.indexOf('custom')>-1 && (!this.ParamScreen.value.shape.sizemin || !this.ParamScreen.value.shape.sizemax)){
+					len = len -1;
+				}
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = len || '';
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = '';
+			}
+		},
+		ScreenShapeCustomInput(){
+			if(this.ParamScreen.value.shape.sizemin && this.ParamScreen.value.shape.sizemax){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.shape.value.length;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.shape.value.length-1;
+			}
+		},
+
+		ScreenGradeClick(val){
+			var index = this.ParamScreen.value.grade.value.indexOf(val);
+			if( index == -1){
+				this.ParamScreen.value.grade.value.push(val);
+			}else{
+				this.ParamScreen.value.grade.value.splice(index,1)
+			}
+			if(this.ParamScreen.value.grade.value && this.ParamScreen.value.grade.value.length){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.grade.value.length;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = '';
+			}
+		},
+		ScreenTimeClick(type,val){
+			if(this.ParamScreen.value[type].value != val){
+				this.ParamScreen.value[type].value = val;
+				if(val == '自定义'){
+					var start = new Date();
+					var end = new Date();
+					start.setTime(start.getTime() - 3600 * 1000 * 24);
+					var defaulttime = [ new Date(start.getFullYear(), start.getMonth()+1, start.getDate()),new Date(end.getFullYear(), end.getMonth()+1, end.getDate())];
+					this.ParamScreen.value[type].defaultdate = defaulttime;
+					var fstart = this.ScreenFormatDate(start);
+					var fend = this.ScreenFormatDate(end);
+					this.ParamScreen.value[type].customvalue = `${fstart} 至 ${fend}`;
+				}
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+			}else{
+				this.ParamScreen.value[type].value = '';
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+			}
+		},
+		ScreenBtimeCalendarConfirm(data){
+			var fstart = this.ScreenFormatDate(data[0]);
+			var fend = this.ScreenFormatDate(data[1]);
+			this.ParamScreen.value.btime.customvalue = `${fstart} 至 ${fend}`;
+			this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;	
+			this.ParamScreen.value.btime.calendar = false;
+		},
+		ScreenDatelineCalendarConfirm(data){
+			var fstart = this.ScreenFormatDate(data[0]);
+			var fend = this.ScreenFormatDate(data[1]);
+			this.ParamScreen.value.dateline.customvalue = `${fstart} 至 ${fend}`;
+			this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;	
+			this.ParamScreen.value.dateline.calendar = false;
+		},
+		ScreenMtimeCalendarConfirm(data){
+			var fstart = this.ScreenFormatDate(data[0]);
+			var fend = this.ScreenFormatDate(data[1]);
+			this.ParamScreen.value.mtime.customvalue = `${fstart} 至 ${fend}`;
+			this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;	
+			this.ParamScreen.value.mtime.calendar = false;
+		},
+		ScreenFormatDate(date) {
+			return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+		},
+		ScreenGetdataNum(ParamData){
+			var self = this;
+			$.post(MOD_URL+'&op=ajax&operation=search_menu',ParamData,function(data){
+				if(data.catdata){
+					for(var i in data.catdata){
+						var item = data.catdata[i];
+						var cid = item.cid;
+						if(parseInt(cid) == 0){
+							cid = 'all';
+						}
+						if(self.ParamScreen.value.tag.data[cid]){
+							self.ParamScreen.value.tag.data[cid].num = item.num;
+						}
+					}
+				}
+			},'json');
+		},
+		ScreenGetdataText(ParamData){
+			var self = this;
+			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				self.ScreenGetdataAssignment(data);
+			},'json');
+		},
+		ScreenGetdataAssignment(data){
+			var self = this;
+			var item = self.ParamScreen.data[self.ParamScreen.LeftActive];
+			var type = item.type;
+			if(type == 'ext'){
+				var arr = [];
+				for(var i in data){
+					arr.push(data[i]);
+				}
+				self.ParamScreen.value.ext.data = arr;
+				self.ParamScreen.value.ext.loading = false;
+			}else if(type == 'tag'){
+				var alltagdata = [];
+				for(var i in data.alltagdata){
+					var titem = data.alltagdata[i];
+					var str = {
+						tagname:titem.tagname,
+						num:titem.num,
+						tid:parseInt(i),
+					}
+					alltagdata.push(str);
+				}
+				var arr = {};
+				arr['all'] = {
+					catname:'全部',
+					num:0,
+					cid:'all',
+					page:1,
+					keyword:'',
+					loading:self.ParamScreen.value.tag.tabActive == 'all'?false:true,
+					scrollloading:false,
+					searchloading:false,
+					data:self.ParamScreen.value.tag.tabActive == 'all'?alltagdata:[],
+					finish:self.ParamScreen.value.tag.tabActive == 'all'?data.finish:false
+				};
+				if(data.catdata){
+					for(var x in data.catdata){
+						var titem = data.catdata[x];
+						var str = {
+							catname:titem.catname,
+							num:0,
+							cid:titem.cid,
+							scrollloading:false,
+							searchloading:false,
+							keyword:'',
+							page:1,
+							loading:self.ParamScreen.value.tag.tabActive == titem.cid?false:true,
+							data:self.ParamScreen.value.tag.tabActive == titem.cid?alltagdata:[],
+							finish:self.ParamScreen.value.tag.tabActive == titem.cid?data.finish:false
+						}
+						arr[titem.cid] = str;
+					}
+				}
+				self.ParamScreen.value.tag.data = arr;
+				if(item.grouptag){
+					item.data = alltagdata
+					item.loading = false;
+					item.finish = data.finish;
+					self.$nextTick(function(){
+						self.ScreenTagScroll(item.cid);
+					});
+				}else{
+					self.ParamScreen.value.tag.loading = false;
+					self.$nextTick(function(){
+						self.ScreenTagScroll();
+					});
+				}
+				
+				
+			}else if(type == 'shape'){
+				var arr = [];
+				for(var i in data){
+					arr.push(data[i]);
+				}
+				arr.push({
+					lablename:'自定义',
+					val:'custom',
+					num:''
+				})
+				self.ParamScreen.value.shape.data = arr;
+				self.ParamScreen.value.shape.loading = false;
+			}else if(type == 'grade'){
+				var arr = [];
+				var not = {};
+				for(var i in data){
+					if(parseInt(data[i].grade)){
+						arr.push({
+							num:data[i].num,
+							grade:parseInt(data[i].grade),
+						});
+					}else{
+						not = {
+							num:data[i].num,
+							grade:parseInt(data[i].grade),
+						}
+					}
+					
+				}
+				if(!$.isEmptyObject(not)){
+					arr.push(not);
+				}
+				self.ParamScreen.value.grade.data = arr;
+				self.ParamScreen.value.grade.loading = false;
+			}else if(type == 'btime' || type == 'dateline' || type == 'mtime'){
+				var arr = [];
+				for(var i in data){
+					arr.push({
+						num:data[i].num,
+						label:data[i].label,
+						val:data[i].val
+					});
+				}
+				if(arr.length){
+					arr.push({
+						num:'',
+						label:'自定义',
+						val:'custom'
+					});
+				}
+				self.ParamScreen.value[type].data = arr;
+				self.ParamScreen.value[type].loading = false;
+			}
+		},
+		ScreenFinishingparameters(){
+			var self = this;
+			var item = self.ParamScreen.data[self.ParamScreen.LeftActive];
+			var type = item.type;
+			var param = {};
+			param['skey'] = type;
+			if(self.ParamSearch.keyword){
+				param['keyword'] = self.ParamSearch.keyword;
+			}
+			if(self.ParamLibrary.activeId){
+				param['appid'] = self.ParamLibrary.activeId;
+				
+			}
+			if(type == 'tag'){
+				if(item.grouptag){
+					param['skey'] = 'tag';
+					param['cid'] = item.cid;
+					param['page'] = item.page;
+				}else{
+					if(!$.isEmptyObject(self.ParamScreen.value.tag.data)){
+						if(self.ParamLibrary.activeId){
+							var itemtag = self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive];
+						}else{
+							var itemtag = self.ParamScreen.value.tag.data['all'];
+						}
+						param['cid'] = self.ParamScreen.value.tag.tabActive=='all'?'':self.ParamScreen.value.tag.tabActive;
+						param['page'] = itemtag.page;
+					}
+				}
+			}
+			for(var i in self.ParamScreen.value){
+				var Pitem = self.ParamScreen.value[i];
+				switch(i){
+					case 'tag':
+						if(Pitem.value && Pitem.value.length){
+							// if(item.grouptag){
+							// 	var tids = [];
+							// 	for(var v in Pitem.value){
+							// 		var ftid = parseInt(Pitem.value[v]);
+							// 		var status = true;
+							// 		if(item.value.indexOf(ftid) > -1){
+							// 			status = false;
+							// 		}
+							// 		if(status){
+							// 			tids.push(ftid);
+							// 		}
+							// 	}
+							// 	if(tids.length){
+							// 		param['tag'] = tids.join(',');
+							// 	}
+							// }else{
+							// 		param['tag'] = Pitem.value.join(',');
+							// }
+							param['tag'] = Pitem.value.join(',');
+						}
+					break;
+					case 'link':
+						if(Pitem.value && type != i){
+							param['link'] = Pitem.value;
+							if(parseInt(Pitem.value)){
+								param['linkval'] = Pitem.input;
+							}
+						}
+					break;
+					case 'desc':
+						if(Pitem.value && type != i){
+							param['desc'] = Pitem.value;
+							if(parseInt(Pitem.value)){
+								param['descval'] = Pitem.input;
+							}
+						}
+					break;
+					case 'duration':
+						if((Pitem.start || Pitem.end) && type != i){
+							param['duration'] = Pitem.start+'_'+Pitem.end;
+							param['dunit'] = Pitem.unit;
+						}
+					break;
+					case 'size':
+						if(Pitem.wstart || Pitem.wend){
+							param['wsize'] = Pitem.wstart+'_'+Pitem.wend;
+						}
+						if(Pitem.hstart || Pitem.hend){
+							param['hsize'] = Pitem.hstart+'_'+Pitem.hend;
+						}
+					break;
+					case 'shape':
+						if(Pitem.value && Pitem.value.length && type != i){
+							var index = Pitem.value.indexOf('custom');
+							var newval = JSON.parse(JSON.stringify(Pitem.value));
+							if(index > -1){
+								newval.splice(index,1);
+							}
+							param['shape'] = newval.join(',');
+							if(index > -1 && Pitem.sizemin && Pitem.sizemax){
+								param['shapesize'] = Pitem.sizemin+':'+Pitem.sizemax;
+							}
+						}
+					break;
+					case 'btime':
+					case 'dateline':
+					case 'mtime':
+						if(Pitem.value && type != i){
+							if(Pitem.value == '自定义'){
+								if(Pitem.customvalue){
+									var time = Pitem.customvalue.split('至');
+									param[i] = $.trim(time[0])+'_'+$.trim(time[1]);
+								}
+							}else{
+								param[i] = GetDateVal(Pitem.value);
+							}
+						}
+					break;
+					case 'color':
+						if(Pitem.value){
+							param['color'] = Pitem.value;
+							param['persion'] = Pitem.persion;
+						}
+					break;
+					default:
+						// grade,ext,classify
+						if(Pitem.value && Pitem.value.length && type != i){
+							param[i] = Pitem.value.join(',');
+						}
+					break;
+				}
+	
+			}
+			return param;
+		},
+		ScreenGetdataClassify(){
+			var self = this;
+			$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',{
+				appid: self.ParamLibrary.activeId
+			},function(data){
+				var arr = [];
+				for(var i in data.folderdatanum){
+					var item = data.folderdatanum[i];
+					arr.push(item);
+				}
+				self.ParamScreen.value.classify.data = arr;
+				self.ParamScreen.value.classify.loading = false;
+			},'json');
+		},
+		ScreenConfirm(){
+			this.ParamScreen.PopupVisible = false;
+		},
+		ScreenReset(){
+			for(var i in this.ParamScreen.data){
+				var item = this.ParamScreen.data[i];
+				var type = item.type;
+				var fitem = this.ParamScreen.value[type];
+				switch(type){
+					case 'classify':
+					case 'ext':
+					case 'grade':
+						fitem.value = [];
+						item.badge = '';
+					break;
+					case 'tag':
+						if(item.grouptag){
+							item.value = [];
+						}
+						fitem.value = [];
+						item.badge = '';
+					break;
+					case 'color':
+						fitem.value = '';
+						item.dot = false;
+					break;
+					case 'link':
+					case 'desc':
+						fitem.value = '';
+						fitem.input = '';
+						item.dot = false;
+					break;
+					case 'duration':
+						fitem.start = '';
+						fitem.end = '';
+						fitem.unit = 's';
+						item.dot = false;
+					break;
+					case 'size':
+						fitem.wstart = '';
+						fitem.wend = '';
+						fitem.hstart = '';
+						fitem.hend = '';
+						item.dot = false;
+					break;
+					case 'shape':
+						fitem.value = [];
+						item.sizemin = '';
+						item.sizemin = '';
+						item.badge = '';
+					break;
+					case 'btime':
+					case 'dateline':
+					case 'mtime':
+						fitem.value = '';
+						fitem.customvalue = '';
+						item.dot = false;
+					break;
+				}
+			}
+			this.ParamScreen.ActiveNum = '';
+			// this.CommonSetBadge();
+			// this.ScreenLeftClick(this.ParamScreen.LeftActive);
+		},
+		ScreenPopupClose(){
+			this.ScreenPopupChange();
+			if(this.ParamScreen.ChangeVal){
+				this.CommonSetFooterBadge();
+				this.CommonhandleHash();
+			}
+		},
+		ScreenPopupChange(){
+			var change = false;
+			for(var i in this.ParamScreen.defaultval){
+				var val = JSON.parse(JSON.stringify(this.ParamScreen.defaultval[i]));
+				var item = JSON.parse(JSON.stringify(this.ParamScreen.value[i]));
+				if(i == 'link' || i == 'desc'){
+					if(item.value != val.value){
+						change = true;
+						break;
+					}
+					if(parseInt(val.value) > 0  && val.input != item.input){
+						change = true;
+						break;
+					}
+				}else if(i == 'duration'){
+					if(val.start != item.start || val.end != item.end){
+						change = true;
+						break;
+					}
+			
+					if((item.end || item.start) && val.unit != item.unit){
+						change = true;
+						break;
+					}
+				}else if(i == 'size'){
+					if(val.wstart != item.wstart || val.wend != item.wend || val.hstart != item.hstart || val.hend != item.hend){
+						change = true;
+						break;
+					}
+				}else if(i == 'shape'){
+					if(JSON.stringify(val.value) != JSON.stringify(item.value)){
+						change = true;
+						break;
+					}
+					if(item.value.indexOf('custom')>-1 && item.sizemin && item.sizemax && (val.sizemin != item.sizemin || val.sizemax != item.sizemax)){
+						change = true;
+						break;
+					}
+				}else if(i == 'btime' || i == 'dateline' || i == 'mtime'){
+					if(item.value != '自定义' && val.value != item.value){
+						change = true;
+						break;
+					}
+					if(item.value == '自定义' && item.customvalue && val.customvalue != item.customvalue){
+						change = true;
+						break;
+					}
+				}else{
+					if(JSON.stringify(val) != JSON.stringify(item.value)){
+						change = true;
+						break;
+					}
+				}
+			}
+			this.ParamScreen.ChangeVal = change;
+		}
+	};
+	
+</script>
+

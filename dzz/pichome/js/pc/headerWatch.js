@@ -4,7 +4,6 @@ var headerWatch = {
 		self.$refs.tree[0].filter(val);
 	},
 	ParamsTagData(val){
-		var str = {};
 		var fstr = {};
 		var str1 = {};
 		if(this.GetParamsInit.tag.length){
@@ -12,12 +11,16 @@ var headerWatch = {
 				var p = this.GetParamsInit.tag[x];
 				if(fstr[p.cid]){
 					fstr[p.cid].text.push(p.tagname);
-					fstr[p.cid].data.push(p.tid);
+					fstr[p.cid].value.push(p.tid);
 				}else{
 					fstr[p.cid] = {
 						search:'',
 						text:[p.tagname],
-						data:[p.tid]
+						data:[],
+						value:[p.tid],
+						page:1,
+						finish:false,
+						loading:false
 					}
 					
 				}
@@ -25,10 +28,6 @@ var headerWatch = {
 			}
 		}
 		for(var i in val){
-			str[val[i].cid] = {
-				newVal:[],
-				oldVal:[]
-			};
 			if(fstr[val[i].cid]){
 				fstr[val[i].cid].text = fstr[val[i].cid].text.join(',');
 				str1[val[i].cid] = fstr[val[i].cid];
@@ -37,13 +36,16 @@ var headerWatch = {
 					search:'',
 					text:'',
 					data:[],
+					page:1,
+					finish:false,
+					loading:false,
+					value:[],
 				};
 			}
 	
 			
 		}
 		this.modelParamsTag = str1;
-		this.paramsTag = str;
 	},
 	GetParamsInit:{
 		handler(item){

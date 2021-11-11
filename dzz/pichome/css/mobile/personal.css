@@ -1,0 +1,133 @@
+body{
+	background: var(--bg-content);
+}
+#dzzoffice{
+	padding-top: 46px;
+	padding-bottom: 75px;
+}
+.van-nav-bar{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+.van-nav-bar .van-nav-bar__title,
+.van-nav-bar .van-icon{
+	color: var(--content-textHover);
+}
+.scroll-box{
+	height: 100%;
+	overflow: auto;
+	padding: 0.625rem 1.875rem;
+}
+.van-form .van-uploader{
+	padding-top: 0.625rem;
+	overflow: hidden;
+}
+.van-form .van-image{
+	border-radius: 0.5rem;
+	border: 1px solid var(--border-color-base);
+	overflow: hidden;
+}
+.van-form .van-image .not-img{
+	font-size: 1.6875rem;
+	width: 1.6875rem;
+	height: 1.6875rem;
+	display: inline-block;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	color: var(--header-text);
+}
+.van-form .van-image .van-image__error{
+	display: none;
+}
+.van-form .van-field{
+	background-color: transparent !important;
+	border: 0;
+	display: block;
+	margin-bottom: 0.625rem;
+}
+.van-form .van-field.van-cell::after{
+	display: none;
+}
+.van-form .van-field .van-field__label{
+	width: 100%;
+}
+.van-form .van-field .van-field__label .tip{
+	font-size: 0.75rem;
+	margin-left: 0.625rem;
+	color: var(--tip-color);
+}
+.van-form .van-field .van-field__value{
+	margin-top: 0.625rem;
+}
+.van-form .van-field .van-field__value .van-field__control{
+	padding: 0.625rem;
+	border: 1px solid var(--border-color-base);
+	border-radius: 0.5rem;
+}
+.van-form .van-field .van-field__value .van-field__error-message{
+	position: absolute;
+	bottom: -24px;
+	left: 0;
+	width: 100%;
+}
+.van-form .thems{
+	margin-top: 0.625rem;
+	overflow: hidden;
+}
+.van-form .thems .thems-item{
+	width: 14.285%;
+	float: left;
+	padding: 0.1875rem;
+}
+.van-form .thems .thems-item .bg{
+	height: 0;
+    padding: 50% 0;
+    position: relative;
+    border-radius: 0.5rem;
+	border: 1px solid var(--border-color-base);
+}
+.van-form .thems .thems-item .bg.active{
+	border-color: var(--color-primary);
+}
+.van-form .thems .thems-item .bg .van-icon{
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+    right: 0px;
+	font-size: 1rem;
+	margin: auto;
+	width: 1rem;
+	height: 1rem;
+	display: none;
+}
+.van-form .thems .thems-item .bg.active .van-icon{
+	display: block;
+}
+@media screen and (min-width: 768px) {
+	.van-form .thems .thems-item .bg .van-icon{
+		font-size: 2rem;
+		width: 2rem;
+		height: 2rem;
+	}
+}
+.footer{
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	padding: 10px 0;
+	background: var(--bg-content);
+	color: #FFFFFF;
+	text-align: center;
+}
+.footer .van-button{
+	padding: 15px 20px;
+	width: auto;
+}

@@ -120,7 +120,8 @@ if($operation == 'filelist'){
             if(!empty($tagval)){
                 $tagdata=[];
 				if($appid){
-					foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t left  join %t tr on t.tid = tr.tid where t.tid in(%n) and tr.appid=%s",array('pichome_tag','pichome_tagrelation',$tagval,$appid)) as $tv){
+					
+					foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t left  join %t tr on t.tid = tr.tid and tr.appid=%s where t.tid in(%n) ",array('pichome_tag','pichome_tagrelation',$appid,$tagval)) as $tv){
 					    $tagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']),'cid'=>$tv['cid']);
 					}
 				}else{
@@ -128,11 +129,7 @@ if($operation == 'filelist'){
 					    $tagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
 					}
 				}
-             
-				//print_r($tagdata);die;
-             /*   foreach(C::t('pichome_tag')->fetch_all($tagval) as $tv){
-                    $tagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
-                }*/
+
             }
             foreach($tagval as $v){
                 $tagwherearr[] = " find_in_set(%d,ra.tag)";
@@ -239,15 +236,7 @@ if($operation == 'filelist'){
     if (isset($_GET['shape'])) {
         $shape = trim($_GET['shape']);
         $shapes = explode(',', $shape);
-        //指定宽高比
-        // $swidth = 0;
-        // $sheight = 0;
-        // if(isset($_GET['shapesize'])){
-        //     $shapesize = trim($_GET['shapesize']);
-        //     $shapesizes = explode(':',$shapesize);
-        //     $swidth = intval($shapesizes[0]);
-        //     $sheight = intval($shapesizes[1]);
-        // }
+
         $shapewherearr = [];
         foreach ($shapes as $v) {
             switch ($v) {
@@ -456,6 +445,7 @@ if($operation == 'filelist'){
             $orderarr[] = ' r.width*r.height '.$asc;
             break;
         default:
+
             $orderarr[] = ' r.dateline '.$asc;
     }
     $ordersql = implode(',',$orderarr);

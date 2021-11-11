@@ -10,7 +10,7 @@
 			</div>
 		</div>
 		<div class="img-loading" v-if="imageLoading">
-			<span class="el-icon-loading"></span>拼命加载中...
+			<span class="el-icon-loading"></span>加载中...
 		</div>
 		<div class="img-loading" v-if="imgdatas.length&&Parameter.page>=Parameter.totalpage&&!GetFirstLoading&&!imageLoading">没有更多了</div>
 		
@@ -59,7 +59,7 @@
 						str.push(val[i].rid);
 					}
 					str = str.join(',');
-					window.localStorage.setItem('imgs',str)
+					window.localStorage.setItem('imgs',str);
 				},
 				deep:true,
 				immediate:true
@@ -437,7 +437,7 @@
 							maxNewtop:0,
 							maxNewLeft:0,
 							perpage : 0,
-							Margin:10,
+							Margin:8,
 							columns:0,
 							fcolumns:1,
 							newWidth:0,//图片宽度

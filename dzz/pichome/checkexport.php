@@ -22,7 +22,7 @@
         }
         closedir($dh);
     }
-    
+   
     //待导入库目录
     $apppaths = [];
     $lastfoldername = '.library';
@@ -42,13 +42,13 @@
         }
       
     }
- 
     
     foreach(DB::fetch_all("select * from %t where 1",array('pichome_vapp')) as $v){
         if(!in_array($eagledir.'/'.$v['path'],$apppaths)){
             C::t('pichome_vapp')->delete_vapp_by_appid($v['appid']);
         }
     }
+    
     //创建库
     foreach ($apppaths as $val) {
         $jsonfile = $val . BS . 'metadata.json';

@@ -27,6 +27,12 @@ if($operation == 'fetch'){
 
 }else{
 	$theme = GetThemeColor();
-	include template('pc/page/details');
+	$ismobile = helper_browser::ismobile();
+	if ($ismobile) {
+	    include template('mobile/page/details');
+	} else {
+		include template('pc/page/details');
+	}
+	
 }
 

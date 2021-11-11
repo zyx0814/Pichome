@@ -1,8 +1,8 @@
 <!--{template pc/frame/header_simple_start}-->
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/index.css?{VERHASH}"/>
 <script type="text/javascript" src="{MOD_PATH}/js/vue/vuex.js?{VERHASH}"></script>
-<script type="text/javascript" src="{MOD_PATH}/js/row-grid.js?{VERHASH}"></script>
-<script type="text/javascript" src="{MOD_PATH}/js/waterfall.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/row-grid.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/waterfall.js?{VERHASH}"></script>
 
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/wavesurfer.js?{VERHASH}"></script>
 <script type="text/javascript" src="{MOD_PATH}/js/pc/audioPlay.js?{VERHASH}"></script>
@@ -105,14 +105,14 @@
 				if(other){
 					VuexStore.commit('seTHeader_Information_other', other);
 				}else{
-					VuexStore.commit('seTHeader_Information_other', 'btime');
+					VuexStore.commit('seTHeader_Information_other', pagesetting.other);
 				}
 				
 				var Layout = sessionStorage.getItem('Layout');
 				if(Layout){
 					VuexStore.commit('seTHeader_Information_Layout', Layout);
 				}else{
-					VuexStore.commit('seTHeader_Information_Layout', 'waterFall');
+					VuexStore.commit('seTHeader_Information_Layout', pagesetting.layout);
 				}
 				
 				var order = sessionStorage.getItem('order');
@@ -120,8 +120,8 @@
 					VuexStore.commit('SetimgParameter', {key:'order',val:parseInt(order)});
 					VuexStore.commit('SetimgParameterInit', {key:'order',val:parseInt(order)});
 				}else{
-					VuexStore.commit('SetimgParameter', {key:'order',val:'1'});
-					VuexStore.commit('SetimgParameterInit', {key:'order',val:'1'});
+					VuexStore.commit('SetimgParameter', {key:'order',val:parseInt(pagesetting.sort)});
+					VuexStore.commit('SetimgParameterInit', {key:'order',val:parseInt(pagesetting.sort)});
 				}
 				
 				var asc = sessionStorage.getItem('asc');
@@ -129,8 +129,8 @@
 					VuexStore.commit('SetimgParameter', {key:'asc',val:asc});
 					VuexStore.commit('SetimgParameterInit', {key:'asc',val:asc});
 				}else{
-					VuexStore.commit('SetimgParameter', {key:'asc',val:'desc'});
-					VuexStore.commit('SetimgParameterInit', {key:'asc',val:'desc'});
+					VuexStore.commit('SetimgParameter', {key:'asc',val:pagesetting.desc});
+					VuexStore.commit('SetimgParameterInit', {key:'asc',val:pagesetting.desc});
 				}
 				<!--{/if}-->
 				<!--{if $_G[uid]}-->
@@ -140,16 +140,12 @@
 					var ShowScreen = sessionStorage.getItem('showscreen_'+GetAppid)? sessionStorage.getItem('showscreen_'+GetAppid):0;
 				<!--{/if}-->
 				
-				<!--{if $_G[uid]}-->
 				if(pagesetting.opentype){
 					VuexStore.commit('seTHeader_Information_Opentype', pagesetting.opentype);
 				}else{
 					VuexStore.commit('seTHeader_Information_Opentype', 'new');
 				}
-				<!--{else}-->
-				VuexStore.commit('seTHeader_Information_Opentype', 'new');
-				<!--{/if}-->
-				
+
 				VuexStore.commit('SetShowScreen',ShowScreen);
 			}
 		},

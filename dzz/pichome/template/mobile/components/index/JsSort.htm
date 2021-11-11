@@ -1,0 +1,270 @@
+<van-popup class="sort-popup footer-popup" v-model="ParamSort.PopupVisible" round  position="bottom" style="height: 90%;padding-top: 10px;" @open="sortpopupopen">
+	<div class="vam-popup-title" v-if="ParamSort.data[ParamSort.labelActive]" @click="SortPopupTitleClick">{{ParamSort.data[ParamSort.labelActive].text}}</div>
+	<van-tree-select
+		height="100%"
+		:items="ParamSort.data"
+		:main-active-index.sync="ParamSort.labelActive">
+		<template #content>
+			<template v-if="ParamSort.data[ParamSort.labelActive]['type'] == 'showinformation'">
+				<div class="screen-item" style="padding: 0;">
+					<van-checkbox-group v-model="ParamSort.showinformation.value" @change="SortShowinformationChange">
+						<van-cell-group>
+							<van-cell v-for="(item,index) in ParamSort.showinformation.data" clickable :title="item.val" @click="SortShowinformationClick(index)">
+								<template #right-icon>
+									<van-checkbox shape="square" :name="item.key" ref="showinformation" />
+								</template>
+							</van-cell>
+						</van-cell-group>
+					</van-checkbox-group>
+				</div>
+			</template>
+			<template v-if="ParamSort.data[ParamSort.labelActive]['type'] == 'otherinformation'">
+				<div class="screen-item" style="padding: 0;">
+					<van-radio-group v-model="ParamSort.otherinformation.value">
+						<van-cell-group>
+							<van-cell v-for="item in ParamSort.otherinformation.data" :title="item.val" clickable @click="SortotherinformationChange(item.key)">
+								<template #right-icon>
+									<van-radio :name="item.key"></van-radio>
+								</template>
+							</van-cell>
+						</van-cell-group>
+					</van-radio-group>
+				</div>
+			</template>
+			<template v-if="ParamSort.data[ParamSort.labelActive]['type'] == 'Sorttype'">
+				<div class="screen-item" style="padding: 0;">
+					<van-radio-group v-model="ParamSort.Sorttype.value">
+						<van-cell-group>
+							<van-cell v-for="item in ParamSort.Sorttype.data" :title="item.val" clickable @click="SortSorttypeChange (item.key)">
+								<template #right-icon>
+									<van-radio :name="item.key"></van-radio>
+								</template>
+							</van-cell>
+						</van-cell-group>
+					</van-radio-group>
+				</div>
+			</template>
+			<template v-if="ParamSort.data[ParamSort.labelActive]['type'] == 'sortorder'">
+				<div class="screen-item" style="padding: 0;">
+					<van-radio-group v-model="ParamSort.sortorder.value">
+						<van-cell-group>
+							<van-cell v-for="item in ParamSort.sortorder.data" :title="item.val" clickable @click="SortsortorderChange(item.key)">
+								<template #right-icon>
+									<van-radio :name="item.key"></van-radio>
+								</template>
+							</van-cell>
+						</van-cell-group>
+					</van-radio-group>
+				</div>
+			</template>
+			<template v-if="ParamSort.data[ParamSort.labelActive]['type'] == 'layout'">
+				<div class="screen-item" style="padding: 0;">
+					<van-radio-group v-model="ParamSort.layout.value">
+						<van-cell-group>
+							<van-cell v-for="item in ParamSort.layout.data" :title="item.val" clickable @click="SortlayoutChange(item.key)">
+								<template #right-icon>
+									<van-radio :name="item.key"></van-radio>
+								</template>
+							</van-cell>
+						</van-cell-group>
+					</van-radio-group>
+				</div>
+			</template>
+		</template>
+	</van-tree-select>
+	<div class="btn-bottom">
+		<van-row>
+		  <van-col span="24" style="text-align: center;">
+			  <van-button round plain type="primary" size="large" @click="ParamSort.PopupVisible=false">关闭</van-button>
+		  </van-col>
+		</van-row>
+	
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var SortData = {
+		ParamSort:{
+			PopupVisible:false,
+			labelActive:0,
+			data:[
+				{text:'显示信息',type:'showinformation'},
+				{text:'排序类型',type:'Sorttype'},
+				{text:'排序方式',type:'sortorder'},
+				{text:'布局',type:'layout',},
+			],
+			showinformation:{
+				value:[],
+				data:[{key:'name',val:'名称'},
+					{key:'tagging',val:'标注数'},
+					{key:'extension',val:'扩展名'},
+					{key:'other',val:'其它信息'}]
+			},
+			otherinformation:{
+				value:'btime',
+				data:[{key:'size',val:'尺寸'},
+					{key:'filesize',val:'文件大小'},
+					{key:'tag',val:'标签'},
+					{key:'grade',val:'评分'},
+					{key:'btime',val:'添加时间'},
+					{key:'dateline',val:'修改时间'},
+					{key:'mtime',val:'创建日期'}]
+			},
+			Sorttype:{
+				value:1,
+				data:[{key:1,val:'添加时间',field:'btime'},
+					{key:3,val:'修改时间',field:'dateline'},
+					{key:2,val:'创建日期',field:'mtime'},
+					{key:4,val:'标题',field:'name'},
+					{key:8,val:'文件大小',field:'filesize'},
+					{key:5,val:'尺寸',field:'size'},
+					{key:6,val:'评分',field:'grade'},
+					{key:7,val:'时长',field:'duration'}]
+			},
+			sortorder:{
+				value:'desc',
+				data:[{key:'desc',val:'降序'},{key:'asc',val:'升序'}]
+			},
+			layout:{
+				value:'waterFall',
+				data:[{key:'waterFall',val:'瀑布流'},{key:'rowGrid',val:'自适应'},{key:'imageList',val:'网格'}]
+			},
+			
+		}
+	};
+	var SortJs = {
+		sortpopupopen(){
+			if(this.ParamSort.showinformation.value.indexOf('other')>-1){
+				var status = true;
+				for(var i in this.ParamSort.data){
+					var item = this.ParamSort.data[i];
+					if(item.type == 'otherinformation'){
+						status = false;
+					}
+				}
+				if(status){
+					var str = {text:'其它信息',type:'otherinformation'};
+					this.ParamSort.data.splice(1,0,str);
+				}
+			}
+		},
+		SortPopupTitleClick(){
+			this.ParamSort.PopupVisible = false;
+		},
+		SortShowinformationClick(index){
+			var self = this;
+			self.$refs.showinformation[index].toggle();
+		},
+		SortShowinformationChange(val){
+			if(val.indexOf('other')>-1){
+				var status = true;
+				for(var i in this.ParamSort.data){
+					var item = this.ParamSort.data[i];
+					if(item.type == 'otherinformation'){
+						status = false;
+					}
+				}
+				if(status){
+					var str = {text:'其它信息',type:'otherinformation'};
+					this.ParamSort.data.splice(1,0,str);
+				}
+			}else{
+				if(this.ParamSort.data.length==5){
+					this.ParamSort.data.splice(1,1);
+				}
+				
+			}
+			this.ParamImages.type = 'refresh';
+			this.ImagesLayoutInit();
+			<!--{if $_G[uid]}-->
+			this.SortSaveinformation();
+			<!--{else}-->
+			sessionStorage.setItem('InformationShow',val.join(','));
+			<!--{/if}-->
+		},
+		SortotherinformationChange(val){
+			this.ParamSort.otherinformation.value = val;
+			<!--{if $_G[uid]}-->
+			this.SortSaveinformation();
+			<!--{else}-->
+			sessionStorage.setItem('InformationOther',val);
+			<!--{/if}-->
+		},
+		
+		SortSorttypeChange(val){
+			if(val != this.ParamSort.Sorttype.value){
+				this.ParamSort.Sorttype.value = val;
+				this.CommonhandleHash();
+				<!--{if $_G[uid]}-->
+				this.SortSaveSorttype();
+				<!--{else}-->
+				sessionStorage.setItem('order',val);
+				<!--{/if}-->
+				
+			}
+		},
+		SortsortorderChange(val){
+			if(val != this.ParamSort.sortorder.value){
+				this.ParamSort.sortorder.value = val;
+				this.CommonhandleHash();
+				<!--{if $_G[uid]}-->
+				this.SortSaveSorttype();
+				<!--{else}-->
+				sessionStorage.setItem('asc',val);
+				<!--{/if}-->
+			}
+		},
+		SortSaveSorttype(){//保存排序方式
+			var self = this;
+			var sortfiles = '';
+			for(var x in self.ParamSort.Sorttype.data){
+				var item = self.ParamSort.Sorttype.data[x];
+				if(item.key == parseInt(self.ParamSort.Sorttype.value)){
+					sortfiles = item.field;
+				}
+			}
+			var param = {
+				sortfiled:sortfiles,
+				sort:self.ParamSort.sortorder.value
+			};
+			$.post(MOD_URL+'&op=ajax&operation=setsort',param,function(json){
+				if(json.success){
+					
+				}else{
+					self.$toast.fail('排序数据保存失败')
+				}
+			},'json');
+		},
+		SortSaveinformation(){//保存显示信息
+			var self = this;
+			var param = {
+				showfileds:self.ParamSort.showinformation.value.join(','),
+				other:self.ParamSort.otherinformation.value
+			};
+			$.post(MOD_URL+'&op=ajax&operation=setshow',param,function(json){
+				if(json.success){
+					
+				}else{
+					self.$toast.fail('显示信息数据保存失败')
+				}
+			},'json')
+		},
+		SortlayoutChange(val){
+			this.ParamSort.layout.value = val;
+			this.ParamImages.type = 'refresh';
+			this.ImagesLayoutInit();
+			<!--{if $_G[uid]}-->
+			$.post('{MOD_URL}&op=ajax&operation=setlayout',{
+				layout:val
+			},function(json){
+				if(json.success){
+					
+				}else{
+					self.$toast.fail('布局数据保存失败')
+				}
+			},'json');
+			<!--{else}-->
+			sessionStorage.setItem('Layout',val);
+			<!--{/if}-->
+		}
+	};
+</script>

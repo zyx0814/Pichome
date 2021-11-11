@@ -1,0 +1,161 @@
+<van-popup class="seasrch-popup footer-popup" v-model="ParamSearch.PopupVisible" round position="bottom" :style="{ height: '90%' }" @open="SearchPopupOpen" @close="SearchPopupClose">
+	<div class="vam-popup-title" @click="ParamSearch.PopupVisible=false">搜索</div>
+	<div class="van-search-box">
+		<van-search class="popup-search-input" v-model.trim="ParamSearch.keyword" shape="round" placeholder="输入关键词" @input="SearchInputKeyword" maxlength="50" :clearable="false">
+			<template #right-icon>
+				<van-icon v-show="ParamSearch.keyword" @click="SearchClearKeyword" name="cross" />
+			</template>
+		</van-search>
+	</div>
+	<div class="search-val-box">
+		<template v-if="ParamSearch.keyword">
+			<template v-if="ParamSearch.likeloading">
+				<van-loading class="custom-load" size="24px" type="spinner" color="var(--color-primary)" vertical>加载中...</van-loading>
+			</template>
+			<template v-else>
+				<van-list>
+					<van-cell v-for="(item,index) in ParamSearch.likedata" :key="index" @click="SearchClickLike(item.text)">
+						<template #title>
+							<div v-html="item.highlight"></div>
+						</template>
+					</van-cell>
+				</van-list>
+			</template>
+			
+		</template>
+		<template v-else>
+			<template v-if="ParamSearch.hostloading">
+				<van-loading class="custom-load" size="24px" type="spinner" color="var(--color-primary)" vertical>加载中...</van-loading>
+			</template>
+			<template v-else>
+				<div class="search-host">
+					<div class="search-host-list" v-for="item in ParamSearch.hostdata" :style="{backgroundImage: 'url('+item.icondata+')'}" @click="SearchClickLike(item.keyword)">
+						<div class="bg"></div>
+						<div class="text">{{item.keyword}}</div>
+					</div>
+				</div>
+			</template>
+			
+		</template>
+	</div>
+	<div class="btn-bottom">
+		<van-row gutter="20">
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round plain type="primary" size="large" @click="SearchClearKeyword">重置</van-button>
+		  </van-col>
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round type="info" size="large" @click="SearchConfirmval">确定</van-button>
+		  </van-col>
+		</van-row>
+	
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var SearchData = {
+		ParamSearch:{
+			PopupVisible:false,
+			keyword: '',
+			keywordDefault:'',
+			hostloading:true,
+			hostdata:[],
+			likeloading:true,
+			likedata:[]
+		}
+	};
+	var SearchJs = {
+		SearchPopupOpen() {
+			var self = this;
+			if(self.ParamSearch.keyword){
+				self.SearchLikeword();
+			}else{
+				self.SearchHottag();
+			}
+			self.ParamSearch.keywordDefault = self.ParamSearch.keyword;
+		},
+		SearchPopupClose(){
+			var self = this;
+			if(self.ParamSearch.keywordDefault == self.ParamSearch.keyword){
+				return false;
+			}
+			self.CommonhandleHash();
+			self.CommonAddkeyword(self.ParamSearch.keyword,0);
+		},
+		SearchClearKeyword(){
+			this.ParamSearch.keyword = '';
+			if(this.ParamSearch.hostloading){
+				this.SearchHottag();
+			}
+		},
+		SearchInputKeyword(val){
+			if(val){
+				this.SearchLikeword();
+			}else{
+				if(this.ParamSearch.hostloading){
+					this.SearchHottag();
+				}
+			}
+		},
+		SearchConfirmval(){
+			this.ParamSearch.PopupVisible = false;
+		},
+		
+		SearchHottag(){
+			var self = this;
+			self.ParamSearch.hostloading = true;
+			$.post(MOD_URL+'&op=ajax&operation=getsearchtag',{
+				appid:self.ParamLibrary.activeId
+			},function(data){
+				self.ParamSearch.hostdata = data.hottags?data.hottags:[];
+				self.ParamSearch.hostloading = false;
+			},'json');
+		},
+		SearchLikeword(){
+			var self = this;
+			this.ParamSearch.likeloading = true;
+			$.post(MOD_URL+'&op=ajax&operation=likewords',{
+				keyword:self.ParamSearch.keyword,
+				appid:self.ParamLibrary.activeId
+			},function(data){
+				self.ParamSearch.likedata = [];
+				if(data && data.likewords){
+					for(var i in data.likewords){
+						var text = data.likewords[i];
+						var highlight = self.SearchHighlight(text,self.ParamSearch.keyword);
+						self.ParamSearch.likedata.push({
+							text:text,
+							highlight:highlight
+						});
+					}
+					
+				}
+				self.ParamSearch.likeloading = false;
+			},'json');
+		},
+		SearchHighlight(text,words){
+			// 默认的标签，如果没有指定，使用span
+			var i, len = words.length,
+			re;
+			//匹配每一个特殊字符 ，进行转义
+			var specialStr = ["*", ".", "?", "+", "$", "^", "[", "]", "{", "}", "|", "\\", "(", ")", "/", "%"]; 
+			$.each(specialStr, function(i, item) {
+				if(words.indexOf(item) != -1) {
+					words = words.replace(new RegExp("\\" + item, 'g'), "\\" + item);
+				}
+			});
+			//匹配整个关键词
+			re = new RegExp(words, 'g');
+			if(re.test(text)) {
+				text = text.replace(re, '<span class="highlight">$&</span>');
+			}
+			return text;
+		},
+		SearchClickLike(val){
+			var self = this;
+			if(self.ParamSearch.keyword != val){
+				self.ParamSearch.keyword = val;
+				self.ParamSearch.PopupVisible = false;
+			}
+			
+		}
+	};
+</script>
