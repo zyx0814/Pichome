@@ -1,0 +1,28 @@
+<div class="block">
+	<el-popover placement="bottom" width="225" trigger="click" ref="ScreenPopoverRef">
+		<ul class="field-select-box dzz-dropdown-menu">
+			<li class="dzz-dropdown-menu__item single">
+				<el-radio v-model="ScreenValue.link.value" label="1" @click.native.prevent="ScreenLinkClick('1')">有链接</el-radio>
+			</li>
+			<li class="dzz-dropdown-menu__item single">
+				<el-radio v-model="ScreenValue.link.value" label="0" @click.native.prevent="ScreenLinkClick('0')">没有链接</el-radio>
+			</li>
+			<li v-if="ScreenValue.link.value=='1'">
+				<el-input 
+					type="textarea"
+					v-model="ScreenValue.link.input"
+					@input="ScreenLinkInput"
+					:autosize="{ minRows: 2, maxRows: 4}"
+					placeholder="包含关键字(使用,隔开)"></el-input>
+			</li>
+		</ul>
+		<div class="field-single" :class="ScreenValue.link.value=='1'||ScreenValue.link.value=='0'?'active':''" slot="reference">
+			<span v-if="ScreenValue.link.value=='0'">链接：没有</span>
+			<span v-else-if="ScreenValue.link.input">链接：{{ScreenValue.link.input}}</span>
+			<span v-else-if="ScreenValue.link.value=='1'">链接：有</span>
+			<span v-else>链接</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.link.value=='1' || ScreenValue.link.value=='0'" class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+		</div>
+	</el-popover>
+</div>

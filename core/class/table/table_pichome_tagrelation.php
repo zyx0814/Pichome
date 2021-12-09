@@ -19,7 +19,7 @@
             }else{
                 //同一库下一个标签只能归属于一个分类
                 $this->delete_by_tpid($setarr['tid'],$setarr['appid']);
-               return parent::insert($setarr,1);
+               return parent::insert($setarr);
             }
         }
         public function delete_by_tpid($tid,$appid){

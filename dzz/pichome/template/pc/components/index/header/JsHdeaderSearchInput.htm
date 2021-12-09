@@ -1,0 +1,190 @@
+<div class="el-popover-search" v-cloak>
+	<el-input 
+		class="search-keyword" 
+		style="border-radius: 0;" 
+		@input="HeaderKeywordInput" 
+		 @keyup.enter.native="HeaderKeywordInputKeyup"
+		v-model="HeaderKeyword" 
+		placeholder="搜索">
+		<i slot="prefix" style="left: -6px;top: -1px;" class="icon-search el-input__icon ri-search-line"></i>
+		<i slot="suffix" v-if="HeaderKeyword" class="ri-close-line keyword-input-close" @click="HeaderKeywordInputClear"></i>
+	</el-input>
+	<div>
+		<el-divider></el-divider>
+	</div>
+	<el-scrollbar class="page-component__scroll" :style="{height: HeaderSearch.height+'px'}">
+		<div v-if="HeaderKeyword" class="association">
+			<template v-if="HeaderSearch.listLoading">
+				<div :style="{height: HeaderSearch.height+'px',postion:'relative'}">
+					<div class="img-loading center">
+						<span class="el-icon-loading"></span>加载中...
+					</div>
+				</div>
+			</template>
+			<template v-else>
+				<ul class="field-select-box dzz-dropdown-menu">
+					<li class="dzz-dropdown-menu__item single" v-for="item in HeaderSearch.list" @click.stop="HdeaderSearchInputListClick(item)">{{item}}</li>
+				</ul>
+			</template>
+			
+		</div>
+		<div v-else class="popover-search">
+			<div class="recent-search" v-if="HeaderSearch.recenttag.length">
+				<p class="title">最近搜索</p>
+				<ul class="recent-search-txt clearfix">
+					<li class="txt" v-for="item in HeaderSearch.recenttag" @click.stop="HdeaderSearchInputRecent(item)">
+						{{item}}</li>
+				</ul>
+			</div>
+			<div class="hot-tags">
+				<p class="title">热门搜索</p>
+				<ul class="tags-img">
+					<li class="img-list" v-for="item in HeaderSearch.host"
+						@click.stop="HdeaderSearchInputRecent(item.keyword)">
+						<div class="img" :style="{backgroundImage: 'url('+item.icondata+')'}"></div>
+						<div class="bg"></div>
+						<div class="txt">
+							<span>{{item.keyword}}</span>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</el-scrollbar>
+</div>
+<script type="text/javascript">
+	var JsHdeaderSearchInputMethods = {
+		HeaderKeywordInput:debounce(function(){//头部搜索
+			var value = this.HeaderKeyword;
+			if(value){
+				if(value.length>100){
+					this.HeaderKeyword=value.slice(0,100)
+				}
+				this.HdeaderSearchInputKeyword(1);
+			}
+		},300),
+		HeaderKeywordInputKeyup(){
+			this.HeaderPopoverSearchHide();
+		},
+		HeaderKeywordInputClear(){
+			this.HeaderKeyword = '';
+			this.HeaderPopoverSearchHide();
+			this.HdeaderSearchInputSubmit();
+		},
+		HdeaderSearchInputListClick(keywrod){
+			if(this.HeaderKeyword != keywrod){
+				this.HeaderKeyword = keywrod;
+				this.HeaderPopoverSearchHide();
+				this.HdeaderSearchInputKeyword();
+			}
+		},
+		HdeaderSearchInputRecent(value){
+			var host = window.sessionStorage.getItem('HostKeyword');
+			if(host){
+				host = host.split(',');
+				var index = host.indexOf(value);
+				if(index>-1){
+					host.splice(index,1);
+				}else{
+					if(host.length>9){
+						host.pop();
+					}
+				}
+				host.unshift(value);
+				var newhost = host.join(',');
+				if(host){
+					window.sessionStorage.setItem("HostKeyword",newhost);
+				}else{
+					window.sessionStorage.removeItem("HostKeyword");
+				}
+				
+			}else{
+				window.sessionStorage.setItem("HostKeyword",value);
+			}
+			this.HeaderKeyword = value;
+			
+			this.HeaderPopoverSearchHide();
+			this.HdeaderSearchInputAddkeywordNum(value);
+			this.HdeaderSearchInputSubmit();
+		},
+		HdeaderSearchInputKeyword(link){
+			var value = this.HeaderKeyword;
+			if(value){
+				var host = window.sessionStorage.getItem('HostKeyword');
+				if(host){
+					host = host.split(',');
+					var index = host.indexOf(value);
+					if(index>-1){
+						host.splice(index,1);
+					}else{
+						if(host.length>9){
+							host.pop();
+						}
+					}
+					host.unshift(value);
+					var newhost = host.join(',');
+					if(host){
+						window.sessionStorage.setItem("HostKeyword",newhost);
+					}else{
+						window.sessionStorage.removeItem("HostKeyword");
+					}
+				}else{
+					window.sessionStorage.setItem("HostKeyword",value);
+				}
+				
+				this.HdeaderSearchInputAddkeywordNum(value);
+				if(link){
+					this.HdeaderSearchInputGetKeyword();
+				}
+			}else{
+				this.popoverSearch.keywordList = [];
+			}
+			this.HdeaderSearchInputSubmit();
+		},
+		HdeaderSearchInputAddkeywordNum(keyword){//添加关键词次数
+			var self = this;
+			if(keyword){
+				jQuery.post(MOD_URL+'&op=ajax&operation=addsearch',{
+					appid:self.Appid,
+					keyword:keyword,
+					ktype:0
+				});
+			}
+		},
+		HdeaderSearchInputGetKeyword(){
+			var self = this;
+			self.HeaderSearch.listLoading = true;
+			if(!self.HeaderKeyword){
+				self.HeaderSearch.listLoading = false;
+				return false;
+			}
+			$.post(MOD_URL+'&op=ajax&operation=likewords',{
+				keyword:self.HeaderKeyword
+			},function(data){
+				if(data && data.likewords){
+					self.HeaderSearch.list = data.likewords;
+				}else{
+					self.HeaderSearch.list = [];
+				}
+				self.HeaderSearch.listLoading = false;
+			},'json');
+		},
+		HdeaderSearchInputSubmit(){
+			this.CommonGetImageData();
+		},
+		HeaderCenterCreate(){
+			var self = this;
+			var hash=location.hash;
+			var url=hash.replace('#','');
+			var arr = url.split('&');
+			for(var i in arr){
+				var farr = arr[i].split('=');
+				switch(farr[0]){
+					case 'keyword':
+						self.HeaderKeyword = decodeURI(farr[1]);
+					break;
+				}
+			}
+		}
+	}
+</script>

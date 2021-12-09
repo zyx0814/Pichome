@@ -28,23 +28,93 @@ class eagleexport
     public function __construct($data = array())
     {
         //获取导入记录表基本数据
-        $this->path = $data['path'];
+        $this->path = str_replace('/', BS, $data['path']);;
         $this->appid = $data['appid'];
         $this->uid = $data['uid'];
         $this->username = $data['username'];
         $this->exportstatus = $data['state'];
         $this->donum = $data['donum'];
         $this->filenum = $data['filenum'];
-        $this->eagledir = str_replace(BS, '/', $this->eagledir);
         $this->lastid = $data['lastid'];
     }
+    public function getpathdata($folderdata,$appid, $pathdata = array())
+    {
+        foreach ($folderdata as $v) {
+            $pathdata[$v['id'].$appid] =  $v['name'];
+            if ($v['children']) {
+                $tmpchild = $v['children'];
+                $pathdata = $this->getpathdata($tmpchild, $appid,$pathdata);
 
+            }
+        }
+
+        return $pathdata;
+    }
+    public function initFoldertag(){
+        $jsonfile = $this->path . BS . 'metadata.json';
+        $mtime = filemtime($jsonfile);
+        $appdatas = file_get_contents($jsonfile);
+        //解析出json数据
+        $appdatas = json_decode($appdatas, true);
+
+        //目录数据
+        $folderdata = $appdatas['folders'];
+
+        C::t('pichome_folder')->insert_folderdata_by_appid($this->appid,$folderdata);
+        //对比目录数据
+        $folderarr = $this->getpathdata($folderdata,$this->appid);
+        $folderfids = array_keys($folderarr);
+        $delfids = [];
+        foreach(DB::fetch_all("select fid from %t where fid not in(%n) and appid = %s",array('pichome_folder',$folderfids,$this->appid)) as $v){
+            $delfids[] = $v['fid'];
+        }
+        C::t('pichome_folder')->delete($delfids);
+        //标签数据
+        $tagdata = $appdatas['tagsGroups'];
+        $currentcids = [];
+        $tids = [];
+        foreach($tagdata as $v){
+            $taggroupdata = [
+                'cid'=>$v['id'].$this->appid,
+                'catname'=>$v['name'],
+                'appid'=>$this->appid,
+                'dateline'=>TIMESTAMP
+            ];
+            //插入或更新标签分类数据
+            $cid = C::t('pichome_taggroup')->insert($taggroupdata);
+            $currentcids[] = $cid;
+
+            foreach($v['tags'] as $val){
+                $tid = C::t('pichome_tag')->insert($val,1);
+                $tids[] = $tid;
+                if($cid){
+                    $relasetarr = ['cid'=>$cid,'tid'=>$tid,'appid'=>$this->appid];
+                    C::t('pichome_tagrelation')->insert($relasetarr);
+                }
+            }
+        }
+        if($tids){
+            //查询关系表中包含的不存在的标签关系
+            $drids = [];
+            foreach(DB::fetch_all("select id from %t where tid  not in(%n)  and appid = %s",array('pichome_tagrelation',$tids,$this->appid)) as $rv){
+                $drids[] = $rv['id'];
+            }
+            //删除不存在的标签关系数据
+            C::t('pichome_tagrelation')->delete($drids);
+        }
+        $ocids = C::t('pichome_taggroup')->fetch_cid_by_appid($this->appid);
+        $delcids = array_diff($ocids,$currentcids);
+        C::t('pichome_taggroup')->delete_by_cids($delcids);
+        C::t('pichome_vapp')->update($this->appid,array('dateline'=>$mtime));
+        return true;
+
+    }
     public function initExport()
     {
-        $filedir = $this->eagledir . '/' . $this->path . '/images';
+        $filedir =  $this->path . BS.'images';
         $readtxt = $this->readtxt . 'eagleexport' . md5($this->path) . '.txt';
         $filenum = 0;
-        if (!is_file($readtxt) || filemtime($readtxt) < filemtime($this->eagledir . '/' . $this->path . '/metadata.json')) {
+        if (!is_file($readtxt) || filemtime($readtxt) < filemtime( $this->path . BS.'metadata.json')) {
             if ($dch = opendir($filedir)) {
                 $thandle = fopen($readtxt, 'w+');
                 while (($file = readdir($dch)) != false) {
@@ -65,57 +135,69 @@ class eagleexport
                 C::t('pichome_vapp')->update($this->appid, array('state' => 0));
                 return array('error' => 'Read Dir Failer');
             }
+
             C::t('pichome_vapp')->update($this->appid, array('filenum' => $this->filenum, 'state' => 1));
         }
         C::t('pichome_vapp')->update($this->appid, array('state' => 1));
+        $this->initFoldertag();
         return array('success' => true);
     }
 
 
     public function execExport($force = false)
     {
-        $filedir = $this->eagledir . '/' . $this->path . '/images';
+        $filedir = $this->path . BS.'images';
         $readtxt = $this->readtxt . 'eagleexport' . md5($this->path) . '.txt';
-        runlog('aaa', $readtxt);
+        if(filesize($readtxt) == 0){
+            @unlink($readtxt);
+            C::t('pichome_vapp')->update($this->appid, array('lastid' => 0, 'percent' => 100, 'donum' => 0, 'state' => 2,'filenum'=>$this->filenum));
+            return array('success'=>true);
+
+        }
         if ($this->lastid) {
             $start = $this->lastid * 19;
         } else $start = 0;
-
         if ($this->lastid < $this->filenum && $this->exportstatus == 1) {
             $tfile = fopen($readtxt, 'r');
-            $i = 1;
+            $i = 0;
             fseek($tfile, $start);
-            while (!feof($tfile)) {
+            while ($tfile && !feof($tfile)) {
+                ++$i;
                 if ($i > $this->onceexportnum) {
                     break;
                 }
                 $file = trim(fgets($tfile));
+
                 $filePath = $filedir . '/' . $file;
-                if (is_dir($filePath) && is_file($filePath . '/metadata.json')) {
-                    $id = str_replace('.info', '', $file);
-                    //组合文件id
-                    $rid = $id . $this->appid;
-                    //文件路径
-                    $tmppath = $filePath;
-                    unset($filePath);
-                    //文件信息文件路径
-                    $metadatajsonfile = $tmppath . BS . 'metadata.json';
 
-                    $data = C::t('pichome_resources')->fetch($rid);
-                    //获取json文件最后修改时间
-                    $lastdate = filemtime($metadatajsonfile);
-                    $metadata = file_get_contents($metadatajsonfile);
-                    $filemetadata = json_decode($metadata, true);
-                    //查询文件表是否有对应记录
-                    if ($data) {
+                $id = str_replace('.info', '', $file);
+                //组合文件id
+                $rid = $id . $this->appid;
+                //文件路径
+                $tmppath = $filePath;
+                unset($filePath);
+                //文件信息文件路径
+                $metadatajsonfile = $tmppath . BS . 'metadata.json';
 
-                        //json文件不存在时删除文件，此情形基本不会出现(文件更新时，mtime会对应发生变化)
-                        if (!is_file($metadatajsonfile)) {
-                            //删除文件
+                $data = C::t('pichome_resources')->fetch($rid);
+                //获取json文件最后修改时间
+                $lastdate = filemtime($metadatajsonfile);
+                $metadata = file_get_contents($metadatajsonfile);
+                $filemetadata = json_decode($metadata, true);
+                //查询文件表是否有对应记录
+                if ($data) {
+
+                    //json文件不存在时删除文件，此情形基本不会出现(文件更新时，mtime会对应发生变化)
+                    if (!is_file($metadatajsonfile)) {
+                        //删除文件
+                        C::t('pichome_resources')->delete_by_rid($rid);
+
+                    }
+                    elseif ($force || ($data['lastdate'] < $lastdate)) {//当文件最后更新时间小于eagle时间时，需处理标签，颜色，目录等信息
+                        if($filemetadata['isDeleted']){
                             C::t('pichome_resources')->delete_by_rid($rid);
-                            continue;
-                        } elseif ($force || ($data['lastdate'] < $lastdate)) {//当文件最后更新时间小于eagle时间时，需处理标签，颜色，目录等信息
-
+                        }
+                        else{
                             $p = new Encode_Core();
                             $charset = $p->get_encoding($tmppath);
                             if (CHARSET != $charset) $filemetadataname = diconv($filemetadata['name'], CHARSET, $charset);
@@ -142,6 +224,7 @@ class eagleexport
                                 $this->exportfile($filemetadata);
                                 unset($filemetadata);
                             } else {
+                                $setarr['searchval'] = $filemetadata['name'];
                                 //查询原数据中的属性信息
                                 $attrdata = C::t('pichome_resources_attr')->fetch($rid);
                                 //信息表数据记录
@@ -149,6 +232,7 @@ class eagleexport
                                 //检查标签变化
                                 //标签数据
                                 $tags = $filemetadata['tags'];
+                                $setarr['searchval'] .= implode('',$tags);
                                 //现有标签
                                 $tagids = [];
                                 //原有标签
@@ -179,6 +263,7 @@ class eagleexport
                                         $tcommentval['y'] = number_format($commentval['y'], 2);
                                         try {
                                             C::t('pichome_comments')->insert($tcommentval);
+                                            $setarr['searchval'] .= $tcommentval['annotation'];
                                         } catch (Exception $e) {
 
                                         }
@@ -202,9 +287,9 @@ class eagleexport
                                     'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0,
                                     'lastdate' => $lastdate
                                 ];
-                                $file = str_replace(BS, '/', $file);
-                                $attachment = str_replace($this->eagledir . '/', '', $file);
-                                $path = str_replace(BS, '/', $attachment);
+                                $file = str_replace('/', BS, $file);
+                                $attachment = str_replace($this->path . BS, '', $file);
+                                $path = str_replace('/', BS, $attachment);
                                 $thumb = (is_file($thumbfile)) ? 1 : 0;
                                 $setarr['path'] = $path;
                                 $resourcesarr['hasthumb'] = $thumb;
@@ -213,94 +298,93 @@ class eagleexport
                                 $rfids = [];
                                 $orfids = C::t('pichome_folderresources')->fetch_id_by_rid($rid);
                                 C::t('pichome_folderresources')->delete($orfids);
+                                $setarr['searchval'] .= $resourcesarr['name'];
+                                //$fids = [];
                                 //检查目录变化
                                 foreach ($filemetadata['folders'] as $fv) {
                                     $fid = trim($fv) . $this->appid;
                                     if (!C::t('pichome_folder')->check_password_byfid($fid)) {
                                         $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
                                         C::t('pichome_folderresources')->insert($frsetarr);
-                                    } else {
-                                        continue;
+                                        // $fids[] = $fid;
                                     }
                                 }
-
                                 //尝试更新属性表数据
                                 $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
                                 //描述数据
                                 $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
+                                $setarr['searchval'] .= $setarr['desc'].$setarr['link'];
                                 if ($filemetadata['duration']) $setarr['duration'] = number_format($filemetadata['duration'], 2);
                                 $setarr['rid'] = $rid;
                                 C::t('pichome_resources_attr')->insert($setarr);
                                 unset($filemetadata);
                                 unset($setarr);
                             }
-                        } else {
-                            unset($data);
-                            $this->donum += 1;
-                            $percent = round(($this->donum / $this->filenum) * 100);
-                            $state = ($percent >= 100) ? 2 : 1;
-                            if ($state == 2) {
-                                fclose($tfile);
-                                @unlink($this->readtxt . 'eagleexport' . md5($this->path) . '.txt');
-                                $lastid = 0;
-                            } else {
-                                $lastid = $this->donum;
-                            }
-                            //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
-                            C::t('pichome_vapp')->update($this->appid, array('lastid' => $lastid, 'percent' => $percent, 'donum' => $this->donum, 'state' => $state));
-                            continue;
-                        }
-                    } else {//如果没有记录，则为新导入文件
-                        if (!is_file($metadatajsonfile)) {
-                            $this->filenum -= 1;
-                            continue;
                         }
 
-                        //如果目录含有密码则不导入数据直接跳过
-                        $haspassword = C::t('pichome_folder')->check_haspasswrod($filemetadata['folders'], $this->appid);
-                        //echo '判断目录密码后缓存:'.memory_get_usage()/1024 . '<br>';
-                        if ($haspassword) continue;
-                        $p = new Encode_Core();
-                        $charset = $p->get_encoding($tmppath);
-                        if (CHARSET != $charset) $filemetadataname = diconv($filemetadata['name'], CHARSET, $charset);
-
-                        $filename = $filemetadataname . '.' . $filemetadata['ext'];
-                        $thumbname = $filemetadataname . '_thumbnail.png';
-                        //echo $i.'middle:'.memory_get_usage()/1024 . '<br>';
-                        $file = $tmppath . BS . $filename;
-                        $thumbfile = $tmppath . BS . $thumbname;
-                        //$filemd5 = md5_file($file);
-                        $filemetadata['filename'] = $filemetadata['name'];
-                        $filemetadata['file'] = $file;
-                        unset($file);
-                        $filemetadata['thumbfile'] = $thumbfile;
-                        unset($thumbfile);
-                        // $filemetadata['md5'] = $filemd5;
-                        $filemetadata['rid'] = $rid;
-                        $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime'] : $filemetadata['modificationTime'];
-                        $filemetadata['btime'] = $filemetadata['btime'] ? $filemetadata['btime'] : $filemetadata['modificationTime'];
-                        $filemetadata['dateline'] = $filemetadata['lastModified'];
-                        $filemetadata['lastdate'] = $lastdate;
-                        $this->exportfile($filemetadata);
-                        unset($filemetadata);
-
                     }
-                    $this->donum += 1;
-                    $percent = round(($this->donum / $this->filenum) * 100);
-                    //防止因获取文件总个数不准确百分比溢出
-                    $state = ($percent >= 100) ? 2 : 1;
-                    if ($state == 2) {
-                        fclose($tfile);
-                        @unlink($this->readtxt . 'eagleexport' . md5($this->path) . '.txt');
-                        $lastid = 0;
-                    } else {
-                        $lastid = $this->donum;
+                    else {
+                        unset($data);
                     }
-                    //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
-                    C::t('pichome_vapp')->update($this->appid, array('lastid' => $lastid, 'percent' => $percent, 'donum' => $this->donum, 'state' => $state));
                 }
-                $i++;
+                else {//如果没有记录，则为新导入文件
+
+                    if (is_file($metadatajsonfile)) {
+                        if($filemetadata['isDeleted']){
+                            //$this->filenum -= 1;
+                        }else{
+                            //如果目录含有密码则不导入数据直接跳过
+                            $haspassword = C::t('pichome_folder')->check_haspasswrod($filemetadata['folders'], $this->appid);
+
+                            if (!$haspassword){
+                                $p = new Encode_Core();
+                                $charset = $p->get_encoding($tmppath);
+                                if (CHARSET != $charset) $filemetadataname = diconv($filemetadata['name'], CHARSET, $charset);
+
+                                $filename = $filemetadataname . '.' . $filemetadata['ext'];
+                                $thumbname = $filemetadataname . '_thumbnail.png';
+                                //echo $i.'middle:'.memory_get_usage()/1024 . '<br>';
+                                $file = $tmppath . BS . $filename;
+                                $thumbfile = $tmppath . BS . $thumbname;
+                                //$filemd5 = md5_file($file);
+                                $filemetadata['filename'] = $filemetadata['name'];
+                                $filemetadata['file'] = $file;
+                                unset($file);
+                                $filemetadata['thumbfile'] = $thumbfile;
+                                unset($thumbfile);
+                                // $filemetadata['md5'] = $filemd5;
+                                $filemetadata['rid'] = $rid;
+                                $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime'] : $filemetadata['modificationTime'];
+                                $filemetadata['btime'] = $filemetadata['btime'] ? $filemetadata['btime'] : $filemetadata['modificationTime'];
+                                $filemetadata['dateline'] = $filemetadata['lastModified'];
+                                $filemetadata['lastdate'] = $lastdate;
+
+                                $this->exportfile($filemetadata);
+                                unset($filemetadata);
+                            }
+                        }
+
+
+                    }
+
+                }
+                $this->donum += 1;
+                $percent = floor(($this->donum / $this->filenum) * 100);
+                //防止因获取文件总个数不准确百分比溢出
+                $state = ($percent >= 100) ? 2 : 1;
+                if ($state == 2) {
+                    fclose($tfile);
+                    @unlink($this->readtxt . 'eagleexport' . md5($this->path) . '.txt');
+                    $tfile = false;
+                    $lastid = 0;
+                } else {
+                    $lastid = $this->donum;
+                }
+                //记录导入起始位置，以备中断后从此处,更改导入状态为正在导入
+                C::t('pichome_vapp')->update($this->appid, array('lastid' => $lastid, 'percent' => $percent, 'donum' => $this->donum, 'state' => $state,'filenum'=>$this->filenum));
+
             }
+
 
         }
 
@@ -324,18 +408,31 @@ class eagleexport
         if ($this->lastid < 1) $this->lastid = 1;
         $limitsql = ($this->lastid - 1) * $this->checklimit . ',' . $this->checklimit;
         $delrids = [];
-        $data = DB::fetch_all("select rid from %t where appid = %s order by lastdate asc limit $limitsql ", array('pichome_resources', $this->appid));
+        $data = DB::fetch_all("select rid,isdelete from %t where appid = %s order by lastdate asc limit $limitsql ", array('pichome_resources', $this->appid));
         if (empty($data)) {
             C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 3, 'lastid' => 0, 'donum' => 0));
+            //校验完成后更新目录文件数
+            foreach(DB::fetch_all("select count(rf.id) as num,f.fid  from %t f left join %t rf on rf.fid=f.fid where f.appid = %s group by f.fid",array('pichome_folder','pichome_folderresources',$this->appid)) as $v){
+                C::t('pichome_folder')->update($v['fid'],array('filenum'=>$v['num']));
+
+            }
+            //修正库中文件数
+            $total = DB::result_first("select count(rid) from %t where appid = %s ", array('pichome_resources', $this->appid));
+            C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total));
             return true;
         }
 
         foreach ($data as $v) {
-            $id = str_replace($this->appid, '', $v['rid']);
-            $filejson = $this->eagledir . '/' . $this->path . '/images/' . $id . '.info/metadata.json';
-            if (!is_file($filejson)) {
+            if($v['isdelete']){
                 $delrids[] = $v['rid'];
+            }else{
+                $id = str_replace($this->appid, '', $v['rid']);
+                $filejson =  $this->path . BS.'images'.BS . $id . '.info'.BS.'metadata.json';
+                if (!is_file($filejson)) {
+                    $delrids[] = $v['rid'];
+                }
             }
+
 
         }
         if (!empty($delrids)) {
@@ -356,9 +453,9 @@ class eagleexport
             return;
         }
 
-        $filemetadata['file'] = str_replace(BS, '/', $filemetadata['file']);
-        $attachment = str_replace(BS, '/', $filemetadata['file']);
-        $path = str_replace($this->eagledir . '/', '', $attachment);
+        $filemetadata['file'] = str_replace('/', BS, $filemetadata['file']);
+        $attachment = str_replace('/', BS, $filemetadata['file']);
+        $path = str_replace($this->path . BS, '', $attachment);
         unset($attachment);
         $thumb = (is_file($filemetadata['thumbfile'])) ? 1 : 0;
         //echo 'middle1:'.memory_get_usage()/1024 . '<br>';
@@ -384,22 +481,30 @@ class eagleexport
         ];
         unset($type);
         //插入文件表数据
-        if (C::t('pichome_resources')->insert($resourcesarr)) {
+        if (C::t('pichome_resources')->insert($resourcesarr,1)) {
+            DB::delete('pichome_folderresources',array('rid'=>$rid));
+            $setarr['searchval'] = $resourcesarr['name'];
+            //$fids = [];
             //插入目录关联表数据
             foreach ($filemetadata['folders'] as $fv) {
                 $fid = $fv . $this->appid;
                 if (!C::t('pichome_folder')->check_password_byfid($fid)) {
                     $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
                     C::t('pichome_folderresources')->insert($frsetarr);
+                    //$fids[] = $fid;
                     unset($frsetarr);
-                } else {
-                    continue;
                 }
             }
+            /* if(!empty($fids)){
+                 foreach(DB::fetch_all("select fname from %t where fid in(%n)",array('pichome_folder',$fids)) as $foldername){
+                     $setarr['searchval'] .= $foldername['fname'];
+                 }
+             }*/
             //获取属性表数据
             $setarr = [];
             //标签数据
             $tags = $filemetadata['tags'];
+            $setarr['searchval'] .= implode('',$tags);
             if (!empty($tags)) {
                 $tagids = $this->addtag($tags);
                 unset($tags);
@@ -426,7 +531,8 @@ class eagleexport
                     $tcommentval['rid'] = $rid;
                     $tcommentval['x'] = number_format($commentval['x'], 2);
                     $t['y'] = number_format($commentval['y'], 2);
-                    C::t('pichome_comments')->insert($tcommentval);
+                    C::t('pichome_comments')->insert($commentval);
+                    $setarr['searchval'] .= $commentval['annotation'];
                     unset($tcommentval);
                 }
             }
@@ -436,6 +542,7 @@ class eagleexport
             $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
             //描述数据
             $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
+            $setarr['searchval'] .= $setarr['desc'].$setarr['link'];
             $setarr['rid'] = $rid;
             $setarr['appid'] = $this->appid;
             $setarr['path'] = $path;
@@ -502,12 +609,12 @@ class eagleexport
     {
         $tagids = [];
         foreach ($tags as $v) {
-            if (preg_match('/^\s*$/', $v)) continue;
-            if ($tid = C::t('pichome_tag')->insert($v)) {
-                $tagids[] = $tid;
-            } else {
-                continue;
+            if (!preg_match('/^\s*$/', $v)) {
+                if ($tid = C::t('pichome_tag')->insert($v)) {
+                    $tagids[] = $tid;
+                }
             }
+
         }
         unset($tags);
         return $tagids;

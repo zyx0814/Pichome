@@ -10,7 +10,7 @@
    
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):0;
     $processname = 'DZZ_EXPORTFILE_LOCK_'.$appid;
-    //dzz_process::unlock($processname);
+   // dzz_process::unlock($processname);
     $locked = true;
     if (!dzz_process::islocked($processname, 60*5)) {
         $locked=false;
@@ -22,17 +22,16 @@
     $force = isset($_GET['force']) ? intval($_GET['force']):0;
     $data = C::t('pichome_vapp')->fetch($appid);
     if(!$data) exit(json_encode(array('error'=>'no data')));
-    if($data['type'] == 0 && $data['state'] == 1){
+    if($data['type'] == 0 && $data['state'] == 1  && $data['isdelete'] == 0){
+
         include_once dzz_libfile('eagleexport');
         $eagleexport = new eagleexport($data);
         $return = $eagleexport->execExport($force);
-    }else{
-        include_once dzz_libfile('oaooaexport');
-        $oaooaexport = new oaooaexport($data);
-        //导入标签分类数据
-        $oaooaexport->exportTaggroup();
+    }elseif($data['type'] == 1 && $data['state'] == 1 && $data['isdelete'] == 0){
+        include_once dzz_libfile('localexport');
+        $localexport = new localexport($data);
         //执行导入文件
-        $return = $oaooaexport->initExport();
+        $return = $localexport->execExport($force);
     }
     dzz_process::unlock($processname);
     exit('success');

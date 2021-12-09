@@ -1,0 +1,34 @@
+<div class="screen-item">
+	<template v-if="ParamScreen.value.dateline.loading">
+		<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+	</template>
+	<template v-else>
+		<template v-if="ParamScreen.value.dateline.data && ParamScreen.value.dateline.data.length">
+			<!-- <van-radio-group v-model="ParamScreen.value.dateline.value" disabled @change="ScreenTimeChange"> -->
+				<van-cell-group>
+					<van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.dateline.value==item.label?'active':''"></van-cell>
+					<!-- <van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)">
+						<template #right-icon>
+							<div class="num">{{item.num}}</div>
+							<van-radio :name="item.label"></van-radio>
+						</template>
+					</van-cell> -->
+				</van-cell-group>
+				<template v-if="ParamScreen.value.dateline.value == '自定义'">
+					<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.dateline.customvalue" readonly @click="ParamScreen.value.dateline.calendar = true"></van-field>
+					<van-calendar title="修改时间" :min-date="ParamScreen.value.dateline.minDate" v-model="ParamScreen.value.dateline.calendar" type="range" :default-date="ParamScreen.value.dateline.defaultdate" @confirm="ScreenDatelineCalendarConfirm" />
+				</template>
+			<!-- </van-radio-group> -->
+		</template>
+		<template v-else>
+			<div class="notScreen">
+				<div>
+					<img src="{MOD_PATH}/image/notScreen.png" >
+					<div>没有筛选条件</div>
+				</div>
+			</div>
+		</template>
+		
+	</template>
+	
+</div>

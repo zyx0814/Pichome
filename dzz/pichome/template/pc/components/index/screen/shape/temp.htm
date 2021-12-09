@@ -1,0 +1,53 @@
+<div class="block">
+	<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="ScreenGetValueData('shape')" ref="ScreenPopoverRef">
+		<div class="field-select-box dzz-dropdown-menu">
+			<div style="padding:12px;">
+				<template v-if="ScreenValue.shape.loading">
+					<div style="height: 100px;">
+						<div class="img-loading center">
+							<span class="el-icon-loading"></span>加载中...
+						</div>
+					</div>
+				</template>
+				<template v-else>
+					<template v-if="ScreenValue.shape.data.length">
+						<div class="dzz-dropdown-menu__item single" v-for="item in ScreenValue.shape.data">
+								<el-checkbox :label="item.val" v-model="ScreenValue.shape.value" @change="ScreenShapeChange(item.val,item.lablename)">{{item.lablename}}</el-checkbox>
+							<span class="quantity">{{item.num}}</span>
+						</div>
+						<div class="dzz-dropdown-menu__item single">
+							<el-checkbox v-model="ScreenValue.shape.custom" label="自定义" @change="ScreenShapeCustom"></el-checkbox>
+						</div>
+						<div class="dzz-dropdown-menu__item single nothover" v-if="ScreenValue.shape.custom">
+							<el-row :gutter="0">
+								<el-col :span="10">
+									<el-input v-model.number="ScreenValue.shape.width" size="mini" @input="ScreenShapeInput"></el-input>
+								</el-col>
+								<el-col :span="4" style="text-align: center;">:</el-col>
+								<el-col :span="10">
+									<el-input v-model.number="ScreenValue.shape.height" size="mini" @input="ScreenShapeInput"></el-input>
+								</el-col>
+							</el-row>
+						</div>
+					</template>
+					<template v-else>
+						<div style="height: 150px;position: relative;">
+							<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+						</div>
+					</template>
+					
+				</template>
+			</div>
+		</div>
+		<div class="field-single" :class="ScreenValue.shape.value.length||(ScreenValue.shape.width&&ScreenValue.shape.height)?'active':''" slot="reference">
+			<span>
+				形状
+				<template v-if="ScreenValue.shape.text.length">：{{ScreenValue.shape.text.join(',')}}</template>
+				<template v-if="ScreenValue.shape.text.length&&ScreenValue.shape.width&&ScreenValue.shape.height">,</template>
+				<template v-if="ScreenValue.shape.width&&ScreenValue.shape.height">{{ScreenValue.shape.width}}:{{ScreenValue.shape.height}}</template>
+			</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.shape.value.length||(ScreenValue.shape.width&&ScreenValue.shape.height)" class="delBtn el-icon-close" @click.stop="ScreenDelete('shape')"></span>
+		</div>
+	</el-popover>
+</div>	

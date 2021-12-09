@@ -1,0 +1,137 @@
+<div class="Kscreen">
+	<i class="icon-search el-input__icon ri-search-line"></i>
+	<span class="icon-box-font">搜索</span>
+	<div class="txtScroll-box" v-cloak>
+		<div id="txtScroll" class="txtScroll">
+			<div v-if="HeaderKeyword" class="txtKeyword list">{{HeaderKeyword}}</div>
+			<div class="txtScrent list" v-if="ScreenValue.classify.value.length">
+				分类：{{ScreenValue.classify.text.join(',')}}<span class="delBtn el-icon-close" @click.stop="ScreenDelete('classify')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.tag.value.length">
+				标签：{{ScreenValue.tag.text.join(',')}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('tag')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.color.value">
+				<span class="color" :style="{background: ScreenValue.color.value}"></span>
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('color')"></span>
+			</div>
+			
+			<template v-if="parseInt(ScreenValue.link.value)>-1">
+				<div class="txtScrent list" v-if="ScreenValue.link.value=='1'&&ScreenValue.link.input">链接：{{ScreenValue.link.input}}
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+				</div>
+				<div class="txtScrent list" v-else-if="ScreenValue.link.value=='1'">链接：有
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+				</div>
+				<div class="txtScrent list" v-else-if="ScreenValue.link.value=='0'">链接：没有
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+				</div>
+			</template>
+			<template v-if="parseInt(ScreenValue.desc.value)>-1">
+				<div class="txtScrent list" v-if="ScreenValue.desc.value=='1'&&ScreenValue.desc.input">注释：{{ScreenValue.desc.input}}
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+				</div>
+				<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='1'">注释：有
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+				</div>
+				<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='0'">注释：没有
+					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+				</div>
+			</template>
+			
+			<div class="txtScrent list" v-if="ScreenValue.duration.start || ScreenValue.duration.end">
+				<template v-if="ScreenValue.duration.start&&ScreenValue.duration.end">{{ScreenValue.duration.start}}≤时长≤{{ScreenValue.duration.end}}</template>
+				<template v-else-if="ScreenValue.duration.start">时长≥{{ScreenValue.duration.start}}</template>
+				<template v-else="ScreenValue.duration.end">时长≤{{ScreenValue.duration.end}}</template>
+				<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('duration')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.size.wstart||ScreenValue.size.wend||ScreenValue.size.hstart||ScreenValue.size.hend">
+				<template v-if="ScreenValue.size.wstart&&ScreenValue.size.wend">{{ScreenValue.size.wstart}}≤宽≤{{ScreenValue.size.wend}}</template>
+				<template v-else-if="ScreenValue.size.wstart">宽≥{{ScreenValue.size.wstart}}</template>
+				<template v-else-if="ScreenValue.size.wend">宽≤{{ScreenValue.size.wend}}</template>
+				<template v-if="ScreenValue.size.hstart && ScreenValue.size.hend">,</template>
+				<template v-if="ScreenValue.size.hstart&&ScreenValue.size.hend">{{ScreenValue.size.hstart}}≤高≤{{ScreenValue.size.hend}}</template>
+				<template v-else-if="ScreenValue.size.hstart">高≥{{ScreenValue.size.hstart}}</template>
+				<template v-else-if="ScreenValue.size.hend">高≤{{ScreenValue.size.hend}}</template>
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('size')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.ext.value.length">
+				{{ScreenValue.ext.value.join(',')}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('ext')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.shape.value.length||(ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height)">
+				<!-- 形状： -->
+				{{ScreenValue.shape.text.join(',')}}<template v-if="ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height">,{{ScreenValue.shape.width}}:{{ScreenValue.shape.height}}</template>
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('shape')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.grade.value.length">
+				评分：{{ScreenValue.grade.text.join(',')}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('grade')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.btime.value" style="max-width:222px;">
+				添加时间：{{ScreenValue.btime.value}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('btime')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.mtime.value" style="max-width:222px;">
+				创建时间：{{ScreenValue.mtime.value}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('mtime')"></span>
+			</div>
+			<div class="txtScrent list" v-if="ScreenValue.dateline.value" style="max-width:222px;">
+				修改时间：{{ScreenValue.dateline.value}}
+				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('dateline')"></span>
+			</div>	
+
+
+		</div>
+	</div>
+	<div class="arrow-left ri-arrow-left-s-line arrow" @click.stop="HdeaderSearchScreenScroll('left')"></div>
+	<div class="arrow-right ri-arrow-right-s-line arrow" @click.stop="HdeaderSearchScreenScroll('right')"></div>
+	<div class="arrow-close ri-close-line arrow" @click.stop="HdeaderSearchScreenDel"></div>
+</div>
+<script type="text/javascript">
+	var JsHdeaderSearchScreenMethods = {
+		HdeaderSearchScreenScroll(type){
+			var boxR = $(".txtScroll-box").outerWidth();
+			var listR = $(".txtScroll").outerWidth();
+			var listL = $(".txtScroll").position().left;
+			if(type == 'left'){
+				var left = listL+100;
+				if(left>0){
+					left = 0;
+				}
+			}else{
+				var left = Math.abs(listL)+100;
+				var listR1 = $(".txtScroll-box").outerWidth()-$(".txtScroll").outerWidth();
+				if(~left<listR1){
+					left = listR1;
+				}else{
+					left = '-'+left;
+				}
+			}
+			$(".txtScroll").css('left',left+'px');
+		},
+		HdeaderSearchScreenResize(){
+			if($('.txtScroll .list').length == 0){
+				$('.txtScroll').css('left',0);
+				$('.Kscreen').removeClass('ShowScroll');
+				$('.Kscreen').removeClass('ShowVal');
+				$('.Kscreen .arrow-close').hide();
+				return false;
+			}else{
+				$('.Kscreen').addClass('ShowVal');
+				$('.Kscreen .arrow-close').show();
+			}
+			if($('.txtScroll').outerWidth() > $('.txtScroll-box').outerWidth()){
+				$('.Kscreen').addClass('ShowScroll');
+			}else{
+				$('.txtScroll').css('left',0);
+				$('.Kscreen').removeClass('ShowScroll');
+			}
+		},
+		HdeaderSearchScreenDel(){
+			this.CommonDeleteAll();
+		}
+	}
+	
+</script>

@@ -1,0 +1,42 @@
+<div class="screen-item" style="position: relative;">
+	<template v-if="ParamScreen.value.shape.loading">
+		<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+	</template>
+	<template v-else>
+		<template v-if="ParamScreen.value.shape.data && ParamScreen.value.shape.data.length">
+			<!-- <van-checkbox-group v-model="ParamScreen.value.shape.value" @change="ScreenShapeChange"> -->
+				<van-cell-group>
+					<van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.shape.value.indexOf(item.val)>-1?'active':''"></van-cell>
+					<!-- <van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)">
+						<template #right-icon>
+							<div class="num">{{item.num}}</div>
+							<van-checkbox shape="square" :name="item.val" disabled />
+						</template>
+					</van-cell> -->
+				</van-cell-group>
+			<!-- </van-checkbox-group> -->
+			<van-row v-if="ParamScreen.value.shape.value.indexOf('custom')>-1">
+				<van-col span="11">
+					<van-cell-group class="screen-cell-input">
+						<van-field v-model.trim="ParamScreen.value.shape.sizemin" @input="ScreenShapeCustomInput" />
+					</van-cell-group>
+				</van-col>
+				<van-col span="2" style="line-height: 44px;text-align: center;">:</van-col>
+				<van-col span="11">
+					<van-cell-group class="screen-cell-input">
+						<van-field v-model.trim="ParamScreen.value.shape.sizemax" @input="ScreenShapeCustomInput" />
+					</van-cell-group>
+				</van-col>
+			</van-row>
+		</template>
+		<template v-else>
+			<div class="notScreen">
+				<div>
+					<img src="{MOD_PATH}/image/notScreen.png" >
+					<div>没有筛选条件</div>
+				</div>
+			</div>
+		</template>
+		
+	</template>
+</div>

@@ -1,0 +1,48 @@
+<div class="block">
+	<el-popover placement="bottom" width="225" trigger="click" @show="ScreenGetValueData('mtime')" ref="ScreenPopoverRef">
+		<template v-if="ScreenValue.mtime.loading">
+			<div style="height: 200px;">
+				<div class="img-loading center">
+					<span class="el-icon-loading"></span>加载中...
+				</div>
+			</div>
+		</template>
+		<template v-else>
+			<template v-if="ScreenValue.mtime.data.length">
+				<ul class="field-select-box dzz-dropdown-menu">
+					<li class="dzz-dropdown-menu__item single" v-for="item in ScreenValue.mtime.data">
+						<el-radio v-model="ScreenValue.mtime.value" :label="item.label" @click.native.prevent="ScreenMtimeClick(item.label)"></el-radio>
+						<span class="quantity">{{item.num}}</span>
+					</li>
+					<li class="dzz-dropdown-menu__item single">
+						<el-radio v-model="ScreenValue.mtime.custom" :label="true" @click.native.prevent="ScreenMtimeCustom">自定义范围</el-radio>
+					</li>
+					<li class="dzz-dropdown-menu__item single nothover" style="padding: 5px 0;" v-if="ScreenValue.mtime.custom">
+						<el-date-picker 
+							class="dateline" 
+							v-model="ScreenValue.mtime.datelinepicker" 
+							size="mini" 
+							:clearable="false" 
+							@change="ScreenMtimePicker"
+							value-format="yyyy-MM-dd"
+							type="daterange" 
+							range-separator="至" 
+							start-placeholder="开始日期" 
+							end-placeholder="结束日期">
+						</el-date-picker>
+					</li>
+				</ul>
+			</template>
+			<template v-else>
+				<div class="field-select-box" style="height: 150px;position: relative;">
+					<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+				</div>
+			</template>
+		</template>
+		<div class="field-single" :class="ScreenValue.mtime.value?'active':''" slot="reference">
+			<span>创建时间<template v-if="ScreenValue.mtime.value">：{{ScreenValue.mtime.value}}</template></span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.mtime.value" class="delBtn el-icon-close" @click.stop="ScreenDelete('mtime')"></span>
+		</div>
+	</el-popover>
+</div>	

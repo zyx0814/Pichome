@@ -158,10 +158,24 @@
                 return $return;
             } else return false;
         }
-        public function getAllFiles($path,$fid){
+        public function getAllFiles($path,$fid,$page=1,$limit=100){
             $path = self::clean($path);
             if ($io = self::initIO($path)) {
-                $return = $io->getAllFiles($path,$fid);
+                $return = $io->getAllFiles($path,$fid,$page,$limit);
+                return $return;
+            } else return false;
+        }
+        public function getAlltag($path){
+            $path = self::clean($path);
+            if ($io = self::initIO($path)) {
+                $return = $io->getAlltag($path);
+                return $return;
+            } else return false;
+        }
+        public function getAlltaggroup($path){
+            $path = self::clean($path);
+            if ($io = self::initIO($path)) {
+                $return = $io->getAlltaggroup($path);
                 return $return;
             } else return false;
         }

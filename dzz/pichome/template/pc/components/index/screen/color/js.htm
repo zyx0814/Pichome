@@ -1,0 +1,20 @@
+<script type="text/javascript">
+	var JsScreenColorData = {
+		ColorData:['#CCF3FC','#CEDFFC','#C1B9FC','#D7B9FC','#E8C6DB','#F0CED1','#F4D5CC','#F8E3CB','#F9E7CB','#FEF6D5','#F9F7D4','#E0E9CA','#A0E7F7','#A2C1F7','#998CF8','#BC8CF8','#DBA3C5','#E4A9AE','#EBB4A5','#F1CCA1','#F2D2A1','#FAEAA8','#F1EDAA','#CCDBA7','#73DCF4','#76A4F4','#7260F5','#A360F5','#D07FB1','#DB838B','#E3947D','#ECB577','#EEBF76','#F5DD7D','#ECE681','#BAD083','#4AD1F0','#4C88F0','#4E38F0','#8A38F0','#C75A9D','#D45C67','#DE7354','#E8A04D','#EBAC4B','#F0D154','#E8E056','#A9C75F','#23C5EB','#256EEB','#2B11EB','#7311EB','#C1358B','#CF3643','#DB532B','#E78B22','#EA9B20','#EBC62D','#E6DC2C','#99C03A','#00B8E3','#0054E5','#1900D2','#5E00D2','#AA2176','#C21827','#D0380C','#DE7700','#DF8800','#E6BA07','#E6D902','#85AD23','#0097BA','#0045BC','#1400A9','#4C00A9','#8D165F','#A20F1C','#AE2B05','#B56100','#B66F00','#C49D00','#BEB400','#6D8F18','#007793','#003794','#100082','#3A0082','#6E0E49','#820813','#8B2000','#8E4C00','#8F5700','#9C7E00','#978F00','#55710F','#00586D','#00296F','#0B005D','#2A005D','#4F0834','#61030C','#661700','#693800','#6A4000','#765F00','#716B00','#3D5309','#FFFFFF','#EAEAEA','#D5D5D5','#C0C0C0','#AAAAAA','#959595','#808080','#6B6B6B','#565656','#414141','#2B2B2B','#161616']
+	};
+	var JsScreenColorMethods = {
+		ScreenColorClick(val){
+			this.ScreenValue.color.value = val;
+			this.ScreenSubmit();
+		},
+		ScreenColorInput:debounce(function(){//颜色输入
+			this.ScreenSubmit();
+		},800),
+		ScreenColorPicker(val){
+			this.ScreenSubmit();
+		},
+		ScreenColorSlider(val){
+			this.ScreenSubmit();
+		},
+	};
+</script>

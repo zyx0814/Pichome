@@ -6,6 +6,7 @@ if(!isset($_GET['src']) && !$path=Decode($_GET['path'],'read')){
 	exit('Access Denied');
 }
 if($_GET['src']){
+    //$file = str_replace('+', ' ', urlencode($_GET['src']));
     $file = urldecode($_GET['src']);
 }else{
     if(!Decode(rawurldecode($_GET['path']),'download')){

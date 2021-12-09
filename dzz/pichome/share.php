@@ -6,7 +6,7 @@
 $sid = isset($_GET['sid']) ? dzzdecode($_GET['sid'],'',0):'';
 $sharedata = C::t('pichome_share')->fetch_by_id($sid);
 $resourcesdata = $sharedata['resourcesdata'];
-
+$resourcesdata['share'] = 0;
 $colors = array();
 foreach($resourcesdata['colors'] as $cval){
 	$colors[] = $cval;

@@ -1,0 +1,30 @@
+<div class="screen-item">
+	<div style="margin-bottom: 5px;">宽</div>
+	<van-row>
+		<van-col span="11">
+			<van-cell-group class="screen-cell-input">
+				<van-field v-model.trim="ParamScreen.value.size.wstart" placeholder="最小" @input="ScreenSizeChange" />
+			</van-cell-group>
+		</van-col>
+		<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
+		<van-col span="11">
+			<van-cell-group class="screen-cell-input">
+				<van-field v-model.trim="ParamScreen.value.size.wend" placeholder="最大" @input="ScreenSizeChange" />
+			</van-cell-group>
+		</van-col>
+	</van-row>
+	<div style="margin-bottom: 5px;">高</div>
+	<van-row>
+		<van-col span="11">
+			<van-cell-group class="screen-cell-input">
+				<van-field v-model.trim="ParamScreen.value.size.hstart" placeholder="最小" @input="ScreenSizeChange" />
+			</van-cell-group>
+		</van-col>
+		<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
+		<van-col span="11">
+			<van-cell-group class="screen-cell-input">
+				<van-field v-model.trim="ParamScreen.value.size.hend" placeholder="最大" @input="ScreenSizeChange" />
+			</van-cell-group>
+		</van-col>
+	</van-row>
+</div>

@@ -1,0 +1,79 @@
+<div class="library-classification" v-if="Librarys.length>1" v-cloak>
+	<span class="el-dropdown-link block" @click="LibraryRefresh">
+		<span>{{LibrarysName}}</span>
+	</span>
+	<el-dropdown trigger="click" placement="bottom" @command="LibraryClick" hide-on-click @visible-change="LibraryDropdownOpen">
+		<i class="el-icon-caret-bottom el-icon--right" style="cursor: pointer;"></i>
+		<el-dropdown-menu slot="dropdown" class="database-box">
+			<el-scrollbar class="page-component__scroll" :style="{height: LibrarysHeight+'px'}">
+				<el-dropdown-item command="" class="Library-Dropdown">
+					<i class="ri-database-2-line icon"></i>全部库
+				</el-dropdown-item>
+				<el-dropdown-item v-for="(item, index) in Librarys" :command="item.appid">
+					<i class="ri-database-2-line icon"></i>{{item.appname}}
+				</el-dropdown-item>
+			</el-scrollbar>
+		</el-dropdown-menu>
+		
+		
+	</el-dropdown>
+</div>
+<script type="text/javascript">
+	var JsLibraryData = {
+		Appid:'',
+		Librarys:$apps,
+		LibrarysName:'全部库',
+		LibrarysHeight:0
+	};
+	var JsLibraryMethods = {
+		LibraryCreate(){
+			var appid = this.CommonGetHashParam('appid');
+			if(appid){
+				this.Appid = appid;
+				for(var i in this.Librarys){
+					if(this.Librarys[i].appid == appid){
+						this.LibrarysName = this.Librarys[i].appname;
+					}
+				}
+			}else{
+				if(this.Librarys.length==1){
+					this.Appid = this.Librarys[0].appid;
+					this.LibrarysName = this.Librarys[0].appname;
+				}
+			}
+		},
+		LibraryClick(appid){
+			if(appid == this.Appid){
+				return false;
+			}
+			if(appid){
+				for(var i in this.Librarys){
+					if(this.Librarys[i].appid == appid){
+						this.LibrarysName = this.Librarys[i].appname;
+					}
+				}
+			}else{
+				this.LibrarysName = '全部库';
+			}
+			this.Appid = appid;
+			this.CommonDeleteAll();
+		},
+		LibraryRefresh(){
+			this.CommonDeleteAll();
+		},
+		LibraryDropdownOpen(status){
+			var self = this;
+			if(status){
+				var index = 1;
+				for(var i in self.Librarys){
+					index++;
+				}
+				var h = index*37.22;
+				if(h>300){
+					h = 300
+				}
+				self.LibrarysHeight = h;
+			}
+		}
+	};
+</script>

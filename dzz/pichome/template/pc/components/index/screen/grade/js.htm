@@ -1,0 +1,16 @@
+<script type="text/javascript">
+	var JsScreenGradeMethods = {
+		ScreenGradeChange(val){
+			var text = [];
+			for(var i in val){
+				if(parseInt(val[i])>0){
+					text.push(val[i]+'星');
+				}else{
+					text.push('未评分');
+				}
+			}
+			this.ScreenValue.grade.text = text;
+			this.ScreenSubmit();
+		},
+	};
+</script>

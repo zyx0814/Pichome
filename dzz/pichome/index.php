@@ -22,19 +22,22 @@
     $theme = GetThemeColor();
 //主题
     $apps = [];
-    foreach(DB::fetch_all("select * from %t where 1",array('pichome_vapp')) as $v){
+    foreach(DB::fetch_all("select * from %t where isdelete = 0",array('pichome_vapp')) as $v){
         $v['path'] = urlencode($v['path']);
+        $v['leaf'] = DB::result_first("select count(*) from %t where appid = %s",array('pichome_folder',$v['appid'])) ? false:true;
+        $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$v['appid']));
+        $v['nosubfilenum'] = $v['filenum'] - $hascatnum;
         $apps[] = $v;
     }
     $apps = json_encode($apps);
 
-
+	$ImageExpanded = C::t('user_setting')->fetch_by_skey('pichomeimageexpanded',$uid);
 //筛选
     $screen = C::t('user_setting')->fetch_by_skey('pichomeuserscreen',$uid);
     $screen = $screen?intval($screen):0;
     
     $setting = $_G['setting'];
-   
+	
     $pagesetting = $setting['pichomepagesetting'] ? $setting['pichomepagesetting'] : [];
     $pichomesortfileds = C::t('user_setting')->fetch_by_skey('pichomesortfileds',$_G['uid']);
     $pichomeshowfileds = C::t('user_setting')->fetch_by_skey('pichomeshowfileds',$_G['uid']);
@@ -54,11 +57,14 @@
         $pagesetting['show'] = $pichomeshowfileds['filed'];
         $pagesetting['other'] = $pichomeshowfileds['other'];
     }
-    
+	$template = 1;
+	if($pagesetting['template']){
+		$template = $pagesetting['template'];
+	}
     $pagesetting = json_encode($pagesetting);
 	if ($ismobile) {
 	    include template('mobile/page/index');
 	} else {
-		include template('pc/page/index');
+		include template('pc/page/index'.$template);
 	}
     

@@ -2,7 +2,6 @@
 if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
-
 $operation = isset($_GET['operation']) ? trim($_GET['operation']) : '';
 global $_G;
 if ($operation == 'addsearch') {//增加关键词搜索次数
@@ -13,9 +12,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     C::t('pichome_searchrecent')->add_search($keyword, $appid, $ktype);
 } elseif ($operation == 'getsearchtag') {//最近搜索标签和热门标签
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
-    //$recenttag = C::t('pichome_searchrecent')->fetch_renctent_search_tag($appid);
     $percachename = 'pichome_searchhot';
-    //$recenttag = C::t('pichome_searchrecent')->fetch_renctent_search_tag($appid);
     $hotdatas = false;
     $hotdatas = C::t('cache')->fetch($percachename . $appid);
     if (!$hotdatas) {
@@ -31,131 +28,167 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     exit(json_encode(array('hottags' => $hotdatas)));
 } elseif ($operation == 'getsearchfolder') {//最近搜索目录和目录信息
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
-    $hotsearchnum = C::t('pichome_searchrecent')->fetch_renctent_search_foldername($appid);
-    $folderdatanum = C::t('pichome_folder')->fetch_all_folder_by_appid($appid);
-    exit(json_encode(array('hotsearchnum' => $hotsearchnum, 'folderdatanum' => $folderdatanum)));
+    $pfids = isset($_GET['pfids']) ? trim($_GET['pfids']):'';
+    if($pfids)$pfids = explode(',',$pfids);
+    else $pfids = [];
+    $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
+    exit(json_encode(array( 'folderdatanum' => $folderdatanum)));
+}elseif($operation == 'searchfolderbyname'){
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']):'';
+    $folderdatanum = C::t('pichome_folder')->search_by_fname($keyword,$appid);
+    exit(json_encode(array( 'folderdata' => $folderdatanum)));
 } elseif ($operation == 'searchmenu_num') {
-
+    $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-    $prepage = 20;
+    //是否获取标签数量
+    $hasnum = isset($_GET['hasnum']) ? intval($_GET['hasnum']):0;
+    $prepage = 15;
     $pagelimit = 'limit '.($page - 1) * $prepage . ',' . $prepage;
     $cid = isset($_GET['cid']) ? trim($_GET['cid']) : '';
     $tagkeyword = isset($_GET['tagkeyword']) ? htmlspecialchars($_GET['tagkeyword']) : '';
     $skey = isset($_GET['skey']) ? trim($_GET['skey']) : '';
-    $wheresql = " 1 ";
+   // $wheresql = " 1 ";
+	
     if ($skey == 'tag') {
-        $sql = " select distinct rt.tid from  %t rt  left join %t r on rt.rid=r.rid ";
+        $sql = "   %t rt   left join %t r on rt.rid=r.rid ";
         $params = [ 'pichome_resourcestag','pichome_resources'];
         //$wheresql = " r.isdelete < 1 ";
     }else{
         $sql = "   %t r ";
         $params = ['pichome_resources'];
     }
-
+    $wheresql = " r.isdelete < 1 ";
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
+    $vappids = [];
+    foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
+        $vappids[] = $v['appid'];
+    }
     if ($appid) {
-        $wheresql .= ' and r.appid = %s ';
+        $wheresql .= ' and r.appid = %s  and r.appid in(%n)';
         $para[] = $appid;
+        $para[] = $vappids;
+        if(!$fids && !$hassub){
+            $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $wheresql .= ' and ISNULL(fr.fid)';
+        }
+
+    }else{
+        $wheresql .= '  and r.appid in(%n)';
+        $para[] = $vappids;
     }
     if ($fids) {
-        $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-        $wheresql .= ' and fr.fid  in(%n)';
-        $fidarr = explode(',', $fids);
-        $para[] = $fidarr;
-        $params[] = 'pichome_folderresources';
-    }
-    //关键词条件
-    $keyword = isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : '';
-    if ($keyword) {
-        $sql .= " LEFT JOIN  %t c on c.rid = r.rid left join %t  rt on r.rid = rt.rid left join %t t on rt.tid= t.tid ";
-        $params[] = 'pichome_comments';
-        $params[] = 'pichome_resourcestag';
-        $params[] = 'pichome_tag';
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
-            $params[] = 'pichome_resources_attr';
-        }
-        $keywords = array();
-        $arr1 = explode('+', $keyword);
-        foreach ($arr1 as $value1) {
-            $value1 = trim($value1);
-            $arr2 = explode(' ', $value1);
-            $arr3 = array();
-            foreach ($arr2 as $value2) {
-                $arr3[] = " r.name LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-                $arr3[] = " ra.link LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-                $arr3[] = " ra.desc LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-                $arr3[] = " c.annotation LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-                $arr3[] = " t.tagname LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-            }
-            $keywords[] = "(" . implode(" OR ", $arr3) . ")";
-        }
-        if ($keywords) {
-            $wheresql .= " and (" . implode(" AND ", $keywords) . ")";
-        }
-    }
-    //颜色条件
-    if (isset($_GET['color'])) {
-        $persion = isset($_GET['persion']) ? intval($_GET['persion']) : 0;
-        $maxColDist = 764.8339663572415;
-        $similarity = 80 + (20 / 100) * $persion;
-        $color = trim($_GET['color']);
-        $rgbcolor = hex2rgb($color);
-        $sql .= " left join %t p on r.rid = p.rid ";
-        $params[] = 'pichome_palette';
-        $wheresql .= "and round((%d-sqrt((((2+(p.r+%d)/2)/256)*(pow((%d-p.r),2))+(4*pow((%d-p.g),2)) + (((2+(255-(p.r+%d)/2))/256))*(pow((%d-p.b), 2)))))/%d,4)*100 >= %d";
-        if (!empty($para)) $para = array_merge($para, array($maxColDist, $rgbcolor['r'], $rgbcolor['r'], $rgbcolor['g'], $rgbcolor['r'], $rgbcolor['b'], $maxColDist, $similarity));
-        else  $para = array($maxColDist, $rgbcolor['r'], $rgbcolor['r'], $rgbcolor['g'], $rgbcolor['r'], $rgbcolor['b'], $maxColDist, $similarity);
-    }
-    //标签条件
-    if (isset($_GET['tag'])) {
-        $tagwherearr = [];
-        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
-            $params[] = 'pichome_resources_attr';
-        }
-        $tag = trim($_GET['tag']);
-        if ($tag == -1) {
-            $wheresql .= " and ra.tag =  '' ";
+        if ($fids == 'not') {
+            $sql .= "  left JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $wheresql .= ' and ISNULL(fr.fid)';
         } else {
-            $tagval = explode(',', trim($_GET['tag']));
-            if(!empty($tagval)){
-                $seltagdata=[];
-                if($appid){
-                    foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t left  join %t tr on t.tid = tr.tid where t.tid in(%n) and tr.appid=%s",array('pichome_tag','pichome_tagrelation',$tagval,$appid)) as $tv){
-                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']),'cid'=>$tv['cid']);
-                    }
-                }else{
-                    foreach(DB::fetch_all("select tagname,tid from %t where tid in(%n) ",array('pichome_tag',$tagval)) as $tv){
-                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
-                    }
-                }
 
-            }
-            foreach ($tagval as $v) {
-                $tagwherearr[] = " find_in_set(%d,ra.tag)";
-                $para[] = $v;
-            }
-            if ($tagrelative) {
-                $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
+            $sql .= "  left JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $fidarr = explode(',', $fids);
+            $childsqlarr = [];
+            if ($hassub) {
+                foreach ($fidarr as $v) {
+                    if ($v == 'not') $childsqlarr[] = " ISNULL(fr.fid) ";
+                    else {
+                        if (!in_array('pichome_folder', $params)) {
+                            $sql .= '  left JOIN %t f1 on f1.fid=fr.fid ';
+                            $params[] = 'pichome_folder';
+                        }
+                        $childsqlarr[] = " f1.pathkey like %s ";
+                        $tpathkey = DB::result_first("select pathkey from %t where fid = %s", array('pichome_folder', $v));
+                        $para[] = $tpathkey . '%';
+                    }
+
+                }
+                if (count($childsqlarr) > 1) $wheresql .= ' and (' . implode(' or ', $childsqlarr) . ')';
+                else $wheresql .= ' and ' . $childsqlarr[0];
             } else {
-                $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+                if (in_array('not', $fidarr)) {
+                    $nindex = array_search('not', $fidarr);
+                    unset($fids[$nindex]);
+                    $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
+                } else {
+                    $wheresql .= ' and fr.fid  in(%n)';
+                }
+                $para[] = $fidarr;
+
             }
         }
 
     }
+	//添加日期
+    if (isset($_GET['btime'])) {
+        $btime = explode('_', $_GET['btime']);
+        $bstart = strtotime($btime[0]);
+        $bend = strtotime($btime[1]) + 24 * 60 * 60;
+        if ($bstart) {
+            $wheresql .= " and r.btime > %d";
+            //将时间补足13位
+            $para[] = $bstart * 1000;
+        }
+        if ($bend) {
+            $wheresql .= " and r.btime < %d";
+            //将时间补足13位
+            $para[] = $bend * 1000;
+        }
+    }
+    //修改日期
+    if (isset($_GET['dateline'])) {
+        $dateline = explode('_', $_GET['dateline']);
+        $dstart = strtotime($dateline[0]);
+        $dend = strtotime($dateline[1]) + 24 * 60 * 60;
+        if ($dstart) {
+            $wheresql .= " and r.dateline > %d";
+            //将时间补足13位
+            $para[] = $dstart * 1000;
+        }
 
+        if ($dend) {
+            $wheresql .= " and r.dateline < %d";
+            //将时间补足13位
+            $para[] = $dend * 1000;
+        }
+    }
+    //创建日期
+    if (isset($_GET['mtime'])) {
+        $mtime = explode('_', $_GET['mtime']);
+        $mstart = strtotime($mtime[0]);
+        $mend = strtotime($mtime[1]) + 24 * 60 * 60;
+        if ($mstart) {
+            $wheresql .= " and r.mtime > %d";
+            //将时间补足13位
+            $para[] = $mstart * 1000;
+        }
+
+        if ($mend) {
+            $wheresql .= " and r.mtime < %d";
+            //将时间补足13位
+            $para[] = $mend * 1000;
+        }
+    }
+    //评分条件
+    if (isset($_GET['grade'])) {
+        $grade = trim($_GET['grade']);
+        $grades = explode(',', $grade);
+        $wheresql .= " and r.grade in(%n)";
+        $para[] = $grades;
+    }
+    //类型条件
+    if (isset($_GET['ext'])) {
+        $ext = trim($_GET['ext']);
+        $exts = explode(',', $ext);
+        $wheresql .= " and r.ext in(%n)";
+        $para[] = $exts;
+    }
+    
     //时长条件
     if (isset($_GET['duration'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= " left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $durationarr = explode('_', $_GET['duration']);
@@ -172,7 +205,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }
     //标注条件
     if (isset($_GET['comments'])) {
-        $sql .= " left join %t c on r.rid = c.rid";
+        $sql .= "  left join %t c on r.rid = c.rid";
         $params[] = 'pichome_comments';
         $comments = intval($_GET['comments']);
         $cval = isset($_GET['cval']) ? trim($_GET['cval']) : '';
@@ -195,7 +228,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //注释条件
     if (isset($_GET['desc'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= " left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $desc = intval($_GET['desc']);
@@ -219,7 +252,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //链接条件
     if (isset($_GET['link'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= " left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $link = intval($_GET['link']);
@@ -304,70 +337,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             $wheresql .= " and (" . implode(" or ", $shapewherearr) . ")";
         }
     }
-    //评分条件
-    if (isset($_GET['grade'])) {
-        $grade = trim($_GET['grade']);
-        $grades = explode(',', $grade);
-        $wheresql .= " and r.grade in(%n)";
-        $para[] = $grades;
-    }
-    //类型条件
-    if (isset($_GET['ext'])) {
-        $ext = trim($_GET['ext']);
-        $exts = explode(',', $ext);
-        $wheresql .= " and r.ext in(%n)";
-        $para[] = $exts;
-    }
-    //添加日期
-    if (isset($_GET['btime'])) {
-        $btime = explode('_', $_GET['btime']);
-        $bstart = strtotime($btime[0]);
-        $bend = strtotime($btime[1]) + 24 * 60 * 60;
-        if ($bstart) {
-            $wheresql .= " and r.btime > %d";
-            //将时间补足13位
-            $para[] = $bstart * 1000;
-        }
-        if ($bend) {
-            $wheresql .= " and r.btime < %d";
-            //将时间补足13位
-            $para[] = $bend * 1000;
-        }
-    }
-    //修改日期
-    if (isset($_GET['dateline'])) {
-        $dateline = explode('_', $_GET['dateline']);
-        $dstart = strtotime($dateline[0]);
-        $dend = strtotime($dateline[1]) + 24 * 60 * 60;
-        if ($dstart) {
-            $wheresql .= " and r.dateline > %d";
-            //将时间补足13位
-            $para[] = $dstart * 1000;
-        }
-
-        if ($dend) {
-            $wheresql .= " and r.dateline < %d";
-            //将时间补足13位
-            $para[] = $dend * 1000;
-        }
-    }
-    //创建日期
-    if (isset($_GET['mtime'])) {
-        $mtime = explode('_', $_GET['mtime']);
-        $mstart = strtotime($mtime[0]);
-        $mend = strtotime($mtime[1]) + 24 * 60 * 60;
-        if ($mstart) {
-            $wheresql .= " and r.mtime > %d";
-            //将时间补足13位
-            $para[] = $mstart * 1000;
-        }
-
-        if ($mend) {
-            $wheresql .= " and r.mtime < %d";
-            //将时间补足13位
-            $para[] = $mend * 1000;
-        }
-    }
+    
     //尺寸条件
     if (isset($_GET['wsize']) || isset($_GET['hsize'])) {
         $wsizearr = explode('_', $_GET['wsize']);
@@ -421,6 +391,81 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             $para[] = $size[1];
         }
     }
+	//关键词条件
+    $keyword = isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : '';
+    if ($keyword) {
+        if (!in_array('pichome_resources_attr', $params)) {
+            $sql .= " left join %t ra on r.rid = ra.rid";
+            $params[] = 'pichome_resources_attr';
+        }
+		$keywords = array();
+        $arr1 = explode('+', $keyword);
+        foreach ($arr1 as $value1) {
+            $value1 = trim($value1);
+            $arr2 = explode(' ', $value1);
+            $arr3 = array();
+            foreach ($arr2 as $value2) {
+               
+                $arr3[] = "ra.searchval LIKE %s";
+                $para[] = '%' . $value2 . '%';
+            }
+            $keywords[] = "(" . implode(" OR ", $arr3) . ")";
+        }
+        if ($keywords) {
+            $wheresql .= " and (" . implode(" AND ", $keywords) . ")";
+        }
+    }
+    //颜色条件
+    if (isset($_GET['color'])) {
+        $persion = isset($_GET['persion']) ? intval($_GET['persion']) : 0;
+        $maxColDist = 764.8339663572415;
+        $similarity = 80 + (20 / 100) * $persion;
+        $color = trim($_GET['color']);
+        $rgbcolor = hex2rgb($color);
+        $sql .= "  left join %t p on r.rid = p.rid ";
+        $params[] = 'pichome_palette';
+        $wheresql .= "and round((%d-sqrt((((2+(p.r+%d)/2)/256)*(pow((%d-p.r),2))+(4*pow((%d-p.g),2)) + (((2+(255-(p.r+%d)/2))/256))*(pow((%d-p.b), 2)))))/%d,4)*100 >= %d";
+        if (!empty($para)) $para = array_merge($para, array($maxColDist, $rgbcolor['r'], $rgbcolor['r'], $rgbcolor['g'], $rgbcolor['r'], $rgbcolor['b'], $maxColDist, $similarity));
+        else  $para = array($maxColDist, $rgbcolor['r'], $rgbcolor['r'], $rgbcolor['g'], $rgbcolor['r'], $rgbcolor['b'], $maxColDist, $similarity);
+    }
+    //标签条件
+    if (isset($_GET['tag'])) {
+        $tagwherearr = [];
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
+        if (!in_array('pichome_resources_attr', $params)) {
+            $sql .= " left join %t ra on r.rid = ra.rid";
+            $params[] = 'pichome_resources_attr';
+        }
+        $tag = trim($_GET['tag']);
+        if ($tag == -1) {
+            $wheresql .= " and ra.tag =  '' ";
+        } else {
+            $tagval = explode(',', trim($_GET['tag']));
+            if(!empty($tagval)){
+                $seltagdata=[];
+                if($appid){
+                    foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t  left  join %t tr on t.tid = tr.tid where t.tid in(%n) and tr.appid=%s",array('pichome_tag','pichome_tagrelation',$tagval,$appid)) as $tv){
+                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']),'cid'=>$tv['cid']);
+                    }
+                }else{
+                    foreach(DB::fetch_all("select tagname,tid from %t where tid in(%n) ",array('pichome_tag',$tagval)) as $tv){
+                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
+                    }
+                }
+
+            }
+            foreach ($tagval as $v) {
+                $tagwherearr[] = " find_in_set(%d,ra.tag)";
+                $para[] = $v;
+            }
+            if ($tagrelative) {
+                $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
+            } else {
+                $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+            }
+        }
+
+    }
     $timedataarr = array(
         1 => array(
             'start' => strtotime(date("Y-m-d", time())) * 1000,
@@ -459,74 +504,15 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             'label' => '最近365日'
         ),
     );
-    $shapedataarr = array(
-        1 => array(
-            'start' => 'round((4 / 3) * 100)',
-            'end' => '',
-            'val' => 1,
-            'lablename' => '4:3'
-        ),
-        2 => array(
-            'start' => 'round((3 / 4) * 100)',
-            'end' => '',
-            'val' => 2,
-            'lablename' => '3:4'
-        ),
-        3 => array(
-            'start' => 'round((16 / 9) * 100)',
-            'end' => '',
-            'val' => 3,
-            'lablename' => '16:9'
-        ),
-        4 => array(
-            'start' => 'round((9 / 16) * 100)',
-            'end' => '',
-            'val' => 4,
-            'lablename' => '9:16'
-        ),
-        5 => array(
-            'start' => 250,
-            'end' => 0,
-            'val' => 5,
-            'lablename' => '细长横图'
-        ),
-        6 => array(
-            'start' => 0,
-            'end' => 40,
-            'val' => 6,
-            'lablename' => '细长竖图'
-        ),
-        7 => array(
-            'start' => 100,
-            'end' => '',
-            'val' => 7,
-            'lablename' => '方图'
-        ),
-        8 => array(
-            'start' => 100,
-            'end' => 250,
-            'val' => 8,
-            'lablename' => '横图'
-        ),
-        9 => array(
-            'start' => 40,
-            'end' => 100,
-            'val' => 9,
-            'lablename' => '竖图'
-        )
-
-    );
-    //if (!empty($para)) $params = array_merge($params, $para);
-    //$count = DB::result_first("$countsql where $wheresql", $params);
     //标签统计
     if ($skey == 'tag') {
         $cid = isset($_GET['cid']) ? $_GET['cid']:'';
         if ($cid) {
             if ($cid == -1) {
-                $sql .= " left join %t tr on isnull(tr.cid)";
+                $sql .= "  left join %t tr on isnull(tr.cid)";
                 $params[] = 'pichome_tagrelation';
             } else {
-                $sql .= " left join %t tr on tr.tid = rt.tid";
+                $sql .= "  left join %t tr on tr.tid = rt.tid ";
                 $params[] = 'pichome_tagrelation';
                 $wheresql .= ' and tr.cid = %s';
                 $para[] = $cid;
@@ -535,34 +521,47 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         }
         $tagkeyword = isset($_GET['tagkeyword']) ? trim($_GET['tagkeyword']):'';
         if ($tagkeyword) {
-            $sql .= " left join %t t on t.tid=rt.tid";
+            $sql .= "  left join %t t on t.tid=rt.tid ";
             $params[] = 'pichome_tag';
             $wheresql .= "  and t.tagname LIKE %s ";
             $para[] = '%'.$tagkeyword.'%';
         }
-        if (!empty($para)) $params = array_merge($params, $para);
-
         $tagdata = [];
         //每个标签对应文件个数
         $tdata = [];
         //所有符合条件标签id
         $tids= [];
-        foreach (DB::fetch_all("$sql where $wheresql  $pagelimit", $params) as $v){
-            $tids[] = $v['tid'];
-        }
 
-        $finish = (count($tids) >= 20) ? false:true;
-
-        foreach (DB::fetch_all("select rt.tid,t.tagname from %t rt left join %t
-                t on t.tid=rt.tid where rt.tid in(%n)",
-            array('pichome_resourcestag','pichome_tag',$tids)) as $v) {
-            if (!isset($tagdata[$v['tid']])) {
+        if(!$hasnum){
+            $sql .= ' left join %t t1 on t1.tid = rt.tid ';
+            $params[] = 'pichome_tag';
+            if (!empty($para)) $params = array_merge($params, $para);
+            foreach (DB::fetch_all("select distinct rt.tid,t1.tagname from $sql where $wheresql  $pagelimit", $params) as $v){
                 $tagdata[$v['tid']]['tagname'] = $v['tagname'];
-                $tagdata[$v['tid']]['num'] = 1;
-            } else {
-                $tagdata[$v['tid']]['num'] += 1;
             }
+        }else{
+            $fparams = $params;
+            if (!empty($para)) $params = array_merge($params, $para);
+            foreach (DB::fetch_all("select distinct rt.tid from $sql where $wheresql  $pagelimit", $params) as $v){
+                $tids[] = $v['tid'];
+            }
+            $sql .= ' left join %t t1 on t1.tid = rt.tid ';
+            $fparams[] = 'pichome_tag';
+            $wheresql .= ' and rt.tid in(%n) ';
+            $para[] = $tids;
+            if (!empty($para)) $fparams = array_merge($fparams, $para);
+            foreach (DB::fetch_all("select rt.tid,t1.tagname from $sql where $wheresql",$fparams) as $v) {
+                if (!isset($tagdata[$v['tid']])) {
+                    $tagdata[$v['tid']]['tagname'] = $v['tagname'];
+                    $tagdata[$v['tid']]['num'] = 1;
+                } else {
+                    $tagdata[$v['tid']]['num'] += 1;
+                }
+            }
+
         }
+        $tids = array_keys($tagdata);
+        $finish = (count($tids) >= 15) ? false:true;
 
         //最后返回数组
         $data = [];
@@ -585,55 +584,60 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $data['alltagdata'] = $alltagdata;
         $data['tgdata'] = $seltagdata;
     } elseif ($skey == 'shape') {
-        //形状统计
-        $presql = ' case ';
-        $prepara = [];
-        foreach ($shapedataarr as $sv) {
-            if ($sv['start'] && $sv['end'] === '') {
-                $presql .= ' when round((r.width/r.height) * 100) = %i  then %d ';
-                $prepara[] = $sv['start'];
+        if($hasnum){
+            //形状统计
+            $presql = ' case ';
+            $prepara = [];
+            foreach ($shapedataarr as $sv) {
+                if ($sv['start'] && $sv['end'] === '') {
+                    $presql .= ' when round((r.width/r.height) * 100) = %i  then %d ';
+                    $prepara[] = $sv['start'];
+                } else {
+                    $presql .= ' when round((r.width/r.height) * 100) > %d ' . (($sv['end']) ? ' and    round((r.width/r.height)*100) <= %d then %d' : ' then %d');
+                    $prepara[] = $sv['start'];
+                }
+
+                if ($sv['end']) $prepara[] = $sv['end'];
+                $prepara[] = $sv['val'];
+            }
+            if ($presql) {
+                $presql .= ' end as %s';
+                $prepara[] = 'shapedata';
+            }
+
+            if (!empty($para)) $params = array_merge($params, $para);
+            if (!empty($prepara)) $shapeparams = array_merge($prepara, $params);
+
+            foreach (DB::fetch_all("select  $presql FROM $sql where $wheresql", $shapeparams) as $value) {
+                if (!isset($data[$value['shapedata']]) && $shapedataarr[$value['shapedata']]['val']) {
+                    $data[$value['shapedata']]['num'] = 1;
+                    $data[$value['shapedata']]['lablename'] = $shapedataarr[$value['shapedata']]['lablename'];
+                    $data[$value['shapedata']]['val'] = $shapedataarr[$value['shapedata']]['val'];
+                } elseif ($data[$value['shapedata']]['num']) {
+                    $data[$value['shapedata']]['num']++;
+                }
+            }
+            //将3:4 9:16 细长竖图归类到竖图
+            $data[9]['num'] = ($data[9]['num'] ? $data[9]['num'] : 0) + ($data[2]['num'] ? $data[2]['num'] : 0) + ($data[4]['num'] ? $data[4]['num'] : 0) + ($data[6]['num'] ? $data[6]['num'] : 0);
+
+            if ($data[9]['num']) {
+                $data[9]['lablename'] = $shapedataarr[9]['lablename'];
+                $data[9]['val'] = $shapedataarr[9]['val'];
             } else {
-                $presql .= ' when round((r.width/r.height) * 100) > %d ' . (($sv['end']) ? ' and    round((r.width/r.height)*100) <= %d then %d' : ' then %d');
-                $prepara[] = $sv['start'];
+                unset($data[9]);
             }
-
-            if ($sv['end']) $prepara[] = $sv['end'];
-            $prepara[] = $sv['val'];
-        }
-        if ($presql) {
-            $presql .= ' end as %s';
-            $prepara[] = 'shapedata';
-        }
-
-        if (!empty($para)) $params = array_merge($params, $para);
-        if (!empty($prepara)) $shapeparams = array_merge($prepara, $params);
-
-        foreach (DB::fetch_all("select  $presql FROM $sql where $wheresql", $shapeparams) as $value) {
-            if (!isset($data[$value['shapedata']]) && $shapedataarr[$value['shapedata']]['val']) {
-                $data[$value['shapedata']]['num'] = 1;
-                $data[$value['shapedata']]['lablename'] = $shapedataarr[$value['shapedata']]['lablename'];
-                $data[$value['shapedata']]['val'] = $shapedataarr[$value['shapedata']]['val'];
-            } elseif ($data[$value['shapedata']]['num']) {
-                $data[$value['shapedata']]['num']++;
+            //将4:3 16:9 细长横图图归类到横图
+            $data[8]['num'] = ($data[8]['num'] ? $data[8]['num'] : 0) + ($data[1]['num'] ? $data[1]['num'] : 0) + ($data[3]['num'] ? $data[3]['num'] : 0) + ($data[5]['num'] ? $data[5]['num'] : 0);
+            if ($data[8]['num']) {
+                $data[8]['val'] = $shapedataarr[8]['val'];
+                $data[8]['lablename'] = $shapedataarr[8]['lablename'];
+            } else {
+                unset($data[8]);
             }
+        }else{
+            $data = $shapedataarr;
         }
-        //将3:4 9:16 细长竖图归类到竖图
-        $data[9]['num'] = ($data[9]['num'] ? $data[9]['num'] : 0) + ($data[2]['num'] ? $data[2]['num'] : 0) + ($data[4]['num'] ? $data[4]['num'] : 0) + ($data[6]['num'] ? $data[6]['num'] : 0);
 
-        if ($data[9]['num']) {
-            $data[9]['lablename'] = $shapedataarr[9]['lablename'];
-            $data[9]['val'] = $shapedataarr[9]['val'];
-        } else {
-            unset($data[9]);
-        }
-        //将4:3 16:9 细长横图图归类到横图
-        $data[8]['num'] = ($data[8]['num'] ? $data[8]['num'] : 0) + ($data[1]['num'] ? $data[1]['num'] : 0) + ($data[3]['num'] ? $data[3]['num'] : 0) + ($data[5]['num'] ? $data[5]['num'] : 0);
-        if ($data[8]['num']) {
-            $data[8]['val'] = $shapedataarr[8]['val'];
-            $data[8]['lablename'] = $shapedataarr[8]['lablename'];
-        } else {
-            unset($data[8]);
-        }
     } elseif ($skey == 'grade') {
         //评分统计
         if (!empty($para)) $params = array_merge($params, $para);
@@ -765,7 +769,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     } elseif ($skey == 'grouptag') {
         //标签分类id
         $cid = isset($_GET['cid']) ? trim($_GET['cid']) : '';
-        $sql .= ' left join %t rt on rt.rid=r.rid left join %t tr on tr.tid=rt.tid ';
+        $sql .= '  left join %t rt on rt.rid=r.rid  left join %t tr on tr.tid=rt.tid ';
         $params[] = 'pichome_resourcestag';
         $params[] = 'pichome_tagrelation';
         $wheresql .= ' and tr.cid = %s';
@@ -797,37 +801,90 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
 } elseif ($operation == 'search_menu') {
 
     $skey = isset($_GET['skey']) ? trim($_GET['skey']) : '';
-
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
     if($skey == 'tag'){
-        $sql = "select distinct rt.tid from  %t rt  left join %t r on rt.rid=r.rid ";
+        if($appid){
+            $sql = "select count(DISTINCT(rt.tid)) as num,g.cid,g.catname  from  %t rt   left join %t r on rt.rid=r.rid ";
+        }else{
+            $sql = "select count(DISTINCT(rt.tid)) as num  from  %t rt   left join %t r on rt.rid=r.rid ";
+        }
+
         $params = [ 'pichome_resourcestag','pichome_resources'];
 
     }else{
         exit(json_encode(array()));
     }
-    $wheresql = " 1 ";
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $wheresql = " r.isdelete < 1 ";
+
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
+    $vappids = [];
+    foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
+        $vappids[] = $v['appid'];
+    }
     if ($appid) {
-        $wheresql .= ' and r.appid = %s ';
+        $wheresql .= ' and r.appid = %s  and r.appid in(%n)';
         $para[] = $appid;
+        $para[] = $vappids;
+        if(!$fids && !$hassub){
+            $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $wheresql .= ' and ISNULL(fr.fid)';
+        }
+
+    }else{
+        $wheresql .= '  and r.appid in(%n)';
+        $para[] = $vappids;
     }
     if ($fids) {
-        $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-        $wheresql .= ' and fr.fid  in(%n)';
-        $fidarr = explode(',', $fids);
-        $para[] = $fidarr;
-        $params[] = 'pichome_folderresources';
+        if ($fids == 'not') {
+            $sql .= "  left JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $wheresql .= ' and ISNULL(fr.fid)';
+        } else {
+
+            $sql .= "  left JOIN %t fr on fr.rid = r.rid ";
+            $params[] = 'pichome_folderresources';
+            $fidarr = explode(',', $fids);
+            $childsqlarr = [];
+            if ($hassub) {
+                foreach ($fidarr as $v) {
+                    if ($v == 'not') $childsqlarr[] = " ISNULL(fr.fid) ";
+                    else {
+                        if (!in_array('pichome_folder', $params)) {
+                            $sql .= '  left JOIN %t f1 on f1.fid=fr.fid ';
+                            $params[] = 'pichome_folder';
+                        }
+                        $childsqlarr[] = " f1.pathkey like %s ";
+                        $tpathkey = DB::result_first("select pathkey from %t where fid = %s", array('pichome_folder', $v));
+                        $para[] = $tpathkey . '%';
+                    }
+
+                }
+                if (count($childsqlarr) > 1) $wheresql .= ' and (' . implode(' or ', $childsqlarr) . ')';
+                else $wheresql .= ' and ' . $childsqlarr[0];
+            } else {
+                if (in_array('not', $fidarr)) {
+                    $nindex = array_search('not', $fidarr);
+                    unset($fids[$nindex]);
+                    $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
+                } else {
+                    $wheresql .= ' and fr.fid  in(%n)';
+                }
+                $para[] = $fidarr;
+
+            }
+
+
+        }
+
     }
+    //关键词条件
     //关键词条件
     $keyword = isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : '';
     if ($keyword) {
-        $sql .= " LEFT JOIN  %t c on c.rid = r.rid left join %t  rt on r.rid = rt.rid left join %t t on rt.tid= t.tid ";
-        $params[] = 'pichome_comments';
-        $params[] = 'pichome_resourcestag';
-        $params[] = 'pichome_tag';
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= "  left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $keywords = array();
@@ -837,15 +894,13 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             $arr2 = explode(' ', $value1);
             $arr3 = array();
             foreach ($arr2 as $value2) {
-                $arr3[] = " r.name LIKE %s ";
+                $arr3[] = "r.name LIKE %s";
                 $para[] = '%' . $value2 . '%';
-                $arr3[] = " ra.link LIKE %s ";
+                $arr3[] = "ra.link LIKE %s";
                 $para[] = '%' . $value2 . '%';
-                $arr3[] = " ra.desc LIKE %s ";
+                $arr3[] = "ra.desc LIKE %s";
                 $para[] = '%' . $value2 . '%';
-                $arr3[] = " c.annotation LIKE %s ";
-                $para[] = '%' . $value2 . '%';
-                $arr3[] = " t.tagname LIKE %s ";
+                $arr3[] = "ra.searchval LIKE %s";
                 $para[] = '%' . $value2 . '%';
             }
             $keywords[] = "(" . implode(" OR ", $arr3) . ")";
@@ -861,7 +916,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $similarity = 80 + (20 / 100) * $persion;
         $color = trim($_GET['color']);
         $rgbcolor = hex2rgb($color);
-        $sql .= " left join %t p on r.rid = p.rid ";
+        $sql .= "  left join %t p on r.rid = p.rid ";
         $params[] = 'pichome_palette';
         $wheresql .= "and round((%d-sqrt((((2+(p.r+%d)/2)/256)*(pow((%d-p.r),2))+(4*pow((%d-p.g),2)) + (((2+(255-(p.r+%d)/2))/256))*(pow((%d-p.b), 2)))))/%d,4)*100 >= %d";
         if (!empty($para)) $para = array_merge($para, array($maxColDist, $rgbcolor['r'], $rgbcolor['r'], $rgbcolor['g'], $rgbcolor['r'], $rgbcolor['b'], $maxColDist, $similarity));
@@ -872,7 +927,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $tagwherearr = [];
         $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= "  left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $tag = trim($_GET['tag']);
@@ -896,7 +951,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //时长条件
     if (isset($_GET['duration'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= "  left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $durationarr = explode('_', $_GET['duration']);
@@ -913,7 +968,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }
     //标注条件
     if (isset($_GET['comments'])) {
-        $sql .= " left join %t c on r.rid = c.rid";
+        $sql .= "  left join %t c on r.rid = c.rid";
         $params[] = 'pichome_comments';
         $comments = intval($_GET['comments']);
         $cval = isset($_GET['cval']) ? trim($_GET['cval']) : '';
@@ -936,7 +991,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //注释条件
     if (isset($_GET['desc'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= " left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $desc = intval($_GET['desc']);
@@ -960,7 +1015,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //链接条件
     if (isset($_GET['link'])) {
         if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
+            $sql .= " left join %t ra on r.rid = ra.rid";
             $params[] = 'pichome_resources_attr';
         }
         $link = intval($_GET['link']);
@@ -1170,10 +1225,10 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $cid = isset($_GET['cid']) ? $_GET['cid']:'';
         if ($cid) {
             if ($cid == -1) {
-                $sql .= " left join %t tr on isnull(tr.cid)";
+                $sql .= "  left join %t tr on isnull(tr.cid)";
                 $params[] = 'pichome_tagrelation';
             } else {
-                $sql .= " left join %t tr on tr.tid = rt.tid";
+                $sql .= "  left join %t tr on tr.tid = rt.tid ";
                 $params[] = 'pichome_tagrelation';
                 $wheresql .= ' and tr.cid = %s';
                 $para[] = $cid;
@@ -1182,36 +1237,42 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         }
         $tagkeyword = isset($_GET['tagkeyword']) ? trim($_GET['tagkeyword']):'';
         if ($tagkeyword) {
-            $sql .= " left join %t t on t.tid=rt.tid";
+            $sql .= "  left join %t t on t.tid=rt.tid ";
             $params[] = 'pichome_tag';
             $wheresql .= "  and t.tagname LIKE %s ";
             $para[] = '%'.$tagkeyword.'%';
         }
-        if (!empty($para)) $params = array_merge($params, $para);
+        //if (!empty($para)) $params = array_merge($params, $para);
 
         //所有符合条件标签id
-        $tids= [];
+       /* $tids= [];
         foreach (DB::fetch_all("$sql where $wheresql", $params) as $v){
             $tids[] = $v['tid'];
-        }
+        }*/
         $catdata = [];
         if($appid){
-            $cattotal = 0;
-            $catdata[]=['cid'=>0,'catname'=>'全部','num'=>count($tids)];
-            foreach (DB::fetch_all("select count(t.tid) as num,g.cid,g.catname from %t t left join %t
-                tr on tr.tid=t.tid left join %t g  on g.cid = tr.cid where t.tid in(%n) and g.appid = %s group by g.cid",
-                array('pichome_tag','pichome_tagrelation','pichome_taggroup',$tids,$appid)) as $v) {
+            $sql .= "  left join %t t1 on rt.tid = t1.tid 
+ left join %t tr on tr.tid=t1.tid 
+ left join %t g  on g.cid = tr.cid";
+            $params[] = 'pichome_tag';
+            $params[] = 'pichome_tagrelation';
+            $params[] = 'pichome_taggroup';
+            if (!empty($para)) $params = array_merge($params, $para);
+            foreach (DB::fetch_all("$sql where $wheresql group by g.cid",$params) as $v) {
                 if($v['cid']){
                     $catdata[]=['cid'=>$v['cid'],'catname'=>$v['catname'],'num'=>$v['num']];
+                }else{
+                    $catdata[]=['cid'=>0,'catname'=>'全部','num'=>$v['num']];
+                    $catdata[]=['cid'=>-1,'catname'=>'未分类','num'=>$v['num']];
                 }
-                $cattotal += $v['num'];
             }
 
-            $catdata[]=['cid'=>-1,'catname'=>'未分类','num'=>count($tids) - $cattotal];
-
-
         }else{
-            $catdata[]=['cid'=>0,'catname'=>'全部','num'=>count($tids)];
+            //if (!empty($para)) $params = array_merge($params, $para);
+            //echo $sql;die;
+           //$numdata =  DB::result_first("$sql where $wheresql ",$params);
+           //print_r($numdata);die;
+            //$catdata[]=['cid'=>0,'catname'=>'全部','num'=>$numdata['num']];
         }
 
 
@@ -1297,6 +1358,41 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }
 } elseif ($operation == 'getscreen') {//获取筛选项
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $tagval = $_GET['tag'] ? explode(',',trim($_GET['tag'])):[];
+    $shape = $_GET['shape'] ? trim($_GET['shape']):'';
+    $shapes = explode(',', $shape);
+    $shapelable = [];
+    if(!empty($shapes)){
+        $lableshape = [];
+        foreach($shapedataarr as $v){
+            $lableshape[$v['lablename']] = $v;
+        }
+        foreach($shapes as $s){
+            $shapelable[] = $lableshape[$s]['val'];
+        }
+    }
+
+    $tagdata=[];
+    if(!empty($tagval)){
+        if($appid){
+
+            foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t  left  join %t tr on t.tid = tr.tid and tr.appid=%s where t.tid in(%n) ",array('pichome_tag','pichome_tagrelation',$appid,$tagval)) as $tv){
+                $tagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']),'cid'=>$tv['cid']);
+            }
+        }else{
+            foreach(DB::fetch_all("select tagname,tid from %t where tid in(%n) ",array('pichome_tag',$tagval)) as $tv){
+                $tagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
+            }
+        }
+
+    }
+    $fids = trim($_GET['fids']);
+    $fidarr = explode(',',$fids);
+    $folderdata = [];
+    foreach(DB::fetch_all("select fname,fid,pathkey,appid from %t where fid in(%n)",array('pichome_folder',$fidarr)) as $v){
+        $folderdata[$v['fid']] = ['fname'=>$v['fname'],'pathkey'=>$v['pathkey'],'appid'=>$v['appid']];
+        $folderdata[$v['fid']]['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array('pichome_folder',$v['fid'])) ? false:true;
+    }
     if ($appid) {
         if ($data = DB::fetch_first("select * from %t where appid=%s ", array('pichome_vapp', $appid))) {
             $data['filter'] = unserialize($data['filter']);
@@ -1317,25 +1413,17 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
                 }
             }
             $pichomefilterfileds = $data['filter'];
-            exit(json_encode(array('success' => true, 'data' => $pichomefilterfileds)));
-            // }else{
-            //     if (isset($setting['pichomefilterfileds'])) {
-            //         exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'])));
-            //     } else {
-            //         $setting = C::t('setting')->fetch_all('pichomefilterfileds');
-            //         exit(json_encode(array('success' => true, 'data' =>$setting['pichomefilterfileds'])));
-            //     }
-            // }
+            exit(json_encode(array('success' => true, 'data' => $pichomefilterfileds,'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
 
         } else {
             exit(json_encode(array('error' => true)));
         }
     } else {
         if (isset($_G['setting']['pichomefilterfileds'])) {
-            exit(json_encode(array('success' => true, 'data' => $_G['setting']['pichomefilterfileds'])));
+            exit(json_encode(array('success' => true, 'data' => $_G['setting']['pichomefilterfileds'],'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
         } else {
             $setting = C::t('setting')->fetch_all('pichomefilterfileds');
-            exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'])));
+            exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'],'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
         }
     }
 
@@ -1383,4 +1471,10 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     ];
     C::t('pichome_vapp')->update($appid, $setarr);
     exit(json_encode(array('success' => true)));
+} elseif($operation == 'expandedsetting'){
+	if (submitcheck('settingsubmit')) {
+		$pichomeimageexpanded = $_GET['pichomeimageexpanded'];
+		C::t('user_setting')->update_by_skey('pichomeimageexpanded',$pichomeimageexpanded);
+		exit(json_encode(array('success' => true)));
+	}
 }

@@ -2,6 +2,7 @@
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
+	font-family: Arial, sans-serif;
 }
 html,
 body,
@@ -27,9 +28,92 @@ body,
 body{
 	background-color: var(--bg-content);
 }
+.tipTxt{
+	color: var(--tip-color);
+	font-size: 12px;
+	line-height: 20px;
+	margin-top: 6px;
+}
+
+.tipTxt:hover {
+	color: var(--content-text);
+}
+.el-loading-mask{
+	background: transparent;
+}
+.img-loading{
+	text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--content-textHover);
+    height: 40px;
+    width: 105px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 10;
+}
+.img-loading.center{
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+.img-loading span{
+	margin-right: 8px;
+}
 [v-cloak]{
     display: none;
 }
+.el-scrollbar__bar:hover{
+	width: 10px;
+}
+
+.el-tree.border .el-tree-node {
+	position: relative;
+	padding-left: 16px;
+}
+.el-tree.border .el-tree-node__children {
+	padding-left: 16px;
+}
+
+.el-tree.border .el-tree-node :last-child:before {
+	height: 26px;
+}
+.el-tree.border .el-tree-node:before {
+	content: "";
+	left: -4px;
+	position: absolute;
+	right: auto;
+	border-width: 1px;
+}
+
+.el-tree.border .el-tree-node:after {
+	content: "";
+	left: -4px;
+	position: absolute;
+	right: auto;
+	border-width: 1px;
+}
+
+.el-tree.border .el-tree-node:before {
+	border-left: 1px solid var(--border-color-base);
+	bottom: 0px;
+	height: 100%;
+	top: -13px;
+	width: 1px;
+}
+
+.el-tree.border .el-tree-node:after {
+	border-top: 1px solid var(--border-color-base);
+	height: 20px;
+	top: 12px;
+	width: 24px;
+}
+  
+
 .el-progress-bar__outer{
 	background-color: var(--bg-input);
 }
@@ -201,12 +285,11 @@ body{
 	background-color: var(--bg-poperHover);
 }
 .el-tree .el-tree-node:focus>.el-tree-node__content{
+	background-color: transparent;
+}
+.el-tree.el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content{
 	background-color: var(--bg-poperHover);
 }
-
-
-
-
 
 .page-content{
 	display: flex;
@@ -312,21 +395,68 @@ ul{
 #top_header {
 	height: 70px;
 	width: 100%;
-	padding: 4px 16px;
+	padding: 4px 0;
 	align-items: center;
 	display: flex;
 }
+#top_header .header-content .h-left {
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-decoration: none;
+}
+.container2 #top_header .header-content .h-left{
+    width: 264px;
+    justify-content: left;
+    background: var(--bg-header);
+    margin-left: -20px;
+	
+}
+#top_header .header-content .h-left>a{
+	width: 100%;
+	position: relative;
+	padding-left: 41px;
+	text-decoration: none;
+}
+.container2 #top_header .header-content .h-left>a{
+	width: calc(100% - 45px);
+}
+#top_header .header-content .h-left .icon{
+	font-size: 24px;
+	padding: 8px;
+	cursor: pointer;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	margin-right: 5px;
+	color: var(--header-icon);
+}
 
+#top_header .header-content .h-left .icon:hover{
+	background: var(--header-textHover);
+    color: var(--header-iconHover);
+}
 #top_header .header-content .h-left .el-image {
 	width: 35px;
 	height: 35px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	margin-bottom: auto;
+	margin-top: auto;
 }
 
 #top_header .header-content .h-left .text {
-	font-size: 16px;
-	font-weight: 700;
-	margin-left: 10px;
-	color: var(--header-active);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--header-active);
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 #top_header .header-content {
 	display: flex;
@@ -335,17 +465,11 @@ ul{
 	width: 100%;
 }
 
-#top_header .header-content .h-left {
-	height: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	text-decoration: none;
-}
+
 #top_header .header-content .h-center {
 	flex: 1 1 auto;
 	height: 100%;
-	padding: 0 30px;
+	padding: 0 20px;
 	display: flex;
 	align-items: center;
 }
@@ -431,6 +555,7 @@ ul{
 	border: 0;
 	font-size: 21px;
 	color: var(--header-text);
+	background-color: transparent;
 }
 #systemNotice .panel-body {
 	background: var(--bg-input);

@@ -1,0 +1,920 @@
+<div class="screen-box" :class="{'notpadding':DocumentTemplate>1}" v-if="ScreenData.length&&Screenshow" v-cloak>
+	<!--{template pc/components/index/screen/classify/temp}-->
+	<template v-for="item in ScreenData">
+		<template v-if="item.key == 'tag'">
+			<!--{template pc/components/index/screen/tag/temp}-->
+		</template>
+		<template v-else-if="item.key == 'color'">
+			<!--{template pc/components/index/screen/color/temp}-->
+		</template>
+		<template v-else-if="item.key == 'link'">
+			<!--{template pc/components/index/screen/link/temp}-->
+		</template>
+		<template v-else-if="item.key == 'desc'">
+			<!--{template pc/components/index/screen/desc/temp}-->
+		</template>
+		<template v-else-if="item.key == 'duration'">
+			<!--{template pc/components/index/screen/duration/temp}-->
+		</template>
+		<template v-else-if="item.key == 'size'">
+			<!--{template pc/components/index/screen/size/temp}-->
+		</template>
+		<template v-else-if="item.key == 'ext'">
+			<!--{template pc/components/index/screen/ext/temp}-->
+		</template>
+		<template v-else-if="item.key == 'shape'">
+			<!--{template pc/components/index/screen/shape/temp}-->
+		</template>
+		<template v-else-if="item.key == 'grade'">
+			<!--{template pc/components/index/screen/grade/temp}-->
+		</template>
+		<template v-else-if="item.key == 'btime'">
+			<!--{template pc/components/index/screen/btime/temp}-->
+		</template>
+		<template v-else-if="item.key == 'mtime'">
+			<!--{template pc/components/index/screen/mtime/temp}-->
+		</template>
+		<template v-else-if="item.key == 'dateline'">
+			<!--{template pc/components/index/screen/dateline/temp}-->
+		</template>
+	</template>
+	
+</div>
+<!--{template pc/components/index/screen/classify/js}-->
+<!--{template pc/components/index/screen/tag/js}-->
+<!--{template pc/components/index/screen/color/js}-->
+<!--{template pc/components/index/screen/link/js}-->
+<!--{template pc/components/index/screen/desc/js}-->
+<!--{template pc/components/index/screen/duration/js}-->
+<!--{template pc/components/index/screen/size/js}-->
+<!--{template pc/components/index/screen/ext/js}-->
+<!--{template pc/components/index/screen/shape/js}-->
+<!--{template pc/components/index/screen/grade/js}-->
+<!--{template pc/components/index/screen/btime/js}-->
+<!--{template pc/components/index/screen/mtime/js}-->
+<!--{template pc/components/index/screen/dateline/js}-->
+<script type="text/javascript">
+	var JsScreenData = $.extend({},JsScreenColorData,{
+		ScreenData:[],
+		Screenshow:true,
+		ScreenPost:'',
+		ScreenValue:{
+			classify:{
+				data:[],
+				value:[],
+				text:[],
+				tree:{
+					appid:'',
+					show:false,
+					filterText:'',
+					DefaultFids:[],
+					loading:true,
+					arrangement:[],
+					arrangementLast:[],
+					DefaultExpandedKeys:[],
+					DefaultExpandedKeysInit:[],
+					Props:{
+						children:'children',
+						label:'fname',
+						isLeaf: 'leaf'
+					}
+				},
+			},
+			tag:{
+				data:{},
+				leftid:'all',
+				tagrelative:'1',
+				search:'',
+				text:[],
+				value:[],
+				loading:true,
+				appid:'',
+			},
+			color:{
+				value:'',
+				persion:50
+			},
+			link:{
+				value:'',
+				input:''
+			},
+			desc:{
+				value:'',
+				input:''
+			},
+			duration:{
+				start:'',
+				end:'',
+				dunit:'s'
+			},
+			size:{
+				wstart:'',
+				wend:'',
+				hstart:'',
+				hend:''
+			},
+			ext:{
+				value:[],
+				data:[],
+				loading:true
+			},
+			shape:{
+				custom:false,
+				width:'',
+				height:'',
+				value:[],
+				text:[],
+				data:[],
+				loading:true,
+			},
+			grade:{
+				value:[],
+				text:[],
+				data:[],
+				loading:true
+			},
+			btime:{
+				value:'',
+				custom:false,
+				datelinepicker:[],
+				data:[],
+				loading:true
+			},
+			mtime:{
+				value:'',
+				custom:false,
+				datelinepicker:[],
+				data:[],
+				loading:true
+			},
+			dateline:{
+				value:'',
+				custom:false,
+				datelinepicker:[],
+				data:[],
+				loading:true
+			},
+		}
+	});
+	var JsScreenMethods = $.extend({},JsScreenClassifyMethods,JsScreenTagMethods,JsScreenColorMethods,JsScreenLinkMethods,JsScreenDescMethods,JsScreenDurationMethods,JsScreenSizeMethods,JsScreenExtMethods,JsScreenShapeMethods,JsScreenGradeMethods,JsScreenBtimeMethods,JsScreenMtimeMethods,JsScreenDatelineMethods,{
+		ScreenGetParam(type){
+			var self = this;
+			var param = {};
+			for(var key in self.ScreenValue){
+				if(type && type != 'hash' && key == type){
+					continue;
+				}
+				switch(key){
+					case 'classify':
+						if(self.DocumentTemplate ==1 && self.ScreenValue.classify.value.length){
+							var fids = [];
+							var classifys = [];
+							for(var x in self.ScreenValue.classify.value){
+								var xitem = self.ScreenValue.classify.value[x];
+								var fid = xitem.replace(self.Appid,'');
+								if(fid == 'not'){
+									fids.push('not');
+									classifys.push('未分类');
+								}else{
+									fids.push(xitem);
+									classifys.push(xitem);
+								}
+							}
+		
+							if(type == 'hash'){
+								param['classify'] = classifys.join(',');
+							}else{
+								param['fids'] = fids.join(',');
+							}
+							
+						}
+						if(self.DocumentTemplate ==2 && self.LeftClassify){
+							var fid = self.LeftClassify.replace(self.Appid,'');
+							if(fid == 'not'){
+								if(type == 'hash'){
+									param['classify'] = '未分类';
+								}else{
+									param['fids'] = 'not';
+								}
+							}else{
+								if(type == 'hash'){
+									param['classify'] = self.LeftClassify;
+								}else{
+									param['fids'] = self.LeftClassify;
+								}
+							}
+							
+						}
+					break;
+					case 'tag':
+						if(self.ScreenValue.tag.value.length){
+							param['tag'] = self.ScreenValue.tag.value.join(',');
+							param['tagrelative'] = self.ScreenValue.tag.tagrelative;
+						}
+					break;
+					case 'color':
+						if(self.ScreenValue.color.value){
+							param['color'] = self.ScreenValue.color.value;
+							param['persion'] = self.ScreenValue.color.persion;
+						}
+					break;
+					case 'link':
+						if(parseInt(self.ScreenValue.link.value)>-1){
+							param['link'] = self.ScreenValue.link.value;
+						}
+						if(parseInt(self.ScreenValue.link.value)>0 && self.ScreenValue.link.input){
+							param['linkval'] = self.ScreenValue.link.input;
+						}
+					break;
+					case 'desc':
+						if(parseInt(self.ScreenValue.desc.value)>-1){
+							param['desc'] = self.ScreenValue.desc.value;
+						}
+						if(parseInt(self.ScreenValue.desc.value)>0 && self.ScreenValue.desc.input){
+							param['descval'] = self.ScreenValue.desc.input;
+						}
+					break;
+					case 'duration':
+						if(self.ScreenValue.duration.start || self.ScreenValue.duration.end){
+							param['duration'] = self.ScreenValue.duration.start+'_'+self.ScreenValue.duration.end;
+							param['dunit'] = self.ScreenValue.duration.dunit;
+						}
+					break;
+					case 'size':
+						if(self.ScreenValue.size.wstart || self.ScreenValue.size.wend){
+							param['wsize'] = self.ScreenValue.size.wstart+'_'+self.ScreenValue.size.wend;
+						}
+						if(self.ScreenValue.size.hstart || self.ScreenValue.size.hend){
+							param['hsize'] = self.ScreenValue.size.hstart+'_'+self.ScreenValue.size.hend;
+						}
+					break;
+					case 'ext':
+						if(self.ScreenValue.ext.value.length){
+							param['ext'] = self.ScreenValue.ext.value.join(',');
+						}
+					break;
+					case 'shape':
+						if(self.ScreenValue.shape.value.length){
+							if(type == 'hash'){
+								param['shape'] = self.ScreenValue.shape.text.join(',');
+							}else{
+								param['shape'] = self.ScreenValue.shape.value.join(',');
+							}
+						}
+						if(self.ScreenValue.shape.custom && self.ScreenValue.shape.width && self.ScreenValue.shape.height){
+							param['shapesize'] = self.ScreenValue.shape.width+':'+self.ScreenValue.shape.height;
+						}
+					break;
+					case 'grade':
+						if(self.ScreenValue.grade.value.length){
+							if(type == 'hash'){
+								var arr = [];
+								for(var g in self.ScreenValue.grade.value){
+									var grade = self.ScreenValue.grade.value[g];
+									if(parseInt(grade)>0){
+										arr.push(grade+'星');
+									}else{
+										arr.push('未评分');
+									}
+								}
+								param['grade'] = arr.join(',');
+							}else{
+								param['grade'] = self.ScreenValue.grade.value.join(',');
+							}
+							
+						}
+					break;
+					case 'btime':
+					case 'mtime':
+					case 'dateline':
+						if(self.ScreenValue[key].value){
+							if(self.ScreenValue[key].custom && self.ScreenValue[key].datelinepicker.length){
+								param[key] = self.ScreenValue[key].value;
+							}else{
+								if(type == 'hash'){
+									param[key] = self.ScreenValue[key].value;
+								}else{
+									param[key] = GetDateVal(self.ScreenValue[key].value);
+								}
+								
+							}
+						}
+					break;
+				}
+			}
+			if(self.DocumentTemplate == 1){
+				param['hassub'] = 1;
+			}else{
+				if(type != 'hash'){
+					param['hassub'] = self.ImageParams.expanded?1:0;
+				}
+			}
+			
+			return param;
+		},
+		ScreenGetValueData(type,getnum,isabort){
+			var self = this;
+			if(!getnum && self.ScreenValue[type]){
+				self.ScreenValue[type].loading = true;
+			}
+			var param = self.ScreenGetParam(type);
+			param['skey'] = type;
+			if(self.Appid && self.Appid!='all'){
+				param['appid'] = self.Appid;
+			}
+			if(type == 'tag'){
+				if(self.ScreenValue.tag.leftid != 'all'){
+					param['cid'] = self.ScreenValue.tag.leftid;
+				}
+				if(self.ScreenValue.tag.search){
+					param['tagkeyword'] = self.ScreenValue.tag.search;
+				}
+				if(!getnum && self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+					self.ScreenValue.tag.loading = false;
+					self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].loading = true;
+				}
+			}
+			if(self.HeaderKeyword){
+				param['keyword'] = self.HeaderKeyword;
+			}
+			if(getnum){
+				param['hasnum'] = 1;
+				if(self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+					param['page'] = self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].page;
+				}
+			}
+			if(!isabort && self.ScreenPost){
+				self.ScreenPost.abort();
+			}
+			self.ScreenPost = $.post(MOD_URL+'&op=ajax&operation=searchmenu_num',param,function(data){
+				switch(type){
+					case 'tag':
+						var tagdata = [];
+						if(getnum){
+							for(var t in data.alltagdata){
+								var otag = data.alltagdata[t];
+								tagdata.push({
+									tid:parseInt(t),
+									tagname:otag.tagname,
+									num:otag.num,
+								});
+							}
+						}else{
+							for(var t in data.alltagdata){
+								var otag = data.alltagdata[t];
+								tagdata.push({
+									tid:parseInt(t),
+									tagname:otag.tagname,
+								});
+							}
+						}
+						
+						if(getnum){
+							if(self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+								for(var xt in tagdata){
+									var xtitem = tagdata[xt];
+									for(var x in self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].data){
+										var xitem = self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].data[x];
+										if(xitem.tid == xtitem.tid){
+											self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].data[x]['num'] = xtitem.num;
+										}
+									}
+								}
+								self.$forceUpdate();
+							}
+							
+							return false;
+						}
+						if(self.Appid==self.ScreenValue.tag.appid && self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+							self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].data = tagdata;
+							self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].page = 1;
+							self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].finish = data.finish;
+							self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].loading = false;
+							if(self.Appid && self.Appid!='all'){
+								self.ScreenGetTagGroupNum(param);
+							}
+							self.$forceUpdate();
+						}else{
+							self.ScreenValue.tag.appid = self.Appid;
+							self.ScreenValue.tag.leftid = 'all';
+							self.ScreenValue.tag.data = {};
+							self.ScreenValue.tag.data['all'] = {
+								id:'all',
+								catname:'全部',
+								num:'',
+								finish:data.finish,
+								page:1,
+								data:tagdata,
+								loading:false,
+								valloading:false
+							};
+							if(self.Appid && self.Appid!='all'){
+								for(var c in data.catdata){
+									var cdata = data.catdata[c];
+									self.ScreenValue.tag.data[cdata.cid] = {
+										id:cdata.cid,
+										catname:cdata.catname,
+										num:'',
+										finish:false,
+										page:1,
+										data:[],
+										loading:true,
+										valloading:false
+									}
+								}
+							}
+							self.ScreenValue.tag.loading = false;
+							self.$nextTick(function(){
+								self.ScreenTagScrollEvent();
+							});
+							if(self.Appid && self.Appid!='all'){
+								self.ScreenGetTagGroupNum(param);
+							}
+							
+						}
+						if(!getnum){
+							self.ScreenGetValueData('tag',true);
+						}
+					break;
+					case 'ext':
+					case 'grade':
+						if(self.ScreenValue[type]){
+							self.ScreenValue[type].data = data
+							self.ScreenValue[type].loading = false;
+						}
+					break;
+					case 'shape':
+						var fdata = [];
+						for(var it in data){
+							fdata.push(data[it]);
+						}
+						if(getnum){
+							for(var xi in self.ScreenValue[type].data){
+								var xiitem = self.ScreenValue[type].data[xi];
+								var num = 0;
+								for(var x in fdata){
+									var xitem = fdata[x];
+									if(parseInt(xitem.val) == parseInt(xiitem.val)){
+										num = xitem.num;
+									}
+								}
+								self.ScreenValue[type].data[xi]['num'] = num;
+							}
+							self.$forceUpdate();
+						}else{
+							self.ScreenValue[type].data = fdata
+							self.ScreenValue[type].loading = false;
+							self.ScreenGetValueData('shape',true);
+						}
+					break;
+					case 'btime':
+					case 'mtime':
+					case 'dateline':
+						if(self.ScreenValue[type]){
+							var fdata = [];
+							for(var it in data){
+								fdata.push(data[it]);
+							}
+							self.ScreenValue[type].data = fdata
+							self.ScreenValue[type].loading = false;
+						}
+					break;
+				}
+				
+			},'json');
+		},
+		
+		ScreenDelete(type){
+			var self = this;
+			switch(type){
+				case 'classify':
+					self.ScreenValue.classify.value = [];
+					self.ScreenValue.classify.text = [];
+					self.ScreenValue.classify.tree.filterText = '';
+					self.ScreenValue.classify.tree.DefaultExpandedKeysInit = [];
+					self.ScreenValue.classify.tree.DefaultFids = [];
+					self.ScreenValue.classify.tree.DefaultExpandedKeys = [];
+					self.ScreenValue.classify.tree.arrangement = [];
+					self.ScreenValue.classify.tree.show = false;
+					self.ScreenValue.classify.tree.loading = true;
+					self.$nextTick(function(){
+						self.ScreenValue.classify.tree.show = true;
+						self.ScreenValue.classify.tree.loading = false;
+					});
+				break;
+				case 'tag':
+					self.ScreenValue.tag.value = [];
+					self.ScreenValue.tag.text = [];
+					self.ScreenValue.tag.search = '';
+					self.ScreenValue.tag.tagrelative = '1';
+				break;
+				case 'color':
+					self.ScreenValue.color.value = '';
+					self.ScreenValue.color.persion = 50;
+				break;
+				case 'link':
+					self.ScreenValue.link.value = '';
+					self.ScreenValue.link.input = '';
+				break;
+				case 'desc':
+					self.ScreenValue.desc.value = '';
+					self.ScreenValue.desc.input = '';
+				break;
+				case 'duration':
+					self.ScreenValue.duration.start = '';
+					self.ScreenValue.duration.end = '';
+					self.ScreenValue.duration.dunit = 's';
+				break;
+				case 'size':
+					self.ScreenValue.size.wstart = '';
+					self.ScreenValue.size.wend = '';
+					self.ScreenValue.size.hstart = '';
+					self.ScreenValue.size.hend = '';
+				break;
+				case 'ext':
+					self.ScreenValue.ext.value = [];
+				break;
+				case 'shape':
+					self.ScreenValue.shape.value = [];
+					self.ScreenValue.shape.width = '';
+					self.ScreenValue.shape.height = '';
+					self.ScreenValue.shape.text = [];
+					self.ScreenValue.shape.custom = false;
+				break;
+				case 'grade':
+					self.ScreenValue.grade.value = [];
+					self.ScreenValue.grade.text = [];
+				break;
+				case 'btime':
+				case 'mtime':
+				case 'dateline':
+					self.ScreenValue[type].value = '';
+					self.ScreenValue[type].custom = false;
+					self.ScreenValue[type].datelinepicker = [];
+				break;
+			}
+			self.ScreenSubmit();
+		},
+		ScreenDeleteAll(){
+			var self = this;
+			for(var i in self.ScreenValue){
+				switch(i){
+					case 'classify':
+						self.ScreenValue.classify.value = [];
+						self.ScreenValue.classify.text = [];
+						self.ScreenValue.classify.tree.filterText = '';
+						self.ScreenValue.classify.tree.DefaultExpandedKeysInit = [];
+						self.ScreenValue.classify.tree.DefaultFids = [];
+						self.ScreenValue.classify.tree.DefaultExpandedKeys = [];
+						self.ScreenValue.classify.tree.arrangement = [];
+						self.ScreenValue.classify.tree.show = false;
+						self.ScreenValue.classify.tree.loading = true;
+						self.$nextTick(function(){
+							self.ScreenValue.classify.tree.show = true;
+							self.ScreenValue.classify.tree.loading = false;
+						});
+					break;
+					case 'tag':
+						self.ScreenValue.tag.value = [];
+						self.ScreenValue.tag.text = [];
+						self.ScreenValue.tag.search = '';
+						self.ScreenValue.tag.tagrelative = '1';
+					break;
+					case 'color':
+						self.ScreenValue.color.value = '';
+						self.ScreenValue.color.persion = 50;
+					break;
+					case 'link':
+						self.ScreenValue.link.value = '';
+						self.ScreenValue.link.input = '';
+					break;
+					case 'desc':
+						self.ScreenValue.desc.value = '';
+						self.ScreenValue.desc.input = '';
+					break;
+					case 'duration':
+						self.ScreenValue.duration.start = '';
+						self.ScreenValue.duration.end = '';
+						self.ScreenValue.duration.dunit = 's';
+					break;
+					case 'size':
+						self.ScreenValue.size.wstart = '';
+						self.ScreenValue.size.wend = '';
+						self.ScreenValue.size.hstart = '';
+						self.ScreenValue.size.hend = '';
+					break;
+					case 'ext':
+						self.ScreenValue.ext.value = [];
+					break;
+					case 'shape':
+						self.ScreenValue.shape.value = [];
+						self.ScreenValue.shape.width = '';
+						self.ScreenValue.shape.height = '';
+						self.ScreenValue.shape.text = [];
+						self.ScreenValue.shape.custom = false;
+					break;
+					case 'grade':
+						self.ScreenValue.grade.value = [];
+						self.ScreenValue.grade.text = [];
+					break;
+					case 'btime':
+					case 'mtime':
+					case 'dateline':
+						self.ScreenValue[i].value = '';
+						self.ScreenValue[i].custom = false;
+						self.ScreenValue[i].datelinepicker = [];
+					break;
+				}
+			}
+			self.ScreenSubmit();
+		},
+		ScreenRefreshHash(){
+			var self = this;
+			var hash=location.hash;
+			var url=hash.replace('#','');
+			var arr = url.split('&');
+			
+			for(var i in arr){
+				var farr = arr[i].split('=');
+				switch(farr[0]){
+					case 'classify':
+						if(self.DocumentTemplate == 1 ){
+							var classifys = farr[1].split(',');
+							var Newclassifys = [];
+							for(var i in classifys){
+								var xitem = decodeURI(classifys[i]);
+								if(xitem == '未分类'){
+									Newclassifys.push('not'+self.Appid);
+									self.ScreenValue.classify.text.push('未分类')
+								}else{
+									Newclassifys.push(xitem);
+								}
+							}
+							self.ScreenValue.classify.value = Newclassifys;
+							self.ScreenValue.classify.tree.DefaultFids = Newclassifys;
+						}
+						// self.ScreenValue.classify.DefaultExpandedKeys = farr[1].split(',');
+					break;
+					case 'tag':
+						self.ScreenValue.tag.value = farr[1].split(',');
+					break;
+					case 'tagrelative':
+						self.ScreenValue.tag.tagrelative = farr[1];
+					break;
+					case 'color':
+						self.ScreenValue.color.value = farr[1];
+					break;
+					case 'persion':
+						self.ScreenValue.color.persion = farr[1];
+					break;
+					case 'link':
+						self.ScreenValue.link.value = farr[1];
+					break;
+					case 'linkval':
+						self.ScreenValue.link.input = farr[1];
+					break;
+					case 'desc':
+						self.ScreenValue.desc.value = farr[1];
+					break;
+					case 'descval':
+						self.ScreenValue.desc.input = farr[1];
+					break;
+					case 'duration':
+						var fsize = farr[1].split('_');
+						self.ScreenValue.duration.start = fsize[0];
+						self.ScreenValue.duration.end = fsize[1];
+					break;
+					case 'dunit':
+						self.ScreenValue.duration.dunit = farr[1];
+					break;
+					case 'wsize':
+						var fsize = farr[1].split('_');
+						self.ScreenValue.size.wstart = fsize[0];
+						self.ScreenValue.size.wend = fsize[1];
+					break;
+					case 'hsize':
+						var fsize = farr[1].split('_');
+						self.ScreenValue.size.hstart = fsize[0];
+						self.ScreenValue.size.hend = fsize[1];
+					break;
+					case 'ext':
+						self.ScreenValue.ext.value = farr[1].split(',');
+					break;
+					case 'shape':
+						var odlval = farr[1].split(',');
+						var newval = [];
+						for(var s in odlval){
+							newval.push(decodeURI(odlval[s]))
+						}
+						self.ScreenValue.shape.text = newval;
+					break;
+					case 'shapesize':
+						var fsize = farr[1].split(':');
+						self.ScreenValue.shape.custom = true;
+						self.ScreenValue.shape.width = fsize[0];
+						self.ScreenValue.shape.height = fsize[1];
+					break;
+					case 'grade':
+						var ftext = [];
+						var fval = [];
+						var odlval = farr[1].split(',');
+						for(var g in odlval){
+							var newtext = decodeURI(odlval[g]);
+							ftext.push(newtext);
+							var re = newtext.replace('星','');
+							if(re == '未评分'){
+								fval.push(0);
+							}else{
+								fval.push(parseInt(re));
+							}
+						}
+						self.ScreenValue.grade.text = ftext;
+						self.ScreenValue.grade.value = fval;
+					break;
+					case 'btime':
+					case 'mtime':
+					case 'dateline':
+						var newtext = decodeURI(farr[1]);
+						var newVal = ['今日','昨日','最近7日','最近30日','最近90日','最近365日'];
+						self.ScreenValue[farr[0]].value = newtext;
+						if(newVal.indexOf(newtext)<0){
+							self.ScreenValue[farr[0]].custom = true;
+							self.ScreenValue[farr[0]].datelinepicker = newtext.split('_');
+						}
+					break;
+				}
+			}
+			
+		},
+		GetScreenData(){
+			var self = this;
+			var param = {};
+			if(self.Appid && self.Appid != 'all'){
+				param['appid'] = self.Appid;
+			}
+			if(self.ScreenValue.tag.value.length){
+				param['tag'] = self.ScreenValue.tag.value.join(',');
+			}
+			if(self.DocumentTemplate == 1){
+				if(self.ScreenValue.classify.value.length){
+					var fids = [];
+					for(var x in self.ScreenValue.classify.value){
+						var xitem = self.ScreenValue.classify.value[x];
+						var fid = xitem.replace(self.Appid,'');
+						if(fid != 'not'){
+							fids.push(xitem);
+						}
+					}
+					param['fids'] = fids.join(',');
+				}
+			}else{
+				if(self.LeftClassify){
+					var fid = self.LeftClassify.replace(self.Appid,'');
+					if(fid != 'not'){
+						param['fids'] = self.LeftClassify;
+					}
+				}
+			}
+			
+			if(self.ScreenValue.shape.text.length){
+				param['shape'] = self.ScreenValue.shape.text.join(',');
+			}
+			$.post(MOD_URL+'&op=ajax&operation=getscreen',param,function(json){
+				var arr = [];
+				if(json.success){
+					for(var i in json.data){
+						var item = json.data[i];
+						if(parseInt(item.checked)){
+							// if(item.key=='tag'){
+							// 	item.showtype = parseInt(item.showtype)
+							// 	if(item.showtype){
+							// 		var group = [];
+							// 		for(var t in item.group){
+							// 			if(parseInt(item.group[t].checked)){
+							// 				item.group[t]['loading'] = true;
+							// 				group.push(item.group[t]);
+							// 			}
+							// 		}
+							// 		commit('SetParamsTagData',group);
+							// 		arr.push(item);
+							// 	}else{
+							// 		arr.push(item);
+							// 	}
+								
+							// }else{
+								
+								arr.push(item);
+							// }
+						}
+					}
+					if(param['tag']){
+						var text = [];
+						for(var  t in json.tagdata){
+							text.push(json.tagdata[t].tagname);
+						}
+						self.ScreenValue.tag.text = text;
+					}
+					if(self.ScreenValue.shape.text.length){
+						self.ScreenValue.shape.value = json.shape;
+					}
+					var folderdatas = [];
+					for(var f in json.folderdata){
+						if(self.Appid == json.folderdata[f].appid){
+							folderdatas.push(json.folderdata[f]);
+							self.ScreenValue.classify.text.push(json.folderdata[f].fname);
+							if(json.folderdata[f].pathkey){
+								self.ScreenSubstring(json.folderdata[f].pathkey,json.folderdata[f].appid)
+							}
+						}
+					}
+					if(self.DocumentTemplate == 2){
+						if(folderdatas.length){
+							self.ImageDataIsExpanded = folderdatas[0].leaf?false:true;
+						}else{
+							if(self.LeftClassify){
+								var fclassify = self.LeftClassify.replace(self.Appid,'');
+								if(fclassify == 'not'){
+									self.ImageDataIsExpanded = false;
+								}
+							}
+						}
+						self.LeftTree.defaultOpenkeys = self.LeftTree.defaultOpenkeysInit;
+					}else{
+						if(self.ScreenValue.classify.value.length){
+							if(self.ScreenValue.classify.value.length>1){
+								self.ImageDataIsExpanded = false;
+							}else{
+								var fids = self.ScreenValue.classify.value[0];
+								var ffids = fids.replace(self.Appid,'');
+								if(ffids == 'not'){
+									self.ImageDataIsExpanded = false;
+								}else{
+									if(json.folderdata[fids]){
+										self.ImageDataIsExpanded = json.folderdata[fids].leaf?false:true;
+									}
+								}
+							}
+						}else{
+							self.ImageDataIsExpanded = false;
+						}
+						
+					}
+				}
+				if(arr.length){
+					self.HeaderRightBtnScreen.show = true;
+				}else{
+					self.HeaderRightBtnScreen.show = false;
+				}
+				self.ScreenData = arr;
+				self.ScreenSubmit();
+			},'json');
+		},
+		ScreenSubstring(str,appid){
+			var self = this;
+			var farr = str.split(appid);
+			var arr = [];
+			if(farr && farr.length == 1){
+				return false;
+			}
+			for(var f in farr){
+				if(farr[f]){
+					arr.push(farr[f]);
+				}
+			}
+			arr.pop();
+			for(var i in arr){
+				var pathkey = arr[i]+appid;
+				if(self.DocumentTemplate == 2){
+					if(self.LeftTree.defaultOpenkeysInit.indexOf(pathkey)<0){
+						self.LeftTree.defaultOpenkeysInit.push(pathkey);
+					}
+				}else{
+					if(self.ScreenValue.classify.tree.DefaultExpandedKeysInit.indexOf(pathkey)<0){
+						self.ScreenValue.classify.tree.DefaultExpandedKeysInit.push(pathkey);
+					}
+				}
+			}
+		},
+		ScreenSubmit(){
+			this.CommonGetImageData();
+		},
+		ScreenCreate(){
+			var pagesetting = $pagesetting;
+			<!--{if $_G[uid]}-->
+			var ShowScreen = $screen;
+			<!--{else}-->
+			var Appid = this.Appid?this.Appid:'all';
+			var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):0;
+			<!--{/if}-->
+			if(parseInt(ShowScreen)){
+				this.Screenshow = true;
+			}else{
+				this.Screenshow = false;
+			}
+			this.ScreenRefreshHash();
+			this.GetScreenData();
+		},
+	});
+
+</script>
+

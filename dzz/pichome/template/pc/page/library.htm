@@ -4,18 +4,38 @@
 	.lbox{
 		padding: 30px 0;
 		/* text-align:center; */
+		overflow: hidden;
 	}
 	.lbox .block{
 		width: 202px;
-		display: inline-block;
+		float: left;
 		margin-right: 35px;
+		margin-bottom: 8px;
 	}
 	.lbox .block .images{
 		width: 202px;
 		height: 202px;
 		overflow: hidden;
-		border-radius: 4px;
+		border-radius: 8px;
 		position: relative;
+	}
+	.lbox .block .images.add{
+		cursor: pointer;
+		padding: 8px;
+		background-color: var(--content-imgbg);
+	}
+	.lbox .block .images.add:hover{
+		opacity: 0.75;
+	}
+	.lbox .block .images.add .border{
+		width: 100%;
+		height: 100%;
+		text-align: center;
+		line-height: 202px;
+		font-size: 45px;
+		color: var(--tip-color);
+		border-radius: 8px;
+		border: 2px dashed var(--slider-line);
 	}
 	.lbox .block .images .img-bg{
 		float: left;
@@ -80,7 +100,12 @@
 	.lbox .block .name{
 		font-size: 16px;
 		color: var(--content-textHover);
-		padding: 15px 0 8px;
+		/* padding: 15px 0 8px; */
+		height: 30px;
+		line-height: 30px;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 	.lbox .block .message{
 		color: var(--content-text);
@@ -88,6 +113,11 @@
 	}
 	.lbox .block .message .left{
 		float: left;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		/* display: block; */
+		width: 100%;
 	}
 	.lbox .block .message .right{
 		float: right;
@@ -108,6 +138,26 @@
 /* 	.SortableBox .sortable-list .el-checkbox{
 		min-width: 120px;
 	} */
+	.Import-dialog{
+		display: flex;
+		flex-direction: column;
+		margin: 0 !important;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%,-50%);
+		/* height: 180px; */
+		max-height: calc(100% - 200px);
+		max-width: calc(100% - 30px);
+	}
+	.Import-dialog .el-dialog__header{
+		text-align: left;
+		padding: 15px;
+		padding-bottom: 10px;
+	}
+	.Import-dialog .el-dialog__body{
+		padding: 10px 15px;
+	}
 </style>
 <!--{template pc/frame/header_simple_end}-->
 <div id="dzzoffice">
@@ -120,65 +170,76 @@
 				<el-scrollbar class="page-component__scroll">
 					<div class="content" style="padding: 26px 16px;">
 						<h1 style="text-align: center;color: var(--content-textHover);">库 设 置</h1>
-						<div class="lbox" v-if="dataList.length">
-							<div class="block" v-for="(item,index) in dataList">
-								<div class="images">
-									<template v-if="item.resources">
-										<div class="img-bg" v-for="ritem in item.resources">
-											<el-image
-											      style="width: 100%; height: 100%"
-											      :src="ritem.icondata"
-											      fit="cover"></el-image>
-										</div>
-									</template>
-									<template v-else>
-										<div class="img-bg"></div>
-										<div class="img-bg"></div>
-										<div class="img-bg"></div>
-										<div class="img-bg"></div>
-									</template>
-									<div class="progress" v-if="parseInt(item.state)==0">
-										<div style="width: 100%;text-align: center;">
-											<el-button type="primary" size="mini" @click="handleImport(index,item.appid)">点击导入</el-button>
-										</div>
+						<div class="lbox">
+							<div class="block" @click="catalogue.dialogVisible = true">
+								<div class="images add">
+									<div class="border">
+										<i class="el-icon-circle-plus-outline"></i>
 									</div>
-									<div class="progress" v-else-if="parseInt(item.state)==1">
-										<div style="width: 100%;">
-											<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入中...</p>
-											<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
-										</div>
-									</div>
-									<div class="progress" v-else-if="parseInt(item.state)==2">
-										<div style="width: 100%;">
-											<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入完成，校验中...</p>
-											<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
-										</div>
-									</div>
-									<div v-else class="bg">
-										<span class="op" @click="handleLook(item.appid)" style="margin-right: 25px;"><i class="el-icon-view icon"></i>查看</span>
-										<span class="op" @click="handleRefresh(index,item.appid)" style="margin-right: 25px;"><i class="el-icon-refresh icon"></i>更新</span>
-										<span class="op" @click="handleSetting(item.appid,item.appname)"><i class="el-icon-edit icon"></i>设置</span>
-									</div>
+									
 								</div>
-								<p class="name" v-cloak>{{item.appname}}</p>
-								<div class="message clearfix">
-									<span class="left" v-cloak>{{item.filenum}}个文件</span>
-<!-- 									<span class="right">
-										<template v-if="parseInt(item.personal)==1">
-											<el-link :underline="false" type="primary">私有</el-link>
+								<p class="name" style="font-size: 20px;text-align: center;height: 49px;line-height: 49px;">添加库</p>
+							</div>
+							<template v-if="dataList.length">
+								<div class="block" v-for="(item,index) in dataList">
+									<div class="images">
+										<template v-if="item.resources">
+											<div class="img-bg" v-for="ritem in item.resources">
+												<el-image
+													style="width: 100%; height: 100%"
+													:src="ritem.icondata"
+													fit="cover"></el-image>
+											</div>
 										</template>
 										<template v-else>
-											<el-link :underline="false" type="danger">公开</el-link>
+											<div class="img-bg"></div>
+											<div class="img-bg"></div>
+											<div class="img-bg"></div>
+											<div class="img-bg"></div>
 										</template>
-									</span> -->
+										<div class="progress" v-if="parseInt(item.state)==0">
+											<div style="width: 100%;text-align: center;">
+												<el-button type="primary" size="mini" @click="handleImport(index,item.appid)">点击导入</el-button>
+											</div>
+										</div>
+										<div class="progress" v-else-if="parseInt(item.state)==1">
+											<div style="width: 100%;">
+												<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入中...</p>
+												<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
+											</div>
+										</div>
+										<div class="progress" v-else-if="parseInt(item.state)==2">
+											<div style="width: 100%;">
+												<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入完成，校验中...</p>
+												<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
+											</div>
+										</div>
+										<div v-else class="bg">
+											<span class="op" @click="handleLook(item.appid)" style="margin-right: 25px;"><i class="el-icon-view icon"></i>查看</span>
+											<span class="op" @click="handleRefresh(index,item.appid)" style="margin-right: 25px;"><i class="el-icon-refresh icon"></i>更新</span>
+											<span class="op" @click="handleSetting(item.appid,item.appname)"><i class="el-icon-edit icon"></i>设置</span>
+										</div>
+									</div>
+									<p class="name" v-cloak>{{item.appname}}</p>
+									<div class="message clearfix">
+										<span class="left" v-cloak>{{item.filenum}}个文件</span>
+	<!-- 									<span class="right">
+											<template v-if="parseInt(item.personal)==1">
+												<el-link :underline="false" type="primary">私有</el-link>
+											</template>
+											<template v-else>
+												<el-link :underline="false" type="danger">公开</el-link>
+											</template>
+										</span> -->
+									</div>
 								</div>
-							</div>
+							</template>
 						</div>
 					</div>	
 				</el-scrollbar>
 			</div>
 			<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false" @opened="handleAfterSetting">
-				<el-form :model="formdta" label-width="100px">
+				<el-form :model="formdta" label-width="140px">
 <!-- 					<el-form-item label="开放权限：">
 					    <el-radio-group v-model="formdta.personal">
 							<el-radio :label="0">公开</el-radio>
@@ -191,7 +252,22 @@
 					<el-form-item label="开放下载：">
 					      <el-switch v-model="formdta.download" active-value="1" inactive-value="0"></el-switch>
 					</el-form-item>
-					<el-form-item label="筛选器：">
+					<template v-if="formdta.eagle">
+						<el-form-item label="允许导入文件：">
+						    <el-input type="textarea" v-model="formdta.allowext"></el-input>
+							<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+						</el-form-item>
+						<el-form-item label="禁止导入文件：">
+						    <el-input type="textarea" v-model="formdta.notallowext"></el-input>
+							<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+						</el-form-item>
+						<el-form-item label="开启缩略图转换：">
+						    <el-switch v-model="formdta.getinfo" active-value="1" inactive-value="0"></el-switch>
+							<p class="tipTxt">缩略图转换需要较长时间，转换时会增加会增加服务器CPU与内存占用，转换缩略图对于大尺寸图片的列表显示速度有大幅度提升</p>
+						</el-form-item>
+					</template>
+					
+					<!-- <el-form-item label="筛选器：">
 						<div class="SortableBox LabelBox clearfix" ref="SortableScreen">
 							<div v-for="(item,index) in newscreens" :key="item.key" class="sortable-list">
 								<el-checkbox v-model="formdta.screen" :label="item.key" v-cloak>{{item.text}}</el-checkbox>
@@ -210,12 +286,83 @@
 							</div>
 						</div>
 						
-					</el-form-item>
+					</el-form-item> -->
 			    </el-form>
 			    <div slot="footer" class="dialog-footer">
-			      <el-button @click="dialog.Visible = false">取 消</el-button>
-			      <el-button type="primary" @click="handleSubmit">确 定</el-button>
+					<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary">
+						<el-button slot="reference" style="float: left;">删除</el-button>
+					</el-popconfirm>
+					<el-button @click="dialog.Visible = false">取 消</el-button>
+					<el-button type="primary" @click="handleSubmit">确 定</el-button>
 			    </div>
+			</el-dialog>
+			<el-dialog
+				title="选择目录"
+				:close-on-click-modal="false"
+				:visible.sync="catalogue.dialogVisible"
+				@open="cataloguedialogOpen">
+				<div style="padding-bottom:16px">
+					<span style="color: var(--header-text);">库类型：</span>
+					<el-radio-group v-model="catalogue.type">
+						<el-radio label="0">Eagle库</el-radio>
+						<el-radio label="1">普通目录</el-radio>
+					</el-radio-group>
+				</div>
+				<div style="padding-bottom:16px">
+					<el-input placeholder="输入快捷路径" clearable v-model="catalogue.search" @input="cataloguesearch" class="input-with-select">
+					    <el-select v-model="catalogue.select" slot="append" placeholder="快捷路径" clearable style="width: 120px;" @change="catalogueselect">
+							<template v-for="(item,index) in catalogue.selectData">
+								<template v-if="item.type">
+									<el-option label="站点Library目录" :value="index" :key="index"></el-option>
+								</template>
+								<template v-else>
+									<el-option :label="item.path" :value="index" :key="index"></el-option>
+								</template>
+							</template>
+							
+					    </el-select>
+					</el-input>
+				</div>
+				<div style="color: var(--header-text);">路径选择：</div>
+				<el-scrollbar class="page-component__scroll" style="height: 300px;">
+					<div style="padding-left: 16px;">
+						<el-tree
+							class="border"
+							highlight-current 
+							:load="LoadNodeTree" 
+							lazy 
+							node-key="id"
+							ref="tree_catalogue"
+							indent="0"
+							accordion
+							@current-change="TreeCurrentChange">
+							<span class="custom-tree-node" slot-scope="{ node, data }">
+								<span>
+									<i class="ri-folder-2-line"></i><span style="margin-left: 6px;">{{ node.label }}</span>
+								</span>              
+							</span>
+						</el-tree>
+					</div>
+				</el-scrollbar>
+				<div style="color: var(--header-text);padding-top: 16px;">已选择路径：{{catalogue.showVal}}</div>	
+				<span slot="footer" class="dialog-footer">
+					<el-button @click="catalogue.dialogVisible = false">取 消</el-button>
+					<el-button type="primary" @click="catalogueSubmit">确 定</el-button>
+				</span>
+			</el-dialog>
+			<el-dialog
+				custom-class="Import-dialog"
+				title="提示"
+				:visible.sync="ImportDataVisible"
+				:close-on-click-modal="false"
+				:show-close="false"
+				width="420px">
+				<div class="el-message-box__container"><div class="el-message-box__status el-icon-warning"></div><div class="el-message-box__message"><p>系统检测该目录为eagle库，只能作为Eagle导入。</p></div></div>
+			  <span slot="footer" class="dialog-footer">
+			    <el-button style="float: left;" @click="ImportDataVisible = false" size="small">取消</el-button>
+				<el-button type="warning" @click="ImportDataDialogClick('eagle')" size="small">作为Eagle库导入</el-button>
+			    <!-- <el-button type="primary" @click="ImportDataDialogClick('file')" size="small">作为普通目录导入</el-button> -->
+			  </span>
 			</el-dialog>
 		</el-main>
 	</el-container>
@@ -227,6 +374,7 @@
 		el: '#dzzoffice',
 		data() {
 			return {
+				resource:0,
 				dialog:{
 					title:'',
 					Visible:false,
@@ -234,10 +382,14 @@
 				formdta:{
 					appid:'',
 					share:'0',
+					getinfo:'0',
 					download:'0',
 					screen:[],
 					classif:[],
-					type:0
+					type:0,
+					eagle:0,
+					allowext:'',
+					notallowext:'',
 				},
 				dataList:[],
 				timelist:{},
@@ -257,7 +409,25 @@
 					{key:'mtime',text:'创建日期',checked:0},
 				],
 				newscreens:[],
-				newClassfiy:[]
+				newClassfiy:[],
+				catalogue:{
+					search:'',
+					defaultsearch:'',
+					searchStatus:false,
+					select:'',
+					type:'0',
+					parentresolve:'',
+					parentnode:'',
+					selectData:[],
+					nodeId:0,
+					parent:[],
+					dialogVisible:false,
+					defaultVal:[],
+					showVal:'',
+					charset:'utf8',
+					force:0
+				},
+				ImportDataVisible:false
 			}
 		},
 		watch:{
@@ -280,12 +450,271 @@
 					}
 				},
 				deep:true
-			}
+			},
 		},
 		created() {
-			this.handleCheckexport();
+			this.GetData();
+			this.GetCatalogueSelect();
 		},
 		methods:{
+			GetCatalogueSelect(){
+				var self = this;
+				$.post(MOD_URL+'&op=library&operation=getpath',{
+					gettype:1
+				},function(data){
+					var fdata = data.data;
+					self.catalogue.selectData = [];
+					for(var i in fdata){
+						if(parseInt(fdata[i].type)){
+							var path = fdata[i].path.split('\\');
+							self.catalogue.defaultVal = path;
+							var str = {
+								path:path.join('/'),
+								charset:fdata[i].charset,
+								type:1
+							}
+						}else{
+							var str = {
+								path:fdata[i].path,
+								charset:fdata[i].charset,
+								type:0
+							}
+						}
+						self.catalogue.selectData.push(str);
+					}
+					
+				},'json');
+			},
+			cataloguedialogOpen(){
+				var dzzroot = '$dzzroot';
+				var defaultVal = [];
+				var showVal = '';
+				if(dzzroot){
+					var str = dzzroot+'library';
+					defaultVal = str.split('/');
+					showVal = defaultVal.join('/');
+				}
+				this.catalogue.search = '';
+				this.catalogue.defaultsearch = '';
+				this.catalogue.searchStatus = '';
+				this.catalogue.select = '';
+				this.catalogue.type = '0';
+				this.catalogue.nodeId = 0;
+				this.catalogue.parent = [];
+				
+				this.catalogue.showVal = showVal;
+				this.catalogue.charset = 'utf8';
+				this.catalogue.force = 0;
+				if(this.catalogue.parentnode){
+					this.catalogue.parentnode.childNodes = []
+					this.LoadNodeTree(this.catalogue.parentnode,this.catalogue.parentresolve);
+				}
+			},
+			catalogueselect(val){
+				var self = this;
+				var path = '';
+				if(self.catalogue.selectData[val]){
+					self.catalogue.searchStatus = true;
+					var item = self.catalogue.selectData[val];
+					path = item.path;
+					self.catalogue.charset = item.charset;
+				}else{
+					for(var i in self.catalogue.selectData){
+						if(parseInt(self.catalogue.selectData[i].type)){
+							self.catalogue.charset = self.catalogue.selectData[i].charset;
+						}
+					}
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.defaultsearch = path;
+				self.catalogue.search = path;
+				self.catalogue.parentnode.childNodes = []
+				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
+			},
+			cataloguesearch(val){
+				var self = this;
+				self.catalogue.select = '';
+				if(val){
+					self.catalogue.searchStatus = true;
+				}else{ 
+					for(var i in self.catalogue.selectData){
+						if(parseInt(self.catalogue.selectData[i].type)){
+							self.catalogue.charset = self.catalogue.selectData[i].charset;
+						}
+					}
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.defaultsearch = val;
+				self.catalogue.parentnode.childNodes = []
+				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
+			},
+			TreeCurrentChange(data,node){
+				var self = this;
+				self.catalogue.parent = [];
+				var path = '';
+				if(node.level>1){
+					self.GetTreeParens(node.parent);
+					var oparam = self.catalogue.parent.reverse();
+					var fparam = oparam.join('/');
+					path = fparam+'/'+data.label;
+				}else{
+					path = data.label;
+				}
+				if(self.catalogue.defaultsearch){
+					self.catalogue.searchStatus = true;
+					this.catalogue.showVal = self.catalogue.defaultsearch+'/'+path;
+					this.catalogue.search = self.catalogue.defaultsearch+'/'+path;
+				}else{
+					self.catalogue.showVal = self.catalogue.defaultVal.join('/')+'/'+path;
+					// self.catalogue.showVal = path;
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.charset = data.charset;
+			},
+			LoadNodeTree(node, resolve){
+				var self = this;
+				var param = {};
+				var fparam = '';
+				if(self.catalogue.searchStatus){
+					if(node.level > 0){
+						if(node.level > 1){
+							self.catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.catalogue.defaultsearch+'/'+fparam;
+							
+						}else{
+							param['path'] = self.catalogue.defaultsearch+'/'+node.data.label;
+							
+						}
+					}else{
+						param['path'] = self.catalogue.search;
+					}
+					
+				}else{
+					if(node.level > 0){
+						if(node.level > 1){
+							self.catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.catalogue.defaultVal.join('/')+'/'+fparam;
+							
+						}else{
+							param['path'] = self.catalogue.defaultVal.join('/')+'/'+node.data.label;
+							
+						}
+					}else{
+						// param['path'] = self.catalogue.defaultVal.join('/');
+						self.catalogue.showVal = self.catalogue.defaultVal.join('/');
+					}
+				}
+				if(node.level == 0){
+					self.catalogue.parentresolve = resolve;
+					self.catalogue.parentnode = node;
+				}
+				$.post(MOD_URL+'&op=library&operation=getpath',param,function(data){
+					var fdata = [];
+					for(var i in data.data){
+						self.catalogue.nodeId++;
+						var item  = data.data[i];
+						fdata.push({
+							label:item.path,
+							id:self.catalogue.nodeId,
+							charset:item.charset
+						});
+					}
+					if(self.catalogue.searchStatus){
+						resolve(fdata);
+						if(fdata.length){
+							self.catalogue.showVal = self.catalogue.search;
+						}
+					}else{
+						
+						resolve(fdata);
+					}
+					
+				},'json');
+			},
+			GetTreeParens(node){
+				var self = this;
+				var data = self.$refs.tree_catalogue.getNode(node);
+				self.catalogue.parent.push(data.data.label);
+				if(node.level > 1){
+					self.GetTreeParens(node.parent);
+				}
+			},
+			ImportDataDialogClick(type){
+				if(type == 'eagle'){
+					this.catalogue.type = 0;
+				}else{
+					this.catalogue.type = 1;
+				}
+				this.catalogue.force = 1;
+				this.ImportDataVisible = false;
+				this.catalogueSubmit();
+			},
+			catalogueSubmit(){
+				var self = this;
+				if(!self.catalogue.showVal){
+					self.$message.error('请选择路径');
+					return false;
+				}
+				var param = {
+					path:self.catalogue.showVal,
+					type:self.catalogue.type,
+					charset:self.catalogue.charset
+				}
+				if(self.catalogue.type == 1 && self.catalogue.force){
+					param['force'] = 1;
+				}
+				$.post(MOD_URL+'&op=library&operation=addlibrary',param,function(data){
+					if(data.tips){
+						self.ImportDataVisible = true;
+						return false;
+					}
+					if(data.error){
+						self.$message.error('添加失败');
+					}else{
+						self.$message({
+							message: '添加成功',
+							type: 'success'
+						});
+						var fdata = data.data;
+						fdata['state'] = 0;
+						fdata['filenum'] = 0;
+						fdata['percent'] = 0;
+						self.dataList.push(fdata)
+					}
+					self.catalogue.dialogVisible = false;
+				},'json');
+			},
+			deleteLibrary(){
+				var self = this;
+				$.post(MOD_URL+'&op=library&operation=dellibrary',{
+					appid:self.formdta.appid
+				},function(data){
+					self.dialog.Visible = false;
+					if(data.success){
+						self.$message({
+							type:'success',
+							message:'删除成功'
+						});
+						var index = 0;
+						for(var i in self.dataList){
+							if(self.dataList[i].appid == self.formdta.appid){
+								index = i;
+							}
+						}
+						self.dataList.splice(index,1);
+					}else{
+						self.$message.error('删除失败');
+					}
+				},'json');
+			},
 			handleSubmit(){
 				var self = this;
 				var filter = [];
@@ -319,8 +748,11 @@
 					settingsubmit:true,
 					formhash:'{FORMHASH}',
 					appid:self.formdta.appid,
+					getinfo:self.formdta.getinfo,
 					share:self.formdta.share,
 					download:self.formdta.download,
+					allowext:self.formdta.allowext,
+					notallowext:self.formdta.notallowext,
 					filter:filter
 				};
 				$.post(MOD_URL+'&op=library&operation=fetch',param,function(data){
@@ -399,11 +831,15 @@
 						self.dialog.Visible = true;
 						self.formdta = {
 							appid:appid,
+							getinfo:data.data.getinfo,
 							share:data.data.share,
 							download:data.data.download,
 							screen:fscreen,
 							classif:fclassif,
-							type:ftype
+							type:ftype,
+							eagle:parseInt(data.data.type),
+							allowext:data.data.allowext,
+							notallowext:data.data.notallowext,
 						};
 					}else{
 						self.$message.error('数据获取失败');
@@ -411,17 +847,17 @@
 				},'json');
 			},
 			handleAfterSetting(){
-				var self = this;
-				var el = self.$refs.SortableScreen;
-				var ops = {
-					animation: 200,
-					onEnd: function ({ newIndex, oldIndex }) {
-						var val = self.newscreens[oldIndex]
-						self.newscreens.splice(oldIndex, 1)
-						self.newscreens.splice(newIndex, 0, val)
-					}};
+				// var self = this;
+				// var el = self.$refs.SortableScreen;
+				// var ops = {
+				// 	animation: 200,
+				// 	onEnd: function ({ newIndex, oldIndex }) {
+				// 		var val = self.newscreens[oldIndex]
+				// 		self.newscreens.splice(oldIndex, 1)
+				// 		self.newscreens.splice(newIndex, 0, val)
+				// 	}};
 				
-				Sortable.create(el, ops);
+				// Sortable.create(el, ops);
 				
 				
 			},
@@ -505,12 +941,12 @@
 			handleImport(index,appid){
 				this.handleimplement(index,appid)
 			},
-			handleCheckexport(){
-				var self = this;
-				$.get(MOD_URL+'&op=checkexport',function(){
-					self.GetData();
-				});
-			},
+			// handleCheckexport(){
+			// 	var self = this;
+			// 	$.get(MOD_URL+'&op=checkexport',function(){
+			// 		self.GetData();
+			// 	});
+			// },
 			
 		},
 		mounted() {

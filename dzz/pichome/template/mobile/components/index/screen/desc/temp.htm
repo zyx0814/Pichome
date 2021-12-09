@@ -1,0 +1,17 @@
+<div class="screen-item">
+	<van-radio-group v-model="ParamScreen.value.desc.value" disabled>
+		<van-cell-group>
+			<van-cell title="有注释" clickable @click="ScreenDescClick('1')">
+				<template #right-icon>
+					<van-radio name="1"></van-radio>
+				</template>
+			</van-cell>
+			<van-cell title="没有注释" clickable  @click="ScreenDescClick('0')">
+				<template #right-icon>
+					<van-radio name="0"></van-radio>
+				</template>
+			</van-cell>
+		</van-cell-group>
+	</van-radio-group>
+	<van-field v-if="ParamScreen.value.desc.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.desc.input" rows="3" autosize type="textarea" placeholder="请输入注释"></van-field>
+</div>

@@ -1,0 +1,16 @@
+<div class="screen-item">
+	<van-cell-group class="screen-cell-input">
+		<van-field v-model.trim="ParamScreen.value.duration.start" placeholder="最小" @input="ScreenDurationChange" />
+	</van-cell-group>
+	<van-cell-group class="screen-cell-input">
+		<van-field v-model.trim="ParamScreen.value.duration.end" placeholder="最大" @input="ScreenDurationChange" />
+	</van-cell-group>
+	<van-row class="swip-row">
+		<van-col span="12">
+			<div class="swip" :class="ParamScreen.value.duration.unit=='s'?'active':''" @click="ParamScreen.value.duration.unit='s'">秒</div>
+		</van-col>
+		<van-col span="12">
+			<div class="swip" :class="ParamScreen.value.duration.unit=='m'?'active':''" @click="ParamScreen.value.duration.unit='m'">分</div>
+		</van-col>
+	</van-row>
+</div>

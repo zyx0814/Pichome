@@ -130,7 +130,7 @@ function html_login_form() {
     $sid = getglobal('sid');
     $avatarstatus=getglobal('avatarstatus','member');
     if(!$uid ){
-        $avastar ='<img src="'.($_G['setting']['sitelogo']?\IO::getFileUri('attach::'.$_G['setting']['sitelogo']):'static/image/common/logo.png').'" />';
+        $avastar ='<img src="'.($_G['setting']['sitelogo']?\IO::getFileUri('attach::'.$_G['setting']['sitelogo']):'data/attachment/sitelogo/sitelogo.png').'" />';
     }else{
         $avastar = avatar_block($uid);
     }

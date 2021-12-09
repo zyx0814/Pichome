@@ -240,7 +240,7 @@ if ($operation == 'patch' || $operation == 'cross') {
         $dzz_upgrade -> rmdirs(DZZ_ROOT . $old_update_dir);
         $dzz_upgrade -> rmdirs(DZZ_ROOT . $old_back_dir);
 		upgradeinformation(0);
-		exit(json_encode(array('dir'=>$new_update_dir,'backdir'=>$new_back_dir)));
+		exit(json_encode(array('version' => $version,'dir'=>$new_update_dir,'backdir'=>$new_back_dir)));
         // $msg = lang('upgrade_successful', array('version' => $version, 'save_update_dir' => $new_update_dir, 'save_back_dir' => $new_back_dir, 'upgradeurl' => upgradeinformation(0)));
 
     }

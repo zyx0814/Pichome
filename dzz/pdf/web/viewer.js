@@ -1593,6 +1593,7 @@ function webViewerInitialized() {
   var appConfig = PDFViewerApplication.appConfig;
   var file = void 0;
   var queryString = document.location.search.substring(1);
+  queryString = encodeURIComponent(queryString);
   var params = (0, _ui_utils.parseQueryString)(queryString);
   file = 'file' in params ? params.file : _app_options.AppOptions.get('defaultUrl');
   file = _fileurl;

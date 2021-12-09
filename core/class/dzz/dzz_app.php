@@ -363,11 +363,13 @@ class dzz_app extends dzz_base{
 
         $allowgzip = $this->config['output']['gzip'] && empty($this->var['inajax']) && EXT_OBGZIP;
         setglobal('gzipcompress', $allowgzip);
-
+		if($this->config['localurl']){
+			 setglobal('localurl', $this->config['localurl']);
+		}
         if(!ob_start($allowgzip ? 'ob_gzhandler' : null)) {
             ob_start();
         }
-
+		
         setglobal('charset', $this->config['output']['charset']);
         define('CHARSET', $this->config['output']['charset']);
         if($this->config['output']['forceheader']) {

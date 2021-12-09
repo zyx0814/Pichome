@@ -34,7 +34,7 @@ if($_GET['action'] == 'checkupgrade') {
 			}
 			$list[$type]['icon']='dzz/images/default/notice_system.png';
 			$list[$type]['official']='admin.php?mod=system#/systemupgrade';
-			$list[$type]['title']='oaooa PicHome &nbsp;<b>'.$upgrade['latestversion'].'</b>';
+			$list[$type]['title']='oaooa &nbsp;<b>'.$upgrade['latestversion'].'</b>';
 			$list[$type]['appurl']= 'admin.php?mod=system&op=systemupgrade';
 			//&operation='.$type.'&version='.$upgrade['latestversion'].'&locale='.$locale.'&charset='.$charset.'&release='.$upgrade['latestrelease'];
 		}

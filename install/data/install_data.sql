@@ -6,17 +6,19 @@ INSERT INTO `dzz_app_market` (`appid`, `mid`, `appname`, `appico`, `appdesc`, `a
 (2, 2, '机构用户', 'appico/201712/21/131016is1wjww2uwvljllw.png', 'Dzz机构用户管理', '{adminscript}?mod=orguser', '', '', 1377753015, 2, '欧奥图文档', 0, 1, 1, 0, '', '', 3, 0, 0, 2, 1, 0, 0, 'orguser', 'admin', 1, '2.0', '', 20171211, '', '', 0),
 (9, 9, '系统工具', 'appico/201712/21/160537cikgw2v6s6z4scuv.png', '系统维护相关工具集合，如：更新缓存、数据库备份，计划任务，在线升级等', '{adminscript}?mod=system', '', '', 1377677136, 9, '欧奥图文档', 0, 1, 1, 0, '', '', 3, 0, 0, 2, 1, 0, 0, 'system', 'admin', 1, '2.0', '', 20171115, '', '', 0);
 
-
 -- 转存表中的数据 `dzz_cron`
 --
 
 INSERT INTO `dzz_cron` (`cronid`, `available`, `type`, `name`, `filename`, `lastrun`, `nextrun`, `weekday`, `day`, `hour`, `minute`) VALUES
 (1,	1,	'system',	'每月通知清理',	'cron_clean_notification_month.php',	1609448401,	1612126800,	-1,	1,	5,	'0'),
 (2,	1,	'system',	'每周清理缓存文件',	'cron_cache_cleanup_week.php',	1609707601,	1610312400,	1,	-1,	5,	'0'),
- (3, 1, 'system', '定时读取pichome库数据', 'cron_pichome_check_library.php', '1629430582', '1629430800', '-1', '-1', '-1', '0	5	10	15	20	25	30	35	40	45	50	55'),
+
+ (3, 1, 'system', '定时删除删除状态库', 'cron_pichome_delete.php', '1629430582', '1629430800', '-1', '-1', '-1', '0	5	10	15	20	25	30	35	40	45	50	55'),
 (4, 1, 'system', '定时更新pichome库内文件数据', 'cron_pichome_updatelibrary_file.php', '1629430723', '1629432000', '-1', '-1', '-1', '0'),
-(5,	0,	'system',	'定时备份数据库',	'cron_database_backup.php',	0,	1607516347,	0,	-1,	5,	'0'),
-(6, '1', 'system', '定时更新热搜', 'cron_cache_pichome_searchhot.php', '1629874690', '1629925200', '-1', '-1', '5', '0');
+(5, '1', 'system', '定时更新热搜', 'cron_cache_pichome_searchhot.php', '1629874690', '1629925200', '-1', '-1', '5', '0'),
+(6, 1, 'system', '定时获取图片颜色', 'cron_pichome_getimagecolor.php', '1629430582', '1629430800', '-1', '-1', '-1', '0	5	10	15	20	25	30	35	40	45	50	55'),
+(7, 1, 'system', '定时获取音视频信息', 'cron_pichome_getvideoinfo.php', '1629430582', '1629430800', '-1', '-1', '-1', '0	5	10	15	20	25	30	35	40	45	50	55'),
+(8, 1, 'system', '定时获取音视频缩略图', 'cron_pichome_getvideothumb.php', '1629430582', '1629430800', '-1', '-1', '-1', '0	5	10	15	20	25	30	35	40	45	50	55');
 
 
 
@@ -41,7 +43,9 @@ INSERT INTO `dzz_hooks` (`id`, `app_market_id`, `name`, `description`, `type`, `
 (17, 0, 'register_before', '', 1, 0, 'user\\register\\classes\\register|user', 1, 0),
 (18, 0, 'check_val', '', 1, 0, 'user\\register\\classes\\checkvalue|user', 1, 0),
 (19, 0, 'register_common', '', 1, 0, 'user\\register\\classes\\regcommon', 1, 0),
-(20, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0);
+(20, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0),
+(21, 0, 'pichomegetinfo', ' ', '1', '0', 'dzz\\imageColor\\classes\\getcolor', '1', '0'),
+(22, 0, 'pichomegetinfo', ' ', '1', '0', 'dzz\\ffmpeg\\classes\\info', '1', '0');
 
 
 
@@ -160,6 +164,8 @@ INSERT INTO `dzz_setting` VALUES('defaultdepartment', '1');
 INSERT INTO `dzz_setting` VALUES ('pichomefilterfileds', 'a:12:{i:0;a:3:{s:3:\"key\";s:3:\"tag\";s:4:\"text\";s:6:\"标签\";s:7:\"checked\";s:1:\"1\";}i:1;a:3:{s:3:\"key\";s:5:\"color\";s:4:\"text\";s:6:\"颜色\";s:7:\"checked\";s:1:\"1\";}i:2;a:3:{s:3:\"key\";s:4:\"link\";s:4:\"text\";s:6:\"链接\";s:7:\"checked\";s:1:\"1\";}i:3;a:3:{s:3:\"key\";s:4:\"desc\";s:4:\"text\";s:6:\"注释\";s:7:\"checked\";s:1:\"1\";}i:4;a:3:{s:3:\"key\";s:8:\"duration\";s:4:\"text\";s:6:\"时长\";s:7:\"checked\";s:1:\"1\";}i:5;a:3:{s:3:\"key\";s:4:\"size\";s:4:\"text\";s:6:\"尺寸\";s:7:\"checked\";s:1:\"1\";}i:6;a:3:{s:3:\"key\";s:3:\"ext\";s:4:\"text\";s:6:\"类型\";s:7:\"checked\";s:1:\"1\";}i:7;a:3:{s:3:\"key\";s:5:\"shape\";s:4:\"text\";s:6:\"形状\";s:7:\"checked\";s:1:\"1\";}i:8;a:3:{s:3:\"key\";s:5:\"grade\";s:4:\"text\";s:6:\"评分\";s:7:\"checked\";s:1:\"1\";}i:9;a:3:{s:3:\"key\";s:5:\"btime\";s:4:\"text\";s:12:\"添加时间\";s:7:\"checked\";s:1:\"1\";}i:10;a:3:{s:3:\"key\";s:8:\"dateline\";s:4:\"text\";s:12:\"修改日期\";s:7:\"checked\";s:1:\"1\";}i:11;a:3:{s:3:\"key\";s:5:\"mtime\";s:4:\"text\";s:12:\"创建日期\";s:7:\"checked\";s:1:\"1\";}}');
 INSERT INTO `dzz_setting` VALUES ('overt', '1');
 INSERT INTO `dzz_setting` VALUES ('pichomepagesetting', 'a:7:{s:5:\"theme\";s:0:\"\";s:6:\"layout\";s:9:\"waterFall\";s:4:\"show\";s:10:\"name,other\";s:5:\"other\";s:5:\"mtime\";s:4:\"sort\";s:1:\"1\";s:4:\"desc\";s:4:\"desc\";s:8:\"opentype\";s:3:\"new\";}');
+INSERT INTO `dzz_setting` VALUES ('pichomeimportallowext', '*.jpg,*.jpeg,*.gif,*.png,*.webp,*.pdf,*.txt,*.mp3,*.mp4,*.webm,*.ogv,*.ogg,*.wav,*.m3u8,*.hls,*.mpg,*.mpeg,*.flv,*.m4v');
+INSERT INTO `dzz_setting` VALUES ('pichomeimportnotdir', 'patch,srv,run,lib64,sys,bin,media,boot,etc,sbin,lib,dev,root,usr,proc,tmp,lost+found,lib32,etc.defaults,var.defaults,@*,.*,$*');
 
 -- 转存表中的数据 `dzz_imagetype`
 --
@@ -167,7 +173,7 @@ INSERT INTO `dzz_setting` VALUES ('pichomepagesetting', 'a:7:{s:5:\"theme\";s:0:
 INSERT INTO `dzz_imagetype` VALUES(1, 1, '默认', 'smiley', 0, 'dzz');
 
 
-
+INSERT INTO `dzz_user_setting` VALUES ('1',''1', 'pichomeimageexpanded', '1');
 
 --
 -- 转存表中的数据 `dzz_user_profile_setting`

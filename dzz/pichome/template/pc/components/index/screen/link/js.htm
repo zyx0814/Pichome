@@ -1,0 +1,15 @@
+<script type="text/javascript">
+	var JsScreenLinkMethods = {
+		ScreenLinkClick(val){
+			if(val == this.ScreenValue.link.value){
+				this.ScreenDelete('link');
+			}else{
+				this.ScreenValue.link.value = val;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenLinkInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+	};
+</script>

@@ -1,0 +1,109 @@
+<!--{template pc/frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/admin.css?{VERHASH}"/>
+<!--{template pc/frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="auto" style="padding: 0;z-index: 10;">
+			<page-header :isscreenshow="false"></page-header>
+		</el-header>
+		<el-container>
+		    <el-aside width="260px">
+				<!--{template pc/page/adminLeft}-->
+			</el-aside>
+		    <el-main>
+				<div class="page-content">
+					<div id="center_title">导入设置</div>
+					<el-scrollbar class="page-component__scroll">
+						<div class="content" style="padding: 16px 25px;">
+							<el-form ref="form" :model="formdata" label-width="200px">
+								<el-form-item label="允许导入文件：">
+								    <el-input type="textarea" v-model="formdata.pichomeimportallowext"></el-input>
+									<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件。只对普通目录有效</p>
+								</el-form-item>
+								<el-form-item label="禁止导入文件：">
+								    <el-input type="textarea" v-model="formdata.pichomeimportnotallowext"></el-input>
+									<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件。只对普通目录有效</p>
+								</el-form-item>
+								<el-form-item label="禁止导入目录：">
+								    <el-input type="textarea" v-model="formdata.pichomeimportnotdir"></el-input>
+									<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件。只对普通目录有效</p>
+								</el-form-item>
+								<el-form-item>
+									<el-button type="primary" @click="handleSubmit" :loading="btnloading">保存更改</el-button>
+								</el-form-item>
+							</el-form>
+						</div>
+					</el-scrollbar>
+				</div>
+						
+			</el-main>
+		  </el-container>
+	</el-container>
+</div>
+<!--{template pc/components/headerAdmin/index}-->
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			return {
+				btnloading:false,
+				formdata:{
+					pichomeimportallowext:'',
+					pichomeimportnotallowext:'',
+					pichomeimportnotdir:''
+				},
+			}
+		},
+		created() {
+			var pichomeimportallowext = '$setting[pichomeimportallowext]';
+			if(!pichomeimportallowext){
+				pichomeimportallowext = '$Defaultallowext';
+			}
+			this.formdata.pichomeimportallowext = pichomeimportallowext;
+			
+			var pichomeimportnotallowext = '$setting[pichomeimportnotallowext]';
+			this.formdata.pichomeimportnotallowext = pichomeimportnotallowext;
+			
+			var pichomeimportnotdir = '$setting[pichomeimportnotdir]';
+			if(!pichomeimportnotdir){
+				pichomeimportnotdir = $Defaultnotallowdir;
+				var arr = [];
+				for(var i in pichomeimportnotdir){
+					arr.push(pichomeimportnotdir[i]);
+				}
+				this.formdata.pichomeimportnotdir = arr.join(',');
+			}else{
+				this.formdata.pichomeimportnotdir = pichomeimportnotdir;
+			}
+			
+			
+		},
+		methods: {
+			handleRouter(type){
+				window.location.href = MOD_URL+'&op=admin&do='+type;
+			},
+			handleSubmit() {
+				var self = this;
+				self.btnloading = true;
+				$.post(MOD_URL+'&op=admin&do=importsetting',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					settingnew:self.formdata,
+				},function(data){
+					if(data){
+						self.$message({
+							type:'success',
+							message:'保存成功'
+						});
+					}else{
+						self.$message.error('保存失败');
+					}
+					self.btnloading = false;
+				},'json');
+			}
+		},
+		mounted() {}
+	})
+</script>
+
+<!--{template pc/frame/footer_simple}-->

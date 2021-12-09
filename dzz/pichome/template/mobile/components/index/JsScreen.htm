@@ -4,579 +4,44 @@
 		<template #content>
 			<template v-if="ParamScreen.data[ParamScreen.LeftActive]">
 				<template v-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'tag'">
-						<template v-if="ParamScreen.data[ParamScreen.LeftActive]['grouptag']">
-							
-								<template v-if="ParamScreen.data[ParamScreen.LeftActive].loading">
-									<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-								</template>
-								<template v-else>
-									<div class="screen-item-box" style="padding-top: 40px;">
-										<div class="van-search-box">
-											<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.data[ParamScreen.LeftActive].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(ParamScreen.LeftActive,true)" maxlength="50" :clearable="false">
-												<template #right-icon>
-													<van-icon v-show="ParamScreen.data[ParamScreen.LeftActive].keyword" @click="ScreenTagClearKeyword(ParamScreen.LeftActive,true)" name="cross" />
-												</template>
-											</van-search>
-										</div>
-										<template v-if="ParamScreen.data[ParamScreen.LeftActive].searchloading">
-											<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-										</template>
-										<template v-else>
-											<div class="screen-item" style="position: relative;" :ref="'scrollbarTag_'+ParamScreen.data[ParamScreen.LeftActive].cid">
-												<template v-if="ParamScreen.data[ParamScreen.LeftActive].data && ParamScreen.data[ParamScreen.LeftActive].data.length">
-													<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
-														<van-cell-group>
-															<van-cell v-for="(fitem,index) in ParamScreen.data[ParamScreen.LeftActive].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
-														</van-cell-group>
-													<!-- </van-checkbox-group> -->
-													<template v-if="!ParamScreen.data[ParamScreen.LeftActive].finish && ParamScreen.data[ParamScreen.LeftActive].scrollloading">
-														<div style="text-align: center;margin-top: 0.625rem;">
-															<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
-														</div>
-													</template>
-												</template>
-												<template v-else>
-													<div class="notScreen">
-														<div>
-															<img src="{MOD_PATH}/image/notScreen.png" >
-															<div>没有筛选条件</div>
-														</div>
-													</div>
-												</template>
-											</div>
-										</template>
-										
-									</div>
-									
-								</template>
-							
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.tag.loading">
-								<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" text-color="var(--header-text)" vertical>加载中...</van-loading>
-							</template>
-							<template v-else>
-								<template v-if="ParamLibrary.activeId">
-									<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange" style="height: 100%;"> -->
-										<van-tabs v-model="ParamScreen.value.tag.tabActive" @change="ScreenTagTabsChange">
-											<van-tab v-for="item in ParamScreen.value.tag.data" v-key="item.cid" :name="item.cid">
-												<template #title>
-													<span>{{item.catname}}<span style="font-size: 14px;margin-left: 5px;" v-if="parseInt(item.num)">{{item.num}}</span></span>
-												</template>
-												<template v-if="item.loading">
-													<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-												</template>
-												<template v-else>
-													<div class="screen-item-box" style="padding-top: 40px;">
-														<div class="van-search-box">
-															<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="item.keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(item.cid)" maxlength="50" :clearable="false">
-																<template #right-icon>
-																	<van-icon v-show="item.keyword" @click="ScreenTagClearKeyword(item.cid)" name="cross" />
-																</template>
-															</van-search>
-														</div>
-														<template v-if="item.data && item.data.length">
-															<div class="screen-item screen-tag-Scroll" style="padding: 0;">
-																<template v-if="item.searchloading">
-																	<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-																</template>
-																<template v-else>
-																	<van-cell-group style="padding: 0 10px;">
-																		<van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
-																		<!-- <van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
-																			<template #right-icon>
-																				<div class="num">{{fitem.num}}</div>
-																				<van-checkbox shape="square" disabled :name="fitem.tid" />
-																			</template>
-																		</van-cell> -->
-																	</van-cell-group>
-																	<template v-if="!item.finish && item.scrollloading">
-																		<div style="text-align: center;margin-top: 0.625rem;">
-																			<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
-																		</div>
-																	</template>
-																</template>
-																
-															</div>
-														</template>
-														<template v-else>
-															<div class="notScreen">
-																<div>
-																	<img src="{MOD_PATH}/image/notScreen.png" >
-																	<div>没有筛选条件</div>
-																</div>
-															</div>
-														</template>
-													</div>
-												</template>
-												
-											</van-tab>
-										</van-tabs>
-									<!-- </van-checkbox-group> -->
-	
-								</template>
-								<template v-else>
-										<template v-if="ParamScreen.value.tag.data['all'].loading">
-											<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-										</template>
-										<template v-else>
-											<div class="screen-item-box" style="padding-top: 40px;">
-												<div class="van-search-box">
-													<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.value.tag.data['all'].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword('all')" maxlength="50" :clearable="false">
-														<template #right-icon>
-															<van-icon v-show="ParamScreen.value.tag.data['all'].keyword" @click="ScreenTagClearKeyword('all')" name="cross" />
-														</template>
-													</van-search>
-												</div>
-												<div class="screen-item screen-tag-Scroll">
-													<template v-if="ParamScreen.value.tag.data['all'].searchloading">
-														<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-													</template>
-													<template v-else>
-														<template v-if="!$.isEmptyObject(ParamScreen.value.tag.data)">
-															<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
-																<van-cell-group>
-																	<van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
-																	<!-- <van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
-																		<template #right-icon>
-																			<div class="num">{{fitem.num}}</div>
-																			<van-checkbox shape="square" disabled :name="fitem.tid" />
-																		</template>
-																	</van-cell> -->
-																</van-cell-group>
-															<!-- </van-checkbox-group> -->
-															<template v-if="!ParamScreen.value.tag.data['all'].finish && ParamScreen.value.tag.data['all'].scrollloading">
-																<div style="text-align: center;margin-top: 0.625rem;">
-																	<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
-																</div>
-															</template>
-														</template>
-														<template v-else>
-															<div class="notScreen">
-																<div>
-																	<img src="{MOD_PATH}/image/notScreen.png" >
-																	<div>没有筛选条件</div>
-																</div>
-															</div>
-														</template>
-													</template>
-													
-												</div>
-											</div>
-											
-										</template>
-										
-									
-								</template>
-							</template>
-							
-						</template>
+					<!--{template mobile/components/index/screen/tag/temp}-->	
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'classify'">
-					<div class="screen-item ">
-						<template v-if="ParamScreen.value.classify.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.classify.data && ParamScreen.value.classify.data.length">
-								<div class="screen-classify-collapse">
-									<!-- ParamScreen.value.classify.value -->
-										<van-collapse v-model="ParamScreen.value.classify.activeNames" :border="false">
-											<van-collapse-item 
-											v-for="item in ParamScreen.value.classify.data" 
-											:key="item.fid" 
-											:name="item.fid" 
-											disabled 
-											:class="{'active':ParamScreen.value.classify.value.indexOf(item.fid)>-1}"
-											:ref="'collapse_'+item.fid">
-												<template #title>
-													<div  @click.stop="ScreenClassifyClick(item)">
-														{{item.fname}}
-													</div>
-												</template>
-												<template #right-icon>
-													<template v-if="item.children && item.children.length">
-														<i @click.stop="ScreenClassifyToggle(item.fid)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
-													</template>
-													<template v-else>
-														<div style="width: 20px;"></div>
-													</template>
-												</template>
-												<template v-if="item.children && item.children.length">
-													<screenclassify :parammodel="ParamScreen.value.classify" :paramdata="item.children" @screenclassifychange="screenclassifychange"></screenclassify>
-												</template>
-												
-											</van-collapse-item>
-										</van-collapse>
-								</div>
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-					</div>
+					<!--{template mobile/components/index/screen/classify/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'color'">
-					<div class="screen-item">
-						<div class="color-box">
-							<div class="color-input">
-								<div class="color-show" :class="!ParamScreen.value.color.value?'border':''" :style="{background:ParamScreen.value.color.value}"></div>
-								<van-field v-model.trim="ParamScreen.value.color.value" round clear-trigger="always" class="colorInput" @blur="ScreenColorInputBlur" @input="ScreenColorInput">
-									<template #right-icon>
-										<van-icon v-show="ParamScreen.value.color.value" @click="ScreenColorInputClear" name="cross" />
-									</template>
-								</van-field>
-							</div>
-							<div class="quick">
-								<template v-for="item in ParamScreen.value.color.defaultval">
-									<template v-if="item.toUpperCase() == '#FFFFFF' || item.toUpperCase() == '#FFF'">
-										<div class="quick-list-box">
-											<div class="quick-list" :style="{background: item,border: '1px solid var(--slider-line)'}" @click="ScreenColorClick(item)">
-												<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" color="#333333" />
-											</div>
-										</div>
-										
-									</template>
-									<template v-else>
-										<div class="quick-list-box">
-											<div class="quick-list" :style="{background: item}" @click="ScreenColorClick(item)">
-												<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" />
-											</div>
-										</div>
-									</template>
-								</template>
-							</div>
-							
-							<div class="color-slider" style="padding: 15px 0;">
-								<div style="white-space: nowrap;min-width: 80px;">精确度：{{ParamScreen.value.color.persion}}</div>
-								<div style="width: 100%;margin-left: 24px;margin-right: 15px;">
-									<van-slider v-model="ParamScreen.value.color.persion" />
-								</div>
-							</div>
-						</div>
-					</div>
-			
+					<!--{template mobile/components/index/screen/color/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'link'">
-					<div class="screen-item">
-						<van-radio-group v-model="ParamScreen.value.link.value" disabled>
-							<van-cell-group>
-								<van-cell title="有链接" clickable @click="ScreenlinkClick('1')">
-									<template #right-icon>
-										<van-radio name="1"></van-radio>
-									</template>
-								</van-cell>
-								<van-cell title="没有链接" clickable @click="ScreenlinkClick('0')">
-									<template #right-icon>
-										<van-radio name="0"></van-radio>
-									</template>
-								</van-cell>
-							</van-cell-group>
-						</van-radio-group>
-						<van-field v-if="ParamScreen.value.link.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.link.input" rows="3" autosize type="textarea" placeholder="请输入链接"></van-field>
-					</div>
+					<!--{template mobile/components/index/screen/link/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'desc'">
-					<div class="screen-item">
-						<van-radio-group v-model="ParamScreen.value.desc.value" disabled>
-							<van-cell-group>
-								<van-cell title="有注释" clickable @click="ScreenDescClick('1')">
-									<template #right-icon>
-										<van-radio name="1"></van-radio>
-									</template>
-								</van-cell>
-								<van-cell title="没有注释" clickable  @click="ScreenDescClick('0')">
-									<template #right-icon>
-										<van-radio name="0"></van-radio>
-									</template>
-								</van-cell>
-							</van-cell-group>
-						</van-radio-group>
-						<van-field v-if="ParamScreen.value.desc.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.desc.input" rows="3" autosize type="textarea" placeholder="请输入注释"></van-field>
-					</div>
+					<!--{template mobile/components/index/screen/desc/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'duration'">
-					<div class="screen-item">
-						<van-cell-group class="screen-cell-input">
-							<van-field v-model.trim="ParamScreen.value.duration.start" placeholder="最小" @input="ScreenDurationChange" />
-						</van-cell-group>
-						<van-cell-group class="screen-cell-input">
-							<van-field v-model.trim="ParamScreen.value.duration.end" placeholder="最大" @input="ScreenDurationChange" />
-						</van-cell-group>
-						<van-row class="swip-row">
-							<van-col span="12">
-								<div class="swip" :class="ParamScreen.value.duration.unit=='s'?'active':''" @click="ParamScreen.value.duration.unit='s'">秒</div>
-							</van-col>
-							<van-col span="12">
-								<div class="swip" :class="ParamScreen.value.duration.unit=='m'?'active':''" @click="ParamScreen.value.duration.unit='m'">分</div>
-							</van-col>
-						</van-row>
-					</div>
+					<!--{template mobile/components/index/screen/duration/temp}-->
 				</template>
 			
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'size'">
-					<div class="screen-item">
-						<div style="margin-bottom: 5px;">宽</div>
-						<van-row>
-							<van-col span="11">
-								<van-cell-group class="screen-cell-input">
-									<van-field v-model.trim="ParamScreen.value.size.wstart" placeholder="最小" @input="ScreenSizeChange" />
-								</van-cell-group>
-							</van-col>
-							<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
-							<van-col span="11">
-								<van-cell-group class="screen-cell-input">
-									<van-field v-model.trim="ParamScreen.value.size.wend" placeholder="最大" @input="ScreenSizeChange" />
-								</van-cell-group>
-							</van-col>
-						</van-row>
-						<div style="margin-bottom: 5px;">高</div>
-						<van-row>
-							<van-col span="11">
-								<van-cell-group class="screen-cell-input">
-									<van-field v-model.trim="ParamScreen.value.size.hstart" placeholder="最小" @input="ScreenSizeChange" />
-								</van-cell-group>
-							</van-col>
-							<van-col span="2" style="line-height: 44px;text-align: center;">-</van-col>
-							<van-col span="11">
-								<van-cell-group class="screen-cell-input">
-									<van-field v-model.trim="ParamScreen.value.size.hend" placeholder="最大" @input="ScreenSizeChange" />
-								</van-cell-group>
-							</van-col>
-						</van-row>
-					</div>
+					<!--{template mobile/components/index/screen/size/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'ext'">
-					<div class="screen-item" style="position: relative;">
-						<template v-if="ParamScreen.value.ext.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.ext.data && ParamScreen.value.ext.data.length">
-								<!-- <van-checkbox-group v-model="ParamScreen.value.ext.value" @change="ScreenExtChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.ext.data" clickable :key="index" :title="item.ext" @click="ScreenExtClick(item.ext)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.ext.value.indexOf(item.ext)>-1?'active':''"></van-cell>
-										<!-- <van-cell v-for="(item, index) in ParamScreen.value.ext.data" clickable :key="index" :title="item.ext" @click="ScreenExtClick(item.ext)">
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-checkbox shape="square" :name="item.ext" disabled />
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-								<!-- </van-checkbox-group> -->
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-					</div>
+					<!--{template mobile/components/index/screen/ext/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'shape'">
-					<div class="screen-item" style="position: relative;">
-						<template v-if="ParamScreen.value.shape.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.shape.data && ParamScreen.value.shape.data.length">
-								<!-- <van-checkbox-group v-model="ParamScreen.value.shape.value" @change="ScreenShapeChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.shape.value.indexOf(item.val)>-1?'active':''"></van-cell>
-										<!-- <van-cell v-for="(item, index) in ParamScreen.value.shape.data" clickable :key="index" :title="item.lablename" @click="ScreenShapeClick(item.val)">
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-checkbox shape="square" :name="item.val" disabled />
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-								<!-- </van-checkbox-group> -->
-								<van-row v-if="ParamScreen.value.shape.value.indexOf('custom')>-1">
-									<van-col span="11">
-										<van-cell-group class="screen-cell-input">
-											<van-field v-model.trim="ParamScreen.value.shape.sizemin" @input="ScreenShapeCustomInput" />
-										</van-cell-group>
-									</van-col>
-									<van-col span="2" style="line-height: 44px;text-align: center;">:</van-col>
-									<van-col span="11">
-										<van-cell-group class="screen-cell-input">
-											<van-field v-model.trim="ParamScreen.value.shape.sizemax" @input="ScreenShapeCustomInput" />
-										</van-cell-group>
-									</van-col>
-								</van-row>
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-					</div>
+					<!--{template mobile/components/index/screen/shape/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'grade'">
-					<div class="screen-item">
-						<template v-if="ParamScreen.value.grade.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.shape.data && ParamScreen.value.grade.data.length">
-								<!-- <van-checkbox-group v-model="ParamScreen.value.grade.value" @change="ScreenGradeChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.grade.data" clickable :key="index" @click="ScreenGradeClick(item.grade)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.grade.value.indexOf(item.grade)>-1?'active':''">
-											<template #title>
-												<template v-if="item.grade">
-													<van-icon name="star" color="var(--header-text)" v-for="iitem in item.grade" />
-												</template>
-												<template v-else>未评分</template>
-											</template>
-										</van-cell>
-<!-- 										<van-cell v-for="(item, index) in ParamScreen.value.grade.data" clickable :key="index" @click="ScreenGradeClick(item.grade)">
-											<template #title>
-												<template v-if="item.grade">
-													<van-icon name="star" color="var(--header-text)" v-for="iitem in item.grade" />
-												</template>
-												<template v-else>未评分</template>
-											</template>
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-checkbox shape="square" :name="item.grade" disabled />
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-								<!-- </van-checkbox-group> -->
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-						
-					</div>
+					<!--{template mobile/components/index/screen/grade/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'btime'">
-					<div class="screen-item">
-						<template v-if="ParamScreen.value.btime.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.btime.data && ParamScreen.value.btime.data.length">
-								<!-- <van-radio-group v-model="ParamScreen.value.btime.value" disabled @change="ScreenTimeChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.btime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('btime',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.btime.value==item.label?'active':''"></van-cell>
-										<!-- <van-cell v-for="(item, index) in ParamScreen.value.btime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('btime',item.label)">
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-radio :name="item.label"></van-radio>
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-									<template v-if="ParamScreen.value.btime.value == '自定义'">
-										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.btime.customvalue" readonly @click="ParamScreen.value.btime.calendar = true"></van-field>
-										<van-calendar title="添加时间" :min-date="ParamScreen.value.btime.minDate" v-model="ParamScreen.value.btime.calendar" type="range" :default-date="ParamScreen.value.btime.defaultdate" @confirm="ScreenBtimeCalendarConfirm" />
-									</template>
-								<!-- </van-radio-group> -->
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-						</template>
-					</div>
+					<!--{template mobile/components/index/screen/btime/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'dateline'">
-					<div class="screen-item">
-						<template v-if="ParamScreen.value.dateline.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.dateline.data && ParamScreen.value.dateline.data.length">
-								<!-- <van-radio-group v-model="ParamScreen.value.dateline.value" disabled @change="ScreenTimeChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.dateline.value==item.label?'active':''"></van-cell>
-										<!-- <van-cell v-for="(item, index) in ParamScreen.value.dateline.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('dateline',item.label)">
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-radio :name="item.label"></van-radio>
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-									<template v-if="ParamScreen.value.dateline.value == '自定义'">
-										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.dateline.customvalue" readonly @click="ParamScreen.value.dateline.calendar = true"></van-field>
-										<van-calendar title="修改时间" :min-date="ParamScreen.value.dateline.minDate" v-model="ParamScreen.value.dateline.calendar" type="range" :default-date="ParamScreen.value.dateline.defaultdate" @confirm="ScreenDatelineCalendarConfirm" />
-									</template>
-								<!-- </van-radio-group> -->
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-						
-					</div>
+					<!--{template mobile/components/index/screen/dateline/temp}-->
 				</template>
 				<template v-else-if="ParamScreen.data[ParamScreen.LeftActive]['type'] == 'mtime'">
-					<div class="screen-item">
-						<template v-if="ParamScreen.value.mtime.loading">
-							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
-						</template>
-						<template v-else>
-							<template v-if="ParamScreen.value.mtime.data && ParamScreen.value.mtime.data.length">
-								<!-- <van-radio-group v-model="ParamScreen.value.mtime.value" disabled @change="ScreenTimeChange"> -->
-									<van-cell-group>
-										<van-cell v-for="(item, index) in ParamScreen.value.mtime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('mtime',item.label)" :value="item.num" class="van-cell-tag" :class="ParamScreen.value.mtime.value==item.label?'active':''"></van-cell>
-										<!-- <van-cell v-for="(item, index) in ParamScreen.value.mtime.data" clickable :key="index" :title="item.label" @click="ScreenTimeClick('mtime',item.label)">
-											<template #right-icon>
-												<div class="num">{{item.num}}</div>
-												<van-radio :name="item.label"></van-radio>
-											</template>
-										</van-cell> -->
-									</van-cell-group>
-									<template v-if="ParamScreen.value.mtime.value == '自定义'">
-										<van-field input-align="center" class="screen-textarea" :value="ParamScreen.value.mtime.customvalue" readonly @click="ParamScreen.value.mtime.calendar = true"></van-field>
-										<van-calendar title="创建时间" :min-date="ParamScreen.value.mtime.minDate" v-model="ParamScreen.value.mtime.calendar" type="range" :default-date="ParamScreen.value.mtime.defaultdate" @confirm="ScreenMtimeCalendarConfirm" />
-									</template>
-								<!-- </van-radio-group> -->
-							</template>
-							<template v-else>
-								<div class="notScreen">
-									<div>
-										<img src="{MOD_PATH}/image/notScreen.png" >
-										<div>没有筛选条件</div>
-									</div>
-								</div>
-							</template>
-							
-						</template>
-						
-					</div>
+					<!--{template mobile/components/index/screen/mtime/temp}-->
 				</template>
 			</template>
 		</template>
@@ -593,6 +58,7 @@
 
 	</div>
 </van-popup>
+<!--{template mobile/components/index/screen/classify/js}-->
 <script type="text/javascript">
 	var ScreenData = {
 		ParamScreen:{
@@ -600,24 +66,30 @@
 			ChangeVal:false,
 			LeftActive:0,
 			ActiveNum:'',
-			dataBadge:['classify','tag','ext','shape','grade'],
+			dataBadge:['tag','ext','shape','grade'],
 			dataTypes:['classify','tag','color','link','desc','duration','size','ext','shape','grade','btime','dateline','mtime'],
 			data:[],
 			groupdata:{},
 			defaultval:{},
+			ScreenPost:'',
 			value:{
 				classify:{
 					loading:true,
 					data:[],
 					activeNames:[],
-					value:[]
+					value:[],
+					valueNode:[],
+					explandFids:[],
+					realvalue:[],
+					DefaultExpandedKeysInit:[]
 				},
 				tag:{
 					loading:true,
 					data:{},
 					value:[],
 					refreshval:{},
-					tabActive:'all'
+					tabActive:'all',
+					Post:''
 				},
 				color:{
 					defaultval:['#FFFFFF','#A0E7F7','#4AD1F0','#00B8E3','#007793','#D5D5D5','#998CF8','#4E38F0','#1900D2','#100082','#C0C0C0','#BC8CF8','#8A38F0','#5E00D2','#3A0082','#AAAAAA','#DBA3C5','#C75A9D','#AA2176','#6E0E49','#959595','#E4A9AE','#D45C67','#C21827','#820813','#808080','#EBB4A5','#DE7354','#D0380C','#8B2000','#565656','#F2D2A1','#EBAC4B','#DF8800','#8F5700','#161616','#CCDBA7','#A9C75F','#85AD23','#55710F'],
@@ -701,7 +173,8 @@
 			}
 		}
 	};
-	var ScreenJs = {
+	
+	var ScreenJs = $.extend({},JsScreenClassiyfMethods,{
 		ScreenPopupOpen(){
 			this.ScreenStorageValdata();
 			this.ScreenLeftClick(this.ParamScreen.LeftActive);
@@ -714,6 +187,8 @@
 				var item = data[i];
 				switch(i){
 					case 'classify':
+						param[i] = item.realvalue;
+					break;
 					case 'tag':
 					case 'ext':
 					case 'grade':
@@ -786,7 +261,6 @@
 			}
 			switch(item.type){
 				case 'classify':
-				
 					self.ScreenGetdataClassify();
 				break;
 				case 'tag':
@@ -816,54 +290,10 @@
 			}
 			
 		},
-		ScreenClassifyClick(item){
-			var index = this.ParamScreen.value.classify.value.indexOf(item.fid);
-			if(index> -1){
-				this.ParamScreen.value.classify.value.splice(index,1);
-				if(item.children && item.children.length){
-					this.ScreenClassifyChild(item.children,'del');
-				}
-				
-			}else{
-				this.ParamScreen.value.classify.value.push(item.fid);
-				if(item.children && item.children.length){
-					this.ScreenClassifyChild(item.children,'add');
-				}
-			}
-			this.screenclassifychange();
-		},
-		ScreenClassifyChild(item,type){
-			var classify = this.ParamScreen.value.classify.value;
-			for(var i in item){
-				var fitem = item[i];
-				var index = classify.indexOf(fitem.fid);
-				if(type == 'add'){
-					if(index<0){
-						classify.push(fitem.fid)
-					}
-				}else{
-					if(index>-1){
-						classify.splice(index,1);
-					}
-				}
-				if(fitem.children && fitem.children.length){
-					this.ScreenClassifyChild(fitem.children,type);
-				}
-			}
-		},
-		ScreenClassifyToggle(fid){
-			var self = this;
-			if(self.$refs['collapse_'+fid] && self.$refs['collapse_'+fid].length){
-				self.$refs['collapse_'+fid][0].toggle();
-			}
-		},
-		screenclassifychange(){
-			if(this.ParamScreen.value.classify.value && this.ParamScreen.value.classify.value.length){
-				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = this.ParamScreen.value.classify.value.length;
-			}else{
-				this.ParamScreen.data[this.ParamScreen.LeftActive].badge = '';
-			}
-		},
+		
+		
+		
+
 		ScreenTagClick(val){
 			var index = this.ParamScreen.value.tag.value.indexOf(val);
 			if( index == -1){
@@ -892,32 +322,70 @@
 				item.badge = val.length || '';
 			}
 		},
-		ScreenTagTabsChange(cid){
+		ScreenTagTabsChange(cid,getnum){
 			var self = this;
-			self.ParamScreen.value.tag.data[cid].page = 1;
-			self.ParamScreen.value.tag.data[cid].loading = true;
-			self.ParamScreen.value.tag.data[cid].data = [];
-			var ParamData = self.ScreenFinishingparameters();
-			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
-				var alltagdata = [];
-				for(var i in data.alltagdata){
-					var titem = data.alltagdata[i];
-					var str = {
-						tagname:titem.tagname,
-						num:titem.num,
-						tid:parseInt(i),
-					}
-					alltagdata.push(str);
+			if(!getnum){
+				self.ParamScreen.value.tag.data[cid].page = 1;
+				self.ParamScreen.value.tag.data[cid].loading = true;
+				self.ParamScreen.value.tag.data[cid].data = [];
+				if(self.ParamScreen.value.tag.Post){
+					self.ParamScreen.value.tag.Post.abort()
 				}
-				self.ParamScreen.value.tag.data[cid].finish = data.finish;
-				self.ParamScreen.value.tag.data[cid].loading = false;
-				self.ParamScreen.value.tag.data[cid].data = alltagdata;
-				self.$nextTick(function(){
-					self.ScreenTagScroll();
-				});
+			}
+			var ParamData = self.ScreenFinishingparameters();
+			if(getnum){
+				ParamData['hasnum'] = 1;
+			}
+			self.ParamScreen.value.tag.Post = $.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				if(getnum){
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
+						var str = {
+							tagname:titem.tagname,
+							num:titem.num,
+							tid:parseInt(i),
+						}
+						alltagdata.push(str);
+					}
+					if(self.ParamScreen.value.tag.data[cid].data){
+						var fdata = self.ParamScreen.value.tag.data[cid].data;
+						for(var xi in fdata){
+							var xiitem  = fdata[xi];
+							var num = 0;
+							for(var x in alltagdata){
+								var xitem = alltagdata[x];
+								if(parseInt(xiitem.tid) == parseInt(xitem.tid)){
+									num = xitem.num;
+								}
+							}
+							
+							self.ParamScreen.value.tag.data[cid].data[xi]['num'] = num;
+						}
+						self.$forceUpdate();
+					}
+				}else{
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
+						var str = {
+							tagname:titem.tagname,
+							tid:parseInt(i),
+						}
+						alltagdata.push(str);
+					}
+					self.ParamScreen.value.tag.data[cid].finish = data.finish;
+					self.ParamScreen.value.tag.data[cid].loading = false;
+					self.ParamScreen.value.tag.data[cid].data = alltagdata;
+					self.$nextTick(function(){
+						self.ScreenTagScroll();
+					});
+					self.ScreenTagTabsChange(cid,true)
+				}
+				
 			},'json');
 		},
-		ScreenTagKeyword(cid,grouptag){
+		ScreenTagKeyword(cid,grouptag,getnum){
 			var self = this;
 			
 			if(grouptag){
@@ -932,32 +400,73 @@
 			
 			if(grouptag){
 				var item = self.ParamScreen.data[cid];
-				self.$refs['scrollbarTag_'+item.cid].scrollTop = 0;
 			}else{
 				var item = self.ParamScreen.value.tag.data[cid];
-				$('.screen-tag-Scroll')[0].scrollTop = 0;
 			}
-			item.data = [];
-			item.page = 1;
-			item.searchloading = true;
+			
+			if(!getnum){
+				if(grouptag){
+					self.$refs['scrollbarTag_'+item.cid].scrollTop = 0;
+				}else{
+					$('.screen-tag-Scroll')[0].scrollTop = 0;
+				}
+				item.data = [];
+				item.page = 1;
+				item.searchloading = true;
+				if(self.ParamScreen.value.tag.Post){
+					self.ParamScreen.value.tag.Post.abort();
+				}
+			}
 			var ParamData = self.ScreenFinishingparameters();
 			if(item.keyword){
 				ParamData['tagkeyword'] = item.keyword;
 			}
-			item.data = [];
-			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
-				var alltagdata = [];
-				for(var i in data.alltagdata){
-					var titem = data.alltagdata[i];
-					var str = {
-						tagname:titem.tagname,
-						num:titem.num,
-						tid:parseInt(i),
+			if(getnum){
+				ParamData['hasnum'] = 1;
+			}
+			
+			self.ParamScreen.value.tag.Post = $.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				if(getnum){
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
+						var str = {
+							tagname:titem.tagname,
+							tid:parseInt(i),
+							num:titem.num
+						}
+						alltagdata.push(str);
 					}
-					item.data.push(str);
+					var fdata = item.data;
+					for(var xi in fdata){
+						var xiitem  = fdata[xi];
+						var num = 0;
+						for(var x in alltagdata){
+							var xitem = alltagdata[x];
+							if(parseInt(xiitem.tid) == parseInt(xitem.tid)){
+								num = xitem.num;
+							}
+						}
+						
+						item.data[xi]['num'] = num;
+					}
+					self.$forceUpdate();
+				}else{
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
+						var str = {
+							tagname:titem.tagname,
+							tid:parseInt(i),
+						}
+						item.data.push(str);
+					}
+					
+					item.finish = data.finish;
+					item.searchloading = false;
+					self.ScreenTagKeyword(cid,grouptag,true)
 				}
-				item.finish = data.finish;
-				item.searchloading = false;
+				
 			},'json');
 		},
 		ScreenTagClearKeyword(cid,grouptag){
@@ -976,7 +485,6 @@
 				$(self.$refs['scrollbarTag_'+cid]).unbind('scroll');
 				$(self.$refs['scrollbarTag_'+cid]).bind('scroll',function(){
 					if(!item.finish && !item.scrollloading && !item.searchloading && this.scrollHeight-100 < $(this).scrollTop()+this.clientHeight){
-						console.log(item.searchloading)
 						item.page += 1;
 						item.scrollloading = true;
 						var ParamData = self.ScreenFinishingparameters();
@@ -986,13 +494,13 @@
 								var titem = data.alltagdata[i];
 								var str = {
 									tagname:titem.tagname,
-									num:titem.num,
 									tid:parseInt(i),
 								}
 								item.data.push(str);
 							}
 							item.finish = data.finish;
 							item.scrollloading = false;
+							self.ScreenTagScrollSearchmenu(cid,ParamData);
 						},'json');
 					}
 				});
@@ -1015,18 +523,49 @@
 								var titem = data.alltagdata[i];
 								var str = {
 									tagname:titem.tagname,
-									num:titem.num,
 									tid:parseInt(i),
 								}
 								item.data.push(str);
 							}
 							item.finish = data.finish;
 							item.scrollloading = false;
+							self.ScreenTagScrollSearchmenu('',ParamData);
 						},'json');
 					}
 				});
 			}
 			
+		},
+		ScreenTagScrollSearchmenu(cid,ParamData){
+			var self = this;
+			if(cid){
+				var item = self.ParamScreen.data[self.ParamScreen.LeftActive];
+			}else{
+				var item = self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive];
+			}
+			ParamData['hasnum'] = 1;
+			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				var alltagdata = [];
+				for(var i in data.alltagdata){
+					var titem = data.alltagdata[i];
+					var str = {
+						tagname:titem.tagname,
+						num:titem.num,
+						tid:parseInt(i),
+					}
+					alltagdata.push(str);
+				}
+				for(var x in item.data){
+					var xitem = item.data[x];
+					for(var xi in alltagdata){
+						var xiitem = alltagdata[xi];
+						if(parseInt(xitem.tid) == parseInt(xiitem.tid)){
+							item.data[x]['num'] = xiitem.num;
+						}
+					}
+				}
+				self.$forceUpdate();
+			},'json');
 		},
 		ScreenColorClick(val){
 			var self = this;
@@ -1197,13 +736,19 @@
 				}
 			},'json');
 		},
-		ScreenGetdataText(ParamData){
+		ScreenGetdataText(ParamData,getnum){
 			var self = this;
-			$.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
-				self.ScreenGetdataAssignment(data);
+			if(!getnum && self.ParamScreen.ScreenPost){
+				self.ParamScreen.ScreenPost.abort();
+			}
+			if(getnum){
+				ParamData['hasnum'] = 1;
+			}
+			self.ParamScreen.ScreenPost = $.post(MOD_URL+'&op=ajax&operation=searchmenu_num',ParamData,function(data){
+				self.ScreenGetdataAssignment(data,getnum,ParamData);
 			},'json');
 		},
-		ScreenGetdataAssignment(data){
+		ScreenGetdataAssignment(data,getnum,ParamData){
 			var self = this;
 			var item = self.ParamScreen.data[self.ParamScreen.LeftActive];
 			var type = item.type;
@@ -1215,75 +760,121 @@
 				self.ParamScreen.value.ext.data = arr;
 				self.ParamScreen.value.ext.loading = false;
 			}else if(type == 'tag'){
-				var alltagdata = [];
-				for(var i in data.alltagdata){
-					var titem = data.alltagdata[i];
-					var str = {
-						tagname:titem.tagname,
-						num:titem.num,
-						tid:parseInt(i),
-					}
-					alltagdata.push(str);
-				}
-				var arr = {};
-				arr['all'] = {
-					catname:'全部',
-					num:0,
-					cid:'all',
-					page:1,
-					keyword:'',
-					loading:self.ParamScreen.value.tag.tabActive == 'all'?false:true,
-					scrollloading:false,
-					searchloading:false,
-					data:self.ParamScreen.value.tag.tabActive == 'all'?alltagdata:[],
-					finish:self.ParamScreen.value.tag.tabActive == 'all'?data.finish:false
-				};
-				if(data.catdata){
-					for(var x in data.catdata){
-						var titem = data.catdata[x];
+				
+				if(getnum){
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
 						var str = {
-							catname:titem.catname,
-							num:0,
-							cid:titem.cid,
-							scrollloading:false,
-							searchloading:false,
-							keyword:'',
-							page:1,
-							loading:self.ParamScreen.value.tag.tabActive == titem.cid?false:true,
-							data:self.ParamScreen.value.tag.tabActive == titem.cid?alltagdata:[],
-							finish:self.ParamScreen.value.tag.tabActive == titem.cid?data.finish:false
+							tagname:titem.tagname,
+							tid:parseInt(i),
+							num:titem.num,
 						}
-						arr[titem.cid] = str;
+						alltagdata.push(str);
 					}
-				}
-				self.ParamScreen.value.tag.data = arr;
-				if(item.grouptag){
-					item.data = alltagdata
-					item.loading = false;
-					item.finish = data.finish;
-					self.$nextTick(function(){
-						self.ScreenTagScroll(item.cid);
-					});
+					if(self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive]){
+						var fdata = self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive];
+						for(var xi in fdata.data){
+							var xiitem  = fdata.data[xi];
+							var num = 0;
+							for(var x in alltagdata){
+								var xitem = alltagdata[x];
+								
+								if(parseInt(xiitem.tid) == parseInt(xitem.tid)){
+									num = xitem.num;
+								}
+							}
+							self.ParamScreen.value.tag.data[self.ParamScreen.value.tag.tabActive].data[xi]['num'] = num;
+						}
+						self.$forceUpdate();
+					}
 				}else{
-					self.ParamScreen.value.tag.loading = false;
-					self.$nextTick(function(){
-						self.ScreenTagScroll();
-					});
+					var alltagdata = [];
+					for(var i in data.alltagdata){
+						var titem = data.alltagdata[i];
+						var str = {
+							tagname:titem.tagname,
+							tid:parseInt(i),
+						}
+						alltagdata.push(str);
+					}
+					var arr = {};
+					arr['all'] = {
+						catname:'全部',
+						num:0,
+						cid:'all',
+						page:1,
+						keyword:'',
+						loading:self.ParamScreen.value.tag.tabActive == 'all'?false:true,
+						scrollloading:false,
+						searchloading:false,
+						data:self.ParamScreen.value.tag.tabActive == 'all'?alltagdata:[],
+						finish:self.ParamScreen.value.tag.tabActive == 'all'?data.finish:false
+					};
+					if(data.catdata){
+						for(var x in data.catdata){
+							var titem = data.catdata[x];
+							var str = {
+								catname:titem.catname,
+								num:0,
+								cid:titem.cid,
+								scrollloading:false,
+								searchloading:false,
+								keyword:'',
+								page:1,
+								loading:self.ParamScreen.value.tag.tabActive == titem.cid?false:true,
+								data:self.ParamScreen.value.tag.tabActive == titem.cid?alltagdata:[],
+								finish:self.ParamScreen.value.tag.tabActive == titem.cid?data.finish:false
+							}
+							arr[titem.cid] = str;
+						}
+					}
+					self.ParamScreen.value.tag.data = arr;
+					if(item.grouptag){
+						item.data = alltagdata
+						item.loading = false;
+						item.finish = data.finish;
+						self.$nextTick(function(){
+							self.ScreenTagScroll(item.cid);
+						});
+					}else{
+						self.ParamScreen.value.tag.loading = false;
+						self.$nextTick(function(){
+							self.ScreenTagScroll();
+						});
+					}
+					self.ScreenGetdataText(ParamData,true);
 				}
-				
-				
 			}else if(type == 'shape'){
 				var arr = [];
 				for(var i in data){
 					arr.push(data[i]);
 				}
-				arr.push({
-					lablename:'自定义',
-					val:'custom',
-					num:''
-				})
-				self.ParamScreen.value.shape.data = arr;
-				self.ParamScreen.value.shape.loading = false;
+				if(getnum){
+					for(var s in self.ParamScreen.value.shape.data){
+						var sitem = self.ParamScreen.value.shape.data[s];
+						var num = 0;
+						for(var a in arr){
+							if(parseInt(arr[a].val) == parseInt(sitem.val)){
+								num = arr[a].num;
+							}
+						}
+						if(sitem.val != 'custom'){
+							sitem['num'] = num;
+						}
+					}
+					self.$forceUpdate();
+				}else{
+					arr.push({
+						lablename:'自定义',
+						val:'custom',
+						num:''
+					})
+					self.ParamScreen.value.shape.data = arr;
+					self.ParamScreen.value.shape.loading = false;
+					self.ScreenGetdataText(ParamData,true);	
+				}
+				
 			}else if(type == 'grade'){
 				var arr = [];
 				var not = {};
@@ -1332,12 +923,12 @@
 			var type = item.type;
 			var param = {};
 			param['skey'] = type;
+			param['hassub'] = 1;
 			if(self.ParamSearch.keyword){
 				param['keyword'] = self.ParamSearch.keyword;
 			}
 			if(self.ParamLibrary.activeId){
 				param['appid'] = self.ParamLibrary.activeId;
-				
 			}
 			if(type == 'tag'){
 				if(item.grouptag){
@@ -1445,6 +1036,11 @@
 							param['persion'] = Pitem.persion;
 						}
 					break;
+					case 'classify':
+						if(Pitem.value && Pitem.value.length && type != i){
+							param['fids'] = Pitem.realvalue.join(',');
+						}
+					break;
 					default:
 						// grade,ext,classify
 						if(Pitem.value && Pitem.value.length && type != i){
@@ -1456,20 +1052,7 @@
 			}
 			return param;
 		},
-		ScreenGetdataClassify(){
-			var self = this;
-			$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',{
-				appid: self.ParamLibrary.activeId
-			},function(data){
-				var arr = [];
-				for(var i in data.folderdatanum){
-					var item = data.folderdatanum[i];
-					arr.push(item);
-				}
-				self.ParamScreen.value.classify.data = arr;
-				self.ParamScreen.value.classify.loading = false;
-			},'json');
-		},
+		
 		ScreenConfirm(){
 			this.ParamScreen.PopupVisible = false;
 		},
@@ -1480,6 +1063,14 @@
 				var fitem = this.ParamScreen.value[type];
 				switch(type){
 					case 'classify':
+						fitem.value = [];
+						fitem.activeNames = [];
+						fitem.valueNode = [];
+						fitem.explandFids = [];
+						fitem.realvalue = [];
+						fitem.DefaultExpandedKeysInit = [];
+						item.dot = false;
+					break;
 					case 'ext':
 					case 'grade':
 						fitem.value = [];
@@ -1531,6 +1122,7 @@
 				}
 			}
 			this.ParamScreen.ActiveNum = '';
+			this.ScreenLeftClick(this.ParamScreen.LeftActive);
 			// this.CommonSetBadge();
 			// this.ScreenLeftClick(this.ParamScreen.LeftActive);
 		},
@@ -1588,6 +1180,12 @@
 						change = true;
 						break;
 					}
+				}else if(i == 'classify'){
+					
+					if(JSON.stringify(val) != JSON.stringify(item.realvalue)){
+						change = true;
+						break;
+					}
 				}else{
 					if(JSON.stringify(val) != JSON.stringify(item.value)){
 						change = true;
@@ -1597,7 +1195,7 @@
 			}
 			this.ParamScreen.ChangeVal = change;
 		}
-	};
+	});
 	
 </script>
 

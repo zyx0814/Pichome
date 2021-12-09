@@ -2,12 +2,19 @@
     if (!defined('IN_OAOOA')) {//所有的php文件必须加上此句，防止被外部调用
         exit('Access Denied');
     }
-    $path = dzzdecode($_GET['dpath']);
+    $path = dzzdecode($_GET['dpath'],'',0);
     if(!$path) exit(json_encode(array('error'=>'dpath is must')));
     $resourcesdata = C::t('pichome_resources')->fetch($path);
     $resourcesdata['name'] = '"' . (strtolower(CHARSET) == 'utf-8' && (strexists($_SERVER['HTTP_USER_AGENT'], 'MSIE') || strexists($_SERVER['HTTP_USER_AGENT'], 'Edge') || strexists($_SERVER['HTTP_USER_AGENT'], 'rv:11')) ? urlencode($resourcesdata['name']) : ($resourcesdata['name'])) . '"';
-    $attachurl = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$path));
-    $attachurl = 'library/' .$attachurl;
+    $attach = DB::fetch_first("select path,appid from %t where rid = %s",array('pichome_resources_attr',$path));
+    $librarydata = DB::fetch_first("select path,iswebsitefile from %t where appid = %s",array('pichome_vapp',$attach['appid']));
+    if($librarydata['iswebsitefile']){
+        $realpath = $librarydata['path'].'./'.$attach['path'];
+        $attachurl= getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($realpath);
+    }else{
+        $attachurl = $librarydata['path'].'./'.$attach['path'];
+    }
+
     $d = new FileDownload();
     $d->download($attachurl, $resourcesdata['name'], $resourcesdata['size'], 0, true);
     exit();

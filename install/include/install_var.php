@@ -62,8 +62,8 @@ define('UNDEFINE_FUNC', 32);
 define('MISSING_PARAMETER', 33);
 define('LOCK_FILE_NOT_TOUCH', 34);
 
-if(function_exists('mysqli_connect')) $func_items = array('mysqli_connect',  'file_get_contents', 'xml_parser_create','filesize', 'curl_init');
-else $func_items = array('mysql_connect',  'file_get_contents', 'xml_parser_create','filesize', 'curl_init');
+if(function_exists('mysqli_connect')) $func_items = array('mysqli_connect',  'file_get_contents', 'xml_parser_create','filesize', 'curl_init','zip_open');
+else $func_items = array('mysql_connect',  'file_get_contents', 'xml_parser_create','filesize', 'curl_init','zip_open');
 
 $filesock_items = array('fsockopen', 'pfsockopen', 'stream_socket_client');
 

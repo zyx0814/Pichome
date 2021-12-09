@@ -1,0 +1,30 @@
+<div class="block">
+	<el-popover placement="bottom" width="240" trigger="click" ref="ScreenPopoverRef">
+		<div class="field-section">
+			<el-input size="small" class="field-el-input" v-model.number="ScreenValue.duration.start" placeholder="最小" @input="ScreenDurationInput"></el-input>
+			<span>-</span>
+			<el-input size="small" class="field-el-input" v-model.number="ScreenValue.duration.end" placeholder="最大" @input="ScreenDurationInput"></el-input>
+			<el-select size="small" class="field-el-select" v-model="ScreenValue.duration.dunit" @change="ScreenDurationdunit">
+				<el-option label="秒" value="s"></el-option>
+				<el-option label="分" value="m"></el-option>
+			</el-select>
+		</div>
+		<div class="field-single" :class="ScreenValue.duration.start||ScreenValue.duration.end?'active':''" slot="reference">
+			<span v-if="ScreenValue.duration.start&&ScreenValue.duration.end">
+				{{ScreenValue.duration.start}}≤时长≤{{ScreenValue.duration.end}}
+				<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
+			</span>
+			<span v-else-if="ScreenValue.duration.start">
+				时长≥{{ScreenValue.duration.start}}
+				<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
+			</span>
+			<span v-else-if="ScreenValue.duration.end">
+				时长≤{{ScreenValue.duration.end}}
+				<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
+			</span>
+			<span v-else>时长</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.duration.start||ScreenValue.duration.end" class="delBtn el-icon-close" @click.stop="ScreenDelete('duration')"></span>
+		</div>
+	</el-popover>
+</div>

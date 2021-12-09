@@ -1,0 +1,315 @@
+<div v-if="HeaderRightBtnScreen.show" class="right-block" :class="HeaderRightBtnScreen.active>0?'active':''" @click="HeaderRightBtnScreenClick(HeaderRightBtnScreen.active>0?0:1)">
+	<i class="ri-filter-2-fill"></i>
+</div>
+<el-dropdown trigger="click" :hide-on-click="false">
+	<div class="right-block">
+		<i class="ri-arrow-up-down-fill"></i>
+	</div>
+	<el-dropdown-menu class="display-mode" slot="dropdown"  v-cloak>
+		<el-dropdown-item>
+			<div class="item-txt">显示信息<i class="el-icon-caret-right suffix"></i></div>
+			<el-dropdown-menu class="child-dropdown">
+				<template v-for="item in HeaderRightBtnDisplay.data">
+					<el-dropdown-item :class="HeaderRightBtnDisplay.value.indexOf(item.key)>-1?'active':''">
+						<div class="item-txt" @click="HeaderRightBtnDisplayClick('show',item.key)"><i class="el-icon-check prefix"></i>{{item.val}}</div>
+					</el-dropdown-item>
+					<template v-if="item.children && item.children.length">
+						<el-divider></el-divider>
+						<el-dropdown-item 
+							v-for="fitem in item.children" 
+							:disabled="HeaderRightBtnDisplay.value.indexOf('other')>-1?false:true"
+							:class="HeaderRightBtnDisplay.value.indexOf('other')>-1&&HeaderRightBtnDisplay.other==fitem.key?'active':''">
+							<div class="item-txt" @click="HeaderRightBtnDisplayClick('other',fitem.key)"><i class="el-icon-check prefix"></i>{{fitem.val}}</div>
+						</el-dropdown-item>
+					</template>
+				</template>
+			</el-dropdown-menu>
+		</el-dropdown-item>
+		<el-dropdown-item>
+			<div class="item-txt">排序方式<i class="el-icon-caret-right suffix"></i></div>
+			<el-dropdown-menu class="child-dropdown">
+				<el-dropdown-item 
+					v-for="item in HeaderRightBtnSorty.data"
+					:class="parseInt(HeaderRightBtnSorty.order)==parseInt(item.key)?'active':''">
+					<div class="item-txt" @click="HeaderRightBtnSortyClick('order',item.key)"><i class="el-icon-check prefix"></i>{{item.val}}</div>
+				</el-dropdown-item>
+				<el-divider></el-divider>
+				<el-dropdown-item :class="HeaderRightBtnSorty.asc=='asc'?'active':''">
+					<div class="item-txt" @click="HeaderRightBtnSortyClick('asc','asc')"><i class="el-icon-check prefix"></i>升序</div>
+				</el-dropdown-item>
+				<el-dropdown-item :class="HeaderRightBtnSorty.asc=='desc'?'active':''">
+					<div class="item-txt" @click="HeaderRightBtnSortyClick('asc','desc')"><i class="el-icon-check prefix"></i>降序</div>
+				</el-dropdown-item>
+			</el-dropdown-menu>
+		</el-dropdown-item>
+		<el-divider></el-divider>
+		<template v-for="item in HeaderRightBtnLayout.data">
+			<el-dropdown-item :class="HeaderRightBtnLayout.value==item.key?'active':''">
+				<div class="item-txt" @click="HeaderRightBtnLayoutClick(item.key)"><i class="el-icon-check prefix"></i>{{item.text}}</div>
+			</el-dropdown-item>
+		</template>
+	</el-dropdown-menu>
+</el-dropdown>
+<script type="text/javascript">
+	var JsHeaderRightBtnData = {
+		HeaderRightBtnScreen:{
+			active:0,
+			show:true
+		},
+		HeaderRightBtnDisplay:{
+			data:[
+				{key:'name',val:'名称'},
+				{key:'tagging',val:'标注数'},
+				{key:'extension',val:'扩展名'},
+				{key:'other',val:'其它信息',children:[
+					{key:'size',val:'尺寸'},
+					{key:'filesize',val:'文件大小'},
+					{key:'tag',val:'标签'},
+					{key:'grade',val:'评分'},
+					{key:'btime',val:'添加时间'},
+					{key:'dateline',val:'修改时间'},
+					{key:'mtime',val:'创建日期'},
+				]},
+			],
+			value:[],
+			other:'',
+		},
+		HeaderRightBtnSorty:{
+			data:[
+				{key:1,val:'添加时间',field:'btime'},
+				{key:3,val:'修改时间',field:'dateline'},
+				{key:2,val:'创建日期',field:'mtime'},
+				{key:4,val:'标题',field:'name'},
+				{key:8,val:'文件大小',field:'filesize'},
+				{key:5,val:'尺寸',field:'size'},
+				{key:6,val:'评分',field:'grade'},
+				{key:7,val:'时长',field:'duration'},
+			],
+			order:1,
+			DeaultOrder:1,
+			asc:'desc',
+			DeaultAsc:'desc'
+		},
+		HeaderRightBtnLayout:{
+			data:[
+				{key:'waterFall',text:'瀑布流'},
+				{key:'rowGrid',text:'自适应'},
+				{key:'imageList',text:'网格'}
+			],
+			value:'waterFall'
+		}
+	};
+	var JsHeaderRightBtnMethods = {
+		HeaderRightBtnScreenClick(val){//设置筛选显示或隐藏
+			if(this.HeaderRightBtnScreen.active == val){
+				return false;
+			}
+			this.HeaderRightBtnScreen.active = val;
+			if(val){
+				this.Screenshow = true;
+			}else{
+				this.Screenshow = false;
+			}
+			<!--{if $_G[uid]}-->
+			$.post('{MOD_URL}&op=ajax&operation=screensetting',{
+				settingsubmit:true,
+				formhash:'{FORMHASH}',
+				screen:val
+			},function(data){
+				
+			},'json');
+			<!--{else}-->
+				var appid = this.Appid;
+				if(!appid && this.DocumentTemplate==2){
+					appid = 'all';
+				}
+				sessionStorage.setItem('showscreen_'+appid,val);
+			<!--{/if}-->
+		},
+		HeaderRightBtnDisplayClick(type,val){//页面显示信息
+			var self = this;
+			if(type == 'show'){
+				var index = this.HeaderRightBtnDisplay.value.indexOf(val);
+				if(index > -1){
+					this.HeaderRightBtnDisplay.value.splice(index,1);
+				}else{
+					this.HeaderRightBtnDisplay.value.push(val);
+				}
+				<!--{if !$_G[uid]}-->
+				sessionStorage.setItem('InformationShow',this.HeaderRightBtnDisplay.value.join(','));
+				<!--{/if}-->
+			}else{
+				this.HeaderRightBtnDisplay.other = val;
+				<!--{if !$_G[uid]}-->
+				sessionStorage.setItem('InformationOther',val);
+				<!--{/if}-->
+			}
+			<!--{if $_G[uid]}-->
+			var param = {
+				showfileds:this.HeaderRightBtnDisplay.value.join(','),
+				other:this.HeaderRightBtnDisplay.other
+			};
+			$.post(MOD_URL+'&op=ajax&operation=setshow',param,function(json){
+				if(json.success){
+					
+				}else{
+					self.$message.error('显示信息数据保存失败')
+				}
+			},'json')
+			<!--{/if}-->
+		},
+		HeaderRightBtnSortyClick(key,val){//排序方式
+			var self = this;
+			if(key == 'order'){
+				if(this.HeaderRightBtnSorty.order == parseInt(val)){
+					return false;
+				}else{
+					this.HeaderRightBtnSorty.order = parseInt(val)
+				}
+			}else{
+				if(this.HeaderRightBtnSorty.asc == val){
+					return false;
+				}else{
+					this.HeaderRightBtnSorty.asc = val
+				}
+			}
+			<!--{if $_G[uid]}-->
+			var sortfiles = '';
+			for(var x in this.HeaderRightBtnSorty.data){
+				if(this.HeaderRightBtnSorty.data[x].key == parseInt(this.HeaderRightBtnSorty.order)){
+					sortfiles = this.HeaderRightBtnSorty.data[x].field;
+				}
+			}
+			var param = {
+				sortfiled:sortfiles,
+				sort:this.HeaderRightBtnSorty.asc
+			};
+			$.post(MOD_URL+'&op=ajax&operation=setsort',param,function(json){
+				if(json.success){
+					
+				}else{
+					self.$message.error('数据失败')
+				}
+			},'json')
+			<!--{else}-->
+			sessionStorage.setItem(key,val);
+			<!--{/if}-->
+			this.HeaderRightBtnSubmit();
+		},
+		HeaderRightBtnLayoutClick(val){//显示方式
+			if(this.HeaderRightBtnLayout.value == val){
+				return false;
+			}
+			this.ImageType = val;
+			this.HeaderRightBtnLayout.value = val;
+			<!--{if $_G[uid]}-->
+			$.post('{MOD_URL}&op=ajax&operation=setlayout',{
+				layout:val
+			},function(data){
+				
+			},'json');
+			<!--{else}-->
+			sessionStorage.setItem('Layout',val);
+			<!--{/if}-->
+		},
+		HeaderRightBtnGetParam(){
+			var param = {};
+			if(this.HeaderRightBtnSorty.order != this.HeaderRightBtnSorty.DeaultOrder){
+				param['order'] = this.HeaderRightBtnSorty.order;
+			}
+			if(this.HeaderRightBtnSorty.asc != this.HeaderRightBtnSorty.DeaultAsc){
+				param['asc'] = this.HeaderRightBtnSorty.asc;
+			}
+			return param;
+		},
+		HeaderRightBtnSubmit(){
+			this.CommonGetImageData();
+		},
+		HeaderRightBtnCreate(){
+			var pagesetting = $pagesetting;
+			var display = [];
+			var other = 'btime';
+			var layout = 'waterFall';
+			var order = 1;
+			var desc = 'desc';
+			var ShowScreen = 0;
+			<!--{if $_G[uid]}-->
+			var ShowScreen = $screen;
+			if(pagesetting && pagesetting.show){
+				display = pagesetting.show.split(',');
+			}
+			if(pagesetting && pagesetting.other){
+				other = pagesetting.other;
+			}
+			if(pagesetting && pagesetting.layout){
+				layout = pagesetting.layout;
+			}
+			if(pagesetting && pagesetting.sort){
+				order = parseInt(pagesetting.sort);
+			}
+			this.HeaderRightBtnSorty.DeaultOrder = order;
+			if(pagesetting && pagesetting.desc){
+				desc = pagesetting.desc
+			}
+			this.HeaderRightBtnSorty.DeaultAsc = desc;
+			<!--{else}-->
+			var Appid = this.Appid?this.Appid:'all';
+			var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):0;
+			var fshow = sessionStorage.getItem('InformationShow');
+			if(fshow){
+				display = fshow.split(',');
+			}else{
+				if(pagesetting && pagesetting.show){
+					display = pagesetting.show.split(',');
+				}
+			}
+			var fother = sessionStorage.getItem('InformationOther');
+			if(fother){
+				other = fother;
+			}else{
+				if(pagesetting && pagesetting.other){
+					other = pagesetting.other;
+				}
+			}
+			var flayout = sessionStorage.getItem('Layout');
+			if(flayout){
+				layout = flayout;
+			}else{
+				if(pagesetting && pagesetting.layout){
+					layout = pagesetting.layout;
+				}
+			}
+			var forder = sessionStorage.getItem('order');
+			if(forder){
+				order = parseInt(forder);
+			}else{
+				if(pagesetting && pagesetting.sort){
+					order = parseInt(pagesetting.sort);
+				}
+			}
+			this.HeaderRightBtnSorty.DeaultOrder = 1;
+			var fasc = sessionStorage.getItem('asc');
+			if(fasc){
+				desc = fasc;
+			}else{
+				if(pagesetting && pagesetting.desc){
+					desc = pagesetting.desc
+				}
+			}
+			this.HeaderRightBtnSorty.DeaultAsc = 'desc';
+			<!--{/if}-->
+			this.HeaderRightBtnScreen.active = parseInt(ShowScreen);
+			this.HeaderRightBtnDisplay.value = display;
+			this.HeaderRightBtnDisplay.other = other;
+			this.HeaderRightBtnSorty.order = order;
+			
+			this.HeaderRightBtnSorty.asc = desc;
+			
+			this.HeaderRightBtnLayout.value = layout;
+			this.HeaderRightBtnRefreshHash();
+		},
+		HeaderRightBtnRefreshHash(){
+			
+		}
+	};
+</script>

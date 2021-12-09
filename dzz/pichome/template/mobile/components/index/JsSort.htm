@@ -178,7 +178,13 @@
 			<!--{if $_G[uid]}-->
 			this.SortSaveinformation();
 			<!--{else}-->
-			sessionStorage.setItem('InformationShow',val.join(','));
+			
+			if(val.length){
+				sessionStorage.setItem('InformationShow',val.join(','));
+			}else{
+				sessionStorage.setItem('InformationShow','not');
+			}
+			
 			<!--{/if}-->
 		},
 		SortotherinformationChange(val){

@@ -9,7 +9,7 @@
     
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):0;
     $processname = 'DZZ_EXPORTCHECKFILE_LOCK_'.$appid;
-    dzz_process::unlock($processname);
+    //dzz_process::unlock($processname);
     $locked = true;
     if (!dzz_process::islocked($processname, 60*5)) {
         $locked=false;
@@ -21,10 +21,14 @@
     $force = isset($_GET['force']) ? intval($_GET['force']):0;
     $data = C::t('pichome_vapp')->fetch($appid);
     if(!$data) exit(json_encode(array('error'=>'no data')));
-    if($data['type'] == 0 && $data['state'] == '2'){
+    if($data['type'] == 0 && $data['state'] == 2 && $data['isdelete'] == 0){
         include_once dzz_libfile('eagleexport');
         $eagleexport = new eagleexport($data);
         $return = $eagleexport->execCheckFile();
+    }elseif($data['type'] == 1 && $data['state'] == 2  && $data['isdelete'] == 0){
+        include_once dzz_libfile('localexport');
+        $localexport = new localexport($data);
+        $return = $localexport->execCheckFile();
     }
     dzz_process::unlock($processname);
     

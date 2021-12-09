@@ -1,0 +1,166 @@
+<template v-if="ParamScreen.data[ParamScreen.LeftActive]['grouptag']">
+		<template v-if="ParamScreen.data[ParamScreen.LeftActive].loading">
+			<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+		</template>
+		<template v-else>
+			<div class="screen-item-box" style="padding-top: 40px;">
+				<div class="van-search-box">
+					<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.data[ParamScreen.LeftActive].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(ParamScreen.LeftActive,true)" maxlength="50" :clearable="false">
+						<template #right-icon>
+							<van-icon v-show="ParamScreen.data[ParamScreen.LeftActive].keyword" @click="ScreenTagClearKeyword(ParamScreen.LeftActive,true)" name="cross" />
+						</template>
+					</van-search>
+				</div>
+				<template v-if="ParamScreen.data[ParamScreen.LeftActive].searchloading">
+					<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+				</template>
+				<template v-else>
+					<div class="screen-item" style="position: relative;" :ref="'scrollbarTag_'+ParamScreen.data[ParamScreen.LeftActive].cid">
+						<template v-if="ParamScreen.data[ParamScreen.LeftActive].data && ParamScreen.data[ParamScreen.LeftActive].data.length">
+							<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
+								<van-cell-group>
+									<van-cell v-for="(fitem,index) in ParamScreen.data[ParamScreen.LeftActive].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+								</van-cell-group>
+							<!-- </van-checkbox-group> -->
+							<template v-if="!ParamScreen.data[ParamScreen.LeftActive].finish && ParamScreen.data[ParamScreen.LeftActive].scrollloading">
+								<div style="text-align: center;margin-top: 0.625rem;">
+									<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+								</div>
+							</template>
+						</template>
+						<template v-else>
+							<div class="notScreen">
+								<div>
+									<img src="{MOD_PATH}/image/notScreen.png" >
+									<div>没有筛选条件</div>
+								</div>
+							</div>
+						</template>
+					</div>
+				</template>
+				
+			</div>
+			
+		</template>
+	
+</template>
+<template v-else>
+	<template v-if="ParamScreen.value.tag.loading">
+		<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" text-color="var(--header-text)" vertical>加载中...</van-loading>
+	</template>
+	<template v-else>
+		<template v-if="ParamLibrary.activeId">
+			<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange" style="height: 100%;"> -->
+				<van-tabs v-model="ParamScreen.value.tag.tabActive" @change="ScreenTagTabsChange">
+					<van-tab v-for="item in ParamScreen.value.tag.data" v-key="item.cid" :name="item.cid">
+						<template #title>
+							<span>{{item.catname}}<span style="font-size: 14px;margin-left: 5px;" v-if="parseInt(item.num)">{{item.num}}</span></span>
+						</template>
+						<template v-if="item.loading">
+							<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+						</template>
+						<template v-else>
+							<div class="screen-item-box" style="padding-top: 40px;">
+								<div class="van-search-box">
+									<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="item.keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword(item.cid)" maxlength="50" :clearable="false">
+										<template #right-icon>
+											<van-icon v-show="item.keyword" @click="ScreenTagClearKeyword(item.cid)" name="cross" />
+										</template>
+									</van-search>
+								</div>
+								<template v-if="item.data && item.data.length">
+									<div class="screen-item screen-tag-Scroll" style="padding: 0;">
+										<template v-if="item.searchloading">
+											<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+										</template>
+										<template v-else>
+											<van-cell-group style="padding: 0 10px;">
+												<van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+												<!-- <van-cell v-for="(fitem,index) in item.data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
+													<template #right-icon>
+														<div class="num">{{fitem.num}}</div>
+														<van-checkbox shape="square" disabled :name="fitem.tid" />
+													</template>
+												</van-cell> -->
+											</van-cell-group>
+											<template v-if="!item.finish && item.scrollloading">
+												<div style="text-align: center;margin-top: 0.625rem;">
+													<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+												</div>
+											</template>
+										</template>
+										
+									</div>
+								</template>
+								<template v-else>
+									<div class="notScreen">
+										<div>
+											<img src="{MOD_PATH}/image/notScreen.png" >
+											<div>没有筛选条件</div>
+										</div>
+									</div>
+								</template>
+							</div>
+						</template>
+						
+					</van-tab>
+				</van-tabs>
+			<!-- </van-checkbox-group> -->
+
+		</template>
+		<template v-else>
+				<template v-if="ParamScreen.value.tag.data['all'].loading">
+					<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+				</template>
+				<template v-else>
+					<div class="screen-item-box" style="padding-top: 40px;">
+						<div class="van-search-box">
+							<van-search class="popup-search-input" style="padding: 0 12px;" v-model.trim="ParamScreen.value.tag.data['all'].keyword" shape="round" placeholder="输入关键词" @input="ScreenTagKeyword('all')" maxlength="50" :clearable="false">
+								<template #right-icon>
+									<van-icon v-show="ParamScreen.value.tag.data['all'].keyword" @click="ScreenTagClearKeyword('all')" name="cross" />
+								</template>
+							</van-search>
+						</div>
+						<div class="screen-item screen-tag-Scroll">
+							<template v-if="ParamScreen.value.tag.data['all'].searchloading">
+								<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+							</template>
+							<template v-else>
+								<template v-if="!$.isEmptyObject(ParamScreen.value.tag.data)">
+									<!-- <van-checkbox-group v-model="ParamScreen.value.tag.value" @change="ScreenTagChange"> -->
+										<van-cell-group>
+											<van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)" :value="fitem.num" class="van-cell-tag" :class="ParamScreen.value.tag.value.indexOf(fitem.tid)>-1?'active':''"></van-cell>
+											<!-- <van-cell v-for="(fitem,index) in ParamScreen.value.tag.data['all'].data" clickable :key="index" :title="fitem.tagname" @click="ScreenTagClick(fitem.tid)">
+												<template #right-icon>
+													<div class="num">{{fitem.num}}</div>
+													<van-checkbox shape="square" disabled :name="fitem.tid" />
+												</template>
+											</van-cell> -->
+										</van-cell-group>
+									<!-- </van-checkbox-group> -->
+									<template v-if="!ParamScreen.value.tag.data['all'].finish && ParamScreen.value.tag.data['all'].scrollloading">
+										<div style="text-align: center;margin-top: 0.625rem;">
+											<van-loading size="24px" type="spinner" color="var(--header-text)">加载中...</van-loading>
+										</div>
+									</template>
+								</template>
+								<template v-else>
+									<div class="notScreen">
+										<div>
+											<img src="{MOD_PATH}/image/notScreen.png" >
+											<div>没有筛选条件</div>
+										</div>
+									</div>
+								</template>
+							</template>
+							
+						</div>
+					</div>
+					
+				</template>
+				
+			
+		</template>
+	</template>
+	
+</template>

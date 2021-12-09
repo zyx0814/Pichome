@@ -1,0 +1,104 @@
+<script type="text/javascript">
+	var JsScreenClassiyfMethods = {
+		screenclassifychange(){
+			if(this.ParamScreen.value.classify.value && this.ParamScreen.value.classify.value.length){
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = true;
+			}else{
+				this.ParamScreen.data[this.ParamScreen.LeftActive].dot = false;
+			}
+			this.screenclassifySetVal();
+		},
+		
+		screenclassifySetVal(){
+			this.ParamScreen.value.classify.valueNode = [];
+			var newcheckedNodes = [];
+			this.ParamScreen.value.classify.realvalue = [];
+			if(this.ParamScreen.value.classify.value.length){
+				for(var i in this.ParamScreen.value.classify.value){
+					var fid = this.ParamScreen.value.classify.value[i];
+					this.screenclassifyGetValData(this.ParamScreen.value.classify.data,fid);
+				}
+			}
+			if(this.ParamScreen.value.classify.valueNode.length){
+				for(var x in this.ParamScreen.value.classify.valueNode){
+					var xitem = this.ParamScreen.value.classify.valueNode[x];
+					if(xitem.pfid){
+						if(this.ParamScreen.value.classify.value.indexOf(xitem.pfid)<0){
+							newcheckedNodes.push(xitem);
+						}
+					}else{
+						newcheckedNodes.push(xitem);
+					}
+				}
+				this.ParamScreen.value.classify.DefaultExpandedKeysInit = [];
+				for(var x in newcheckedNodes){
+					var xitem = newcheckedNodes[x];
+					this.ParamScreen.value.classify.realvalue.push(xitem.fid);
+					if(xitem.pathkey){
+						this.ScreenSubstring(xitem.pathkey,xitem.appid);
+					}
+				}
+			}
+		},
+		screenclassifyGetValData(data,fid){
+			for(var i in data){
+				var item = data[i];
+				if(item.fid == fid){
+					this.ParamScreen.value.classify.valueNode.push(item)
+					return false;
+				}else{
+					if(item.children && item.children.length){
+						this.screenclassifyGetValData(item.children,fid);
+					}
+				}
+			}
+		},
+		ScreenSubstring(str,appid){
+			var self = this;
+			var farr = str.split(appid);
+			var arr = [];
+			if(farr && farr.length == 1){
+				return false;
+			}
+			for(var f in farr){
+				if(farr[f]){
+					arr.push(farr[f]);
+				}
+			}
+			arr.pop();
+			for(var i in arr){
+				var pathkey = arr[i]+appid;
+				if(self.ParamScreen.value.classify.DefaultExpandedKeysInit.indexOf(pathkey)<0){
+					self.ParamScreen.value.classify.DefaultExpandedKeysInit.push(pathkey);
+				}
+			}
+		},
+		ScreenGetdataClassify(){
+			var self = this;
+			var param = {
+				appid: self.ParamLibrary.activeId
+			};
+			self.ParamScreen.value.classify.activeNames = [];
+			self.ParamScreen.value.classify.data = [];
+			
+			$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',param,function(json){
+				var arr = [];
+				for(var i in json.folderdatanum){
+					var item = json.folderdatanum[i];
+					item['loaded'] = false;
+					item['loading'] = true;
+					item['children'] = [];
+					arr.push(item);
+					if(self.ParamScreen.value.classify.value.indexOf(item.pfid)>-1){
+						self.ParamScreen.value.classify.value.push(item.fid);
+					}
+				}
+
+				self.ParamScreen.value.classify.data = arr;
+				self.ParamScreen.value.classify.loading = false;
+				
+			},'json');
+		},
+		
+	}
+</script>

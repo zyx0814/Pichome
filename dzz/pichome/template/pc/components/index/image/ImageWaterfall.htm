@@ -1,0 +1,119 @@
+<script type="text/javascript">
+	var JsImageWaterfallData = {
+		ImageWaterfall:{
+			imgWidth : 252,
+			imgArr : [],
+			ImgAll : [],
+			total : 0,
+			columns:0,
+			boxHeight:0,
+			OtherHeight:0,
+			perpage:0,
+			Margin:8,
+			StoreImgdatas:[],
+		}
+	};
+	var JsImageWaterfallMethods = {
+		ImagesWaterfallInit(IsRefresh){
+			var self = this;
+			var documentW = document.body.clientWidth;
+			var boxWidth = $('.image-container').width();
+			if(IsRefresh || !self.ImageDataList.length){
+				self.ImageWaterfall.imgArr = [];
+				self.ImageWaterfall.perpage = 0;
+				self.ImageWaterfall.StoreImgdatas = [];
+				self.ImageDataListShow = {};
+				if(documentW<768){
+					self.ImageWaterfall.isMax = false;
+					self.ImageWaterfall.columns = 2;
+					self.ImageWaterfall.imgWidth = boxWidth/2;
+				}else{
+					self.ImageWaterfall.isMax = true;
+					self.ImageWaterfall.imgWidth = 252;
+					self.ImageWaterfall.columns = parseInt(boxWidth/self.ImageWaterfall.imgWidth);
+				}
+				var OtherHeight = 0
+				if(self.HeaderRightBtnDisplay.value.indexOf('name')>-1 || self.HeaderRightBtnDisplay.value.indexOf('extension')>-1){
+					OtherHeight += 45;
+				}
+				if(self.HeaderRightBtnDisplay.value.indexOf('other')>-1){
+					OtherHeight += 21;
+				}
+				self.ImageWaterfall.OtherHeight = OtherHeight;
+			}
+			
+			if(!self.ImageDataList.length){
+				$('.image-wrapper').height(0);
+				return false;
+			}
+			var pwidth = self.ImageWaterfall.imgWidth;
+			var arr = [];
+			var i = 0;
+			for (var index = self.ImageWaterfall.perpage; index < self.ImageDataList.length; index++){
+				arr[i] = JSON.parse(JSON.stringify(self.ImageDataList[index]));
+				var ppwidth = pwidth-8;
+				if(self.ImageWaterfall.isMax){
+					arr[i]['pwidth'] = 252;
+				}else{
+					arr[i]['pwidth'] = pwidth;
+				}
+				var h = ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height)>120?ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height):120;
+				arr[i]['pheight'] = h;
+				if (index < self.ImageWaterfall.columns) {
+					arr[i]['ptop'] = 0;
+					arr[i]['pleft'] = pwidth*index;
+					arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ImageWaterfall.Margin+self.ImageWaterfall.OtherHeight;
+					var imgArr = JSON.parse(JSON.stringify(arr[i]));
+					self.ImageWaterfall.imgArr.push(imgArr);
+					
+				}else{
+					if(self.ImageWaterfall.imgArr.length){
+						var minHeight = self.ImageWaterfall.imgArr[0]['pbottom'];
+						var findex = 0;
+						for (var j = 0; j < self.ImageWaterfall.imgArr.length; j++) {
+							if (minHeight > self.ImageWaterfall.imgArr[j]['pbottom']) {
+								minHeight = self.ImageWaterfall.imgArr[j]['pbottom'];
+								findex = j;
+							}
+						}
+						arr[i]['ptop'] = JSON.parse(JSON.stringify(self.ImageWaterfall.imgArr[findex]['pbottom']));
+						arr[i]['pleft'] = JSON.parse(JSON.stringify(self.ImageWaterfall.imgArr[findex]['pleft']));
+						arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ImageWaterfall.Margin+self.ImageWaterfall.OtherHeight;
+									
+						var imgArr = JSON.parse(JSON.stringify(arr[i]));
+						self.ImageWaterfall.imgArr[findex] = imgArr;
+					}
+					
+					
+				}
+				i++;
+			}
+			self.ImageWaterfall.perpage = self.ImageDataList.length;
+			if(self.ImageParams.scroll){
+				self.ImageWaterfall.StoreImgdatas.push.apply(self.ImageWaterfall.StoreImgdatas,arr);
+			}else{
+				self.ImageWaterfall.StoreImgdatas = arr;
+			}
+			var fminHeight = 0;
+			if(self.ImageWaterfall.imgArr.length){
+				for (var j = 0; j < self.ImageWaterfall.imgArr.length; j++) {
+					if (fminHeight < self.ImageWaterfall.imgArr[j]['pbottom']) {
+						fminHeight = self.ImageWaterfall.imgArr[j]['pbottom'];
+					}
+				}
+				
+			}
+			self.ImageWaterfall.boxHeight = fminHeight;
+			$('.image-wrapper').css({
+				width:self.ImageWaterfall.columns*pwidth+'px'
+			});
+			var boxHeight = $('#container_scroll').height();
+			if(boxHeight>self.ImageWaterfall.boxHeight){
+				$('.image-wrapper').height(boxHeight);
+			}else{
+				$('.image-wrapper').height(self.ImageWaterfall.boxHeight);
+			}
+			self.ImageLayoutScrollShow();
+		},
+	};
+</script>

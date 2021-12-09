@@ -1,11 +1,13 @@
 <template id="PageHeader">
 	<div>
-		<div id="top_header">
+		<div id="top_header" style="padding: 4px 16px;">
 			<div class="header-content">
-				<a class="h-left" href="{MOD_URL}">
-					<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
-					<span class="text">$_G['setting'][sitename]</span>
-				</a>
+				<div class="h-left">
+					<a href="{MOD_URL}">
+						<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+						<span class="text">$_G['setting'][sitename]</span>
+					</a>
+				</div>
 				<div class="h-center">
 				</div>
 				<div class="h-right">
@@ -72,7 +74,7 @@
 								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版本信息：</span><span class="mes">$_G[setting][version] <a class="update" href="javascript:;">检查更新</a></span>
+								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>

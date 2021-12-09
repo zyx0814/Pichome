@@ -1,0 +1,319 @@
+<div id="imagelayout">
+	<div class="image-top-message">
+		<!-- <div class="left" v-cloak>找到文件&nbsp;{{ImageParams.counttotal}}&nbsp;个</div> -->
+		<div class="right" v-if="DocumentTemplate==2 && ImageDataIsExpanded"><el-checkbox v-model="ImageParams.expanded" @change="ImageExpandedChange">显示子分类内容</el-checkbox></div>
+	</div>
+	<div class="image-container">
+		<div class="image-wrapper">
+			<template v-for="item in ImageDataListShow">
+				<div class="image-item" :key="item.rid" :style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}" >
+					<div class="image-inside">
+						<div 
+							class="image-single radius" 
+							:class="[{'border':item.opentype=='video'||item.opentype=='audio'},ImageType]"
+							:style="{height: item.pheight+'px',width: (item.pwidth-8)+'px',background:'#'+item.color}"
+							@mouseenter="ImageMouseenter" 
+							@mouseleave="ImageMouseleave" 
+							@click="item.type!='audio'&&ImageDetails(item.rid)">
+							<div class="image-storage">
+								<img class="img thumbnail" :src="item.icondata" alt="">
+								<img class="img opacity" :src="item.icondata" alt="" @load="Imageload(item.rid)"  :ref="'img_'+item.rid" />
+							</div>
+							<div class="topFlex" v-if="parseInt(item.download)||parseInt(item.share)">
+								<div v-if="parseInt(item.share)" class="circulars" @click.stop="ImageOperation('share',item.rid)">
+									<i class="ri-share-line"></i>
+								</div>
+								<div v-if="parseInt(item.download)" class="circulars" @click.stop="ImageOperation('down',item.dpath)">
+									<i class="ri-download-2-line"></i>
+								</div>
+							</div>
+							<template v-if="item.type=='audio'">
+								<div @click.stop="ImageDetails(item.rid)" class="circulars link">
+									<i class="ri-search-line"></i>
+									<span class="el-link--inner">详情</span>
+								</div>
+							</template>
+							<template v-else>
+								<div v-if="item.link" @click.stop="ImageLink(item.link)" class="circulars link">
+									<i class="ri-link"></i>
+									<span class="el-link--inner">链接</span>
+								</div>
+							</template>
+							<div v-if="item.type=='audio'||item.type=='video'" class="image-playurl" data-status="true" :data-type="item.type" :data-playurl="item.realpath">
+								
+							</div>
+							
+						</div>
+						<div class="message">
+							<div class="name" v-if="HeaderRightBtnDisplay.value.indexOf('name')>-1 || HeaderRightBtnDisplay.value.indexOf('extension')>-1">
+							<template v-if="HeaderRightBtnDisplay.value.indexOf('name')>-1">{{item.name}}</template><template v-if="HeaderRightBtnDisplay.value.indexOf('extension')>-1">.{{item.ext}}</template>
+							</div>
+							<template v-if="HeaderRightBtnDisplay.value.indexOf('other')>-1">
+								<div class="other" v-if="HeaderRightBtnDisplay.other=='size'">
+									<template  v-if="parseInt(item.width)>0">
+										<span>{{item.width}} × {{item.height}}</span>
+									</template>
+									<template v-else>•</template>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='filesize'">
+									<span>{{item.fsize}}</span>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='tag'">
+									<span v-if="!item.tags" class="label">-</span>
+									<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='grade'">
+									<span v-for="item in parseInt(item.grade)" class="score active el-icon-star-on"></span><span v-for="item in 5-parseInt(item.grade)" class="score el-icon-star-on"></span>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='btime'">
+									<span>{{item.btime}}</span>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='dateline'">
+									<span>{{item.dateline}}</span>
+								</div>
+								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='mtime'">
+									<span>{{item.mtime}}</span>
+								</div>
+							</template>
+						</div>
+					</div>
+				</div>
+			</template>
+		</div>
+		
+	</div>
+	
+	<div style="position: relative;height: 40px;" v-if="ImageParams.ValLoading" v-cloak>
+		<div class="img-loading">
+			<span class="el-icon-loading"></span>加载中...
+		</div>
+	</div>
+	<div style="position: relative;height: 40px;" v-if="ImageDataList.length&&ImageParams.page>=ImageParams.totalpage&&!ImageParams.loading&&!ImageParams.ValLoading" v-cloak>
+		<div class="img-loading">已经到底了</div>
+	</div>
+	
+</div>
+<div class="container-not" style="display: none;" v-cloak>
+	<div class="el-empty">
+		<div class="el-empty__image">
+			<img src="{MOD_PATH}/image/nodata.svg" />
+		</div>
+		<div class="el-empty__description">
+			<p>暂无数据</p>
+		</div>
+	</div>
+</div>
+<!--{template pc/components/index/image/ImageWaterfall}-->
+<!--{template pc/components/index/image/ImageRowGrid}-->
+<!--{template pc/components/index/image/ImageList}-->
+<!--{template pc/components/index/image/ImageAudioPlay}-->
+<script type="text/javascript">
+	var JsImageWatch = {
+		ImageType:{
+			handler(){
+				var self = this;
+				if(this.ImageParams.loading && this.ImageParams.ValLoading){
+					return false;
+				}
+				self.$nextTick(function(){
+					self.ImageParams.scroll = false;
+					self.ImageInit();
+				});
+				
+			},
+			deep:true
+		},
+		ImageDataList:{
+			handler(val){
+				var self = this;
+				var h = $(document).height()-$('.el-header').height();
+				this.ImageParams.Height = h;
+				self.$nextTick(function(){
+					self.ImageInit();
+					if(val.length){
+						$('#container_scroll .container-not').hide();
+					}else{
+						$('#container_scroll .container-not').show();
+					}
+				});
+			},
+			deep:true
+		}
+	};
+	var JsImageData = $.extend({},JsImageWaterfallData,JsImageRowGridData,JsImageListData,ImageAudioPlayData,{
+		ImageDataIsExpanded:false,
+		ImageDataList:[],
+		ImageDataListShow:{},
+		ImageType:'waterFall',//rowGrid,imageList
+		ImageParams:{
+			counttotal:0,
+			expanded:false,
+			page: 1,
+			perpage: 50,
+			total: 0,
+			totalpage:0,
+			scroll:false,
+			loading:true,
+			ValLoading:false,
+			Height:0,
+			Videovoice:true,
+			Musicovoice:false
+		}
+	});
+	var JsImageMethods = $.extend({},JsImageWaterfallMethods,JsImageRowGridMethods,JsImageListMethods,ImageAudioPlayMethods,{
+		ImageCreate(){
+			var pagesetting = $pagesetting;
+			var layout = 'waterFall';
+			var imageexpanded = false;
+			<!--{if $_G[uid]}-->
+			if(pagesetting && pagesetting.layout){
+				layout = pagesetting.layout;
+			}
+			var fimageexpanded = '$ImageExpanded';
+			if(fimageexpanded && parseInt(fimageexpanded)>0){
+				imageexpanded = true;
+			}
+			<!--{else}-->
+			var flayout = sessionStorage.getItem('Layout');
+			if(flayout){
+				layout = flayout;
+			}else{
+				if(pagesetting && pagesetting.layout){
+					layout = pagesetting.layout;
+				}
+			}
+			
+			var fimageexpanded = sessionStorage.getItem('imageexpanded');
+			if(fimageexpanded == null){
+				imageexpanded = true;
+			}else{
+				if(parseInt(fimageexpanded)){
+					imageexpanded = true;
+				}
+			}
+			
+			<!--{/if}-->
+			this.ImageParams.expanded = imageexpanded;
+			this.ImageType = layout;
+		},
+		ImageInit(){
+			var IsRefresh = true;
+			if(this.ImageParams.scroll){
+				IsRefresh = false;
+			}
+			if(this.ImageType == 'imageList'){
+				this.ImagesListInit(IsRefresh);
+			}else if(this.ImageType == 'rowGrid'){
+				this.ImagesRowGridInit(IsRefresh);
+			}else{
+				this.ImagesWaterfallInit(IsRefresh);
+			}
+			
+			this.ImageParams.loading = false;
+			this.ImageParams.ValLoading = false;
+		},
+		ImageDetails(rid){
+			var arr = [];
+			for(var i in this.ImageDataList){
+				arr.push(this.ImageDataList[i].rid)
+			}
+			window.localStorage.setItem('imgs',arr.join(','));
+			if(this.OpenDetailType == 'new'){
+				window.open(SITEURL+MOD_URL+'&op=details#rid='+rid);
+			}else{
+				this.DetailsIframe = SITEURL+MOD_URL+'&op=details&opentype=current#rid='+rid;
+			}
+		},
+		ImageLink(url){
+			if(url.indexOf('https://')>-1){
+				window.open(url);
+			}else{
+				window.open('https://'+url);
+			}
+			return false;
+		},
+		ImageMouseenter(e){
+			this.ImageAudioPlayMouseenter($(e.target));
+		},
+		ImageMouseleave(e){
+			this.ImageAudioPlayMouseleave($(e.target));
+		},
+		ImageLayoutScrollShow(){
+			var self = this;
+			var H = $('#container_scroll .el-scrollbar__wrap')[0].clientHeight;//获取可视区域高度
+			var S = $('#container_scroll .el-scrollbar__wrap')[0].scrollTop;
+			var arr = [];
+			
+			if(self.ImageType == 'imageList'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageList.StoreImgdatas));
+			}else if(self.ImageType == 'rowGrid'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageRowGrid.StoreImgdatas));
+			}else{
+				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageWaterfall.StoreImgdatas));
+			}
+			self.ImageDataListShow = {};
+			for(var o in StoreImgdatas){
+				var item = JSON.parse(JSON.stringify(StoreImgdatas[o]));
+				if ((H+S) >= item.ptop && S<item.pbottom) {
+					item['index'] = parseInt(o);
+					self.ImageDataListShow[item.rid] = item;
+				}
+			}
+			
+		},
+		Imageload(rid){
+			var self = this;
+			var item = $(self.$refs['img_'+rid]);
+			item.closest('.image-single').css('background','').removeClass('radius');
+			item.removeClass('opacity').siblings('.img').remove();
+			
+		},
+		ImageOperation(type,val){
+			if(type == 'share'){
+				var self = this;
+				$.post('{MOD_URL}&op=ajax&operation=createshare',{
+					rid:val
+				},function(data){
+					if(data.success){
+						self.$notify({
+						  title: '分享成功',
+						  duration:6000,
+						  dangerouslyUseHTMLString: true,
+						  message: '<p class="address">'+data.success+'</p><div style="text-align: right;margin-top: 6px;"><button type="button" class="el-button el-button--primary el-button--mini copy-share-btn"><span>复制地址</span></button></div>',
+						  position: 'bottom-right'
+						});
+					}else{
+						self.$message({
+						  message: '分享失败',
+						  type: 'error'
+						});
+					}
+				},'json')
+			}else if(type == 'down'){
+				window.open(SITEURL+MOD_URL+'&op=download&dpath='+val);
+			}else if(type == 'star'){
+				// this.dialogVisible = true;
+			}
+		},
+		ImageExpandedChange(status){
+			<!--{if $_G[uid]}-->
+			$.post('{MOD_URL}&op=ajax&operation=expandedsetting',{
+				settingsubmit:true,
+				formhash:'{FORMHASH}',
+				pichomeimageexpanded:status?1:0
+			},function(data){
+				if(data.success){
+				}else{
+					self.$message({
+					  message: '设置失败',
+					  type: 'error'
+					});
+				}
+			},'json');
+			<!--{else}-->
+			sessionStorage.setItem('imageexpanded',status?1:0);
+			<!--{/if}-->
+			this.CommonGetImageData();
+		}
+	});
+</script>

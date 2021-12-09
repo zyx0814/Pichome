@@ -16,5 +16,5 @@ if(!defined('IN_OAOOA')) {
 
 require_once libfile('function/cache');
 updatecache();
-
+cleartemplatecache();
 ?>

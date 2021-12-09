@@ -375,11 +375,12 @@ class image {
 		return array($width,$height);
 	}
 	function Thumb_IM() {
+
 		switch($this->param['thumbtype']) {
 			case 'fixnone':
 			case 1:
 				if($this->imginfo['width'] >= $this->param['thumbwidth'] || $this->imginfo['height'] >= $this->param['thumbheight']) {
-					$im = new Imagick(realpath($this->source));
+				    $im = new Imagick(realpath($this->source));
 					$this->autoRotateImage($im);
 					$im->stripImage(); //去除图片信息
 					$im->setIteratorIndex(0);

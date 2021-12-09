@@ -59,6 +59,7 @@
 							break;
 							case 'classify':
 								self.ParamScreen.value.classify.value = value.split(',');
+								self.ParamScreen.value.classify.realvalue = value.split(',');
 							break;
 							case 'tag':
 								var fval = value.split(',');
@@ -169,7 +170,9 @@
 				self.ParamImages.valloading = true;
 			}
 			var hash = '';
-			self.ParamData = {};
+			self.ParamData = {
+				hassub:1
+			};
 			for(var x in self.ParamDataInit){
 				var value = self.ParamDataInit[x];
 				switch(x){
@@ -187,10 +190,12 @@
 						}
 					break;
 					case 'classify':
-						if(self.ParamScreen.value.classify.value && self.ParamScreen.value.classify.value.length){
-							self.ParamData['fids'] = self.ParamScreen.value.classify.value.join(',');
+						
+						if(self.ParamScreen.value.classify.realvalue && self.ParamScreen.value.classify.realvalue.length){
+							
+							self.ParamData['fids'] = self.ParamScreen.value.classify.realvalue.join(',');
 							if(hash) hash += '&';
-							hash += 'classify='+ self.ParamScreen.value.classify.value.join(',');
+							hash += 'classify='+ self.ParamScreen.value.classify.realvalue.join(',');
 						}
 					break;
 					case 'tag':
@@ -393,6 +398,13 @@
 				var type = item.type;
 				switch(type){
 					case 'classify':
+						var fitem = self.ParamScreen.value[type];
+						if(fitem.value.length){
+							item.dot = true;
+						}else{
+							item.dot = false;
+						}
+					break;
 					case 'ext':
 					case 'shape':
 					case 'grade':
@@ -449,7 +461,6 @@
 			for(var i in self.ParamScreen.data){
 				var item = self.ParamScreen.data[i];
 				switch(item.type){
-					case 'classify':
 					case 'tag':
 					case 'ext':
 					case 'shape':
@@ -458,6 +469,7 @@
 							num++;
 						}
 					break;
+					case 'classify':
 					case 'color':
 					case 'link':
 					case 'desc':
@@ -526,9 +538,13 @@
 		},
 		CommonGetScreenData(){
 			var self = this;
-			$.post(MOD_URL+'&op=ajax&operation=getscreen',{
+			var param = {
 				appid:self.ParamLibrary.activeId
-			},function(data){
+			};
+			if(self.ParamScreen.value.classify.realvalue && self.ParamScreen.value.classify.realvalue.length){
+				param['fids'] = self.ParamScreen.value.classify.realvalue.join(',');
+			}
+			$.post(MOD_URL+'&op=ajax&operation=getscreen',param,function(data){
 				if(data.success){
 					var fdata = data.data;
 					var arr = [];
@@ -582,6 +598,11 @@
 					}
 					self.ParamScreen.groupdata = grouparr;
 					self.ParamScreen.data = arr;
+					var folderdata = data.folderdata;
+					for(var f in folderdata){
+						var fitem = folderdata[f];
+						self.ScreenSubstring(fitem.pathkey,fitem.appid);
+					}
 					if(arr.length){
 						self.ParamFooter.data.screen.show = true;
 						self.CommonSetBadge();

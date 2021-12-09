@@ -23,9 +23,9 @@
        }
        //插入和更新目录数据
        public function insert_folderdata_by_appid($appid,$folderdata,$folderarr = array(),$pfid='',$pathkey=''){
-           foreach ($folderdata as $v) {
+            foreach ($folderdata as $v) {
                $fid = $v['id'].$appid;
-               $setarr=['fname'=>$v['name'],'dateline'=>TIMESTAMP,'pfid'=>$pfid,'appid'=>$appid,'pathkey'=>$pathkey.$fid];
+               $setarr=['fname'=>$v['name'],'dateline'=>TIMESTAMP,'pfid'=>$pfid,'appid'=>$appid,'pathkey'=>($pathkey)?$pathkey:$fid];
                if($v['coverId']) $setarr['cover'] = $v['coverId'].$appid;
                if($v['password']) $setarr['password'] = $v['password'];
                if($v['passwordTips']) $setarr['passwordtips'] = trim($v['passwordTips']);
@@ -37,6 +37,7 @@
                }else{
                     //如果插入数据失败跳过当前层级目录
                    $setarr['fid'] = $fid;
+                   if(!$setarr['fname']) continue;
                    if(!parent::insert($setarr))continue;
                }
                $folderarr[] = $setarr;
@@ -44,12 +45,9 @@
                    $tmpchild = $v['children'];
                    foreach($tmpchild as $child){
                        $cfid = $child['id'].$appid;
-                       $setarr=['fname'=>$child['name'],'dateline'=>TIMESTAMP,'pfid'=>$fid,'appid'=>$appid,'pathkey'=>$pathkey.$fid.$cfid];
-                       if($child['coverId']) $setarr['cover'] = $child['coverId'].$appid;
-                       if($child['password']) $setarr['password'] = $child['password'];
-                       if($v['passwordTips']) $setarr['passwordtips'] = trim($child['passwordTips']);
+                       $folderarr = $this->insert_folderdata_by_appid($appid,[$child],$folderarr,$fid,($pathkey) ? $pathkey.$cfid:$fid.$cfid);
                    }
-                   $folderarr = $this->insert_folderdata_by_appid($appid,$tmpchild,$folderarr,$fid,$pathkey.$fid.$cfid);
+
             
                }
            }
@@ -80,6 +78,8 @@
                     $haspassword = 1;
                 }
             }
+            unset($haspasswordfids);
+            unset($folderids);
             return $haspassword;
        }
        
@@ -104,4 +104,50 @@
           }
           return $returndata;
         }
+
+        public function fetch_folder_by_appid_pfid($appid,$pfid=[]){
+            
+            $folderdata = [];
+			if(!empty($pfid)){
+				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid in(%n)",array($this->_table,$appid,$pfid)) as $v){
+				    $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
+                    left join %t f on fr.fid = f.fid
+                    where fr.appid = %s and f.pathkey  like %s",array('pichome_folderresources','pichome_folder',$appid,$v['pathkey'].'%'));
+				    $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
+				   $folderdata[] = $v;
+				   
+				}
+			}else{
+				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid = ''",array($this->_table,$appid)) as $v){
+                    $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
+                    left join %t f on fr.fid = f.fid
+                    where fr.appid = %s and f.pathkey  like %s",array('pichome_folderresources','pichome_folder',$appid,$v['pathkey'].'%'));
+                    $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
+				    $folderdata[] = $v;
+				   
+				}
+			}
+			return $folderdata;
+        }
+        public function search_by_fname($keyword,$appid=''){
+            $folderdata = [];
+            $wheresql = ' fname like %s  ';
+            $params = array($this->_table,'%'.$keyword.'%');
+            if($appid){
+                $wheresql .= ' and appid = %s ';
+                $params[] = $appid;
+            }
+            foreach(DB::fetch_all("select fname,fid,pathkey,appid,pfid from %t where  $wheresql",$params)as $v ){
+                $folderdata[$v['fid']] = $v;
+            }
+            foreach ($folderdata as $k=>$v){
+                $len=strlen($folderdata[$k]['pathkey']);
+
+                $folderdata[$k]['len']=$len;
+            }
+            $cloumarr = array_column($folderdata,'len');
+            array_multisort($cloumarr,SORT_ASC,$folderdata);
+            return $folderdata;
+        }
+
     }

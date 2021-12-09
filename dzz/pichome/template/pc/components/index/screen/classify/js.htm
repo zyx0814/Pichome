@@ -1,0 +1,204 @@
+<script type="text/javascript">
+	var JsScreenClassifyMethods = {
+		ScreenClassifyTreeCheck(data, node){
+			var self = this;
+			var checkedNodes = node.checkedNodes;
+			var checkedKeys = node.checkedKeys;
+			var text = [];
+			var fid = [];
+			self.ScreenValue.classify.tree.DefaultExpandedKeysInit = [];
+			var newcheckedNodes = [];
+			if(checkedKeys.length){
+				if(checkedKeys.length>1){
+					self.ImageDataIsExpanded = false;
+				}else{
+					self.ImageDataIsExpanded = checkedNodes[0].leaf?false:true;
+				}
+			}else{
+				self.ImageDataIsExpanded = false;
+			}
+			for(var i in checkedNodes){
+				var item = checkedNodes[i];
+				if(item.pfid){
+					if(checkedKeys.indexOf(item.pfid)<0){
+						newcheckedNodes.push(item);
+					}
+				}else{
+					newcheckedNodes.push(item);
+				}
+			}
+			for(var x in newcheckedNodes){
+				var xitem = newcheckedNodes[x];
+				text.push(xitem.fname);
+				fid.push(xitem.fid);
+				if(xitem.pathkey){
+					self.ScreenSubstring(xitem.pathkey,xitem.appid);
+				}
+			}
+			self.ScreenValue.classify.tree.DefaultExpandedKeys = self.ScreenValue.classify.tree.DefaultExpandedKeysInit;
+			this.ScreenValue.classify.tree.DefaultFids = fid;
+			this.ScreenValue.classify.value = fid;
+			this.ScreenValue.classify.text = text;
+			this.ScreenSubmit();
+		},
+		ScreenClassifyFilterText:debounce(function(val){//输入
+			var self = this;
+			self.ScreenValue.classify.tree.show = false;
+			self.ScreenValue.classify.tree.loading = true;
+			self.ScreenValue.classify.tree.DefaultExpandedKeys = [];
+			self.ScreenValue.classify.tree.arrangementLast = [];
+			if(val){
+				$.post(MOD_URL+'&op=ajax&operation=searchfolderbyname',{
+					appid:self.Appid,
+					keyword:val
+				},function(data){
+					for(var b in data.folderdata){
+						var bitem = data.folderdata[b];
+						if(self.ScreenValue.classify.tree.arrangementLast.indexOf(bitem.fid)<0){
+							self.ScreenValue.classify.tree.arrangementLast.push(bitem.fid);
+						}
+						if(bitem.pathkey.length>19){
+							self.ScreenValue.classify.tree.arrangement = [];
+							if(bitem.pathkey){
+								self.ScreenClassifySubstring(bitem.pathkey,bitem.appid);
+							}
+							var pathkey = self.ScreenValue.classify.tree.arrangement;
+							for(var p in pathkey){
+								if(self.ScreenValue.classify.tree.DefaultExpandedKeys.indexOf(pathkey[p])<0){
+									self.ScreenValue.classify.tree.DefaultExpandedKeys.push(pathkey[p])
+								}
+							}
+						}
+					}
+					self.ScreenValue.classify.tree.show = true;
+				},'json');
+			}else{
+				self.ScreenValue.classify.tree.DefaultExpandedKeys = this.ScreenValue.classify.tree.DefaultExpandedKeysInit;
+				self.$nextTick(function(){
+					self.ScreenValue.classify.tree.show = true;
+				});
+			}
+			
+		},800),
+		ScreenClassifySubstring(str,appid){
+			var self = this;
+			var farr = str.split(appid);
+			var arr = [];
+			for(var f in farr){
+				if(farr[f]){
+					arr.push(farr[f]);
+				}
+			}
+			arr.pop();
+			for(var i in arr){
+				var pathkey = arr[i]+appid;
+				if(self.ScreenValue.classify.tree.arrangement.indexOf(pathkey) == -1){
+					self.ScreenValue.classify.tree.arrangement.push(pathkey);
+				}
+			}
+		},
+		ScreenClassifySubstringFinish(){
+			var self = this;
+			if(this.ScreenValue.classify.tree.DefaultExpandedKeys.length){
+				var status = false;
+				for(var i in this.ScreenValue.classify.tree.DefaultExpandedKeys){
+					var node = self.$refs.ClassifyTree.getNode(this.ScreenValue.classify.tree.DefaultExpandedKeys[i]);
+					if(!node){
+						return false;
+					}
+					status = true;
+				}
+				if(status){
+					self.ScreenValue.classify.tree.loading = false;
+				}
+			}else{
+				self.ScreenValue.classify.tree.loading = false;
+			}
+		},
+		ScreenClassifyGetTreeData(node, resolve){
+			var self = this;
+			self.ScreenValue.classify.tree.appid = self.Appid;
+			if (node.level === 0) {
+				var param = {
+					appid:self.Appid,
+				};
+				$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',param,function(data){
+					var folderdatanum = data.folderdatanum;
+					var arr = [];
+					for(var f in folderdatanum){
+						var item = folderdatanum[f];
+						if(self.ScreenValue.classify.tree.filterText){
+							if(self.ScreenValue.classify.tree.DefaultExpandedKeys.indexOf(item.fid)>-1 || self.ScreenValue.classify.tree.arrangementLast.indexOf(item.fid)>-1){
+								arr.push(item);
+							}
+						}else{
+							if(item.fid == 'not'){
+								item['leaf'] = true;
+							}
+							arr.push(item);
+						}
+						
+					}
+					resolve(arr);
+				},'json');
+				self.$nextTick(function(){
+					self.ScreenClassifySubstringFinish();
+				})
+			}else{
+				$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',{
+					appid:node.data.appid,
+					pfids:node.data.fid
+				},function(data){
+					var arr = [];
+					for(var i in data.folderdatanum){
+						var item = data.folderdatanum[i];
+						if(self.ScreenValue.classify.tree.filterText){
+							if(self.ScreenValue.classify.tree.DefaultExpandedKeys.indexOf(item.fid)>-1 || self.ScreenValue.classify.tree.arrangementLast.indexOf(item.fid)>-1){
+								arr.push(item);
+							}
+						}else{
+							arr.push(item);
+						}
+						
+					}
+					resolve(arr);
+					self.$nextTick(function(){
+						self.ScreenClassifySubstringFinish();
+					})
+				},'json');
+				
+			}
+		},
+		
+		ScreenClassifyFilter(value, data) {//分类搜索
+			if (!value) return true;
+			return data.fname.indexOf(value) !== -1;
+		},
+		ScreenClassifyPopoverHide(){
+			var self = this;
+			// this.ScreenValue.classify.filterText = '';
+			// self.$refs.ClassifyTree[0].filter();
+			// this.ScreenValue.classify.loading = false;
+		},
+		ScreenClassifyPopoverShow(){
+			var self = this;
+			if(self.ScreenValue.classify.tree.appid != this.Appid){
+				self.ScreenValue.classify.tree.show = false;
+				self.ScreenValue.classify.tree.loading = true;
+				self.ScreenValue.classify.tree.DefaultExpandedKeys = this.ScreenValue.classify.tree.DefaultExpandedKeysInit;
+				self.$nextTick(function(){
+					self.ScreenValue.classify.tree.show = true;
+				});
+			}
+		},
+		ScreenClassifyGetArrangement(fid){
+			var arr = [];
+			for(var i in this.ScreenValue.classify.arrangement){
+				if(this.ScreenValue.classify.arrangement[i].pfid == fid){
+					arr.push(this.ScreenValue.classify.arrangement[i])
+				}
+			}
+			return arr;
+		}
+	};
+</script>

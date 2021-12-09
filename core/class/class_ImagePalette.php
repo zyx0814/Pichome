@@ -238,10 +238,11 @@ class ImagePalette implements IteratorAggregate
     protected function setWorkingImageImagick()
     {
         $file = file_get_contents($this->file);
-        $temp = tempnam("/tmp", uniqid("ImagePalette_", true));
+        $temp = tempnam(DZZ_ROOT.'./data/attachment/cache', uniqid("ImagePalette_", true));
         if(!file_put_contents($temp, $file)) return false;
         $this->loadedImage = new Imagick($temp);
 		$this->loadedImage ->thumbnailImage(64,64,true);
+		@unlink($temp);
 		return true;
     }
 

@@ -291,6 +291,8 @@ if ($operation == 'patch' || $operation == 'cross') {
         dheader('Location: ' . $url);
 
     } elseif ($step == 5) {
+		print_r(1111);
+		die;
         $file = DZZ_ROOT . './data/update/pichome' . $version . '/updatelist.tmp';
         @unlink($file);
         @unlink(DZZ_ROOT . './install/update.php');

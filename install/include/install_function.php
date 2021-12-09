@@ -1170,6 +1170,7 @@ function upgradeinformation($uniqueid,$sitename) {
     $update[ 'siteurl' ] = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'];
     $update[ 'sitename' ] = $sitename;
     $update[ 'version' ] = CORE_VERSION;
+    $update[ 'version_level' ] = CORE_VERSION_LEVEL;
     $update[ 'release' ] = CORE_RELEASE;
     $update[ 'fixbug' ] = CORE_FIXBUG;
     
@@ -1180,3 +1181,30 @@ function upgradeinformation($uniqueid,$sitename) {
     $upgradeurl = OFFICIAL . "market/system/info/" . rawurlencode( base64_encode( $data ) ) . "/" . time();
     dfopen( $upgradeurl );
   }
+    function quote($str, $noarray = false) {
+        
+        if (is_string($str))
+            return '\'' . addcslashes($str, "\n\r\\'\"\032") . '\'';
+        
+        if (is_int($str) or is_float($str))
+            return '\'' . $str . '\'';
+        
+        if (is_array($str)) {
+            if($noarray === false) {
+                foreach ($str as &$v) {
+                    $v = quote($v, true);
+                }
+                return $str;
+            } else {
+                return '\'\'';
+            }
+        }
+        
+        if (is_bool($str))
+            return $str ? '1' : '0';
+        
+        return '\'\'';
+    }
+    function str_transferred_meaning($str){
+        return str_replace(array('\'','(',')','+','^','$','{','}','[',']','#'),array("\'",'\(','\)','\+','\^','\$','\{','\}','\[','\]','\#'),$str);
+    }

@@ -33,9 +33,8 @@ require ROOT_PATH.'./install/include/install_var.php';
 	'Home'=>'家庭版',
 	'Persion'=>'个人版',
 );*/
-$arr=explode('.',CORE_VERSION);
-if(count($arr) > 1)array_shift($arr);
-$version=implode('.',$arr);
+
+$version=CORE_VERSION;
 
 //$version_name=$versions[CORE_VERSION_LEVEL];
 if(function_exists('mysqli_connect')) {
@@ -45,7 +44,6 @@ if(function_exists('mysqli_connect')) {
 }
 require ROOT_PATH.'./install/include/install_function.php';
 require ROOT_PATH.'./install/language/zh-cn/lang.php';
-
 $view_off = getgpc('view_off');
 define('VIEW_OFF', $view_off ? TRUE : FALSE);
 
@@ -126,6 +124,7 @@ elseif($method == 'db_init') {
 	$dbuser = $_config['db'][1]['dbuser'];
 	$tablepre = $_config['db'][1]['tablepre'];
 	$adminemail = 'admin@oaooa.com';
+	$company = 'pichome';
 
 	$error_msg = array();
 	if(isset($form_db_init_items) && is_array($form_db_init_items)) {
@@ -308,6 +307,7 @@ elseif($method == 'db_init') {
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('verhash', '".random(3)."')");
 		//创建默认机构
 		if($company){
+		    $company = str_transferred_meaning($company);
 			$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('sitename', '".$company."')");
 			$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('bbname', '".$company."')");
 			//插入默认机构
@@ -324,22 +324,13 @@ elseif($method == 'db_init') {
 			showjsmessage(lang('set_system1'));
 		}
 		
-		/*for($i=0; $i<5;$i++){
-			showjsmessage(lang('import_division_data'));
-		}
-		install_districtdata();*/
-		
-		for($i=0; $i<5;$i++){
-			showjsmessage(lang('import_division_data1'));
-		}
-		
 		$yearmonth = date('Ym_', time());
 		loginit($yearmonth.'loginlog');
 		loginit($yearmonth.'cplog');
 		loginit($yearmonth.'errorlog');
 
 		dir_clear(ROOT_PATH.'./data/template');
-		//dir_clear(ROOT_PATH.'./data/cache');
+		dir_clear(ROOT_PATH.'./data/cache');
 		
 
 		foreach($serialize_sql_setting as $k => $v) {

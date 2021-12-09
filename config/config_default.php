@@ -166,4 +166,21 @@ $_config['userlogin']['checkip']		= 1; 		//用户登录错误验证ip，对于�
 
 //$_config['system_os']	= 'linux';		//windows,linux,mac,系统会自动判断
 //$_config['system_charset']='utf-8';	//操作系统编码，不设置系统将根据操作系统类型来判断linux:utf-8;windows:gbk;
+
+//pichome宽高
+$_config['pichomethumbwidth']= 900;
+$_config['pichomethumbheight']= 900;
+//pichome缩略图颜色允许后缀
+$_config['getcolorextlimit'] = ['jpg','png','jpeg','gif','webp','pdf'];
+//ffmpeg位置
+$_config['pichomeffmpegposition'] = '';
+$_config['pichomeffprobposition'] = '';
+
+//支持获取音视频信息的后缀
+$_config['pichomeffmpeggetvieoinoext']= [ 'avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts',
+    '3gp', 'webm', 'flv', 'wav', 'mp3', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au', 'm4a'];
+//支持获取音视频缩略图后缀
+$_config['pichomeffmpeggetthumbext']= [ 'avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts',
+    '3gp', 'webm', 'flv', 'wav', 'mp3', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au', 'm4a'];
+
 return $_config;

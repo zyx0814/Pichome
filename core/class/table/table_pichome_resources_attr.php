@@ -18,24 +18,9 @@
       		$rid = trim($setarr['rid']);
       		if($attrdata = parent::fetch($rid)){
       			unset($setarr['rid']);
-      			if($setarr['tag']){
-      			    $tagarr = explode(',',$setarr['tag']);
-      			    $otagarr = explode(',',$attrdata['tag']);
-      			    $delrtids = [];
-      			    foreach(DB::fetch_all("select id,tid from %t where rid = %s and tid not in(%n)",array('pichome_resourcestag',$rid,$tagarr)) as $v){
-                        $delrtids[] = $v['id'];
-                        C::t('pichome_tag')->delete_by_tid($v['tid']);
-                    }
-      			    if(!empty($delrtids)) C::t('pichome_resourcestag')->delete($delrtids);
-      			    $addrtids = array_diff($tagarr,$otagarr);
-      			    foreach ($addrtids as $tid){
-                        $rtag = ['appid' => $attrdata['appid'], 'rid' => $rid, 'tid' => $tid];
-                        C::t('pichome_resourcestag')->insert($rtag);
-                    }
-                }
       			return parent::update($rid,$setarr);
       		}else{
-      			return parent::insert($setarr,1);
+      			return parent::insert($setarr);
       		}
       	}
       	//删除文件属性数据

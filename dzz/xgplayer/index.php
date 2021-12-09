@@ -39,8 +39,9 @@ if($_GET['operation']=='progress'){
 		$src=IO::getFileUri($path);
 	}
 }elseif($_GET['src']){
-	
-    $src = str_replace('+',' ',urlencode($_GET['src']));
+	$ismobile = helper_browser::ismobile();
+	$src = urldecode($_GET['src']);
+    //$src = str_replace('+',' ',urlencode($src));
     if(!isset($_GET['ext'])){
         $filedirpathinfo = pathinfo($src);
         $filedirextensionarr = explode('?', $filedirpathinfo['extension']);

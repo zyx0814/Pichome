@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenShapeMethods = {
+		ScreenShapeChange(val,text){
+			if(this.ScreenValue.shape.value.indexOf(val)>-1){
+				this.ScreenValue.shape.text.push(text);
+			}else{
+				var index = this.ScreenValue.shape.text.indexOf(text);
+				this.ScreenValue.shape.text.splice(index,1);
+			}
+			this.ScreenSubmit();
+		},
+		ScreenShapeCustom(status){
+			if(this.ScreenValue.shape.width && this.ScreenValue.shape.height){
+				this.ScreenSubmit();
+			}
+		},
+		ScreenShapeInput:debounce(function(){//输入
+			if(this.ScreenValue.shape.width && this.ScreenValue.shape.height){
+				this.ScreenSubmit();
+			}
+		},800),
+	};
+</script>

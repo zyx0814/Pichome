@@ -45,86 +45,13 @@
 		</template>
 	</div>
 </footer>
+<!--{template mobile/components/classify}-->
 <!--{template mobile/components/index/JsCommon}-->
 <!--{template mobile/components/index/JsSearch}-->
 <!--{template mobile/components/index/JsSort}-->
 <!--{template mobile/components/index/JsScreen}-->
 <!--{template mobile/components/index/JsMy}-->
 <script type="text/javascript">
-	Vue.component('screenclassify', {
-		template: `<van-collapse v-model="parammodel.activeNames" :border="false">
-						<van-collapse-item v-for="item in paramdata" :key="item.fid" :name="item.fid" disabled  :class="{'active':parammodel.value.indexOf(item.fid)>-1}" :ref="'collapse_'+item.fid">
-							<template #title>
-								<div  @click.stop="ScreenClassifyClick(item)">
-									{{item.fname}}
-								</div>
-							</template>
-							<template #right-icon>
-								<template v-if="item.children && item.children.length">
-									<i @click.stop="ScreenClassifyToggle(item.fid)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
-								</template>
-								<template v-else>
-									<div style="width: 20px;"></div>
-								</template>
-							</template>
-							<template v-if="item.children && item.children.length">
-								<screenclassify :parammodel="parammodel" :paramdata="item.children" @screenclassifychange="screenclassifychange"></screenclassify>
-							</template>
-						</van-collapse-item>
-					</van-collapse>`,
-		props:['paramdata','parammodel'],
-		data: function() {
-			return {}
-		},
-		created() {
-		},
-		methods:{
-			ScreenClassifyClick(item){
-				var self = this;
-				var index = this.parammodel.value.indexOf(item.fid);
-				if(index> -1){
-					this.parammodel.value.splice(index,1);
-					this.ScreenClassifyChild(item.children,'del');
-				}else{
-					this.parammodel.value.push(item.fid);
-					this.ScreenClassifyChild(item.children,'add');
-				}
-				self.$emit('screenclassifychange');
-			},
-			ScreenClassifyChild(item,type){
-				var classify = this.parammodel.value;
-				for(var i in item){
-					var fitem = item[i];
-					var index = classify.indexOf(fitem.fid);
-					if(type == 'add'){
-						if(index<0){
-							classify.push(fitem.fid)
-						}
-					}else{
-						if(index>-1){
-							classify.splice(index,1);
-						}
-					}
-					if(fitem.children && fitem.children.length){
-						this.ScreenClassifyChild(fitem.children,type);
-					}
-				}
-			},
-			screenclassifychange(){
-				var self = this;
-				self.$emit('screenclassifychange');
-			},
-			ScreenClassifyToggle(fid){
-				var self = this;
-				if(self.$refs['collapse_'+fid] && self.$refs['collapse_'+fid].length){
-					self.$refs['collapse_'+fid][0].toggle();
-				}
-			},
-		},
-		mounted() {
-		},
-	});
-	
 	new Vue({
 		el: '#dzzoffice',
 		data: function() {
@@ -183,7 +110,6 @@
 		},
 		created() {
 			var pagesetting = $pagesetting;
-			console.log(pagesetting)
 			if(pagesetting){
 				var show = [];
 				<!--{if $_G[uid]}-->
@@ -193,7 +119,12 @@
 				<!--{else}-->
 				var fshow = sessionStorage.getItem('InformationShow');
 				if(fshow){
-					show = fshow.split(',');
+					if(fshow == 'not'){
+						show = [];
+					}else{
+						show = fshow.split(',');
+					}
+					
 				}else{
 					if(pagesetting.show){
 						show = pagesetting.show.split(',');

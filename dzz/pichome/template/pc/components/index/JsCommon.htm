@@ -1,0 +1,118 @@
+<script type="text/javascript">
+	var JsCommonData = {
+		PostParam:'',
+	};
+	var JsCommonMethods = {
+		CommonGetImageData(type){
+			var self = this;
+			if(type == 'scroll'){
+				self.ImageParams.page += 1;
+				self.ImageParams.scroll = true;
+				self.ImageParams.ValLoading = true;
+			}else{
+				self.ImageParams.page = 1;
+				self.ImageParams.loading = true;
+				self.ImageParams.scroll = false;
+				if($('#container_scroll .el-scrollbar__wrap').length){
+					$('#container_scroll .el-scrollbar__wrap')[0].scrollTop = 0;
+				}
+			}
+			self.$nextTick(function(){
+				this.LayoutStructure();//设置布局结构
+				self.HdeaderSearchScreenResize();
+			});
+			self.CommonSetHash();//设置hash
+			var params = self.CommonSetParam();//获取提交参数
+			if(self.PostParam){
+				self.PostParam.abort();
+			}
+			self.PostParam = $.post(MOD_URL+'&op=filelist&operation=filelist',params,function(data){
+				var json = data.data;
+				self.ImageParams.counttotal = json.counttotal;
+				if(parseInt(json.param.page)>1){
+					self.ImageParams.totalpage = Math.ceil(json.param.total / json.param.perpage);
+				}else{
+					var ftotal = Math.ceil(json.param.total / json.param.perpage);
+					self.ImageParams.totalpage = ftotal<1?1:ftotal;
+				}
+				if(self.ImageParams.scroll){
+					self.ImageDataList.push.apply(self.ImageDataList,json.data);
+				}else{
+					self.ImageDataList = json.data;
+				}
+				
+			},'json');
+		},
+		CommonSetHash(){
+			var self = this;
+			var ScreenParam = self.ScreenGetParam('hash');
+			var OrderParam = self.HeaderRightBtnGetParam();
+			var LeftParam = {};
+			var Params = {}
+			if(self.Appid&&self.Appid!='all'){
+				Params['appid'] = self.Appid;
+			}
+			// if(self.DocumentTemplate ==2 && self.LeftClassify){
+			// 	var fid = self.LeftClassify.replace(self.Appid,'');
+			// 	if(fid == 'not'){
+			// 		Params['classify'] = '未分类';
+			// 	}else{
+			// 		Params['classify'] = self.LeftClassify;
+			// 	}
+			// }
+			if(self.HeaderKeyword){
+				Params['keyword'] = self.HeaderKeyword;
+			}
+			Params = $.extend({},Params,ScreenParam,OrderParam,LeftParam);
+			var arr = [];
+			for(var key in Params){
+				arr.push(key+'='+Params[key]);
+			}
+			var hash = arr.join('&');
+			location.hash=hash;
+		},
+		CommonSetParam(){
+			var self = this;
+			var Params = {};
+			var ScreenParam = self.ScreenGetParam();
+			var OrderParam = self.HeaderRightBtnGetParam();
+			if(self.DocumentTemplate ==2 && self.LeftClassify){
+				Params['fids'] = self.LeftClassify;
+			}
+			if(self.Appid&&self.Appid!='all'){
+				Params['appid'] = self.Appid;
+			}
+			if(self.HeaderKeyword){
+				Params['keyword'] = self.HeaderKeyword;
+			}
+			
+			Params['perpage'] = self.ImageParams.perpage;
+			Params['page'] = self.ImageParams.page;
+			return $.extend({},Params,ScreenParam,OrderParam);
+		},
+		CommonGetHashParam(name,url){
+			if(!url){
+				var hash=location.hash;
+				var url=hash.replace(/&.+$/i,'').replace('#','');
+			}else{
+				var url=location.hash;
+			}
+			if (!name) {
+				return '';
+			}
+			var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+			if (!url) {
+				return '';
+			}
+			var r = url.match(reg);
+			if (r !== null) {
+				return decodeURIComponent(r[2]);
+			}
+		},
+		CommonDeleteAll(){
+			this.HeaderKeyword = '';
+			this.ScreenDeleteAll();
+		},
+		
+	};
+</script>

@@ -1,0 +1,28 @@
+<div class="block">
+	<el-popover placement="bottom" width="235" trigger="click" ref="ScreenPopoverRef">
+		<div class="field-section">
+			<span style="width: 20%;display: inline-block;">宽</span>
+			<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="ScreenValue.size.wstart" placeholder="最小" @input="ScreenSizeInput"></el-input>
+			<span>-</span>
+			<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="ScreenValue.size.wend" placeholder="最大" @input="ScreenSizeInput"></el-input>
+		</div>
+		<div class="field-section" style="margin-top: 8px;">
+			<span style="width: 20%;display: inline-block;">高</span>
+			<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="ScreenValue.size.hstart" placeholder="最小" @input="ScreenSizeInput"></el-input>
+			<span>-</span>
+			<el-input size="small" style="width: 35%;" class="field-el-input" v-model.number="ScreenValue.size.hend" placeholder="最大" @input="ScreenSizeInput"></el-input>
+		</div>
+		<div class="field-single" :class="ScreenValue.size.wstart||ScreenValue.size.wend||ScreenValue.size.hstart||ScreenValue.size.hend?'active':''"  slot="reference">
+			<span v-if="ScreenValue.size.wstart&&ScreenValue.size.wend">{{ScreenValue.size.wstart}}≤宽≤{{ScreenValue.size.wend}}</span>
+			<span v-else-if="ScreenValue.size.wstart">宽≥{{ScreenValue.size.wstart}}</span>
+			<span v-else-if="ScreenValue.size.wend">宽≤{{ScreenValue.size.wend}}</span>
+			<template v-if="(ScreenValue.size.wstart||ScreenValue.size.wend)&&(ScreenValue.size.hstart||ScreenValue.size.hend)">,</template>
+			<span v-if="ScreenValue.size.hstart&&ScreenValue.size.hend">{{ScreenValue.size.hstart}}≤高≤{{ScreenValue.size.hend}}</span>
+			<span v-else-if="ScreenValue.size.hstart">高≥{{ScreenValue.size.hstart}}</span>
+			<span v-else-if="ScreenValue.size.hend">高≤{{ScreenValue.size.hend}}</span>
+			<span v-if="!ScreenValue.size.wstart&&!ScreenValue.size.wend&!ScreenValue.size.hstart&!ScreenValue.size.hend">尺寸</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.size.wstart||ScreenValue.size.wend||ScreenValue.size.hstart||ScreenValue.size.hend" class="delBtn el-icon-close" @click.stop="ScreenDelete('size')"></span>
+		</div>
+	</el-popover>
+</div>

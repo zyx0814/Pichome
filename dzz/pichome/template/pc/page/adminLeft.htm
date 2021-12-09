@@ -1,0 +1,17 @@
+<el-menu>
+	<el-menu-item <!--{if $_GET['do'] =='basic'}-->class="is-active"<!--{else}-->@click="handleRouter('basic')"<!--{/if}-->>
+		<span slot="title">基本信息</span>
+	</el-menu-item>
+	<el-menu-item <!--{if $_GET['do'] =='loginpage'}-->class="is-active"<!--{else}-->@click="handleRouter('loginpage')"<!--{/if}-->>
+		<span slot="title">登录页设置</span>
+	</el-menu-item>
+	<el-menu-item <!--{if $_GET['do'] =='pagesetting'}-->class="is-active"<!--{else}-->@click="handleRouter('pagesetting')"<!--{/if}-->>
+		<span slot="title">界面设置</span>
+	</el-menu-item>
+	<el-menu-item <!--{if $_GET['do'] =='fileterset'}-->class="is-active"<!--{else}-->@click="handleRouter('fileterset')"<!--{/if}-->>
+		<span slot="title">筛选器设置</span>
+	</el-menu-item>
+	<el-menu-item <!--{if $_GET['do'] =='importsetting'}-->class="is-active"<!--{else}-->@click="handleRouter('importsetting')"<!--{/if}-->>
+		<span slot="title">导入设置</span>
+	</el-menu-item>
+</el-menu>

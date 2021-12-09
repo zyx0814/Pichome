@@ -1,0 +1,72 @@
+<div class="result-section">
+	<div class="input-box">
+		<div class="InputKeyword notradius" @click="HeaderPopoverSearchShow">
+			<!--{template pc/components/index/header/JsHdeaderSearchInput}-->
+			<!--{template pc/components/index/header/JsHdeaderSearchScreen}-->
+		</div>
+	</div>
+
+</div>
+<script type="text/javascript">
+	var JsHdeaderSearchData = $.extend({},{
+		HeaderKeyword:'',
+		HeaderSearch:{
+			height:0,
+			width:0,
+			host:[],
+			recenttag:[],
+			list:[],
+			listLoading:false
+		}
+	});
+	var JsHdeaderSearchMethods = $.extend({},JsHdeaderSearchInputMethods,JsHdeaderSearchScreenMethods,{
+		HeaderPopoverSearchShow(){
+			var self = this;
+			$('.InputKeyword').addClass('focus');
+			$('.search-keyword input').focus();
+			this.HeaderSearch.width = $('.el-header').find('.input-box').width();
+			this.HeaderSearch.height = $('body').height()*0.6;
+			var host = window.sessionStorage.getItem('HostKeyword');
+			if(host){
+				self.HeaderSearch.recenttag = host.split(',');
+			}
+			if(this.HeaderKeyword){
+				this.HdeaderSearchInputGetKeyword();
+			}else{
+				$.post(MOD_URL+'&op=ajax&operation=getsearchtag',{
+					appid:self.Appid&&self.Appid!='all'?self.Appid:''
+				},function(data){
+					self.HeaderSearch.host = [];
+					if(data.hottags){
+						for(var i in data.hottags){
+							self.HeaderSearch.host.push(data.hottags[i]);
+						}
+					}
+				},'json');
+			}
+			return false;
+		},
+		HeaderPopoverSearchHide(){
+			$('.InputKeyword').removeClass('focus');
+			return false;
+		},
+		HeaderPopoverSearchMounted(){
+			var self = this;
+			$(document).click(function(e){
+				if($('.InputKeyword').hasClass('focus')){
+					if($(e.target) == $('.InputKeyword') || $(e.target).closest('.InputKeyword').length){
+						return false;
+					}else{
+						$('.InputKeyword').removeClass('focus')
+					}
+				}
+			});
+			$(".txtScroll-box").resize(function(){
+			    self.HdeaderSearchScreenResize();
+			});
+			$(".txtScroll").resize(function(){
+			    self.HdeaderSearchScreenResize();
+			});
+		}
+	});
+</script>

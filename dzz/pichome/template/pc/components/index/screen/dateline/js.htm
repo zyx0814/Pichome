@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenDatelineMethods = {
+		ScreenDatelineClick(val){
+			if(val==this.ScreenValue.dateline.value){
+				this.ScreenDelete('dateline');
+			}else{
+				this.ScreenValue.dateline.datelinepicker = [];
+				this.ScreenValue.dateline.custom = false;
+				this.ScreenValue.dateline.value = val;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenDatelineCustom(){
+			this.ScreenValue.dateline.custom = !this.ScreenValue.dateline.custom;
+		},
+		ScreenDatelinePicker(val){
+			if(val.length){
+				this.ScreenValue.dateline.value = val.join('_');
+				this.ScreenSubmit();
+			}
+		},
+	};
+</script>

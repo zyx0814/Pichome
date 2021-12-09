@@ -6,12 +6,14 @@
 	<el-container>
 		<el-header height="70" style="padding: 0;z-index: 10;">
 			<div id="top_header">
-				<div class="header-content">
+				<div class="header-content" style="padding:0 16px;">
 					<!--{if !$_G['setting']['bbclosed']&&$_G['setting']['overt']}-->
-					<a class="h-left" href="{MOD_URL}">
-						<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
-						<span class="text">$_G['setting'][sitename]</span>
-					</a>
+					<div class="h-left">
+						<a href="{MOD_URL}">
+							<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+							<span class="text">$_G['setting'][sitename]</span>
+						</a>
+					</div>
 					<!--{else}-->
 					<span class="h-left" href="{MOD_URL}">
 						<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
@@ -329,6 +331,7 @@
 					btime : '$resourcesdata[btime]',
 					colors : $resourcesdata[colors],
 					desc : '$resourcesdata[desc]',
+					dpath : '$resourcesdata[dpath]',
 					link : '$resourcesdata[link]',
 					tag :$resourcesdata[tag],
 					opentype : '$resourcesdata[opentype]',
@@ -385,7 +388,8 @@
 			}
 		},
 		created() {
-			document.title = '$resourcesdata[name]-$_G[setting][sitename]';
+			var name = '$resourcesdata[name]-'+'$_G[setting][sitename]';
+			document.title = name;
 		},
 		
 		methods: {
@@ -845,6 +849,7 @@
 					case 'library':
 						window.location.href = MOD_URL + '&op=library';
 					break;
+					<!-- <span class="title">版本信息：</span><span class="mes">Beat 1 <a class="update" href="javascript:;">检查更新</a></span> -->
 					case 'about':
 						this.$alert(
 						`<div class="aboutlogo">
@@ -855,7 +860,7 @@
 								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版本信息：</span><span class="mes">Beat 1 <a class="update" href="javascript:;">检查更新</a></span>
+								<span class="title">版本信息：</span><span class="mes">Beat 1</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>

@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenBtimeMethods = {
+		ScreenBtimeClick(val){
+			if(val==this.ScreenValue.btime.value){
+				this.ScreenDelete('btime');
+			}else{
+				this.ScreenValue.btime.datelinepicker = [];
+				this.ScreenValue.btime.custom = false;
+				this.ScreenValue.btime.value = val;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenBtimeCustom(){
+			this.ScreenValue.btime.custom = !this.ScreenValue.btime.custom;
+		},
+		ScreenBtimePicker(val){
+			if(val.length){
+				this.ScreenValue.btime.value = val.join('_');
+				this.ScreenSubmit();
+			}
+		},
+	};
+</script>

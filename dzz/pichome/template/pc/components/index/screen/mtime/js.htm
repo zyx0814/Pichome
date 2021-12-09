@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenMtimeMethods = {
+		ScreenMtimeClick(val){
+			if(val==this.ScreenValue.mtime.value){
+				this.ScreenDelete('mtime');
+			}else{
+				this.ScreenValue.mtime.datelinepicker = [];
+				this.ScreenValue.mtime.custom = false;
+				this.ScreenValue.mtime.value = val;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenMtimeCustom(){
+			this.ScreenValue.mtime.custom = !this.ScreenValue.mtime.custom;
+		},
+		ScreenMtimePicker(val){
+			if(val.length){
+				this.ScreenValue.mtime.value = val.join('_');
+				this.ScreenSubmit();
+			}
+		},
+	};
+</script>

@@ -1,0 +1,45 @@
+<div class="block" v-if="DocumentTemplate==1&&Appid">
+	<el-popover placement="bottom" popper-class="ScreenClassifyPopover" width="auto" trigger="click" ref="ScreenPopoverRef" @show="ScreenClassifyPopoverShow" @after-leave="ScreenClassifyPopoverHide">
+<!-- 		<template v-if="!ScreenValue.classify.loading">
+				<div class="img-loading center">
+					<span class="el-icon-loading"></span>加载中...
+				</div>
+		</template>
+		<template v-else> -->
+			<div class="classification-box" v-if="ScreenValue.classify.tree.show">
+				<el-input v-model.trim="ScreenValue.classify.tree.filterText" size="mini" clearable placeholder="输入关键字进行过滤" @input="ScreenClassifyFilterText"></el-input>
+				<div class="classification-all-box">
+					<el-scrollbar class="page-component__scroll">
+						<el-tree 
+							class="LeftClassifyTree" 
+							ref="ClassifyTree"
+							:load="ScreenClassifyGetTreeData"
+							lazy
+							show-checkbox
+							node-key="fid"
+							:expand-on-click-node="false"
+							check-on-click-node
+							@check="ScreenClassifyTreeCheck"
+							:filter-node-method="ScreenClassifyFilter"
+							:default-checked-keys="ScreenValue.classify.tree.DefaultFids"
+							:default-expanded-keys="ScreenValue.classify.tree.DefaultExpandedKeys"
+							:props="ScreenValue.classify.tree.Props">
+						</el-tree>
+						<div class="backloading" v-if="ScreenValue.classify.tree.loading">
+							<div class="img-loading center">
+								<span class="el-icon-loading"></span>加载中...
+							</div>
+						</div>
+					</el-scrollbar>
+				</div>
+			</div>
+		<!-- </template> -->
+		
+		<div class="field-single" :class="ScreenValue.classify.value.length?'active':''" slot="reference">
+			分类
+			<span class="screen-show-val" v-if="ScreenValue.classify.value.length">：{{ScreenValue.classify.text.join(',')}}</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.classify.value.length" class="delBtn el-icon-close" @click.stop="ScreenDelete('classify')"></span>
+		</div>
+	</el-popover>
+</div>

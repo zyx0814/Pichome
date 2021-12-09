@@ -48,7 +48,16 @@
 			$waterfilepath = $_G['setting']['attachurl'] . 'sitelogo/sitelogo.png';
             include template('pc/page/adminPagesetting');
         }
-    } elseif ($do == 'loginpage') {//登录页设置
+    } elseif($do == 'importsetting'){
+        if (submitcheck('settingsubmit')) {
+            $settingnew = $_GET['settingnew'];
+            updatesetting($setting, $settingnew);
+            exit(json_encode(array('success' => true)));
+        } else {
+			$Defaultnotallowdir = json_encode($Defaultnotallowdir);
+            include template('pc/page/adminImportsetting');
+        }
+    }elseif ($do == 'loginpage') {//登录页设置
         if (submitcheck('settingsubmit')) {
             $settingnew = $_GET['settingnew'];
             if ($back = trim($settingnew['loginset']['background'])) {

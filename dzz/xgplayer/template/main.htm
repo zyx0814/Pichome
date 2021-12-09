@@ -35,6 +35,13 @@
 		.xgplayer-skin-default.xgplayer-music .xgplayer-controls .xgplayer-time{
 			top:35% !important;
 		}
+		<!--{if $ismobile}-->
+		.xgplayer-skin-default .xgplayer-controls{
+			display: -webkit-flex !important;
+			display: -moz-box !important;
+			display: flex !important;
+		}
+		<!--{/if}-->
     </style>
 	  <script src="{MOD_PATH}/js/xgplayer.js"></script>
 	<!--{if $_GET['ext']=='flv' || $_GET['ext']=='m4v'}-->
@@ -48,16 +55,12 @@
 	<!--{/if}-->
   </head>
   <body>
-<table width="100%" height="100%">
-	  <tr><td valign="middle">
-		  <!--{if $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav' }-->
+ <!--{if $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav' }-->
 		  <div id="canvas">
 				<canvas ></canvas>
 		  </div>
 		  <!--{/if}-->
 		  <div id="mse"></div>
-		  </td> </tr>
-  </table>
   
 	
 	<!--{if $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav' }-->

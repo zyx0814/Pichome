@@ -1,0 +1,37 @@
+<div class="block">
+	<el-popover placement="bottom" width="225" trigger="click" @show="ScreenGetValueData('grade')" ref="ScreenPopoverRef">
+		<template v-if="ScreenValue.grade.loading">
+			<div style="height: 200px;">
+				<div class="img-loading center">
+					<span class="el-icon-loading"></span>加载中...
+				</div>
+			</div>
+		</template>
+		<template v-else>
+			<template v-if="ScreenValue.grade.data.length">
+				<el-checkbox-group v-model="ScreenValue.grade.value" @change="ScreenGradeChange">
+					<ul class="field-select-box dzz-dropdown-menu">
+						<li class="dzz-dropdown-menu__item single" v-for="item in ScreenValue.grade.data">
+							<el-checkbox v-if="item.grade == 0" :label="item.grade">未评分</el-checkbox>
+							<el-checkbox v-else name="type" :label="item.grade">
+								<i class="ri-star-fill stars" v-for="fitem in parseInt(item.grade)"></i>
+							</el-checkbox>
+							<span class="quantity">{{item.num}}</span>
+						</li>
+					</ul>
+				</el-checkbox-group>
+			</template>
+			<template v-else>
+				<div class="field-select-box" style="height: 150px;position: relative;">
+					<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+				</div>
+			</template>
+			
+		</template>
+		<div class="field-single" :class="ScreenValue.grade.value.length?'active':''" slot="reference">
+			<span>评分<template v-if="ScreenValue.grade.value.length">：{{ScreenValue.grade.text.join(',')}}</template></span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.grade.value.length" class="delBtn el-icon-close" @click.stop="ScreenDelete('grade')"></span>
+		</div>
+	</el-popover>
+</div>	

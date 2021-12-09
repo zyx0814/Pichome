@@ -1,0 +1,32 @@
+<div class="block">
+	<el-popover popper-class="PopoverNotPadding" placement="bottom" width="225" trigger="click" @show="ScreenGetValueData('ext')" @after-enter="ScreenExtPopoverOpen" ref="ScreenPopoverRef">
+		<div class="field-select-box dzz-dropdown-menu scroll" style="height: 300px;">
+			<template v-if="ScreenValue.ext.loading">
+				<div class="img-loading center">
+					<span class="el-icon-loading"></span>加载中...
+				</div>
+			</template>
+			<template v-else>
+				<template v-if="ScreenValue.ext.data && ScreenValue.ext.data.length">
+					<el-scrollbar class="page-component__scroll">
+						<div style="padding: 12px;">
+							<div class="dzz-dropdown-menu__item single" v-for="item in ScreenValue.ext.data">
+								<el-checkbox v-model="ScreenValue.ext.value" :label="item.ext" @change="ScreenExtChange"></el-checkbox>
+								<span class="quantity">{{item.num}}</span>
+							</div>
+						</div>
+						
+					</el-scrollbar>
+				</template>
+				<template v-else>
+					<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+				</template>
+			</template>
+		</div>
+		<div class="field-single" :class="ScreenValue.ext.value.length?'active':''" slot="reference">
+			<span>类型<template v-if="ScreenValue.ext.value.length">：{{ScreenValue.ext.value.join(',')}}</template></span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.ext.value.length" class="delBtn el-icon-close" @click.stop="ScreenDelete('ext')"></span>
+		</div>
+	</el-popover>
+</div>	

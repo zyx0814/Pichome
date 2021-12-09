@@ -18,7 +18,7 @@
         public function insert($setarr)
         {
             $cid = $setarr['cid'];
-            if ($taggroup = DB::fetch_first("select * from %t  where cid = %s", array($this->_table, $cid))) {
+            if ($taggroup = DB::fetch_first("select * from %t  where cid = %s and appid = %s", array($this->_table, $cid,$setarr['appid']))) {
                 unset($setarr['cid']);
                 if ($taggroup['catname'] != $setarr['catname']) parent::update($cid, $setarr);
                 return $cid;

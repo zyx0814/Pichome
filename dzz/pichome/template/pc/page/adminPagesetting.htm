@@ -8,20 +8,7 @@
 		</el-header>
 		<el-container>
 		    <el-aside width="260px">
-				<el-menu>
-				    <el-menu-item @click="handleRouter('basic')">
-						<span slot="title">基本信息</span>
-				    </el-menu-item>
-					<el-menu-item @click="handleRouter('loginpage')">
-						<span slot="title">登录页设置</span>
-					</el-menu-item>
-					<el-menu-item class="is-active">
-						<span slot="title">界面设置</span>
-					</el-menu-item>
-					<el-menu-item @click="handleRouter('fileterset')">
-						<span slot="title">筛选器设置</span>
-					</el-menu-item>
-				</el-menu>
+				<!--{template pc/page/adminLeft}-->
 			</el-aside>
 		    <el-main>
 				<div class="page-content">
@@ -38,6 +25,12 @@
 											</div>
 										</el-tooltip>
 									</div>
+								</el-form-item>
+								<el-form-item label="默认模板：">
+									<el-radio-group v-model="formdata.pichomepagesetting.template">
+									    <el-radio border label="1">模板1</el-radio>
+									    <el-radio border label="2">模板2</el-radio>
+									</el-radio-group>
 								</el-form-item>
 								<el-form-item label="默认布局：">
 									<el-radio-group v-model="formdata.pichomepagesetting.layout">
@@ -120,6 +113,7 @@
 				formdata: {
 					pichomepagesetting:{
 						theme: '',
+						template:'1',
 						layout: 'waterFall',
 						show: [],
 						other:'btime',
@@ -133,6 +127,7 @@
 		created() {
 			var params = {
 				theme: '$setting[pichomepagesetting][theme]',
+				template:'$setting[pichomepagesetting][template]',
 				layout: '$setting[pichomepagesetting][layout]',
 				show: '$setting[pichomepagesetting][show]',
 				other:'$setting[pichomepagesetting][other]',
@@ -154,6 +149,7 @@
 			var Newparams = {
 				theme: params.theme,
 				layout: params.layout?params.layout:'waterFall',
+				template:params.template?params.template:'1',
 				show: newshow,
 				other:params.other?params.other:'btime',
 				sort: params.sort?params.sort:'2',

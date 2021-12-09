@@ -25,16 +25,7 @@
 	margin-right: 16px;
 	margin-left: 0 !important;
 }
-.tipTxt{
-	color: var(--tip-color);
-	font-size: 12px;
-	line-height: 20px;
-	margin-top: 6px;
-}
 
-.tipTxt:hover {
-	color: var(--content-text);
-}
 
 .avatar-uploader .el-upload {
 	border: 1px dashed var(--border-color-base);

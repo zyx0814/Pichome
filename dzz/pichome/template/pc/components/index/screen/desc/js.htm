@@ -1,0 +1,15 @@
+<script type="text/javascript">
+	var JsScreenDescMethods = {
+		ScreenDescClick(val){
+			if(val == this.ScreenValue.desc.value){
+				this.ScreenDelete('desc');
+			}else{
+				this.ScreenValue.desc.value = val;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenDescInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+	};
+</script>

@@ -14,9 +14,14 @@
             parent::__construct();
         }
         public function insert($setarr){
-            if($id = DB::result_first("select id from %t where rid = %s and fid =%s",array($this->_table,$setarr['rid'],$setarr['fid']))){
+            if($id = DB::result_first("select id from %t where rid = %s and fid =%s and appid = %s",array($this->_table,$setarr['rid'],$setarr['fid'],$setarr['appid']))){
                 return $id;
             }else{
+                if($id = DB::result_first("select id from %t where rid = %s and fid = %s and appid = %s",array($this->_table,$setarr['rid'],$setarr['fid'],$setarr['appid']))){
+                    $rid = $setarr['rid'];
+                    unset($setarr['rid']);
+                   return  parent::update($rid,$setarr);
+                }
                 return parent::insert($setarr);
             }
         }

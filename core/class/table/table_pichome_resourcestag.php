@@ -53,8 +53,9 @@
         }
         public function delete_by_rid($rid)
         {
+            if(!is_array($rid)) $rid = (array)$rid;
             $delids = [];
-            foreach (DB::fetch_all("select id from %t where rid = %s", array($this->_table, $rid)) as $v) {
+            foreach (DB::fetch_all("select id from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
                 $delids[] = $v['id'];
             }
             return parent::delete($delids);

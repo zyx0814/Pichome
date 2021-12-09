@@ -1,0 +1,101 @@
+<script type="text/javascript">
+	var JsImageListData = {
+		ImageList:{
+			maxNewtop:0,
+			maxNewLeft:0,
+			perpage : 0,
+			Margin:4,
+			columns:0,
+			fcolumns:1,
+			newWidth:0,//图片宽度
+			newHeight:0,//图片高度
+			boxHeight:0,//总体高度
+			OtherHeight:0,//底部信息
+			StoreImgdatas:[],
+		},
+	};
+	var JsImageListMethods = {
+		ImagesListInit(IsRefresh){
+			var self = this;
+			if(IsRefresh || !self.ImageDataList.length){
+				self.ImageList.perpage = 0;
+				var documentW = document.body.clientWidth;
+				var boxWidth = $('.image-container').width();
+				$('.image-wrapper').width(boxWidth);
+				var columns = 0;
+				if(documentW>=1024){
+					columns = 5;
+				}else if(documentW>=992){
+					columns = 4;
+				}else if(documentW>=768){
+					columns = 3;
+				}else{
+					columns = 2;
+				}
+			
+				self.ImageList.maxNewLeft = 0;
+				self.ImageList.maxNewtop = 0;
+				self.ImageList.fcolumns = 1;
+				self.ImageList.boxHeight = 0;
+				self.ImageList.StoreImgdatas = [];
+				self.ImageDataListShow = {};
+				self.ImageList.columns = columns;
+				self.ImageList.newWidth = (boxWidth-(columns*self.ImageList.Margin-self.ImageList.Margin)) / columns;
+				self.ImageList.newHeight = 2 / 3 * self.ImageList.newWidth;
+				
+				var OtherHeight = 0
+				if(self.HeaderRightBtnDisplay.value.indexOf('name')>-1 || self.HeaderRightBtnDisplay.value.indexOf('extension')>-1){
+					OtherHeight += 45;
+				}
+				if(self.HeaderRightBtnDisplay.value.indexOf('other')>-1){
+					OtherHeight += 21;
+				}
+				self.ImageList.OtherHeight = OtherHeight;
+
+			}
+			
+			if(!self.ImageDataList.length){
+				$('.image-wrapper').height(0);
+				return false;
+			}
+			
+			
+			var arr = [];
+			var i = 0;
+			for(var index = self.ImageList.perpage; index < self.ImageDataList.length;++index){
+				var item = JSON.parse(JSON.stringify(self.ImageDataList[index]));
+				arr[i] = item;
+				arr[i]['pwidth'] = self.ImageList.newWidth;
+				arr[i]['pheight'] = self.ImageList.newHeight;
+				arr[i]['ptop'] = self.ImageList.maxNewtop;
+				arr[i]['pleft'] = self.ImageList.maxNewLeft;
+				arr[i]['pbottom'] = self.ImageList.maxNewtop + self.ImageList.newHeight+self.ImageList.OtherHeight;
+				self.ImageList.maxNewLeft += self.ImageList.newWidth+self.ImageList.Margin;
+				self.ImageList.fcolumns++;
+				if(self.ImageList.fcolumns > self.ImageList.columns){
+					self.ImageList.maxNewLeft = 0;
+					self.ImageList.maxNewtop += self.ImageList.newHeight+self.ImageList.Margin+self.ImageList.OtherHeight;
+					self.ImageList.fcolumns = 1;
+					self.ImageList.boxHeight = self.ImageList.maxNewtop;
+				}
+				i++;
+			}
+			self.ImageList.perpage = self.ImageDataList.length;
+			if(!IsRefresh){
+				self.ImageList.StoreImgdatas.push.apply(self.ImageList.StoreImgdatas,arr);
+			}else{
+				self.ImageList.StoreImgdatas = arr;
+			}
+			if(self.ImageList.fcolumns>1&&self.ImageList.fcolumns<self.ImageList.columns+1){
+				self.ImageList.boxHeight += self.ImageList.newHeight+self.ImageList.OtherHeight;
+			}
+			var boxHeight = $('#container_scroll').height();
+			if(boxHeight>self.ImageList.boxHeight){
+				$('.image-wrapper').height(boxHeight);
+			}else{
+				$('.image-wrapper').height(self.ImageList.boxHeight);
+			}
+			self.ImageLayoutScrollShow();
+		}
+	};
+</script>

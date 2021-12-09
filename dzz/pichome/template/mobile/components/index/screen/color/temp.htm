@@ -1,0 +1,38 @@
+<div class="screen-item">
+	<div class="color-box">
+		<div class="color-input">
+			<div class="color-show" :class="!ParamScreen.value.color.value?'border':''" :style="{background:ParamScreen.value.color.value}"></div>
+			<van-field v-model.trim="ParamScreen.value.color.value" round clear-trigger="always" class="colorInput" @blur="ScreenColorInputBlur" @input="ScreenColorInput">
+				<template #right-icon>
+					<van-icon v-show="ParamScreen.value.color.value" @click="ScreenColorInputClear" name="cross" />
+				</template>
+			</van-field>
+		</div>
+		<div class="quick">
+			<template v-for="item in ParamScreen.value.color.defaultval">
+				<template v-if="item.toUpperCase() == '#FFFFFF' || item.toUpperCase() == '#FFF'">
+					<div class="quick-list-box">
+						<div class="quick-list" :style="{background: item,border: '1px solid var(--slider-line)'}" @click="ScreenColorClick(item)">
+							<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" color="#333333" />
+						</div>
+					</div>
+					
+				</template>
+				<template v-else>
+					<div class="quick-list-box">
+						<div class="quick-list" :style="{background: item}" @click="ScreenColorClick(item)">
+							<van-icon v-if="ParamScreen.value.color.value.toUpperCase() == item" name="success" />
+						</div>
+					</div>
+				</template>
+			</template>
+		</div>
+		
+		<div class="color-slider" style="padding: 15px 0;">
+			<div style="white-space: nowrap;min-width: 80px;">精确度：{{ParamScreen.value.color.persion}}</div>
+			<div style="width: 100%;margin-left: 24px;margin-right: 15px;">
+				<van-slider v-model="ParamScreen.value.color.persion" />
+			</div>
+		</div>
+	</div>
+</div>

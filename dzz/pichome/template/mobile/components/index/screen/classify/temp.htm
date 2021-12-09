@@ -1,0 +1,52 @@
+<div class="screen-item ">
+	<template v-if="ParamScreen.value.classify.loading">
+		<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+	</template>
+	<template v-else>
+		<template v-if="ParamScreen.value.classify.data && ParamScreen.value.classify.data.length">
+			<div class="screen-classify-collapse">
+				<!-- ParamScreen.value.classify.value -->
+				<!-- <van-collapse v-model="ParamScreen.value.classify.activeNames" :border="false">
+					<van-collapse-item 
+						v-for="item in ParamScreen.value.classify.data" 
+						:key="item.fid" 
+						:name="item.fid"
+						disabled 
+						:class="{'active':ParamScreen.value.classify.value.indexOf(item.fid)>-1}"
+						:ref="'collapse_'+item.fid">
+						<template #title>
+							<div  @click.stop="ScreenClassifyClick(item)">
+								{{item.fname}}
+							</div>
+						</template>
+						<template #right-icon>
+							<template v-if="!item.leaf">
+								<i @click.stop="ScreenClassifyToggle(item)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
+							</template>
+							<template v-else>
+								<div style="width: 20px;"></div>
+							</template>
+						</template>
+						<div class="van-cell" v-if="item.loading">
+							<van-loading type="spinner" size="24px" />
+						</div>
+						<template v-if="item.children && item.children.length">
+							<screenclassify :parammodel="ParamScreen.value.classify" :paramdata="item.children" :alldata="ParamScreen.value.classify.data" @screenclassifychange="screenclassifychange"></screenclassify>
+						</template>
+						
+					</van-collapse-item>
+				</van-collapse> -->
+				<screenclassify v-if="!ParamScreen.value.classify.loading" :parammodel="ParamScreen.value.classify" :paramdata="ParamScreen.value.classify.data" :alldata="ParamScreen.value.classify.data" @screenclassifychange="screenclassifychange" :expandedkeys="ParamScreen.value.classify.DefaultExpandedKeysInit"></screenclassify>
+			</div>
+		</template>
+		<template v-else>
+			<div class="notScreen">
+				<div>
+					<img src="{MOD_PATH}/image/notScreen.png" >
+					<div>没有筛选条件</div>
+				</div>
+			</div>
+		</template>
+		
+	</template>
+</div>

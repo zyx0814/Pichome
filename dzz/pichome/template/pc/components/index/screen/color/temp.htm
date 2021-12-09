@@ -1,0 +1,34 @@
+<div class="block">
+	<el-popover placement="bottom" width="507" trigger="click" ref="ScreenPopoverRef">
+		<div class="field-select-box">
+			<ul class="field-color-box clearfix">
+				<li class="colors-single" v-for="item in ColorData" :class="ScreenValue.color.value==item?'active':''" :style="{background:item}" @click="ScreenColorClick(item)"></li>
+			</ul>
+			<div class="voluntarily">
+				<div class="color-disk">
+					<span class="show" :style="{background:ScreenValue.color.value}"></span>
+					<input class="el-input__inner" v-model="ScreenValue.color.value" type="text" @input="ScreenColorInput" />
+					<span class="icon">
+						 <el-color-picker v-model="ScreenValue.color.value" color-format="hex" @change="ScreenColorPicker"></el-color-picker>
+						<img src="{MOD_PATH}/image/palette.png">
+					</span>
+				</div>
+				<div class="slider" v-if="ScreenValue.color.value">
+					<span class="txt">精确度</span>
+					<el-slider v-model="ScreenValue.color.persion" @change="ScreenColorSlider"></el-slider>
+				</div>
+			</div>
+		</div>
+	
+		<div class="field-single" :class="ScreenValue.color.value?'active':''" slot="reference">
+			<span>
+				颜色
+				<template v-if="ScreenValue.color.value">
+					:<span class="color" :style="{background:ScreenValue.color.value}"></span>
+				</template>
+			</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.color.value" class="delBtn el-icon-close" @click.stop="ScreenDelete('color')"></span>
+		</div>
+	</el-popover>
+</div>

@@ -1,0 +1,28 @@
+<div class="block">
+	<el-popover placement="bottom" width="225" trigger="click" ref="ScreenPopoverRef">
+		<ul class="field-select-box dzz-dropdown-menu">
+			<li class="dzz-dropdown-menu__item single">
+				<el-radio v-model="ScreenValue.desc.value" label="1" @click.native.prevent="ScreenDescClick('1')">有注释</el-radio>
+			</li>
+			<li class="dzz-dropdown-menu__item single">
+				<el-radio v-model="ScreenValue.desc.value" label="0" @click.native.prevent="ScreenDescClick('0')">没有注释</el-radio>
+			</li>
+			<li v-if="ScreenValue.desc.value=='1'">
+				<el-input 
+					type="textarea"
+					v-model="ScreenValue.desc.input"
+					@input="ScreenDescInput"
+					:autosize="{ minRows: 2, maxRows: 4}"
+					placeholder="包含关键字(使用,隔开)"></el-input>
+			</li>
+		</ul>
+		<div class="field-single" :class="ScreenValue.desc.value=='1'||ScreenValue.desc.value=='0'?'active':''" slot="reference">
+			<span v-if="ScreenValue.desc.value=='0'">注释：没有</span>
+			<span v-else-if="ScreenValue.desc.input">注释：{{ScreenValue.desc.input}}</span>
+			<span v-else-if="ScreenValue.desc.value=='1'">注释：有</span>
+			<span v-else>注释</span>
+			<i class="ri-arrow-down-s-fill icon"></i>
+			<span v-if="ScreenValue.desc.value=='1' || ScreenValue.desc.value=='0'" class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+		</div>
+	</el-popover>
+</div>

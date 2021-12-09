@@ -1,0 +1,17 @@
+<div class="screen-item">
+	<van-radio-group v-model="ParamScreen.value.link.value" disabled>
+		<van-cell-group>
+			<van-cell title="有链接" clickable @click="ScreenlinkClick('1')">
+				<template #right-icon>
+					<van-radio name="1"></van-radio>
+				</template>
+			</van-cell>
+			<van-cell title="没有链接" clickable @click="ScreenlinkClick('0')">
+				<template #right-icon>
+					<van-radio name="0"></van-radio>
+				</template>
+			</van-cell>
+		</van-cell-group>
+	</van-radio-group>
+	<van-field v-if="ParamScreen.value.link.value=='1'" class="screen-textarea" v-model.trim="ParamScreen.value.link.input" rows="3" autosize type="textarea" placeholder="请输入链接"></van-field>
+</div>

@@ -28,19 +28,41 @@
             return $show;
         }
         public function getSid($url) {
-            $url = crc32($url);
+            $microtime = microtime();
+            list($msec, $sec) = explode(' ', $microtime);
+            $msec = $msec * 1000000;
+            $url = crc32($url.$sec.random(6).$msec);
             $result = sprintf("%u", $url);
-            return self::code62($result);
+            $sid =  self::code62($result);
+            $len = strlen($sid);
+            if($len < 6){
+                $sid .= random(1);
+            }
+            if(strlen($sid) > 6){
+                $sid = substr($sid,0,6);
+            }
+            if(DB::result_first("select appid from %t where appid = %s",array($this->_table,$sid))){
+                $sid = $this->getSid($url);
+            }
+            return $sid;
         }
         public function insert($setarr){
-            $path = $setarr['path'];
-            if($appid = DB::result_first("select appid from %t where path = %s",array($this->_table,$path))){
-                return $appid;
+            //如果为oaooa库时
+            if($setarr['type'] == 2){
+              $setarr['path'] =$setarr['did'].'_'.$setarr['kuid'].'_'.$setarr['fid'];
+              $path = md5($setarr['path']);
             }else{
-                $setarr['appid'] = $this->getSid($setarr['path']);
-                if(parent::insert($setarr)){
-                    return $setarr['appid'];
-                }
+                $path = $setarr['path'];
+            }
+            if($appid = DB::result_first("select appid from %t where path = %s and isdelete = 0",array($this->_table,$setarr['path']))){
+                parent::update($appid,$setarr);
+                return $appid;
+            }
+            //生成appid
+            $setarr['appid'] = $this->getSid($path);
+
+            if(parent::insert($setarr)){
+                return $setarr['appid'];
             }
         }
         
@@ -74,13 +96,22 @@
             C::t('pichome_tagrelation')->delete_by_appid($appid);
             //删除最近搜索表数据
             C::t('pichome_searchrecent')->delete_by_appid($appid);
-            return parent::delete($appid);
+            //resources表数据未完成删除前不允许删除vapp表
+            if(DB::result_first("select count(rid) from %t where appid = %s",array('pichome_resources',$appid))){
+                return ;
+            }else{
+                if(is_dir(getglobal('setting/attachdir').'pichomethumb/'.$appid)){
+                    removedirectory(getglobal('setting/attachdir').'pichomethumb/'.$appid);
+                }
+                return parent::delete($appid);
+            }
+
         }
         
         public function fetch_all_sharedownlod(){
             $downshare = array();
-            foreach(DB::fetch_all("select appid,download,share from %t where 1",array($this->_table)) as $v){
-                $downshare[$v['appid']]=['share'=>$v['share'],'download'=>$v['download']];
+            foreach(DB::fetch_all("select * from %t where 1",array($this->_table)) as $v){
+                $downshare[$v['appid']]=$v;
             }
             return $downshare;
         }
