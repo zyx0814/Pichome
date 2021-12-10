@@ -44,19 +44,23 @@ if ($operation == 'filelist') {
     foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
         $vappids[] = $v['appid'];
     }
-    if ($appid) {
-        $wheresql .= ' and r.appid = %s  and r.appid in(%n)';
-        $para[] = $appid;
-        $para[] = $vappids;
-        if(!$fids && !$hassub){
-            $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-            $params[] = 'pichome_folderresources';
-            $wheresql .= ' and ISNULL(fr.fid)';
-        }
-
+    if(empty($vappids)){
+        $wheresql .= ' and 0';
     }else{
-        $wheresql .= '  and r.appid in(%n)';
-        $para[] = $vappids;
+        if ($appid) {
+            $wheresql .= ' and r.appid = %s  and r.appid in(%n)';
+            $para[] = $appid;
+            $para[] = $vappids;
+            if(!$fids && !$hassub){
+                $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
+                $params[] = 'pichome_folderresources';
+                $wheresql .= ' and ISNULL(fr.fid)';
+            }
+
+        }else{
+            $wheresql .= '  and r.appid in(%n)';
+            $para[] = $vappids;
+        }
     }
     if ($fids) {
         if ($fids == 'not') {

@@ -173,7 +173,7 @@ INSERT INTO `dzz_setting` VALUES ('pichomeimportnotdir', 'patch,srv,run,lib64,sy
 INSERT INTO `dzz_imagetype` VALUES(1, 1, '默认', 'smiley', 0, 'dzz');
 
 
-INSERT INTO `dzz_user_setting` VALUES ('1',''1', 'pichomeimageexpanded', '1');
+INSERT INTO `dzz_user_setting` VALUES ('1','1', 'pichomeimageexpanded', '1');
 
 --
 -- 转存表中的数据 `dzz_user_profile_setting`
