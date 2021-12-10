@@ -1259,11 +1259,13 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         }*/
         $catdata = [];
         if($appid){
-            $sql .= "  left join %t t1 on rt.tid = t1.tid 
- left join %t tr on tr.tid=t1.tid 
- left join %t g  on g.cid = tr.cid";
+            $sql .= "  left join %t t1 on rt.tid = t1.tid ";
             $params[] = 'pichome_tag';
-            $params[] = 'pichome_tagrelation';
+            if(!in_array('pichome_tagrelation',$params)){
+                $sql .= "  left join %t tr on tr.tid=t1.tid ";
+                $params[] = 'pichome_tagrelation';
+            }
+            $sql .= "  left join %t g  on g.cid = tr.cid ";
             $params[] = 'pichome_taggroup';
             if (!empty($para)) $params = array_merge($params, $para);
             foreach (DB::fetch_all("$sql where $wheresql group by g.cid",$params) as $v) {
