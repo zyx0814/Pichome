@@ -824,10 +824,10 @@
 			handleCommandColor(val){
 				if(val == 'common'){
 					<!--{if $opentype=='current'}-->
-					window.parent.window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+					window.parent.window.location.hash = '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
 					window.parent.window.location.reload()
 					<!--{else}-->
-					window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+					window.location.href = '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
 					<!--{/if}-->
 				}else{
 					CopyTxt(this,val)
@@ -880,19 +880,19 @@
 			},
 			handleClickTag(tid){
 				<!--{if $opentype=='current'}-->
-				window.parent.window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&tag=' + tid;
+				window.parent.window.location.hash = '#appid=' + this.imagesData.appid + '&tag=' + tid;
 				window.parent.window.location.reload()
 				<!--{else}-->
-				window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&tag=' + tid;
+				window.location.href = '#appid=' + this.imagesData.appid + '&tag=' + tid;
 				<!--{/if}-->
 				
 			},
 			handleClickClass(cid){
 				<!--{if $opentype=='current'}-->
-				window.parent.window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&classify=' + cid;
+				window.parent.window.location.hash = '#appid=' + this.imagesData.appid + '&classify=' + cid;
 				window.parent.window.location.reload()
 				<!--{else}-->
-				window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&classify=' + cid;
+				window.location.href = '#appid=' + this.imagesData.appid + '&classify=' + cid;
 				<!--{/if}-->
 			},
 			handleClickLink(val){

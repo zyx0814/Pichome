@@ -190,8 +190,8 @@ class table_pichome_resources extends dzz_table
         }
         //echo $resourcesdata['icondata'];die;
         $imginfo = @getimagesize($resourcesdata['icondata']);
-        $resourcesdata['iconwidth'] = $imginfo[0] ? $imginfo[0]:0;
-        $resourcesdata['iconheight'] = $imginfo[1] ? $imginfo[1]:0;
+        $resourcesdata['iconwidth'] = $imginfo[0] ? $imginfo[0]:$resourcesdata['width'];
+        $resourcesdata['iconheight'] = $imginfo[1] ? $imginfo[1]:$resourcesdata['height'];
         $resourcesdata['icondata'] = str_replace('+', '%20', $resourcesdata['icondata']);
 
 
