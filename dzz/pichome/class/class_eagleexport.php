@@ -224,11 +224,12 @@ class eagleexport
                                 $this->exportfile($filemetadata);
                                 unset($filemetadata);
                             } else {
+                                //信息表数据记录
+                                $setarr = [];
                                 $setarr['searchval'] = $filemetadata['name'];
                                 //查询原数据中的属性信息
                                 $attrdata = C::t('pichome_resources_attr')->fetch($rid);
-                                //信息表数据记录
-                                $setarr = [];
+
                                 //检查标签变化
                                 //标签数据
                                 $tags = $filemetadata['tags'];
@@ -483,6 +484,8 @@ class eagleexport
         //插入文件表数据
         if (C::t('pichome_resources')->insert($resourcesarr,1)) {
             DB::delete('pichome_folderresources',array('rid'=>$rid));
+            //获取属性表数据
+            $setarr = [];
             $setarr['searchval'] = $resourcesarr['name'];
             //$fids = [];
             //插入目录关联表数据
@@ -500,8 +503,7 @@ class eagleexport
                      $setarr['searchval'] .= $foldername['fname'];
                  }
              }*/
-            //获取属性表数据
-            $setarr = [];
+
             //标签数据
             $tags = $filemetadata['tags'];
             $setarr['searchval'] .= implode('',$tags);
