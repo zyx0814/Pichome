@@ -411,7 +411,7 @@ elseif($method == 'admin_init') {
 		$tablepre = $_config['db'][1]['tablepre'];
 		$db->connect($dbhost, $dbuser, $dbpw, $dbname, DBCHARSET);
 		$db->query("REPLACE INTO {$tablepre}user (uid, username,nickname, password, adminid, groupid, email, regdate,salt,authstr) VALUES ('$uid', '$username', '$nickname','$password', '1', '1', '$email', '".time()."','$salt','');");
-        $db->query("update {$tablepre}folder set `uid`=$uid,`username`='$username' where `fid` = 1");
+        //$db->query("update {$tablepre}folder set `uid`=$uid,`username`='$username' where `fid` = 1");
 		$db->query("REPLACE INTO {$tablepre}user_status (uid, regip,lastip, lastvisit, lastactivity, lastsendmail, invisible, profileprogress) VALUES ('$uid', '', '','$timestamp', '$timestamp', '0', '0', '0');");
 		$query = $db->query("SELECT COUNT(*) FROM {$tablepre}user");
 		$totalmembers = $db->result($query, 0);
