@@ -70,7 +70,7 @@ class table_pichome_resources extends dzz_table
             $v['dateline'] = dgmdate(round($v['dateline'] / 1000), 'Y/m/d H:i');
             $v['name'] = str_replace(strrchr($v['name'], "."), "", $v['name']);
             $v['btime'] = dgmdate(round($v['btime'] / 1000), 'Y/m/d H:i');
-            $v['dpath'] = dzzencode($v['rid'], '', 0,0);
+            $v['dpath'] = dzzencode($v['rid'], '', 0, 0);
             if (in_array($v['ext'], $Opentype['video'])) {
                 $v['opentype'] = 'video';
             } elseif (in_array($v['ext'], $Opentype['text'])) {
@@ -107,16 +107,18 @@ class table_pichome_resources extends dzz_table
 
         return $datas;
     }
+
     //获取数据后端使用
-    public function fetch_data_by_rid($rid){
+    public function fetch_data_by_rid($rid)
+    {
 
         if (!$resourcesdata = parent::fetch($rid)) return array();
         if ($resourcesdata['isdelete'] > 0) return array();
         $downshare = C::t('pichome_vapp')->fetch_all_sharedownlod();
-        if($downshare[$resourcesdata['appid']]['isdelete']) return array();
+        if ($downshare[$resourcesdata['appid']]['isdelete']) return array();
         $attrdata = C::t('pichome_resources_attr')->fetch($rid);
         $resourcesdata = array_merge($resourcesdata, $attrdata);
-        $resourcesdata['realpath'] =$downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
+        $resourcesdata['realpath'] = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
         return $resourcesdata;
     }
 
@@ -145,19 +147,18 @@ class table_pichome_resources extends dzz_table
         if ($resourcesdata['hasthumb']) {
             //如果是本地文件
             if ($resourcesdata['apptype'] == 1) {
-                $filename = 'pichomethumb'.BS . $resourcesdata['appid'] . BS . md5($resourcesdata['path']) . '.jpg';
+                $filename = 'pichomethumb' . BS . $resourcesdata['appid'] . BS . md5($resourcesdata['path']) . '.jpg';
 
                 $thumbpath = getglobal('setting/attachurl') . $filename;
                 //echo $thumbpath;die;
                 $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
 
-            }
-            else {
-                $resourcesdata['path'] = str_replace('\\','/',$resourcesdata['path']);
+            } elseif ($resourcesdata['apptype'] == 0) {
+                $resourcesdata['path'] = str_replace('\\', '/', $resourcesdata['path']);
                 $filepath = dirname($resourcesdata['path']);
                 $filename = substr($resourcesdata['path'], strrpos($resourcesdata['path'], '/') + 1);
                 $filename = str_replace(strrchr($filename, "."), "", $filename);
-                $filepath = str_replace('/',BS,$filepath);
+                $filepath = str_replace('/', BS, $filepath);
                 if ($downshare[$resourcesdata['appid']]['iswebsitefile']) {
                     $tmppath = str_replace(DZZ_ROOT, '', $downshare[$resourcesdata['appid']]['path']);
                     $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
@@ -165,23 +166,34 @@ class table_pichome_resources extends dzz_table
                 } else {
                     $tmppath = $downshare[$resourcesdata['appid']]['path'];
                     $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
-                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath,'',0,0);
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath, '', 0, 0);
                 }
-                //$thumbpath = 'library/' . $filepath . '/' . $filename . '_thumbnail.png';
-                //$resourcesdata['icondata'] = $thumbpath;
+
+            } else {
+
+                $hookdata = ['rid' => $resourcesdata['rid'], 'apppath' => $downshare[$resourcesdata['appid']]['path'], 'appid' => $resourcesdata['appid']];
+                $return = Hook::listen('getpichomethumb', $hookdata);
+                $thumbpath = str_replace(DZZ_ROOT, '', $return[0]['icon']);
+                if ($downshare[$resourcesdata['appid']]['iswebsitefile']){
+                    $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
+                }else{
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath, '', 0, 0);
+                }
+
             }
+
 
             //}
         } else {
             if ($resourcesdata['type'] == 'commonimage') {
                 if ($downshare[$resourcesdata['appid']]['iswebsitefile']) {
                     $tmppath = str_replace(DZZ_ROOT, '', $downshare[$resourcesdata['appid']]['path']);
-                    $thumbpath =  $tmppath . BS . $resourcesdata['path'];
-                    $thumbpath = str_replace(BS,'/',$thumbpath);
+                    $thumbpath = $tmppath . BS . $resourcesdata['path'];
+                    $thumbpath = str_replace(BS, '/', $thumbpath);
                     $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
                 } else {
                     $tmppath = $downshare[$resourcesdata['appid']]['path'];
-                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath,'',0,0);
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath, '', 0, 0);
                 }
 
             } else {
@@ -190,25 +202,25 @@ class table_pichome_resources extends dzz_table
         }
         //echo $resourcesdata['icondata'];die;
         $imginfo = @getimagesize($resourcesdata['icondata']);
-        $resourcesdata['iconwidth'] = $imginfo[0] ? $imginfo[0]:$resourcesdata['width'];
-        $resourcesdata['iconheight'] = $imginfo[1] ? $imginfo[1]:$resourcesdata['height'];
+        $resourcesdata['iconwidth'] = $imginfo[0] ? $imginfo[0] : $resourcesdata['width'];
+        $resourcesdata['iconheight'] = $imginfo[1] ? $imginfo[1] : $resourcesdata['height'];
         $resourcesdata['icondata'] = str_replace('+', '%20', $resourcesdata['icondata']);
 
 
         $resourcesdata['share'] = $downshare[$resourcesdata['appid']]['share'];
         $resourcesdata['download'] = $downshare[$resourcesdata['appid']]['download'];
-        if ($downshare[$resourcesdata['appid']]['iswebsitefile']){
-            $originalimg= str_replace(DZZ_ROOT,'',$downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path']);
-            $originalimg = str_replace(BS,'/',$originalimg);
+        if ($downshare[$resourcesdata['appid']]['iswebsitefile']) {
+            $originalimg = str_replace(DZZ_ROOT, '', $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path']);
+            $originalimg = str_replace(BS, '/', $originalimg);
             $resourcesdata['originalimg'] = str_replace('+', '%20', urlencode($originalimg));
-            $resourcesdata['realpath'] =str_replace('+', '%20', urlencode($originalimg));
-        }else{
+            $resourcesdata['realpath'] = str_replace('+', '%20', urlencode($originalimg));
+        } else {
             $originalimg = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
-            $resourcesdata['originalimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg,'',0,0);
-            if(in_array($resourcesdata['opentype'],array('text','video','pdf'))){
-                $resourcesdata['realpath'] = str_replace('+','',urlencode(getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg,'',0,0)));
-            }else{
-                $resourcesdata['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg,'',0,0);
+            $resourcesdata['originalimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg, '', 0, 0);
+            if (in_array($resourcesdata['opentype'], array('text', 'video', 'pdf'))) {
+                $resourcesdata['realpath'] = str_replace('+', '', urlencode(getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg, '', 0, 0)));
+            } else {
+                $resourcesdata['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg, '', 0, 0);
             }
 
         }
@@ -221,7 +233,7 @@ class table_pichome_resources extends dzz_table
         unset($resourcesdata['path']);
         $resourcesdata['foldernames'] = C::t('pichome_folderresources')->get_foldername_by_rid($rid);
         $resourcesdata['tag'] = C::t('pichome_resourcestag')->fetch_tag_by_rid($rid);
-        $resourcesdata['dpath'] = dzzencode($rid, '', 0,0);
+        $resourcesdata['dpath'] = dzzencode($rid, '', 0, 0);
         //print_r($resourcesdata);die;
 
         return $resourcesdata;
@@ -245,37 +257,48 @@ class table_pichome_resources extends dzz_table
             $v['download'] = $downshare[$v['appid']]['download'];
             if ($v['hasthumb']) {
                 //如果是本地文件
-                if ($v['apptype'] == 1) {
-                    $filename = 'pichomethumb'.BS . $v['appid'] . BS . md5($v['path']) . '.jpg';
+                if ($downshare[$v['appid']]['type'] == 1) {
+                    $filename = 'pichomethumb' . BS . $v['appid'] . BS . md5($v['path']) . '.jpg';
                     $thumbpath = getglobal('setting/attachurl') . $filename;
                     $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
-                } else {
-                    $v['path'] = str_replace('\\','/',$v['path']);
+                } elseif ($downshare[$v['appid']]['type'] == 0) {
+                    $v['path'] = str_replace('\\', '/', $v['path']);
                     $filepath = dirname($v['path']);
                     $filename = substr($v['path'], strrpos($v['path'], '/') + 1);
-                    $filepath = str_replace('/',BS,$filepath);
+                    $filepath = str_replace('/', BS, $filepath);
                     $filename = str_replace(strrchr($filename, "."), "", $filename);
-                    $filepath = str_replace('/',BS,$filepath);
+                    $filepath = str_replace('/', BS, $filepath);
                     if ($downshare[$v['appid']]['iswebsitefile']) {
                         $tmppath = str_replace(DZZ_ROOT, '', $downshare[$v['appid']]['path']);
                         $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
                         $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
                     } else {
                         $tmppath = $downshare[$v['appid']]['path'];
-                        $thumbpath = $tmppath . BS . $filepath .BS . $filename . '_thumbnail.png';
+                        $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
                         $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath);
                     }
 
+                } else {
+                    $hookdata = ['rid' => $v['rid'], 'apppath' => $downshare[$v['appid']]['path'], 'appid' => $v['appid']];
+                    $return = Hook::listen('getpichomethumb', $hookdata);
+                    $thumbpath = str_replace(DZZ_ROOT, '', $return[0]['icon']);
+                    if ($downshare[$v['appid']]['iswebsitefile']){
+                        $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
+                    }else{
+                        $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath, '', 0, 0);
+                    }
                 }
 
             } else {
                 if ($v['type'] == 'commonimage') {
                     if ($downshare[$v['appid']]['iswebsitefile']) {
                         $tmppath = str_replace(DZZ_ROOT, '', $downshare[$v['appid']]['path']);
-                        $v['icondata'] = str_replace('+', '%20', urlencode($tmppath . '/' . $v['path']));
+                        $thumbpath = $tmppath . BS . $v['path'];
+                        $thumbpath = str_replace(BS,'/',$thumbpath);
+                        $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
                     } else {
                         $tmppath = $downshare[$v['appid']]['path'] . BS . $v['path'];
-                        $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath,'',0,0);
+                        $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath, '', 0, 0);
                     }
                 } else {
                     $v['icondata'] = geticonfromext($v['ext'], $v['type']);
@@ -284,13 +307,13 @@ class table_pichome_resources extends dzz_table
                 }
             }
             //文件真实地址
-            if ($downshare[$v['appid']]['iswebsitefile']){
-                $originalimg= str_replace(DZZ_ROOT,'',$downshare[$v['appid']]['path'] . BS . $v['path']);
-                $originalimg = str_replace(BS,'/',$originalimg);
-                $v['realpath'] =str_replace('+', '%20', urlencode($originalimg));
-            }else{
+            if ($downshare[$v['appid']]['iswebsitefile']) {
+                $originalimg = str_replace(DZZ_ROOT, '', $downshare[$v['appid']]['path'] . BS . $v['path']);
+                $originalimg = str_replace(BS, '/', $originalimg);
+                $v['realpath'] = str_replace('+', '%20', urlencode($originalimg));
+            } else {
                 $originalimg = $downshare[$v['appid']]['path'] . BS . $v['path'];
-                $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg,'',0,0);
+                $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg, '', 0, 0);
             }
 
 
@@ -299,44 +322,54 @@ class table_pichome_resources extends dzz_table
         }
         return $returndata;
     }
-    public function geticondata_by_rid($rid){
+
+    public function geticondata_by_rid($rid)
+    {
         $resourcesdata = DB::fetch_first("select r.rid,r.appid,r.hasthumb,r.ext,r.type,ra.path as fpath,
             v.path,r.apptype,v.iswebsitefile from %t r 
         left join %t ra on r.rid=ra.rid left join %t v on r.appid = v.appid where r.rid = %s and r.isdelete = 0",
-            array($this->_table,'pichome_resources_attr','pichome_vapp',$rid));
+            array($this->_table, 'pichome_resources_attr', 'pichome_vapp', $rid));
         if ($resourcesdata['hasthumb']) {
             //如果是本地文件
             if ($resourcesdata['apptype'] == 1) {
-                $filename = 'pichomethumb'.BS . $resourcesdata['appid'] . BS. md5($resourcesdata['fpath']) . '.jpg';
+                $filename = 'pichomethumb' . BS . $resourcesdata['appid'] . BS . md5($resourcesdata['fpath']) . '.jpg';
                 $thumbpath = getglobal('setting/attachurl') . $filename;
                 $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
-            }
-            else {
-                $resourcesdata['fpath'] = str_replace('\\','/',$resourcesdata['fpath']);
+            } elseif($resourcesdata['apptype'] == 0){
+                $resourcesdata['fpath'] = str_replace('\\', '/', $resourcesdata['fpath']);
                 $filepath = dirname($resourcesdata['fpath']);
                 $filename = substr($resourcesdata['fpath'], strrpos($resourcesdata['fpath'], '/') + 1);
                 $filename = str_replace(strrchr($filename, "."), "", $filename);
-                $filepath = str_replace('/',BS,$filepath);
+                $filepath = str_replace('/', BS, $filepath);
                 if ($resourcesdata['iswebsitefile']) {
                     $tmppath = str_replace(DZZ_ROOT, '', $resourcesdata['path']);
-                    $thumbpath = $tmppath . BS . $filepath . BS. $filename . '_thumbnail.png';
+                    $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
                     $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
                 } else {
                     $tmppath = $resourcesdata['path'];
                     $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
-                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath,'',0,0);
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath, '', 0, 0);
+                }
+            } else {
+                $hookdata = ['rid' => $resourcesdata['rid'], 'apppath' => $resourcesdata['path'], 'appid' => $resourcesdata['appid']];
+                $return = Hook::listen('getpichomethumb', $hookdata);
+                $thumbpath = str_replace(DZZ_ROOT, '', $return[0]['icon']);
+                if ($resourcesdata['iswebsitefile']){
+                    $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
+                }else{
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath, '', 0, 0);
                 }
             }
         } else {
             if ($resourcesdata['type'] == 'commonimage') {
                 if ($resourcesdata['iswebsitefile']) {
                     $tmppath = str_replace(DZZ_ROOT, '', $resourcesdata['path']);
-                    $thumbpath =  $tmppath . BS . $resourcesdata['fpath'];
-                    $thumbpath = str_replace(BS,'/',$thumbpath);
+                    $thumbpath = $tmppath . BS . $resourcesdata['fpath'];
+                    $thumbpath = str_replace(BS, '/', $thumbpath);
                     $resourcesdata['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
                 } else {
                     $tmppath = $resourcesdata['path'];
-                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath,'',0,0);
+                    $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath, '', 0, 0);
                 }
 
             } else {
@@ -346,6 +379,7 @@ class table_pichome_resources extends dzz_table
         }
         return $resourcesdata;
     }
+
     public function fetch_like_words($keyword, $limit = 10)
     {
         $likewords = [];

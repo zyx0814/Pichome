@@ -48,12 +48,7 @@
         }
         public function insert($setarr){
             //如果为oaooa库时
-            if($setarr['type'] == 2){
-              $setarr['path'] =$setarr['did'].'_'.$setarr['kuid'].'_'.$setarr['fid'];
-              $path = md5($setarr['path']);
-            }else{
-                $path = $setarr['path'];
-            }
+            $path = $setarr['path'];
             if($appid = DB::result_first("select appid from %t where path = %s and isdelete = 0",array($this->_table,$setarr['path']))){
                 parent::update($appid,$setarr);
                 return $appid;
@@ -84,6 +79,7 @@
      
         //删除虚拟应用
         public function delete_vapp_by_appid($appid){
+            $appdata = parent::fetch($appid);
             //删除文件表数据
             C::t('pichome_resources')->delete_by_appid($appid);
             //删除目录表数据
@@ -102,6 +98,9 @@
             }else{
                 if(is_dir(getglobal('setting/attachdir').'pichomethumb/'.$appid)){
                     removedirectory(getglobal('setting/attachdir').'pichomethumb/'.$appid);
+                }
+                if($appdata['type'] > 1){
+                    Hook::listen('pichomevappdelete',$appid);
                 }
                 return parent::delete($appid);
             }

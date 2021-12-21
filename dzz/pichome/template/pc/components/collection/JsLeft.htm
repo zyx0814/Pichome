@@ -1,0 +1,334 @@
+
+<div class="classify-search">
+	<el-input 
+		v-model="LeftTree.filterText" 
+		placeholder="搜索文件夹" 
+		clearable 
+		size="medium"
+		prefix-icon="ri-search-line"
+		@input="LeftClassifyFilterInput"></el-input>
+</div>
+<div class="left-scroll">
+	<el-scrollbar style="height: 100%;">
+		<el-menu
+			default-active="tt">
+			<el-menu-item index="tt" style="padding-left: 24px;">
+		        <i class="ri-home-heart-line" style="font-size: 20px;"></i>
+		        <span slot="title" style="font-size: 16px;">全部收藏</span>
+			</el-menu-item>
+		    <el-menu-item index="xx" style="padding-left: 24px;">
+		        <i class="ri-folder-reduce-line" style="font-size: 20px;"></i>
+		        <span slot="title" style="font-size: 16px;">未分类收藏</span>
+		    </el-menu-item>
+		</el-menu>
+		<el-divider></el-divider>
+		<div class="tree-box" v-if="LeftTree.show">
+			<el-tree
+				class="left-tree"
+				ref="lefttree"
+				:load="LeftGetTreeData"
+				lazy
+				indent="8"
+				:props="LeftTree.defaultProps"
+				:expand-on-click-node="false"
+				node-key="fid" 
+				accordion
+				:current-node-key="LeftTree.defaultChecked"
+				:default-expanded-keys="LeftTree.defaultOpenkeys"
+				@node-click="LeftTreeClick"
+				:filter-node-method="LeftTreeFilterNode"
+				highlight-current>
+				<div class="custom-tree-node" slot-scope="{ node, data }" :class="{'tree-node-color':node.level==1?Appid==data.fid:Appid==data.appid}">
+					<i class="ri-folder-line" style="font-size: 20px;vertical-align: middle;margin-right: 5px;"></i>
+					<!-- <i class="ri-folder-open-line"></i> -->
+					<div class="name" v-cloak>{{ node.label }}</div>
+					<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
+					<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
+				</div>
+			</el-tree>
+		</div>
+		<div class="TreeBackloading" v-if="Leftloading">
+			<div class="img-loading center">
+				<span class="el-icon-loading"></span>加载中...
+			</div>
+		</div>
+	</el-scrollbar>
+</div>
+
+
+<script type="text/javascript">
+	var JsLeftData = {
+		Appid:'all',
+		Librarys:$apps,
+		LeftClassify:'',
+		Leftloading:true,
+		LeftTree:{
+			show:true,
+			defaultDataInit:{},
+			defaultProps:{
+				children: 'children',
+				label: 'fname',
+				isLeaf: 'leaf'
+			},
+			filterText:'',
+			defaultChecked:'',
+			defaultOpenkeysInit:[],
+			defaultOpenkeys:[],
+			arrangement:[],
+			arrangementLast:[],
+		}
+	};
+	var JsLeftMethods = {
+		LeftCreat(){
+			var self = this;
+			var appid = this.CommonGetHashParam('appid');
+			var classify = this.CommonGetHashParam('classify',true);
+			if(classify){
+				var fclassify = decodeURI(classify.split(',')[0]);
+				if(fclassify == '未分类'){
+					self.LeftClassify = 'not'+appid;
+				}else{
+					self.LeftClassify = fclassify;
+				}
+				
+			}
+			if(appid){
+				this.Appid = appid;
+				for(var i in this.Librarys){
+					if(this.Librarys[i].appid == appid){
+						this.LibrarysName = this.Librarys[i].appname;
+						self.ImageDataIsExpanded = this.Librarys[i].leaf?false:true;
+					}
+				}
+			}else{
+				if(this.Librarys.length==1){
+					this.Appid = this.Librarys[0].appid;
+					this.LibrarysName = this.Librarys[0].appname;
+				}
+			}
+			if(self.Appid && self.Appid!='all'&&self.LeftClassify){
+				self.LeftTree.defaultOpenkeysInit.push(self.Appid);
+			}
+			if(classify){
+				self.LeftTree.defaultChecked = self.LeftClassify;
+			}else{
+				
+				self.LeftTree.defaultChecked = self.Appid;
+			}
+		},
+		LeftTreeClick(data,node){
+			var self = this;
+			if(node.isLeaf){
+				node.loading = false;
+				node.loaded = true;
+				self.ImageDataIsExpanded = false;
+			}else{
+				self.ImageDataIsExpanded = true;
+			}
+			if(self.$refs.ScreenPopoverRef && self.$refs.ScreenPopoverRef.length){
+				for(var s in self.$refs.ScreenPopoverRef){
+					self.$refs.ScreenPopoverRef[s].doClose();
+				}
+			}
+			self.HeaderPopoverSearchHide()
+			if(node.level>1){
+				if(self.LeftClassify != data.fid){
+					self.Appid = data.appid;
+					self.LeftClassify = data.fid;
+
+					self.LeftTree.defaultChecked = self.LeftClassify;
+					self.LeftTree.defaultOpenkeysInit = [data.appid];
+
+					if(data.pathkey){
+						self.ScreenSubstring(data.pathkey,data.appid);
+					}
+					self.LeftTree.defaultOpenkeys = self.LeftTree.defaultOpenkeysInit;
+					this.CommonGetImageData();
+				}
+			}else{
+				
+				if(self.Appid != data.fid || self.LeftClassify){
+					self.Appid = data.fid;
+					self.LeftClassify = '';
+					self.LeftTree.defaultChecked = self.Appid;
+					self.LeftTree.defaultOpenkeys = [];
+					self.LeftTree.defaultOpenkeysInit = [];
+					this.CommonGetImageData();
+				}
+			}
+		},
+		LeftTreeFilterNode(value, data){
+			if (!value) return true;
+			return data.fname.indexOf(value) !== -1;
+		},
+		LeftClassifyFilterInput:debounce(function(val){//输入
+			var self = this;
+			self.LeftTree.defaultOpenkeys = [];
+			self.LeftTree.arrangementLast = [];
+			self.LeftTree.show = false;
+			self.Leftloading = true;
+			if(val){
+				$.post(MOD_URL+'&op=ajax&operation=searchfolderbyname',{
+					keyword:val
+				},function(data){
+					for(var b in data.folderdata){
+						var bitem = data.folderdata[b];
+						var pathkey = [];
+						if(self.LeftTree.arrangementLast.indexOf(bitem.fid)<0){
+							self.LeftTree.arrangementLast.push(bitem.fid);
+						}
+						if(self.LeftTree.defaultOpenkeys.indexOf(bitem.appid)<0){
+							self.LeftTree.defaultOpenkeys.push(bitem.appid)
+						}
+						self.LeftTree.arrangement = [];
+						if(bitem.pathkey){
+							self.LeftGetTreeDataSubstring(bitem.pathkey,bitem.appid);
+						}
+						for(var p in self.LeftTree.arrangement){
+							if(self.LeftTree.defaultOpenkeys.indexOf(self.LeftTree.arrangement[p])<0){
+								self.LeftTree.defaultOpenkeys.push(self.LeftTree.arrangement[p])
+							}
+						}
+					}
+					self.$nextTick(function(){
+						self.LeftTree.show = true;
+					})
+				},'json');
+			}else{
+				self.LeftTree.defaultOpenkeys = self.LeftTree.defaultOpenkeysInit;
+				self.$nextTick(function(){
+					self.LeftTree.show = true;
+				})
+			}
+		},800),
+		
+		LeftGetTreeDataSubstring(str,appid){
+			var self = this;
+			var farr = str.split(appid);
+			var arr = [];
+			for(var f in farr){
+				if(farr[f]){
+					arr.push(farr[f]);
+				}
+			}
+			arr.pop();
+			for(var i in arr){
+				var pathkey = arr[i]+appid;
+				if(self.LeftTree.arrangement.indexOf(pathkey) == -1){
+					self.LeftTree.arrangement.push(pathkey);
+				}
+			}
+			
+		},
+		LeftGetTreeDataSubstringFinish(){
+			var self = this;
+			if(this.LeftTree.defaultOpenkeys.length){
+				var status = false;
+				for(var i in this.LeftTree.defaultOpenkeys){
+					var node = self.$refs.lefttree.getNode(this.LeftTree.defaultOpenkeys[i]);
+					if(!node){
+						return false;
+					}
+					status = true;
+				}
+				if(status){
+					self.Leftloading = false;
+				}
+			}else{
+				self.Leftloading = false;
+			}
+		},
+		LeftGetTreeData(node,resolve){
+			var self = this;
+			if(node.level == 0){
+				var arr = [];
+				if(self.LeftTree.filterText){
+					for(var i in self.Librarys){
+						var item = self.Librarys[i];
+						if(self.LeftTree.defaultOpenkeys.indexOf(item.appid)>-1){
+							arr.push({
+								fid:item.appid,
+								fname:item.appname,
+								leaf:item.leaf,
+								filenum:item.filenum,
+								nosubfilenum:item.nosubfilenum
+							});
+						}
+					}
+				}else{
+					var num = 0;
+					for(var i in self.Librarys){
+						var item = self.Librarys[i];
+						num += parseInt(item.filenum);
+						arr.push({
+							fid:item.appid,
+							fname:item.appname,
+							leaf:item.leaf,
+							filenum:item.filenum,
+							nosubfilenum:item.nosubfilenum
+						});
+					}
+					// if(self.Librarys.length>1){
+					// 	arr.unshift({
+					// 		fid:'all',
+					// 		fname:'全部库',
+					// 		filenum:num,
+					// 		leaf:true
+					// 	});
+					// }
+					
+				}
+				
+				resolve(arr);
+				self.$nextTick(function(){
+					self.LeftGetTreeDataSubstringFinish();
+				})
+			}
+			if(node.level == 1){
+				$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',{
+					appid:node.data.fid,
+				},function(data){
+					var arr = [];
+					var num = 0;
+					for(var i in data.folderdatanum){
+						var item = data.folderdatanum[i];
+						if(self.LeftTree.filterText){
+							if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
+								arr.push(item);
+							}
+						}else{
+							arr.push(item);
+						}
+					}
+					resolve(arr);
+					self.$nextTick(function(){
+						self.LeftGetTreeDataSubstringFinish();
+					})
+				},'json');
+			}
+			if(node.level > 1){
+				$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',{
+					appid:node.data.appid,
+					pfids:node.data.fid,
+				},function(data){
+					var arr = [];
+					var num = 0;
+					for(var i in data.folderdatanum){
+						var item = data.folderdatanum[i];
+						if(self.LeftTree.filterText){
+							if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
+								arr.push(item);
+							}
+						}else{
+							arr.push(item);
+						}
+					}
+					resolve(arr);
+					self.$nextTick(function(){
+						self.LeftGetTreeDataSubstringFinish();
+					})
+				},'json');
+			}
+		}
+	};
+</script>

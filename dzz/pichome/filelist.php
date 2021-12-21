@@ -41,8 +41,11 @@ if ($operation == 'filelist') {
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
     $vappids = [];
-    foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        $vappids[] = $v['appid'];
+    foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
+        if(is_dir($v['path'])){
+            $vappids[] = $v['appid'];
+        }
+
     }
     if(empty($vappids)){
         $wheresql .= ' and 0';

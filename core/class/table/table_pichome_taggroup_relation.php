@@ -26,4 +26,13 @@
         public function fetch_cid_by_gid($gid,$appid){
             return DB::result_first("select cid from %t where gid = %d and appid = %s",array($this->_table,$gid,$appid));
         }
+
+        public function insertdata($setarr){
+            if($id=DB::result_first("select id from %t where tid = %d and appid = %s",array($this->_table,$setarr['tid'],$setarr['appid']))){
+                parent::update($id,$setarr);
+            }else{
+                parent::insert($setarr);
+            }
+            return true;
+        }
     }

@@ -25,10 +25,10 @@
 				@node-click="LeftTreeClick"
 				:filter-node-method="LeftTreeFilterNode"
 				highlight-current>
-				<div class="custom-tree-node" slot-scope="{ node, data }">
+				<div class="custom-tree-node" slot-scope="{ node, data }" :class="{'tree-node-color':node.level==1?Appid==data.fid:Appid==data.appid}">
 					<div class="name" v-cloak>{{ node.label }}</div>
-					<div style="color: var(--content-textMessage);font-size: 14px;" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
-					<div style="color: var(--content-textMessage);font-size: 14px;" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
+					<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
+					<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
 				</div>
 			</el-tree>
 		</div>

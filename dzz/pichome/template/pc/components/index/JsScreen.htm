@@ -161,7 +161,7 @@
 			var self = this;
 			var param = {};
 			for(var key in self.ScreenValue){
-				if(type && type != 'hash' && key == type){
+				if(type && type != 'hash' && key == type && key!='tag'){
 					continue;
 				}
 				switch(key){
@@ -318,6 +318,7 @@
 				self.ScreenValue[type].loading = true;
 			}
 			var param = self.ScreenGetParam(type);
+			console.log(param)
 			param['skey'] = type;
 			if(self.Appid && self.Appid!='all'){
 				param['appid'] = self.Appid;
@@ -656,7 +657,11 @@
 						// self.ScreenValue.classify.DefaultExpandedKeys = farr[1].split(',');
 					break;
 					case 'tag':
-						self.ScreenValue.tag.value = farr[1].split(',');
+						var tags = farr[1].split(',');
+						for(var t in tags){
+							self.ScreenValue.tag.value.push(parseInt(tags[t]))
+						}
+						console.log(self.ScreenValue.tag.value)
 					break;
 					case 'tagrelative':
 						self.ScreenValue.tag.tagrelative = farr[1];

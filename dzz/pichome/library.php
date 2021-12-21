@@ -35,9 +35,9 @@ if ($operation == 'fetch') {
 where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or (ra.isget=1))",
                 array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$appid));
             $catdata = C::t('pichome_taggroup')->fetch_by_appid($appid);
-            if (($data['state'] == 1)) {
+            if (($data['state'] == 2)) {
                 dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
-            } elseif ($data['state'] == 2) {
+            } elseif ($data['state'] == 3) {
                 dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
             }
             exit(json_encode(array('success' => true, 'data' => $data, 'catdata' => $catdata)));
@@ -47,57 +47,26 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
     }
 } elseif ($operation == 'getdata') {
     $data = array();
-    foreach (DB::fetch_all("select * from %t where isdelete = 0", array('pichome_vapp')) as $val) {
-        foreach (DB::fetch_all("select r.rid,r.apptype,r.type,r.ext,r.name,ra.path,r.hasthumb from %t  r left join %t ra on r.rid=ra.rid where r.appid = %s order by r.btime limit 0,4",
-            array('pichome_resources', 'pichome_resources_attr', $val['appid'])) as $v) {
-
-            if ($v['hasthumb']) {
-                //如果是本地文件
-                if ($v['apptype'] == 1) {
-                    $filename = 'pichomethumb'.BS . $val['appid'] .BS . md5($v['path']) . '.jpg';
-                    $thumbpath = getglobal('setting/attachurl') . $filename;
-                    $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
-                } else {
-                    $v['path'] = str_replace('\\','/',$v['path']);
-                    $filepath = dirname($v['path']);
-                    $filename = substr($v['path'], strrpos($v['path'], '/') + 1);
-                    $filename = str_replace(strrchr($filename, "."), "", $filename);
-                    $filepath = str_replace('/',BS,$filepath);
-                    if ($val['iswebsitefile']) {
-                        $tmppath = str_replace(DZZ_ROOT, '', $val['path']);
-                        $thumbpath = $tmppath . BS . $filepath .BS . $filename . '_thumbnail.png';
-                        $v['icondata'] = str_replace('+', '%20', urlencode($thumbpath));
-
-                    } else {
-                        $tmppath = $val['path'];
-                        $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
-                        $v['icondata'] = $_G['siteurl'] . 'index.php?mod=io&op=getImg&path=' . dzzencode($thumbpath,'',0,0);
-                    }
-                }
-            } else {
-                if ($v['type'] == 'commonimage') {
-                    if ($val['iswebsitefile']) {
-                        $tmppath = str_replace(DZZ_ROOT, '', $val['path']);
-                        $v['icondata'] = str_replace('+', '%20', urlencode($tmppath . BS . $v['path']));
-                    } else {
-                        $tmppath = $val['path'] . BS . $v['path'];
-                        $v['icondata'] = $_G['siteurl'] . 'index.php?mod=io&op=getImg&path=' . dzzencode($tmppath,'',0,0);
-                    }
-
-                } else {
-                    $v['icondata'] = geticonfromext($v['ext'], $v['type']);
-                }
-            }
-            $v['path'] = str_replace('+', '%20', urlencode($v['path']));
-            $val['resources'][] = $v;
+    foreach (DB::fetch_all("select * from %t where isdelete = 0 order by disp", array('pichome_vapp')) as $val) {
+        $val['connect'] = (is_dir($val['path'])) ? 1:0;
+        if($val['charset'] != CHARSET){
+            $val['path'] = diconv($val['path'], $val['charset'], CHARSET);
         }
-        $val['path'] = str_replace('+', '%20', urlencode($val['path']));
         $data[] = $val;
     }
     exit(json_encode(array('data' => $data)));
 
-} elseif ($operation == 'addlibrary') {
-    //require_once(DZZ_ROOT . './dzz/class/class_encode.php');
+} elseif($operation == 'getinfonum'){//已获取文件信息个数
+    $returndata = [];
+    foreach(DB::fetch_all("select appid from %t where isdelete = 0 and getinfo = 1 and `type` = 1 and getinfonum < filenum", array('pichome_vapp')) as $v){
+         $getinfonum= DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid 
+where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or (ra.isget=1))",
+            array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$v['appid']));
+        C::t('pichome_vapp')->update($v['appid'],array('getinfonum'=>$getinfonum));
+            $returndata['appid'] = $getinfonum;
+    }
+    exit(json_encode(array('data' => $returndata)));
+}elseif ($operation == 'addlibrary') {
     //接收路径
     $path = isset($_GET['path']) ? trim($_GET['path']) : '';
     //接收编码
@@ -119,14 +88,26 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
     if ($type == 0) {
         $metajsonfile = $path . BS . 'metadata.json';
         if (!is_file($metajsonfile)) {
-            exit(json_encode(array('error' => 'not a eagle library')));
+            exit(json_encode(array('error' => '系统检测该库不符合eagle库标准，不能作为eagle库添加')));
         }
         $appname = str_replace('.library', '', $appname);
+    }
+    if ($type == 2) {
+        $dbfile = $path . BS . '.bf'.BS.'billfish.db';
+        if (!is_file($dbfile)) {
+            exit(json_encode(array('tips' => '系统检测该库不符合billfish库标准，不能作为billfish库添加')));
+        }
     }
     if ($type == 1 && !$force) {
         $metajsonfile = $path . BS . 'metadata.json';
         if (is_file($metajsonfile) && is_dir($path . BS . 'images')) {
             exit(json_encode(array('tips' => '系统检测该目录可能为eagle库，您确认要作为普通目录导入吗')));
+        }
+    }
+    if ($type == 1 && !$force) {
+        $dbfile = $path . BS . '.bf'.BS.'billfish.db';
+        if (is_file($dbfile)) {
+            exit(json_encode(array('tips' => '系统检测该目录可能为billfish库，您确认要作为普通目录导入吗')));
         }
     }
 
@@ -150,7 +131,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
     $appid = C::t('pichome_vapp')->insert($appattr);
     if ($appid) {
         $appattr['appid'] = $appid;
-        $appattr['path'] = urlencode($appattr['path']);
+        $appattr['path'] = $_GET['path'];
         exit(json_encode(array('data' => $appattr)));
     } else {
         exit(json_encode(array('error' => 'create failer')));
@@ -159,6 +140,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
 } elseif ($operation == 'dellibrary') {
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     if (C::t('pichome_vapp')->update($appid, array('isdelete' => 1))) {
+        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=delete', 0, '', '', false, '', 0.1);
         exit(json_encode(array('success' => true)));
     } else {
         exit(json_encode(array('error' => true)));
@@ -205,9 +187,6 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
                 closedir($dh);
             }
         } elseif ($gettype) {
-
-            //echo $notallowdir;die;
-            //$noallowshowdir = ['patch', 'opt', 'srv', 'run', 'lib64', 'sys', 'bin', 'mnt', 'media', 'boot', 'etc', 'sbin', 'lib', 'dev', 'root', 'usr', 'proc', 'var', 'tmp', 'lost+found', 'lib32', 'etc.defaults', 'var.defaults'];
             if (is_dir($path)) {
                 if ($dh = @opendir($path)) {
                     while (($file = readdir($dh)) !== false) {
@@ -230,6 +209,18 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
 
     }
     exit(json_encode(array('data' => $datas)));
+} elseif ($operation == 'sort') {
+	$appids = isset($_GET['appids']) ? trim($_GET['appids']) : '';
+	if (submitcheck('settingsubmit')) {
+	    if (!$appids) exit(json_encode(array('error' => true)));
+		$appidarr = explode(',', $appids);
+		$setarr = [];
+		foreach($appidarr as $k=>$v){
+           $setarr['disp'] = $k;
+           C::t('pichome_vapp')->update($v,$setarr);
+        }
+	    exit(json_encode(array('success' => true)));
+	}
 } else {
     $theme = GetThemeColor();
     include template('pc/page/library');

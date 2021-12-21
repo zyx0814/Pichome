@@ -1,143 +1,42 @@
 <!--{template pc/frame/header_simple_start}-->
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/sortable.min.js?{VERHASH}"></script>
 <style type="text/css">
-	.lbox{
-		padding: 30px 0;
-		/* text-align:center; */
-		overflow: hidden;
-	}
-	.lbox .block{
-		width: 202px;
-		float: left;
-		margin-right: 35px;
-		margin-bottom: 8px;
-	}
-	.lbox .block .images{
-		width: 202px;
-		height: 202px;
-		overflow: hidden;
-		border-radius: 8px;
-		position: relative;
-	}
-	.lbox .block .images.add{
-		cursor: pointer;
-		padding: 8px;
-		background-color: var(--content-imgbg);
-	}
-	.lbox .block .images.add:hover{
-		opacity: 0.75;
-	}
-	.lbox .block .images.add .border{
-		width: 100%;
-		height: 100%;
-		text-align: center;
-		line-height: 202px;
-		font-size: 45px;
-		color: var(--tip-color);
-		border-radius: 8px;
-		border: 2px dashed var(--slider-line);
-	}
-	.lbox .block .images .img-bg{
-		float: left;
-		width: 100px;
-		height: 100px;
-		margin-right: 2px;
-		margin-bottom: 2px;
-		background-color: var(--content-imgbg);
-	}
-	.lbox .block .images .img-bg:nth-child(even){
-		margin-right: 0;
-	}
-	.lbox .block .images .img-bg:nth-child(3),
-	.lbox .block .images .img-bg:nth-child(4){
-		margin-bottom: 0;
-	}
-
-	.lbox .block .images .bg{
-		display: none;
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		justify-content: center;
-		align-items: center;
-		background: rgb(0,0,0,0.5);
-	}
-	
-	.lbox .block .images:hover .bg{
-		display: flex;
-	}
-	.lbox .block .images .progress{
-		position: absolute;
-		left: 0;
-		top: 0;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		width: 100%;
-		height: 100%;
-		padding: 0 10px;
-		background: rgb(0,0,0,0.5);
-	}
-	.lbox .block .images .progress .el-progress{
-		width: 100%;
-	}
-	.lbox .block .images .bg .op{
-		text-align: center;
-		cursor: pointer;
-		color: #FFFFFF;
-		opacity: 0.7;
-	}
-	.lbox .block .images .bg .op:hover{
-		opacity: 1;
-	}
-	.lbox .block .images .bg .op .icon{
-		display: block;
-		font-size: 19px;
-		margin-bottom: 5px;
-	}
-	.lbox .block .name{
-		font-size: 16px;
-		color: var(--content-textHover);
-		/* padding: 15px 0 8px; */
-		height: 30px;
-		line-height: 30px;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-	.lbox .block .message{
+	.el-table{
 		color: var(--content-text);
-		font-size: 14px;
+		background: transparent;
 	}
-	.lbox .block .message .left{
-		float: left;
+	.el-table thead{
+		color: var(--content-textHover);
+	}
+	.el-table .el-table__empty-text{
+		color: var(--content-text);
+	}
+	.el-table .operation{
 		overflow: hidden;
 		white-space: nowrap;
-		text-overflow: ellipsis;
-		/* display: block; */
-		width: 100%;
+		text-align: right;
 	}
-	.lbox .block .message .right{
-		float: right;
+	.el-table .link{
+		font-size: 20px;
+		display: inline-block;
+		vertical-align: bottom;
+		color: var(--leftTreeColor);
 	}
-	.SortableBox{
-		padding-top: 10px;
+	.el-table .operation .icon{
+		font-size: 18px;
+		display: inline-block;
+		margin-right: 8px;
+		cursor: pointer;
 	}
-	.SortableBox .sortable-list{
-		margin-bottom: 8px;
-		line-height: 26px;
+	.el-table .operation .icon:last-child{
+		margin-right:0;
 	}
-	[v-cloak]{
-	    display: none;
+	.el-table .operation .icon:hover{
+		color: var(--content-textHover);
 	}
-	.el-progress-bar__inner{
-		transition: none;
+	.el-table .operation .icon.loading{
+		animation: rotating 2s linear infinite;
 	}
-/* 	.SortableBox .sortable-list .el-checkbox{
-		min-width: 120px;
-	} */
 	.Import-dialog{
 		display: flex;
 		flex-direction: column;
@@ -157,224 +56,396 @@
 	}
 	.Import-dialog .el-dialog__body{
 		padding: 10px 15px;
+		color: var(--header-text);
+	}
+	.notes-box{
+		padding: 24px 10px;
+		color: var(--content-text);
+	}
+	.notes-box .block{
+		font-size: 14px;
+		overflow: hidden;
+		margin-bottom: 8px;
+	}
+	.notes-box .block .text{
+		float: left;
+		width: 80px;
+	}
+	.notes-box .block .message{
+		float: left;
+		width: calc(100% - 80px);
 	}
 </style>
 <!--{template pc/frame/header_simple_end}-->
 <div id="dzzoffice">
 	<el-container>
 		<el-header height="70px" style="padding: 0;z-index: 10;">
-			<page-header></page-header>
+			<div id="top_header" style="padding: 4px 16px;">
+				<div class="header-content">
+					<div class="h-left">
+						<a href="{MOD_URL}">
+							<el-image src="dzz/pichome/image/library/library.png?{VERHASH}" fit="contain"></el-image>
+							<span class="text">库设置</span>
+						</a>
+					</div>
+					<div class="h-center">
+					</div>
+					<div class="h-right" style="overflow: hidden;">
+						<el-button type="primary" style="float: left;" size="small"  icon="el-icon-circle-plus-outline" @click="catalogue.dialogVisible = true">新建库</el-button>
+						<div class="r-option" style="float: left;margin-left: 8px;">
+							<el-dropdown v-cloak trigger="click" @command="handleavatar">
+								<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
+								<el-dropdown-menu slot="dropdown" style="width: 165px;">
+									<el-dropdown-item command="personal">个人设置</el-dropdown-item>
+									<el-dropdown-item command="help">帮助文档</el-dropdown-item>
+									<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+									<el-divider></el-divider>
+									<el-dropdown-item command="setting">站点设置</el-dropdown-item>
+									<el-dropdown-item command="library">库设置</el-dropdown-item>
+									<el-dropdown-item command="system">系统工具</el-dropdown-item>
+									<el-divider></el-divider>
+									<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
+									<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+								</el-dropdown-menu>
+							</el-dropdown>
+						</div>
+					</div>
+				</div>
+			</div>
 		</el-header>
 		<el-main>
 			<div class="page-content">
 				<el-scrollbar class="page-component__scroll">
 					<div class="content" style="padding: 26px 16px;">
-						<h1 style="text-align: center;color: var(--content-textHover);">库 设 置</h1>
-						<div class="lbox">
-							<div class="block" @click="catalogue.dialogVisible = true">
-								<div class="images add">
-									<div class="border">
-										<i class="el-icon-circle-plus-outline"></i>
-									</div>
-									
-								</div>
-								<p class="name" style="font-size: 20px;text-align: center;height: 49px;line-height: 49px;">添加库</p>
-							</div>
-							<template v-if="dataList.length">
-								<div class="block" v-for="(item,index) in dataList">
-									<div class="images">
-										<template v-if="item.resources">
-											<div class="img-bg" v-for="ritem in item.resources">
+						<el-table
+							v-loading="loading"
+						    :data="tableData"
+							row-key="appid"
+							stripe
+						    style="width: 100%">
+						    <el-table-column
+								show-overflow-tooltip
+						        label="库名称">
+								<template slot-scope="scope">
+									<template v-if="parseInt(scope.row.connect) == 1">
+										<a :href="'#appid='+scope.row.appid" target="_blank" style="color: var(--content-text);text-decoration: none;">
+											<template v-if="parseInt(scope.row.type)==1">
 												<el-image
-													style="width: 100%; height: 100%"
-													:src="ritem.icondata"
-													fit="cover"></el-image>
-											</div>
-										</template>
-										<template v-else>
-											<div class="img-bg"></div>
-											<div class="img-bg"></div>
-											<div class="img-bg"></div>
-											<div class="img-bg"></div>
-										</template>
-										<div class="progress" v-if="parseInt(item.state)==0">
-											<div style="width: 100%;text-align: center;">
-												<el-button type="primary" size="mini" @click="handleImport(index,item.appid)">点击导入</el-button>
-											</div>
-										</div>
-										<div class="progress" v-else-if="parseInt(item.state)==1">
-											<div style="width: 100%;">
-												<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入中...</p>
-												<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
-											</div>
-										</div>
-										<div class="progress" v-else-if="parseInt(item.state)==2">
-											<div style="width: 100%;">
-												<p style="margin-bottom: 5px;color: #FFFFFF;font-size: 14px;">导入完成，校验中...</p>
-												<el-progress :text-inside="true" :stroke-width="19" :percentage="parseInt(item.percent)"></el-progress>
-											</div>
-										</div>
-										<div v-else class="bg">
-											<span class="op" @click="handleLook(item.appid)" style="margin-right: 25px;"><i class="el-icon-view icon"></i>查看</span>
-											<span class="op" @click="handleRefresh(index,item.appid)" style="margin-right: 25px;"><i class="el-icon-refresh icon"></i>更新</span>
-											<span class="op" @click="handleSetting(item.appid,item.appname)"><i class="el-icon-edit icon"></i>设置</span>
-										</div>
-									</div>
-									<p class="name" v-cloak>{{item.appname}}</p>
-									<div class="message clearfix">
-										<span class="left" v-cloak>{{item.filenum}}个文件</span>
-	<!-- 									<span class="right">
-											<template v-if="parseInt(item.personal)==1">
-												<el-link :underline="false" type="primary">私有</el-link>
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/file.png"
+												    fit="contain"></el-image>
+											</template>
+											<template v-else-if="parseInt(scope.row.type)==2">
+												<el-image
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/billfish.png"
+												    fit="contain"></el-image>
 											</template>
 											<template v-else>
-												<el-link :underline="false" type="danger">公开</el-link>
+												<el-image
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/eagle.png"
+												    fit="contain"></el-image>
 											</template>
-										</span> -->
+											<span style="margin-left: 8px;">{{ scope.row.appname }}</span>
+										</a>
+									</template>
+									<template v-else>
+										<div style="display: inline-block;color: var(--content-text);">
+											<template v-if="parseInt(scope.row.type)==1">
+												<el-image
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/file.png"
+												    fit="contain"></el-image>
+											</template>
+											<template v-else-if="parseInt(scope.row.type)==2">
+												<el-image
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/billfish.png"
+												    fit="contain"></el-image>
+											</template>
+											<template v-else>
+												<el-image
+												    style="width: 24px; height: 24px;vertical-align: top;"
+												    src="dzz/pichome/image/library/eagle.png"
+												    fit="contain"></el-image>
+											</template>
+											<span style="margin-left: 8px;">{{ scope.row.appname }}</span>
+										</div>
+									</template>
+								</template>
+						    </el-table-column>
+							<el-table-column
+								show-overflow-tooltip
+							    label="位置">
+								<template slot-scope="scope">
+									{{ decodeURI(scope.row.path) }}
+								</template>
+							</el-table-column>
+							<el-table-column
+							    prop="filenum"
+								width="120"
+								align="center"
+							    label="连接状态">
+								<template slot-scope="scope">
+									<template v-if="parseInt(scope.row.connect) == 1">
+										<i class="link ri-link-m"></i>
+										<span style="color: var(--leftTreeColor);">连接正常</span>
+									</template>
+									<template v-else>
+										<i class="link ri-link-unlink-m" style="color: #e6a23c;"></i>
+										<span style="color: #e6a23c;">连接中断</span>
+									</template>
+								</template>
+							</el-table-column>
+							<el-table-column
+							    prop="filenum"
+								width="150"
+								align="center"
+							    label="文件数">
+							</el-table-column>
+							<el-table-column
+								width="150"
+								align="center"
+							    label="导入数">
+								<template slot-scope="scope">
+									<template v-if="parseInt(scope.row.state)==0">{{scope.row.filenum}}</template>
+									<template v-else-if="parseInt(scope.row.state)==1">0%</template>
+									<template v-else-if="parseInt(scope.row.state)==2">{{scope.row.percent}}%</template>
+									<template v-else-if="parseInt(scope.row.state)==3">{{scope.row.percent}}%</template>
+									<template v-else>{{scope.row.filenum}}</template>
+								</template>
+							</el-table-column>
+							<el-table-column
+								width="120"
+								align="center"
+							    label="状态">
+								<template slot-scope="scope">
+									<template v-if="parseInt(scope.row.state)==0">未导入</template>
+									<template v-else-if="parseInt(scope.row.state)==1">准备中...</template>
+									<template v-else-if="parseInt(scope.row.state)==2">导入中...</template>
+									<template v-else-if="parseInt(scope.row.state)==3">校验中...</template>
+									<template v-else>完成</template>
+								</template>
+							</el-table-column>
+							<el-table-column
+								width="120"
+								align="center"
+							    label="缩略图">
+								<template slot-scope="scope">
+									<template v-if="parseInt(scope.row.state) == 4 && parseInt(scope.row.type) == 1 && parseInt(scope.row.getinfo) == 1">
+										{{scope.row.getinfonum}}
+									</template>
+									<template v-else>——</template>
+								</template>
+							</el-table-column>
+							<el-table-column
+							    prop="name"
+							    label="操作"
+								width="130">
+								<template slot-scope="scope">
+									<div class="operation">
+										<template>
+											<el-tooltip :enterable="false" effect="dark" content="更新" placement="top" v-if="parseInt(scope.row.connect) == 1">
+											    <i class="icon el-icon-refresh" @click="handleRefresh(scope.row.appid)" :class="{loading:parseInt(scope.row.state)==1||parseInt(scope.row.state)==2||parseInt(scope.row.state)==3}"></i>
+											</el-tooltip>
+											<el-tooltip :enterable="false" effect="dark" content="设置" placement="top">
+											    <i class="icon el-icon-setting" @click="handleSetting(scope.row.appid,scope.row.appname)"></i>
+											</el-tooltip>
+										</template>
+										<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary(scope.row.appid)" style="margin-right: 8px;">
+											<el-tooltip slot="reference" :enterable="false" effect="dark" content="删除" placement="top">
+											    <i class="icon el-icon-delete"></i>
+											</el-tooltip>
+										</el-popconfirm>
+										<el-tooltip :enterable="false" effect="dark" content="拖动排序" placement="top">
+										    <i class="icon el-icon-rank icon-rank"></i>
+										</el-tooltip>
+									</div>
+								</template>
+							</el-table-column>
+						</el-table>
+						<style type="text/css">
+							
+						</style>
+						<div class="notes-box">
+							<p class="title" style="padding: 8px 0;">注释：</p>
+							<div class="block">
+								<div class="text">库图标：</div>
+								<div class="message" style="float: left;">
+									<div style="display: inline-block;">
+										<el-image
+										    style="width: 20px; height: 20px;vertical-align: top;margin-right: 5px;"
+										    src="dzz/pichome/image/library/file.png"
+										    fit="contain"></el-image>
+										    普通目录
+									</div>
+									<div style="display: inline-block;margin-left: 8px;">
+										<el-image
+										    style="width: 20px; height: 20px;vertical-align: top;margin-right: 5px;"
+										    src="dzz/pichome/image/library/eagle.png"
+										    fit="contain"></el-image>
+										Eagle库
+									</div>
+									<div style="display: inline-block;margin-left: 8px;">
+										<el-image
+										    style="width: 22px; height: 22px;vertical-align: middle;margin-right: 5px;"
+										    src="dzz/pichome/image/library/billfish.png"
+										    fit="contain"></el-image>
+										Billfish
 									</div>
 								</div>
-							</template>
+							</div>
+							<div class="block">
+								<div class="text">连接状态：</div>
+								
+								<div class="message">当连接状态为<span style="color: #e6a23c;">连接中断</span>时，库内容将不会在页面中显示。可能原因为库目录被移动或者删除，如果是移动了库目录位置，可以先删除掉库，然后重新添加。</div>
+							</div>
+							<div class="block">
+								<div class="text">转缩略图：</div>
+								<div class="message">对于图片文件比较大时，为图片转换缩略图会提高列表页面的显示速度。如果库内文件大多为KB以内文件，可以不用转换，如果库内文件为5M至几十M的文件，则需要开启缩略图转换。<span style="color: var(--leftTreeColor);">开启方法是在库设置中开启</span>即可。只有普通目录会需要转缩略图，其他软件的库目录不需要转缩略图</div>
+							</div>
 						</div>
 					</div>	
 				</el-scrollbar>
 			</div>
-			<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false" @opened="handleAfterSetting">
-				<el-form :model="formdta" label-width="140px">
-<!-- 					<el-form-item label="开放权限：">
-					    <el-radio-group v-model="formdta.personal">
-							<el-radio :label="0">公开</el-radio>
-							<el-radio :label="1">私有</el-radio>
-					    </el-radio-group>
-					</el-form-item> -->
-					<el-form-item label="开放分享：">
-					    <el-switch v-model="formdta.share" active-value="1" inactive-value="0"></el-switch>
-					</el-form-item>
-					<el-form-item label="开放下载：">
-					      <el-switch v-model="formdta.download" active-value="1" inactive-value="0"></el-switch>
-					</el-form-item>
-					<template v-if="formdta.eagle">
-						<el-form-item label="允许导入文件：">
-						    <el-input type="textarea" v-model="formdta.allowext"></el-input>
-							<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
-						</el-form-item>
-						<el-form-item label="禁止导入文件：">
-						    <el-input type="textarea" v-model="formdta.notallowext"></el-input>
-							<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
-						</el-form-item>
-						<el-form-item label="开启缩略图转换：">
-						    <el-switch v-model="formdta.getinfo" active-value="1" inactive-value="0"></el-switch>
-							<p class="tipTxt">缩略图转换需要较长时间，转换时会增加会增加服务器CPU与内存占用，转换缩略图对于大尺寸图片的列表显示速度有大幅度提升</p>
-						</el-form-item>
-					</template>
-					
-					<!-- <el-form-item label="筛选器：">
-						<div class="SortableBox LabelBox clearfix" ref="SortableScreen">
-							<div v-for="(item,index) in newscreens" :key="item.key" class="sortable-list">
-								<el-checkbox v-model="formdta.screen" :label="item.key" v-cloak>{{item.text}}</el-checkbox>
-								<template v-if="item.key=='tag'">
-									<template v-if="formdta.screen.indexOf('tag')>-1">
-										<el-radio v-model="formdta.type" :label="0">默认</el-radio>
-										<el-radio v-model="formdta.type" :label="1">展示分类</el-radio>
-										<div v-show="formdta.type==1" class="SortableBox GroupBox clearfix" ref="SortableClassif" style="padding-left: 24px;">
-											<div v-for="fitem in newClassfiy" :key="fitem.cid" class="sortable-list">
-												<el-checkbox v-model="formdta.classif" :label="fitem.cid" v-cloak>{{fitem.catname}}</el-checkbox>
-											</div>
-										</div>
-									</template>
-									
-								</template>
-							</div>
-						</div>
-						
-					</el-form-item> -->
-			    </el-form>
-			    <div slot="footer" class="dialog-footer">
-					<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary">
-						<el-button slot="reference" style="float: left;">删除</el-button>
-					</el-popconfirm>
-					<el-button @click="dialog.Visible = false">取 消</el-button>
-					<el-button type="primary" @click="handleSubmit">确 定</el-button>
-			    </div>
-			</el-dialog>
-			<el-dialog
-				title="选择目录"
-				:close-on-click-modal="false"
-				:visible.sync="catalogue.dialogVisible"
-				@open="cataloguedialogOpen">
-				<div style="padding-bottom:16px">
-					<span style="color: var(--header-text);">库类型：</span>
-					<el-radio-group v-model="catalogue.type">
-						<el-radio label="0">Eagle库</el-radio>
-						<el-radio label="1">普通目录</el-radio>
-					</el-radio-group>
-				</div>
-				<div style="padding-bottom:16px">
-					<el-input placeholder="输入快捷路径" clearable v-model="catalogue.search" @input="cataloguesearch" class="input-with-select">
-					    <el-select v-model="catalogue.select" slot="append" placeholder="快捷路径" clearable style="width: 120px;" @change="catalogueselect">
-							<template v-for="(item,index) in catalogue.selectData">
-								<template v-if="item.type">
-									<el-option label="站点Library目录" :value="index" :key="index"></el-option>
-								</template>
-								<template v-else>
-									<el-option :label="item.path" :value="index" :key="index"></el-option>
-								</template>
-							</template>
-							
-					    </el-select>
-					</el-input>
-				</div>
-				<div style="color: var(--header-text);">路径选择：</div>
-				<el-scrollbar class="page-component__scroll" style="height: 300px;">
-					<div style="padding-left: 16px;">
-						<el-tree
-							class="border"
-							highlight-current 
-							:load="LoadNodeTree" 
-							lazy 
-							node-key="id"
-							ref="tree_catalogue"
-							indent="0"
-							accordion
-							@current-change="TreeCurrentChange">
-							<span class="custom-tree-node" slot-scope="{ node, data }">
-								<span>
-									<i class="ri-folder-2-line"></i><span style="margin-left: 6px;">{{ node.label }}</span>
-								</span>              
-							</span>
-						</el-tree>
-					</div>
-				</el-scrollbar>
-				<div style="color: var(--header-text);padding-top: 16px;">已选择路径：{{catalogue.showVal}}</div>	
-				<span slot="footer" class="dialog-footer">
-					<el-button @click="catalogue.dialogVisible = false">取 消</el-button>
-					<el-button type="primary" @click="catalogueSubmit">确 定</el-button>
-				</span>
-			</el-dialog>
-			<el-dialog
-				custom-class="Import-dialog"
-				title="提示"
-				:visible.sync="ImportDataVisible"
-				:close-on-click-modal="false"
-				:show-close="false"
-				width="420px">
-				<div class="el-message-box__container"><div class="el-message-box__status el-icon-warning"></div><div class="el-message-box__message"><p>系统检测该目录为eagle库，只能作为Eagle导入。</p></div></div>
-			  <span slot="footer" class="dialog-footer">
-			    <el-button style="float: left;" @click="ImportDataVisible = false" size="small">取消</el-button>
-				<el-button type="warning" @click="ImportDataDialogClick('eagle')" size="small">作为Eagle库导入</el-button>
-			    <!-- <el-button type="primary" @click="ImportDataDialogClick('file')" size="small">作为普通目录导入</el-button> -->
-			  </span>
-			</el-dialog>
 		</el-main>
+		<el-dialog
+			title="选择目录"
+			:close-on-click-modal="false"
+			:visible.sync="catalogue.dialogVisible"
+			@open="cataloguedialogOpen">
+			<div style="padding-bottom:16px">
+				<span style="color: var(--header-text);">库类型：</span>
+				<el-radio-group v-model="catalogue.type">
+					<el-radio label="0">Eagle库</el-radio>
+					<el-radio label="2">billfish</el-radio>
+					<el-radio label="1">普通目录</el-radio>
+				</el-radio-group>
+			</div>
+			<div style="padding-bottom:16px">
+				<el-input placeholder="输入快捷路径" clearable v-model="catalogue.search" @input="cataloguesearch" class="input-with-select">
+				    <el-select v-model="catalogue.select" slot="append" placeholder="快捷路径" clearable style="width: 120px;" @change="catalogueselect">
+						<template v-for="(item,index) in catalogue.selectData">
+							<template v-if="item.type">
+								<el-option label="站点Library目录" :value="index" :key="index"></el-option>
+							</template>
+							<template v-else>
+								<el-option :label="item.path" :value="index" :key="index"></el-option>
+							</template>
+						</template>
+						
+				    </el-select>
+				</el-input>
+			</div>
+			<div style="color: var(--header-text);">路径选择：</div>
+			<el-scrollbar class="page-component__scroll" style="height: 300px;">
+				<div style="padding-left: 16px;">
+					<el-tree
+						class="border"
+						highlight-current 
+						:load="LoadNodeTree" 
+						lazy 
+						node-key="id"
+						ref="tree_catalogue"
+						indent="0"
+						accordion
+						@current-change="TreeCurrentChange">
+						<span class="custom-tree-node" slot-scope="{ node, data }">
+							<span>
+								<i class="ri-folder-2-line"></i><span style="margin-left: 6px;">{{ node.label }}</span>
+							</span>              
+						</span>
+					</el-tree>
+				</div>
+			</el-scrollbar>
+			<div style="color: var(--header-text);padding-top: 16px;">已选择路径：{{catalogue.showVal}}</div>	
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="catalogue.dialogVisible = false">取 消</el-button>
+				<el-button type="primary" @click="catalogueSubmit">确 定</el-button>
+			</span>
+		</el-dialog>
+		<el-dialog
+			custom-class="Import-dialog"
+			title="提示"
+			:visible.sync="ImportDataVisible"
+			:close-on-click-modal="false"
+			:show-close="false"
+			width="420px">
+			<div class="el-message-box__container"><div class="el-message-box__status el-icon-warning"></div><div class="el-message-box__message"><p>系统检测该目录为eagle库，只能作为Eagle导入。</p></div></div>
+			<span slot="footer" class="dialog-footer">
+				<el-button style="float: left;" @click="ImportDataVisible = false" size="small">取消</el-button>
+				<el-button type="warning" @click="ImportDataDialogClick('eagle')" size="small">作为Eagle库导入</el-button>
+		  </span>
+		</el-dialog>
+		<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false">
+			<el-form :model="formdta" label-width="140px">
+	<!-- 					<el-form-item label="开放权限：">
+					<el-radio-group v-model="formdta.personal">
+						<el-radio :label="0">公开</el-radio>
+						<el-radio :label="1">私有</el-radio>
+					</el-radio-group>
+				</el-form-item> -->
+				<el-form-item label="开放分享：">
+					<el-switch v-model="formdta.share" active-value="1" inactive-value="0"></el-switch>
+				</el-form-item>
+				<el-form-item label="开放下载：">
+					  <el-switch v-model="formdta.download" active-value="1" inactive-value="0"></el-switch>
+				</el-form-item>
+				<template v-if="formdta.eagle">
+					<el-form-item label="允许导入文件：">
+						<el-input type="textarea" v-model="formdta.allowext"></el-input>
+						<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+					</el-form-item>
+					<el-form-item label="禁止导入文件：">
+						<el-input type="textarea" v-model="formdta.notallowext"></el-input>
+						<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+					</el-form-item>
+					<el-form-item label="开启缩略图转换：">
+						<el-switch v-model="formdta.getinfo" active-value="1" inactive-value="0"></el-switch>
+						<p class="tipTxt">缩略图转换需要较长时间，转换时会增加会增加服务器CPU与内存占用，转换缩略图对于大尺寸图片的列表显示速度有大幅度提升</p>
+					</el-form-item>
+				</template>
+				
+				<!-- <el-form-item label="筛选器：">
+					<div class="SortableBox LabelBox clearfix" ref="SortableScreen">
+						<div v-for="(item,index) in newscreens" :key="item.key" class="sortable-list">
+							<el-checkbox v-model="formdta.screen" :label="item.key" v-cloak>{{item.text}}</el-checkbox>
+							<template v-if="item.key=='tag'">
+								<template v-if="formdta.screen.indexOf('tag')>-1">
+									<el-radio v-model="formdta.type" :label="0">默认</el-radio>
+									<el-radio v-model="formdta.type" :label="1">展示分类</el-radio>
+									<div v-show="formdta.type==1" class="SortableBox GroupBox clearfix" ref="SortableClassif" style="padding-left: 24px;">
+										<div v-for="fitem in newClassfiy" :key="fitem.cid" class="sortable-list">
+											<el-checkbox v-model="formdta.classif" :label="fitem.cid" v-cloak>{{fitem.catname}}</el-checkbox>
+										</div>
+									</div>
+								</template>
+								
+							</template>
+						</div>
+					</div>
+					
+				</el-form-item> -->
+			</el-form>
+			<div slot="footer" class="dialog-footer">
+<!-- 				<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary">
+					<el-button slot="reference" style="float: left;">删除</el-button>
+				</el-popconfirm> -->
+				<el-button @click="dialog.Visible = false">取 消</el-button>
+				<el-button type="primary" @click="handleSubmit">确 定</el-button>
+			</div>
+		</el-dialog>
 	</el-container>
 </div>
-<!--{template pc/components/headerAdmin/index}-->
-<!-- 0未导入,1导入中,2校验中,3完成 -->
+<!-- 0未导入,1准备中，2导入中,3校验中,4完成 -->
 <script type="text/javascript">
 	new Vue({
 		el: '#dzzoffice',
 		data() {
 			return {
-				resource:0,
+				loading:true,
+				tableData:[],
 				dialog:{
 					title:'',
 					Visible:false,
@@ -391,23 +462,6 @@
 					allowext:'',
 					notallowext:'',
 				},
-				dataList:[],
-				timelist:{},
-				screens:[
-					{key:'classify',text:'分类',checked:0},
-					{key:'tag',text:'标签',checked:0,showtype:0},
-					{key:'color',text:'颜色',checked:0},
-					{key:'link',text:'链接',checked:0},
-					{key:'desc',text:'注释',checked:0},
-					{key:'duration',text:'时长',checked:0},
-					{key:'size',text:'尺寸',checked:0},
-					{key:'ext',text:'类型',checked:0},
-					{key:'shape',text:'形状',checked:0},
-					{key:'grade',text:'评分',checked:0},
-					{key:'btime',text:'添加时间',checked:0},
-					{key:'dateline',text:'修改日期',checked:0},
-					{key:'mtime',text:'创建日期',checked:0},
-				],
 				newscreens:[],
 				newClassfiy:[],
 				catalogue:{
@@ -431,287 +485,46 @@
 			}
 		},
 		watch:{
-			'formdta.type':{
-				handler(val){
-					var self = this;
-					if(val&&self.newClassfiy&&self.newClassfiy.length){
-						this.$nextTick(function(){
-							var el = self.$refs.SortableClassif[0];
-							var ops = {
-								animation: 200,
-								onEnd: function ({ newIndex, oldIndex }) {
-									var val = self.newClassfiy[oldIndex]
-									self.newClassfiy.splice(oldIndex, 1)
-									self.newClassfiy.splice(newIndex, 0, val)
-								}};
-							Sortable.create(el, ops);
-						})
-						
-					}
-				},
-				deep:true
-			},
+			
 		},
 		created() {
 			this.GetData();
 			this.GetCatalogueSelect();
 		},
 		methods:{
-			GetCatalogueSelect(){
+			TableSortable(){
+				var _this = this;
+				var tbody = document.querySelector('.el-table__body-wrapper tbody');
+				Sortable.create(tbody, {
+					draggable: ".el-table__row",
+					handle:".icon-rank",
+					onEnd ({ newIndex, oldIndex }) {
+						var currRow = _this.tableData.splice(oldIndex, 1)[0];
+						_this.tableData.splice(newIndex, 0, currRow);
+						var appids = [];
+						for(var i in _this.tableData){
+							var item = _this.tableData[i];
+							appids.push(item.appid);
+						}
+						appids = appids.join(',');
+						_this.TableSortableSubmit(appids);
+					}
+				});
+			},
+			TableSortableSubmit(appids){
 				var self = this;
-				$.post(MOD_URL+'&op=library&operation=getpath',{
-					gettype:1
+				$.post(MOD_URL+'&op=library&operation=sort',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appids:appids
 				},function(data){
-					var fdata = data.data;
-					self.catalogue.selectData = [];
-					for(var i in fdata){
-						if(parseInt(fdata[i].type)){
-							var path = fdata[i].path.split('\\');
-							self.catalogue.defaultVal = path;
-							var str = {
-								path:path.join('/'),
-								charset:fdata[i].charset,
-								type:1
-							}
-						}else{
-							var str = {
-								path:fdata[i].path,
-								charset:fdata[i].charset,
-								type:0
-							}
-						}
-						self.catalogue.selectData.push(str);
-					}
-					
-				},'json');
-			},
-			cataloguedialogOpen(){
-				var dzzroot = '$dzzroot';
-				var defaultVal = [];
-				var showVal = '';
-				if(dzzroot){
-					var str = dzzroot+'library';
-					defaultVal = str.split('/');
-					showVal = defaultVal.join('/');
-				}
-				this.catalogue.search = '';
-				this.catalogue.defaultsearch = '';
-				this.catalogue.searchStatus = '';
-				this.catalogue.select = '';
-				this.catalogue.type = '0';
-				this.catalogue.nodeId = 0;
-				this.catalogue.parent = [];
-				
-				this.catalogue.showVal = showVal;
-				this.catalogue.charset = 'utf8';
-				this.catalogue.force = 0;
-				if(this.catalogue.parentnode){
-					this.catalogue.parentnode.childNodes = []
-					this.LoadNodeTree(this.catalogue.parentnode,this.catalogue.parentresolve);
-				}
-			},
-			catalogueselect(val){
-				var self = this;
-				var path = '';
-				if(self.catalogue.selectData[val]){
-					self.catalogue.searchStatus = true;
-					var item = self.catalogue.selectData[val];
-					path = item.path;
-					self.catalogue.charset = item.charset;
-				}else{
-					for(var i in self.catalogue.selectData){
-						if(parseInt(self.catalogue.selectData[i].type)){
-							self.catalogue.charset = self.catalogue.selectData[i].charset;
-						}
-					}
-					self.catalogue.searchStatus = false;
-				}
-				this.catalogue.defaultsearch = path;
-				self.catalogue.search = path;
-				self.catalogue.parentnode.childNodes = []
-				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
-			},
-			cataloguesearch(val){
-				var self = this;
-				self.catalogue.select = '';
-				if(val){
-					self.catalogue.searchStatus = true;
-				}else{ 
-					for(var i in self.catalogue.selectData){
-						if(parseInt(self.catalogue.selectData[i].type)){
-							self.catalogue.charset = self.catalogue.selectData[i].charset;
-						}
-					}
-					self.catalogue.searchStatus = false;
-				}
-				this.catalogue.defaultsearch = val;
-				self.catalogue.parentnode.childNodes = []
-				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
-			},
-			TreeCurrentChange(data,node){
-				var self = this;
-				self.catalogue.parent = [];
-				var path = '';
-				if(node.level>1){
-					self.GetTreeParens(node.parent);
-					var oparam = self.catalogue.parent.reverse();
-					var fparam = oparam.join('/');
-					path = fparam+'/'+data.label;
-				}else{
-					path = data.label;
-				}
-				if(self.catalogue.defaultsearch){
-					self.catalogue.searchStatus = true;
-					this.catalogue.showVal = self.catalogue.defaultsearch+'/'+path;
-					this.catalogue.search = self.catalogue.defaultsearch+'/'+path;
-				}else{
-					self.catalogue.showVal = self.catalogue.defaultVal.join('/')+'/'+path;
-					// self.catalogue.showVal = path;
-					self.catalogue.searchStatus = false;
-				}
-				this.catalogue.charset = data.charset;
-			},
-			LoadNodeTree(node, resolve){
-				var self = this;
-				var param = {};
-				var fparam = '';
-				if(self.catalogue.searchStatus){
-					if(node.level > 0){
-						if(node.level > 1){
-							self.catalogue.parent = [];
-							this.GetTreeParens(node.parent);
-							var oparam = self.catalogue.parent.reverse();
-							fparam = oparam.join('/');
-							fparam += '/'+node.data.label;
-							param['path'] = self.catalogue.defaultsearch+'/'+fparam;
-							
-						}else{
-							param['path'] = self.catalogue.defaultsearch+'/'+node.data.label;
-							
-						}
-					}else{
-						param['path'] = self.catalogue.search;
-					}
-					
-				}else{
-					if(node.level > 0){
-						if(node.level > 1){
-							self.catalogue.parent = [];
-							this.GetTreeParens(node.parent);
-							var oparam = self.catalogue.parent.reverse();
-							fparam = oparam.join('/');
-							fparam += '/'+node.data.label;
-							param['path'] = self.catalogue.defaultVal.join('/')+'/'+fparam;
-							
-						}else{
-							param['path'] = self.catalogue.defaultVal.join('/')+'/'+node.data.label;
-							
-						}
-					}else{
-						// param['path'] = self.catalogue.defaultVal.join('/');
-						self.catalogue.showVal = self.catalogue.defaultVal.join('/');
-					}
-				}
-				if(node.level == 0){
-					self.catalogue.parentresolve = resolve;
-					self.catalogue.parentnode = node;
-				}
-				$.post(MOD_URL+'&op=library&operation=getpath',param,function(data){
-					var fdata = [];
-					for(var i in data.data){
-						self.catalogue.nodeId++;
-						var item  = data.data[i];
-						fdata.push({
-							label:item.path,
-							id:self.catalogue.nodeId,
-							charset:item.charset
-						});
-					}
-					if(self.catalogue.searchStatus){
-						resolve(fdata);
-						if(fdata.length){
-							self.catalogue.showVal = self.catalogue.search;
-						}
-					}else{
-						
-						resolve(fdata);
-					}
-					
-				},'json');
-			},
-			GetTreeParens(node){
-				var self = this;
-				var data = self.$refs.tree_catalogue.getNode(node);
-				self.catalogue.parent.push(data.data.label);
-				if(node.level > 1){
-					self.GetTreeParens(node.parent);
-				}
-			},
-			ImportDataDialogClick(type){
-				if(type == 'eagle'){
-					this.catalogue.type = 0;
-				}else{
-					this.catalogue.type = 1;
-				}
-				this.catalogue.force = 1;
-				this.ImportDataVisible = false;
-				this.catalogueSubmit();
-			},
-			catalogueSubmit(){
-				var self = this;
-				if(!self.catalogue.showVal){
-					self.$message.error('请选择路径');
-					return false;
-				}
-				var param = {
-					path:self.catalogue.showVal,
-					type:self.catalogue.type,
-					charset:self.catalogue.charset
-				}
-				if(self.catalogue.type == 1 && self.catalogue.force){
-					param['force'] = 1;
-				}
-				$.post(MOD_URL+'&op=library&operation=addlibrary',param,function(data){
-					if(data.tips){
-						self.ImportDataVisible = true;
-						return false;
-					}
-					if(data.error){
-						self.$message.error('添加失败');
-					}else{
-						self.$message({
-							message: '添加成功',
-							type: 'success'
-						});
-						var fdata = data.data;
-						fdata['state'] = 0;
-						fdata['filenum'] = 0;
-						fdata['percent'] = 0;
-						self.dataList.push(fdata)
-					}
-					self.catalogue.dialogVisible = false;
-				},'json');
-			},
-			deleteLibrary(){
-				var self = this;
-				$.post(MOD_URL+'&op=library&operation=dellibrary',{
-					appid:self.formdta.appid
-				},function(data){
-					self.dialog.Visible = false;
 					if(data.success){
 						self.$message({
 							type:'success',
-							message:'删除成功'
+							message:'排序成功'
 						});
-						var index = 0;
-						for(var i in self.dataList){
-							if(self.dataList[i].appid == self.formdta.appid){
-								index = i;
-							}
-						}
-						self.dataList.splice(index,1);
 					}else{
-						self.$message.error('删除失败');
+						self.$message.error('排序失败');
 					}
 				},'json');
 			},
@@ -846,78 +659,361 @@
 					}
 				},'json');
 			},
-			handleAfterSetting(){
-				// var self = this;
-				// var el = self.$refs.SortableScreen;
-				// var ops = {
-				// 	animation: 200,
-				// 	onEnd: function ({ newIndex, oldIndex }) {
-				// 		var val = self.newscreens[oldIndex]
-				// 		self.newscreens.splice(oldIndex, 1)
-				// 		self.newscreens.splice(newIndex, 0, val)
-				// 	}};
+			cataloguedialogOpen(){
+				var dzzroot = '$dzzroot';
+				var defaultVal = [];
+				var showVal = '';
+				if(dzzroot){
+					var str = dzzroot+'library';
+					defaultVal = str.split('/');
+					showVal = defaultVal.join('/');
+				}
+				this.catalogue.search = '';
+				this.catalogue.defaultsearch = '';
+				this.catalogue.searchStatus = '';
+				this.catalogue.select = '';
+				this.catalogue.type = '0';
+				this.catalogue.nodeId = 0;
+				this.catalogue.parent = [];
 				
-				// Sortable.create(el, ops);
-				
-				
+				this.catalogue.showVal = showVal;
+				this.catalogue.charset = 'utf8';
+				this.catalogue.force = 0;
+				if(this.catalogue.parentnode){
+					this.catalogue.parentnode.childNodes = []
+					this.LoadNodeTree(this.catalogue.parentnode,this.catalogue.parentresolve);
+				}
 			},
-			handleLook(appid){
-				window.open(MOD_URL+'#appid='+appid);
+			ImportDataDialogClick(type){
+				if(type == 'eagle'){
+					this.catalogue.type = 0;
+				}else{
+					this.catalogue.type = 1;
+				}
+				this.catalogue.force = 1;
+				this.ImportDataVisible = false;
+				this.catalogueSubmit();
 			},
-			handleRefresh(index,appid){
+			catalogueselect(val){
 				var self = this;
-				// if(!self.dataList[index]['time']){
-					$.post(MOD_URL+'&op=initexport&appid='+appid);
-					self.dataList[index].state = 1;
-					self.dataList[index].percent = 0;
-					self.handleRefreshLoading(index,appid);
-				// }
+				var path = '';
+				if(self.catalogue.selectData[val]){
+					self.catalogue.searchStatus = true;
+					var item = self.catalogue.selectData[val];
+					path = item.path;
+					self.catalogue.charset = item.charset;
+				}else{
+					for(var i in self.catalogue.selectData){
+						if(parseInt(self.catalogue.selectData[i].type)){
+							self.catalogue.charset = self.catalogue.selectData[i].charset;
+						}
+					}
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.defaultsearch = path;
+				self.catalogue.search = path;
+				self.catalogue.parentnode.childNodes = []
+				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
+			},
+			cataloguesearch:debounce(function(val){//输入
+				var self = this;
+				self.catalogue.select = '';
+				if(val){
+					self.catalogue.searchStatus = true;
+				}else{ 
+					for(var i in self.catalogue.selectData){
+						if(parseInt(self.catalogue.selectData[i].type)){
+							self.catalogue.charset = self.catalogue.selectData[i].charset;
+						}
+					}
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.defaultsearch = val;
+				self.catalogue.parentnode.childNodes = []
+				this.LoadNodeTree(self.catalogue.parentnode,self.catalogue.parentresolve);
+			},800),
+			LoadNodeTree(node, resolve){
+				var self = this;
+				var param = {};
+				var fparam = '';
+				if(self.catalogue.searchStatus){
+					if(node.level > 0){
+						if(node.level > 1){
+							self.catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.catalogue.defaultsearch+'/'+fparam;
+							
+						}else{
+							param['path'] = self.catalogue.defaultsearch+'/'+node.data.label;
+							
+						}
+					}else{
+						param['path'] = self.catalogue.search;
+					}
+					
+				}else{
+					if(node.level > 0){
+						if(node.level > 1){
+							self.catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.catalogue.defaultVal.join('/')+'/'+fparam;
+							
+						}else{
+							param['path'] = self.catalogue.defaultVal.join('/')+'/'+node.data.label;
+							
+						}
+					}else{
+						// param['path'] = self.catalogue.defaultVal.join('/');
+						self.catalogue.showVal = self.catalogue.defaultVal.join('/');
+					}
+				}
+				if(node.level == 0){
+					self.catalogue.parentresolve = resolve;
+					self.catalogue.parentnode = node;
+				}
+				$.post(MOD_URL+'&op=library&operation=getpath',param,function(data){
+					var fdata = [];
+					for(var i in data.data){
+						self.catalogue.nodeId++;
+						var item  = data.data[i];
+						fdata.push({
+							label:item.path,
+							id:self.catalogue.nodeId,
+							charset:item.charset
+						});
+					}
+					if(self.catalogue.searchStatus){
+						resolve(fdata);
+						if(fdata.length){
+							self.catalogue.showVal = self.catalogue.search;
+						}
+					}else{
+						
+						resolve(fdata);
+					}
+					
+				},'json');
+			},
+			GetTreeParens(node){
+				var self = this;
+				var data = self.$refs.tree_catalogue.getNode(node);
+				self.catalogue.parent.push(data.data.label);
+				if(node.level > 1){
+					self.GetTreeParens(node.parent);
+				}
+			},
+			TreeCurrentChange(data,node){
+				var self = this;
+				self.catalogue.parent = [];
+				var path = '';
+				if(node.level>1){
+					self.GetTreeParens(node.parent);
+					var oparam = self.catalogue.parent.reverse();
+					var fparam = oparam.join('/');
+					path = fparam+'/'+data.label;
+				}else{
+					path = data.label;
+				}
+				if(self.catalogue.defaultsearch){
+					self.catalogue.searchStatus = true;
+					this.catalogue.showVal = self.catalogue.defaultsearch+'/'+path;
+					this.catalogue.search = self.catalogue.defaultsearch+'/'+path;
+				}else{
+					self.catalogue.showVal = self.catalogue.defaultVal.join('/')+'/'+path;
+					// self.catalogue.showVal = path;
+					self.catalogue.searchStatus = false;
+				}
+				this.catalogue.charset = data.charset;
+			},
+			catalogueSubmit(){
+				var self = this;
+				if(!self.catalogue.showVal){
+					self.$message.error('请选择路径');
+					return false;
+				}
+				var param = {
+					path:self.catalogue.showVal,
+					type:self.catalogue.type,
+					charset:self.catalogue.charset
+				}
+				if(self.catalogue.type == 1 && self.catalogue.force){
+					param['force'] = 1;
+				}
+				$.post(MOD_URL+'&op=library&operation=addlibrary',param,function(data){
+					if(data.tips){
+						self.ImportDataVisible = true;
+						return false;
+					}
+					if(data.error){
+						self.$message.error(data.error);
+					}else{
+						self.$message({
+							message: '添加成功',
+							type: 'success'
+						});
+						var fdata = data.data;
+						fdata['state'] = 0;
+						fdata['filenum'] = 0;
+						fdata['percent'] = 0;
+						fdata['connect'] = 1;
+						self.tableData.push(fdata);
+						self.catalogue.dialogVisible = false;
+					}
+					
+				},'json');
+			},
+			deleteLibrary(appid){
+				var self = this;
+				$.post(MOD_URL+'&op=library&operation=dellibrary',{
+					appid:appid
+				},function(data){
+					if(data.success){
+						self.$message({
+							type:'success',
+							message:'删除成功'
+						});
+						var index = 0;
+						for(var i in self.tableData){
+							if(self.tableData[i].appid == appid){
+								index = i;
+							}
+						}
+						if(self.tableData[index]['time']){
+							clearInterval(self.tableData[index]['time']);
+						}
+						self.tableData.splice(index,1);
+					}else{
+						self.$message.error('删除失败');
+					}
+				},'json');
+			},
+			GetData(){
+				var self = this;
+				$.post(MOD_URL+'&op=library&operation=getdata',function(data){
+					self.tableData = data.data;
+					self.loading = false;
+					for(var i in self.tableData){
+						if(parseInt(self.tableData[i].state) == 1 || parseInt(self.tableData[i].state) == 2 || parseInt(self.tableData[i].state) == 3){
+							self.handleimplement(i,self.tableData[i].appid)
+						}
+						self.getinfonum(self.tableData[i]);
+					}
+					self.$nextTick(function(){
+						self.TableSortable();
+					});
+				},'json');
+			},
+			getinfonum(item){
+				var self = this;
+				if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
+					var index = 0;
+					for(var i in self.tableData){
+						if(self.tableData[i].appid == item.appid){
+							index = i;
+						}
+					}
+					if(!self.tableData[index]['getinfotime']){
+						self.tableData[index]['getinfotime'] = '';
+					}
+					this.getinfonumtime(index,item.appid);
+				}
+			},
+			getinfonumtime(index,appid){
+				var self = this;
+				self.tableData[index]['getinfotime'] = setInterval(function(){
+					$.post(MOD_URL+'&op=library&operation=getinfonum',{
+						appid:appid
+					},function(data){
+						if(parseInt(self.tableData[index].getinfonum)==parseInt(self.tableData[index].filenum)){
+							clearInterval(self.tableData[index]['getinfotime']);
+						}else{
+							self.tableData[index].getinfonum = data.data.appid;
+						}
+					},'json');
+				},8000)
 				
+			},
+			handleRefresh(appid){
+				var self = this;
+				var index = 0;
+				var status = 0;
+				for(var i in self.tableData){
+					if(self.tableData[i].appid == appid){
+						index = i;
+						status = self.tableData[i].state
+					}
+				}
+				if(status == 0 || status == 4){
+					// if(!self.tableData[index]['time']){
+						$.post(MOD_URL+'&op=initexport&appid='+appid);
+						
+						self.tableData[index].state = 1;
+						self.tableData[index].percent = 0;
+						
+						self.handleRefreshLoading(index,appid);
+					// }
+				}
+				
+				
+			},
+			handleImport(appid){
+				var self = this;
+				var index = 0;
+				for(var i in self.tableData){
+					if(self.tableData[i].appid == appid){
+						index = i;
+					}
+				}
+				this.handleimplement(index,appid)
 			},
 			handleimplement(index,appid){
 				var self = this;
-				if(!self.dataList[index]['time']){
+				if(!self.tableData[index]['time']){
 					$.post(MOD_URL+'&op=initexport&appid='+appid);
-					self.dataList[index].state = 1;
+					self.tableData[index].state = 1;
 					self.handleRefreshLoading(index,appid);
 				}
-				
 			},
 			handleRefreshLoading(index,appid){
 				var self = this;
-				if(self.dataList[index]){
-					self.dataList[index]['time'] = setInterval(function(){
+				if(self.tableData[index]){
+					self.tableData[index]['time'] = setInterval(function(){
 						$.post(MOD_URL+'&op=library&operation=fetch',{
 							appid:appid
 						},function(data){
 							if(data.success){
-								if(parseInt(data.data.state)==3){
-									clearInterval(self.dataList[index]['time']);
-									self.dataList[index].percent = 100;
+								if(parseInt(data.data.state)==4){
+									clearInterval(self.tableData[index]['time']);
 									setTimeout(function(){
-										self.dataList[index].filenum = data.data.filenum;
-										self.dataList[index].percent = parseInt(data.data.percent);
-										self.dataList[index].state = parseInt(data.data.state);
-										self.dataList[index].lastid = data.data.lastid;
+										self.tableData[index].filenum = data.data.filenum;
+										self.tableData[index].percent = parseInt(data.data.percent);
+										self.tableData[index].state = parseInt(data.data.state);
+										self.tableData[index].lastid = data.data.lastid;
 										self.$message({
 											type:'success',
 											message:data.data.appname+' 更新完成'
 										},500);
 									},500);
 								}else{
-									if(parseInt(data.data.state) != self.dataList[index]['state']){
-										self.dataList[index].percent = 100;
+									if(parseInt(data.data.state) != self.tableData[index]['state']){
+										self.tableData[index].percent = 100;
 									}
-									self.dataList[index].filenum = data.data.filenum;
-									self.dataList[index].percent = parseInt(data.data.percent);
-									self.dataList[index].state = parseInt(data.data.state);
-									/*if(self.dataList[index].state==0){
-										clearInterval(self.dataList[index]['time']);
+									self.tableData[index].filenum = data.data.filenum;
+									self.tableData[index].percent = parseInt(data.data.percent);
+									self.tableData[index].state = parseInt(data.data.state);
+									/*if(self.tableData[index].state==0){
+										clearInterval(self.tableData[index]['time']);
 										self.$message.error('更新中断，请刷新重试');
 									}*/
 								}
 							}else{
-								clearInterval(self.dataList[index]['time']);
+								clearInterval(self.tableData[index]['time']);
 								self.$message.error('数据获取失败');
 							}
 						},'json');
@@ -926,28 +1022,98 @@
 				
 				
 			},
-			GetData(){
+			GetCatalogueSelect(){
 				var self = this;
-				$.post(MOD_URL+'&op=library&operation=getdata',function(data){
-					self.dataList = data.data;
-					for(var i in self.dataList){
-						if(parseInt(self.dataList[i].state) == 1 || parseInt(self.dataList[i].state) == 2){
-							self.handleimplement(i,self.dataList[i].appid)
+				$.post(MOD_URL+'&op=library&operation=getpath',{
+					gettype:1
+				},function(data){
+					var fdata = data.data;
+					self.catalogue.selectData = [];
+					for(var i in fdata){
+						if(parseInt(fdata[i].type)){
+							var path = fdata[i].path.split('\\');
+							self.catalogue.defaultVal = path;
+							var str = {
+								path:path.join('/'),
+								charset:fdata[i].charset,
+								type:1
+							}
+						}else{
+							var str = {
+								path:fdata[i].path,
+								charset:fdata[i].charset,
+								type:0
+							}
 						}
+						self.catalogue.selectData.push(str);
 					}
 					
 				},'json');
 			},
-			handleImport(index,appid){
-				this.handleimplement(index,appid)
+			handleavatar(type) {//头像点击
+				switch(type){
+					case 'personal':
+						window.location.href = MOD_URL + '&op=user&do=personal';
+					break;
+					case 'help':
+						window.open('https://www.yuque.com/pichome');
+					break;
+					case 'problem':
+						window.open('https://support.qq.com/products/340252');
+					break;
+					case 'setting':
+						window.location.href = MOD_URL + '&op=admin&do=basic';
+					break;
+					case 'library':
+						window.location.href = MOD_URL + '&op=library';
+					break;
+					case 'about':
+						this.$alert(
+						`<div class="aboutlogo">
+							<img src="`+MOD_PATH+`/image/phlogo.png" alt="">
+						</div>
+						<div class="aboutmessage">
+							<div class="aboutlist">
+								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>
+							</div>
+						</div>`,
+						'',
+						{
+							customClass:'aboutPichome',
+							showClose:false,
+							showConfirmButton:false,
+							dangerouslyUseHTMLString: true,
+							closeOnClickModal:true
+						});
+					break;
+					case 'OutLogin':
+						this.$confirm('您确定要注销登录?', '提示', {
+						          confirmButtonText: '确定',
+						          cancelButtonText: '取消',
+						          type: 'warning'
+						        }).then(() => {
+						         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
+						         		window.location.reload();
+						         	});
+						        }).catch(() => {
+						                   
+						        });
+					break;
+					case 'system':
+						window.open(SITEURL+'admin.php?mod=system');
+					break;
+				}
+				
 			},
-			// handleCheckexport(){
-			// 	var self = this;
-			// 	$.get(MOD_URL+'&op=checkexport',function(){
-			// 		self.GetData();
-			// 	});
-			// },
-			
 		},
 		mounted() {
 			

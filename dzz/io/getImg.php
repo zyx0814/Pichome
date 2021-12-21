@@ -21,12 +21,10 @@ $filename = rtrim( $_GET[ 'n' ], '.dzz' );
 $ext = strtolower( substr( strrchr( $filename, '.' ), 1, 10 ) );
 if ( !$ext )$ext = strtolower( substr( strrchr( preg_replace( "/\.dzz$/i", '', preg_replace( "/\?.*/i", '', $url ) ), '.' ), 1, 10 ) );
 $mime = dzz_mime::get_type( $ext );
-
 if ( is_file( $url ) ) {
     $filename = $url;
     $start = 0;
     $total = filesize( $filename );
-	
 	header("Cache-Control: private, max-age=2592000, pre-check=2592000");
 	header("Pragma: private");
 	header("Expires: ".date(DATE_RFC822,strtotime(" 30 day")));

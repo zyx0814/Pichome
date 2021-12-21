@@ -20,17 +20,24 @@
 
 //主题
     $theme = GetThemeColor();
-//主题
+//库
     $apps = [];
-    foreach(DB::fetch_all("select * from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        $v['path'] = urlencode($v['path']);
-        $v['leaf'] = DB::result_first("select count(*) from %t where appid = %s",array('pichome_folder',$v['appid'])) ? false:true;
-        $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$v['appid']));
-        $v['nosubfilenum'] = $v['filenum'] - $hascatnum;
-        $apps[] = $v;
+    foreach(DB::fetch_all("select * from %t where isdelete = 0 order by disp ",array('pichome_vapp')) as $v){
+        if(is_dir($v['path'])){
+            $v['path'] = urlencode($v['path']);
+            $v['leaf'] = DB::result_first("select count(*) from %t where appid = %s",array('pichome_folder',$v['appid'])) ? false:true;
+            if(!$v['nosubfilenum']){
+                $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$v['appid']));
+                $v['nosubfilenum'] = $v['filenum'] - $hascatnum;
+                C::t('pichome_vapp')->update($v['appid'],array('nosubfilenum'=>$v['nosubfilenum']));
+            }
+
+            $apps[] = $v;
+        }
+
     }
     $apps = json_encode($apps);
-
+//显示子分类内容
 	$ImageExpanded = C::t('user_setting')->fetch_by_skey('pichomeimageexpanded',$uid);
 //筛选
     $screen = C::t('user_setting')->fetch_by_skey('pichomeuserscreen',$uid);
@@ -39,8 +46,11 @@
     $setting = $_G['setting'];
 	
     $pagesetting = $setting['pichomepagesetting'] ? $setting['pichomepagesetting'] : [];
+//排序方式
     $pichomesortfileds = C::t('user_setting')->fetch_by_skey('pichomesortfileds',$_G['uid']);
+//显示信息	
     $pichomeshowfileds = C::t('user_setting')->fetch_by_skey('pichomeshowfileds',$_G['uid']);
+//布局类型
     $pichomelayout = C::t('user_setting')->fetch_by_skey('pichomelayout',$_G['uid']);
     if($pichomesortfileds){
         $sortdatarr = unserialize($pichomesortfileds);

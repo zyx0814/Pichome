@@ -22,16 +22,20 @@
     $force = isset($_GET['force']) ? intval($_GET['force']):0;
     $data = C::t('pichome_vapp')->fetch($appid);
     if(!$data) exit(json_encode(array('error'=>'no data')));
-    if($data['type'] == 0 && $data['state'] == 1  && $data['isdelete'] == 0){
-
+    if($data['state'] != 2  || $data['isdelete'] != 0) exit(json_encode(array('error'=>'is deleted or state is not allow')));
+    if($data['type'] == 0){
         include_once dzz_libfile('eagleexport');
         $eagleexport = new eagleexport($data);
         $return = $eagleexport->execExport($force);
-    }elseif($data['type'] == 1 && $data['state'] == 1 && $data['isdelete'] == 0){
+    }elseif($data['type'] == 1){
         include_once dzz_libfile('localexport');
         $localexport = new localexport($data);
         //执行导入文件
         $return = $localexport->execExport($force);
+    }elseif ($data['type'] == 2){
+        include_once DZZ_ROOT.'dzz'.BS.'billfish'.BS.'class'.BS.'class_billfishexport.php';
+        $billfishxport = new billfishxport($data);
+        $return = $billfishxport->execExport();
     }
     dzz_process::unlock($processname);
     exit('success');

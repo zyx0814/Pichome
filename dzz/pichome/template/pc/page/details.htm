@@ -385,8 +385,7 @@
 			},
 			
 			'ImgParam.proportion':function(val){
-				this.ImgParam.fproportion = Math.round(val*100);
-				this.handleImgSize(val);
+				
 			},
 			'ImgParam.rotate':function(val){
 				this.handleImgTransform();
@@ -415,6 +414,7 @@
 					var self = this;
 					self.$nextTick(function(){
 						if(dasta.opentype=='image' || dasta.opentype=='other'){
+							// console.log(33333333)
 							self.handleImgSet();
 						}
 					});
@@ -436,6 +436,14 @@
 		},
 		
 		methods: {
+			handleproportion(){
+				var self = this;
+				var val = self.ImgParam.proportion
+				this.ImgParam.fproportion = Math.round(val*100);
+				self.$nextTick(function(){
+					self.handleImgSize(val);
+				});
+			},
 			handleImgTransform(){
 				var self = this;
 				var str = '';
@@ -503,7 +511,6 @@
 				}else{
 					img.css({
 						'max-height': '',
-						
 						'height':fheight+'px',
 					});
 				}
@@ -554,10 +561,10 @@
 				}else{
 					proportion = 1;
 				}
-				this.ImgParam.proportion = proportion;
+				self.ImgParam.proportion = proportion;
 				var fproportion = Math.round(proportion*100);
 				this.ImgParam.slider = ($('.el-slider').width()/2)*(fproportion/100);
-		
+				this.handleproportion();
 			},
 			handleImgDrag(e){//图片移动
 				var self = this;
@@ -620,6 +627,7 @@
 					}
 					self.ImgParam.slider = moveX;
 					self.ImgParam.proportion = proportion/100;
+					this.handleproportion();
 					
 					return false; //阻止默认事件或冒泡  
 				});
@@ -633,8 +641,8 @@
 			},
 			GetData(){
 				var self = this;
-				self.imagesData.icondata = '';
-				self.imagesData.originalimg = '';
+				// self.imagesData.icondata = '';
+				// self.imagesData.originalimg = '';
 				self.HtmlLoading = true;
 				$.post(MOD_URL+'&op=details&operation=fetch',{
 					rid:self.rid
@@ -715,7 +723,7 @@
 					var num = parseInt(type)/100;
 					this.ImgParam.scale = num;
 					var proportion = parseInt(type);
-					this.ImgParam.proportion = proportion/100;
+					self.ImgParam.proportion = proportion/100;
 					// var img = $('.image-viewer__img');
 					var slider = $('.el-slider');
 					var fslider = 0;
@@ -725,7 +733,7 @@
 						fslider = (slider.width()/2)*(proportion/100);
 					}
 					this.ImgParam.slider = fslider;
-
+					this.handleproportion();
 				}
 			},
 			handleImgOperation(type){//图片快捷点击
@@ -733,11 +741,12 @@
 				var self = this;
 				if(type==1){
 					var proportion = 1;
-					this.ImgParam.proportion = proportion;
+					self.ImgParam.proportion = proportion;
+					
 					// var img = $('.image-viewer__img');
 					var slider = $('.el-slider');
 					this.ImgParam.slider = (slider.width()/2)*proportion;
-
+					this.handleproportion();
 				}else if(type==2){
 					this.handleImgSet();
 				}else if(type==3){

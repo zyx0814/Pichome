@@ -62,8 +62,11 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $vappids = [];
-    foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        $vappids[] = $v['appid'];
+    foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
+        if(is_dir($v['path'])){
+            $vappids[] = $v['appid'];
+        }
+
     }
     if(empty($vappids)){
         $wheresql .= ' and 0';
@@ -823,8 +826,12 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
 
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $vappids = [];
-    foreach(DB::fetch_all("select appid from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        $vappids[] = $v['appid'];
+    $vappids = [];
+    foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
+        if(is_dir($v['path'])){
+            $vappids[] = $v['appid'];
+        }
+
     }
     if(empty($vappids)){
         $wheresql .= ' and 0';
@@ -1230,7 +1237,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     $wheresql .= " and r.isdelete < 1 ";
     $data = array();
     if ($skey == 'tag') {
-        $cid = isset($_GET['cid']) ? $_GET['cid']:'';
+        /*$cid = isset($_GET['cid']) ? $_GET['cid']:'';
         if ($cid) {
             if ($cid == -1) {
                 $sql .= "  left join %t tr on isnull(tr.cid)";
@@ -1242,7 +1249,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
                 $para[] = $cid;
             }
 
-        }
+        }*/
         $tagkeyword = isset($_GET['tagkeyword']) ? trim($_GET['tagkeyword']):'';
         if ($tagkeyword) {
             $sql .= "  left join %t t on t.tid=rt.tid ";
@@ -1268,14 +1275,17 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             $sql .= "  left join %t g  on g.cid = tr.cid ";
             $params[] = 'pichome_taggroup';
             if (!empty($para)) $params = array_merge($params, $para);
+            $sum = 0;
             foreach (DB::fetch_all("$sql where $wheresql group by g.cid",$params) as $v) {
                 if($v['cid']){
                     $catdata[]=['cid'=>$v['cid'],'catname'=>$v['catname'],'num'=>$v['num']];
                 }else{
-                    $catdata[]=['cid'=>0,'catname'=>'全部','num'=>$v['num']];
                     $catdata[]=['cid'=>-1,'catname'=>'未分类','num'=>$v['num']];
                 }
+                $sum += $v['num'];
+
             }
+            $catdata[]=['cid'=>0,'catname'=>'全部','num'=>$sum];
 
         }else{
             //if (!empty($para)) $params = array_merge($params, $para);

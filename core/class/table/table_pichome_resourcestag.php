@@ -55,11 +55,13 @@
         {
             if(!is_array($rid)) $rid = (array)$rid;
             $delids = [];
-            foreach (DB::fetch_all("select id from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
+            foreach (DB::fetch_all("select id,tid from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
                 $delids[] = $v['id'];
+                C::t('pichome_tag')->delete_by_tid($v['tid']);
             }
             return parent::delete($delids);
         }
+
         
         public function fetch_rids_by_tids($tids,$appid,$limit=6,$rid=''){
             if(!is_array($tids)) $tids = (array) $tids;

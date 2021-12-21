@@ -115,6 +115,7 @@ class eagleexport
         $readtxt = $this->readtxt . 'eagleexport' . md5($this->path) . '.txt';
         $filenum = 0;
         if (!is_file($readtxt) || filemtime($readtxt) < filemtime( $this->path . BS.'metadata.json')) {
+            C::t('pichome_vapp')->update($this->appid, array( 'state' => 1));
             if ($dch = opendir($filedir)) {
                 $thandle = fopen($readtxt, 'w+');
                 while (($file = readdir($dch)) != false) {
@@ -136,9 +137,9 @@ class eagleexport
                 return array('error' => 'Read Dir Failer');
             }
 
-            C::t('pichome_vapp')->update($this->appid, array('filenum' => $this->filenum, 'state' => 1));
+            C::t('pichome_vapp')->update($this->appid, array('filenum' => $this->filenum, 'state' => 2));
         }
-        C::t('pichome_vapp')->update($this->appid, array('state' => 1));
+        C::t('pichome_vapp')->update($this->appid, array('state' => 2));
         $this->initFoldertag();
         return array('success' => true);
     }
@@ -150,14 +151,14 @@ class eagleexport
         $readtxt = $this->readtxt . 'eagleexport' . md5($this->path) . '.txt';
         if(filesize($readtxt) == 0){
             @unlink($readtxt);
-            C::t('pichome_vapp')->update($this->appid, array('lastid' => 0, 'percent' => 100, 'donum' => 0, 'state' => 2,'filenum'=>$this->filenum));
+            C::t('pichome_vapp')->update($this->appid, array('lastid' => 0, 'percent' => 100, 'donum' => 0, 'state' => 3,'filenum'=>$this->filenum));
             return array('success'=>true);
 
         }
         if ($this->lastid) {
             $start = $this->lastid * 19;
         } else $start = 0;
-        if ($this->lastid < $this->filenum && $this->exportstatus == 1) {
+        if ($this->lastid < $this->filenum && $this->exportstatus == 2) {
             $tfile = fopen($readtxt, 'r');
             $i = 0;
             fseek($tfile, $start);
@@ -372,8 +373,9 @@ class eagleexport
                 $this->donum += 1;
                 $percent = floor(($this->donum / $this->filenum) * 100);
                 //防止因获取文件总个数不准确百分比溢出
-                $state = ($percent >= 100) ? 2 : 1;
-                if ($state == 2) {
+                $percent = ($percent > 100) ? 100 : $percent;
+                $state = ($percent >= 100) ? 3 : 2;
+                if ($state == 3) {
                     fclose($tfile);
                     @unlink($this->readtxt . 'eagleexport' . md5($this->path) . '.txt');
                     $tfile = false;
@@ -396,7 +398,7 @@ class eagleexport
     //校验文件
     public function execCheckFile()
     {
-        if ($this->exportstatus == 2) {
+        if ($this->exportstatus == 3) {
             $total = DB::result_first("select count(rid) from %t where appid = %s ", array('pichome_resources', $this->appid));
             //校验文件
             $this->check_file($total);
@@ -411,7 +413,7 @@ class eagleexport
         $delrids = [];
         $data = DB::fetch_all("select rid,isdelete from %t where appid = %s order by lastdate asc limit $limitsql ", array('pichome_resources', $this->appid));
         if (empty($data)) {
-            C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 3, 'lastid' => 0, 'donum' => 0));
+            C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 4, 'lastid' => 0, 'donum' => 0));
             //校验完成后更新目录文件数
             foreach(DB::fetch_all("select count(rf.id) as num,f.fid  from %t f left join %t rf on rf.fid=f.fid where f.appid = %s group by f.fid",array('pichome_folder','pichome_folderresources',$this->appid)) as $v){
                 C::t('pichome_folder')->update($v['fid'],array('filenum'=>$v['num']));
@@ -419,7 +421,9 @@ class eagleexport
             }
             //修正库中文件数
             $total = DB::result_first("select count(rid) from %t where appid = %s ", array('pichome_resources', $this->appid));
-            C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total));
+            $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$this->appid));
+            $nosubfilenum = $total - $hascatnum;
+            C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total,'nosubfilenum'=>$nosubfilenum));
             return true;
         }
 
@@ -439,11 +443,20 @@ class eagleexport
         if (!empty($delrids)) {
             //如果有需要删除的，删除后，则重新查询上一页数据
             C::t('pichome_resources')->delete_by_rid($delrids);
-            $percent = round((($this->lastid - 1) * $this->checklimit / $total) * 100);
-            C::t('pichome_vapp')->update($this->appid, array('lastid' => $this->lastid, 'percent' => $percent, 'state' => 2));
+            if($this->lastid == 1){
+                $percent = round(($this->checklimit / $total) * 100);
+            }else{
+                $percent = round((($this->lastid - 1) * $this->checklimit / $total) * 100);
+            }
+            C::t('pichome_vapp')->update($this->appid, array('lastid' => $this->lastid, 'percent' => $percent, 'state' => 3));
         } else {
-            $percent = round((($this->lastid - 1) * $this->checklimit / $total) * 100);
-            C::t('pichome_vapp')->update($this->appid, array('lastid' => $this->lastid + 1, 'percent' => $percent, 'state' => 2));
+            if($this->lastid == 1){
+                $percent = round(($this->checklimit / $total) * 100);
+            }else{
+                $percent = round((($this->lastid - 1) * $this->checklimit / $total) * 100);
+            }
+            $percent = ($percent > 100) ? 100:$percent;
+            C::t('pichome_vapp')->update($this->appid, array('lastid' => $this->lastid + 1, 'percent' => $percent, 'state' => 3));
         }
     }
 

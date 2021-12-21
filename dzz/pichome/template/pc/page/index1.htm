@@ -8,33 +8,32 @@
 	.el-header{
 		border-bottom: 0;
 	}
-
 </style>
 <!--{template pc/frame/header_simple_end}-->
 <div id="dzzoffice">
-	<el-container>
-		<el-header class="fixed" height="auto" style="padding: 0;z-index: 100;">
-			<div class="header-wrapper">
-				<!--{template pc/components/index/JsHeader1}-->
-			</div>
-		</el-header>
-		<el-scrollbar id="container_scroll">
-			<div class="container-scroll-loading" v-if="ImageParams.loading" style="position: absolute;width: 100%;height: 100%;left: 0;top: 0;padding-top: 70px;">
-				<div v-loading="ImageParams.loading" style="width: 100%;height: 100%;">
-					
+	<el-scrollbar id="container_scroll">
+		<el-container>
+			<el-header class="fixed" height="auto" style="padding: 0;z-index: 5;">
+				<div class="header-wrapper">
+					<!--{template pc/components/index/JsHeader1}-->
 				</div>
-			</div>
-			<div class="page-content" style="min-height: 100%;">
-				<!--{template pc/components/index/Jsimage}-->
-				<el-backtop target="#container_scroll>.el-scrollbar__wrap"></el-backtop>
-			</div>
-		</el-scrollbar>
-	</el-container>
+			</el-header>
+			
+				<div class="container-scroll-loading" v-if="ImageParams.loading" style="position: absolute;width: 100%;height: 100%;left: 0;top: 0;padding-top: 70px;">
+					<div v-loading="ImageParams.loading" style="width: 100%;height: 100%;">
+						
+					</div>
+				</div>
+				<div class="page-content" style="min-height: 100%;">
+					<!--{template pc/components/index/Jsimage}-->
+					<el-backtop target="#container_scroll>.el-scrollbar__wrap"></el-backtop>
+				</div>
+			
+		</el-container>
+	</el-scrollbar>
 	<div id="Details_Iframe" v-if="DetailsIframe">
 		<iframe id="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
 	</div>
-	
-	
 </div>
 <!--{template pc/components/index/JsCommon}-->
 <script type="text/javascript">

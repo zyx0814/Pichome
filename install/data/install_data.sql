@@ -25,7 +25,7 @@ INSERT INTO `dzz_cron` (`cronid`, `available`, `type`, `name`, `filename`, `last
 --
 -- 转存表中的数据 `dzz_hooks`
 --
-INSERT INTO `dzz_hooks` (`id`, `app_market_id`, `name`, `description`, `type`, `update_time`, `addons`, `status`, `priority`) VALUES
+INSERT INTO dzz_hooks (id, app_market_id, `name`, description, `type`, update_time, addons, `status`, priority) VALUES
 (1, 0, 'check_login', '', 1, 0, 'user\\classes\\checklogin', 1, 0),
 (2, 0, 'safe_chk', '', 1, 0, 'user\\classes\\safechk', 1, 0),
 (3, 0, 'config_read', '读取配置钩子', 0, 0, 'core\\dzz\\config', 1, 0),
@@ -44,8 +44,10 @@ INSERT INTO `dzz_hooks` (`id`, `app_market_id`, `name`, `description`, `type`, `
 (18, 0, 'check_val', '', 1, 0, 'user\\register\\classes\\checkvalue|user', 1, 0),
 (19, 0, 'register_common', '', 1, 0, 'user\\register\\classes\\regcommon', 1, 0),
 (20, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0),
-(21, 0, 'pichomegetinfo', ' ', '1', '0', 'dzz\\imageColor\\classes\\getcolor', '1', '0'),
-(22, 0, 'pichomegetinfo', ' ', '1', '0', 'dzz\\ffmpeg\\classes\\info', '1', '0');
+(21, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\getcolor', 1, 0),
+(22, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
+(23, 0, 'getpichomethumb', ' ', 1, 0, 'dzz\\billfish\\classes\\getpichomethumb', 1, 0),
+(24, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\billfish\\classes\\pichomevappdelete', 1, 0);
 
 
 

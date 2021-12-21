@@ -51,6 +51,14 @@
 	text-overflow: ellipsis;
 	min-width: 80px;
 }
+.left-tree .el-tree-node__content .custom-tree-node .num{
+	color: var(--content-textMessage);
+	font-size: 14px;
+}
+.left-tree .el-tree-node__content .tree-node-color.custom-tree-node .name,
+.left-tree .el-tree-node__content .tree-node-color.custom-tree-node .num{
+	color: var(--leftTreeColor);
+}
 .el-aside .classify-search{
     position: absolute;
     left: 0;

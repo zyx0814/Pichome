@@ -44,6 +44,9 @@
 			this.ScreenSubmit();
 		},
 		ScreenGetTagGroupNum(ParamData){
+			if(ParamData['cid']){
+				ParamData['cid'] = '';
+			}
 			var self = this;
 			$.post(MOD_URL+'&op=ajax&operation=search_menu',ParamData,function(data){
 				if(data.catdata){

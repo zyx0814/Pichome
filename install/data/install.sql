@@ -745,10 +745,10 @@ UNIQUE KEY `orgid` (`orgid`, `uid`) USING BTREE
 DROP TABLE IF EXISTS `dzz_pichome_comments`;
 CREATE TABLE `dzz_pichome_comments` (
 `id`  char(19) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '标注id' ,
-`x`  float(11,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT 'x轴位置' ,
-`y`  float(11,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT 'y轴位置' ,
-`width`  float(11,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT '宽' ,
-`height`  float(11,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT '高度' ,
+`x`  float(11,2)  NOT NULL DEFAULT 0.00 COMMENT 'x轴位置' ,
+`y`  float(11,2)  NOT NULL DEFAULT 0.00 COMMENT 'y轴位置' ,
+`width`  float(11,2)  NOT NULL DEFAULT 0.00 COMMENT '宽' ,
+`height`  float(11,2)  NOT NULL DEFAULT 0.00 COMMENT '高度' ,
 `annotation`  varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '标注内容' ,
 `lastModified`  char(13) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '最后更改时间' ,
 `appid`  char(19) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '库id' ,
@@ -1018,13 +1018,13 @@ CREATE TABLE `dzz_pichome_vapp` (
 `filenum`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '文件个数' ,
 `lastid`  char(13) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT '' COMMENT '最后执行位置id' ,
 `percent`  tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '导入百分比' ,
-`state`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0，未导入，1导入中，2检校，3完成' ,
+`state`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0，未导入，1准备中，2导入中，3校验中，4已完成' ,
 `filter`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '筛选项' ,
 `share`  tinyint(1) NOT NULL COMMENT '分享是否开放' ,
 `download`  tinyint(1) NOT NULL COMMENT '是否开放下载' ,
 `donum`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '已导入文件数' ,
 `charset`  char(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '库编码类型' ,
-`type`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0，eagle库，1本地目录库，2，oaooa库' ,
+`type`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0，eagle库，1本地目录库，billfish库' ,
 `isdelete`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否已删除' ,
 `sort`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '排序，值越大越靠前' ,
 `allowext`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '允许导入后缀' ,
@@ -1032,9 +1032,10 @@ CREATE TABLE `dzz_pichome_vapp` (
 `iswebsitefile`  tinyint(1) UNSIGNED NULL DEFAULT 1 COMMENT '是否是站点下文件' ,
 `getinfonum`  int(11) UNSIGNED NULL DEFAULT 0 COMMENT '获取信息文件数' ,
 `getinfo`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否获取信息' ,
+`nosubfilenum`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '未分类文件总数' ,
+`disp`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '排序' ,
 PRIMARY KEY (`appid`)
 )ENGINE=MyISAM;
-
 -- ----------------------------
 -- Table structure for `dzz_process`
 -- ----------------------------
@@ -1370,3 +1371,69 @@ CREATE TABLE `dzz_usergroup_field` (
 `perm`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
 UNIQUE KEY `groupid` (`groupid`) USING BTREE
 )ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS `dzz_billfish_folderrecord`;
+CREATE TABLE `dzz_billfish_folderrecord` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `bfid` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'billfish目录id',
+  `fid` char(19) NOT NULL DEFAULT '' COMMENT 'pichome目录id',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  PRIMARY KEY (id),
+  KEY `bfid` (`bfid`,`appid`),
+  KEY `fid` (`fid`),
+  KEY `appid` (`appid`)
+) ENGINE=MyISAM;
+
+-- --------------------------------------------------------
+
+--
+-- table dzz_billfish_record
+--
+DROP TABLE IF EXISTS `dzz_billfish_record`;
+CREATE TABLE `dzz_billfish_record` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `bid` int(11) UNSIGNED NOT NULL,
+  `rid` char(32) NOT NULL DEFAULT '' COMMENT '对应resources表id',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  `thumb` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '缩略图id',
+  PRIMARY KEY (`id`),
+  KEY `rid` (`rid`),
+  KEY `appid` (`appid`),
+  KEY `bid` (`bid`,`appid`) USING BTREE
+) ENGINE=MyISAM ;
+
+-- --------------------------------------------------------
+
+--
+-- table dzz_billfish_taggrouprecord
+--
+DROP TABLE IF EXISTS `dzz_billfish_taggrouprecord`;
+CREATE TABLE dzz_billfish_taggrouprecord (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `cid` char(19) NOT NULL DEFAULT '' COMMENT '标签分类id',
+  `bcid` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'billfish标签分类id',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT 'appid',
+  PRIMARY KEY (`id`),
+  KEY `bcid` (`bcid`,`appid`),
+  KEY `appid` (`appid`),
+  KEY `cid` (`cid`)
+) ENGINE=MyISAM;
+
+-- --------------------------------------------------------
+
+--
+-- table dzz_billfish_tagrecord
+--
+DROP TABLE IF EXISTS `dzz_billfish_tagrecord`;
+CREATE TABLE `dzz_billfish_tagrecord` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `lid` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '标签id',
+  `name` varchar(128) NOT NULL DEFAULT '' COMMENT 'billfish标签',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  PRIMARY KEY (`id`),
+  KEY `btid` (`name`,`appid`),
+  KEY `tid` (`lid`),
+  KEY `appid` (`appid`)
+) ENGINE=MyISAM;
+
+
