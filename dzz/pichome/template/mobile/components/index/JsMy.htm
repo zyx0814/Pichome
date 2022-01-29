@@ -82,13 +82,11 @@
 					self.$dialog.confirm({
 					  title: '提示',
 					  message: '您确定要注销登录？',
-					}).then(() => {
+					}).then(function(){
 					    // on confirm
 						jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
 							window.location.reload();
 						});
-					}).catch(() => {
-					    // on cancel
 					});
 				break;
 				case 'login':

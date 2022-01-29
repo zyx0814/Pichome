@@ -28,6 +28,8 @@ if ($operation == 'fetch') {
         exit(json_encode(array('success' => true)));
     } else {
         if ($data = DB::fetch_first("select * from %t where appid=%s and isdelete = 0 ", array('pichome_vapp', $appid))) {
+            if($data['charset'] != CHARSET)$data['convertpath'] = diconv($data['path'],$data['charset'],CHARSET);
+            else $data['convertpath'] = $data['path'];
             $data['path'] = urlencode($data['path']);
             $data['filter'] = unserialize($data['filter']);
             $getinfonum = 0;
@@ -36,20 +38,37 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
                 array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$appid));
             $catdata = C::t('pichome_taggroup')->fetch_by_appid($appid);
             if (($data['state'] == 2)) {
-                dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
+                $processname = 'DZZ_PAGEEXPORTFILE_LOCK_' . $appid;
+                $locked = true;
+                if (!dzz_process::islocked($processname, 60 * 5)) {
+                    $locked = false;
+                }
+                if ($locked) {
+                    dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
+                }
+
             } elseif ($data['state'] == 3) {
-                dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
+                $processname = 'DZZ_PAGEEXPORTCHECKFILE_LOCK_' . $appid;
+                $locked = true;
+                if (!dzz_process::islocked($processname, 60 * 5)) {
+                    $locked = false;
+                }
+                if ($locked) {
+                    dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
+                }
             }
             exit(json_encode(array('success' => true, 'data' => $data, 'catdata' => $catdata)));
         } else {
             exit(json_encode(array('error' => true)));
         }
     }
-} elseif ($operation == 'getdata') {
+}
+elseif ($operation == 'getdata') {
     $data = array();
     foreach (DB::fetch_all("select * from %t where isdelete = 0 order by disp", array('pichome_vapp')) as $val) {
         $val['connect'] = (is_dir($val['path'])) ? 1:0;
         if($val['charset'] != CHARSET){
+            //echo $val['path'];die;
             $val['path'] = diconv($val['path'], $val['charset'], CHARSET);
         }
         $data[] = $val;
@@ -66,7 +85,8 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
             $returndata['appid'] = $getinfonum;
     }
     exit(json_encode(array('data' => $returndata)));
-}elseif ($operation == 'addlibrary') {
+}
+elseif ($operation == 'addlibrary') {
     //接收路径
     $path = isset($_GET['path']) ? trim($_GET['path']) : '';
     //接收编码
@@ -124,7 +144,6 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
         'allowext'=>getglobal('setting/pichomeimportallowext'),
         'filter' => 'a:13:{i:0;a:3:{s:3:"key";s:8:"classify";s:4:"text";s:6:"分类";s:7:"checked";s:1:"1";}i:1;a:4:{s:3:"key";s:3:"tag";s:4:"text";s:6:"标签";s:7:"checked";s:1:"1";s:8:"showtype";s:1:"0";}i:2;a:3:{s:3:"key";s:5:"color";s:4:"text";s:6:"颜色";s:7:"checked";s:1:"1";}i:3;a:3:{s:3:"key";s:4:"link";s:4:"text";s:6:"链接";s:7:"checked";s:1:"1";}i:4;a:3:{s:3:"key";s:4:"desc";s:4:"text";s:6:"注释";s:7:"checked";s:1:"1";}i:5;a:3:{s:3:"key";s:8:"duration";s:4:"text";s:6:"时长";s:7:"checked";s:1:"1";}i:6;a:3:{s:3:"key";s:4:"size";s:4:"text";s:6:"尺寸";s:7:"checked";s:1:"1";}i:7;a:3:{s:3:"key";s:3:"ext";s:4:"text";s:6:"类型";s:7:"checked";s:1:"1";}i:8;a:3:{s:3:"key";s:5:"shape";s:4:"text";s:6:"形状";s:7:"checked";s:1:"1";}i:9;a:3:{s:3:"key";s:5:"grade";s:4:"text";s:6:"评分";s:7:"checked";s:1:"1";}i:10;a:3:{s:3:"key";s:5:"btime";s:4:"text";s:12:"添加时间";s:7:"checked";s:1:"1";}i:11;a:3:{s:3:"key";s:8:"dateline";s:4:"text";s:12:"修改日期";s:7:"checked";s:1:"1";}i:12;a:3:{s:3:"key";s:5:"mtime";s:4:"text";s:12:"创建日期";s:7:"checked";s:1:"1";}}'
     ];
-
     if ($type == 1) $appattr['allowext'] = $Defaultallowext;
     $path = str_replace(array('/', './', '\\'), BS, $path);
     if (strpos($path, DZZ_ROOT) !== 0) $appattr['iswebsitefile'] = 0;
@@ -137,15 +156,57 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
         exit(json_encode(array('error' => 'create failer')));
     }
 
-} elseif ($operation == 'dellibrary') {
+}
+elseif($operation == 'changePath'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $path = isset($_GET['path']) ? trim($_GET['path']):'';
+    //接收编码
+    $charset = isset($_GET['charset']) ? trim($_GET['charset']) : 'utf8';
+    //转换路径
+    $path = str_replace('/', BS, $path);
+    //转换编码，防止路径找不到（linux下中文乱码，前端展示为正常编码，依据前端传递编码转换出原路径存储）
+    if (CHARSET != $charset) $path = diconv($path, CHARSET, $charset);
+    //存在相同路径的不允许重复添加
+    if (DB::result_first("select appid from %t where path = %s and isdelete = 0", array('pichome_vapp', $path))) {
+        exit(json_encode(array('tips' => '路径对应库已存在，不允许修改')));
+    }else{
+        $appdata = C::t('pichome_vapp')->fetch($appid);
+    }
+    if(!$appdata) exit(json_encode(array('tips' => '库不存在或已被删除，不允许修改')));
+    $type = $appdata['type'];
+    if ($type == 0) {
+        $metajsonfile = $path . BS . 'metadata.json';
+        if (!is_file($metajsonfile)) {
+            exit(json_encode(array('error' => '系统检测该库不已符合eagle库标准，修改失败')));
+        }
+    }
+    if ($type == 2) {
+        $dbfile = $path . BS . '.bf'.BS.'billfish.db';
+        if (!is_file($dbfile)) {
+            exit(json_encode(array('tips' => '系统检测该库已不符合billfish库标准，修改失败')));
+        }
+    }
+    //if(!is_dir($path))  exit(json_encode(array('tips' => '系统检测该库准，修改失败')));
+    if (strpos($path, DZZ_ROOT) !== 0) $iswebsitefile = 0;
+    else $iswebsitefile = 1;
+    if (C::t('pichome_vapp')->update($appid, array('path' => $path,'iswebsitefile'=>$iswebsitefile))) {
+        //dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=initexport&appid='.$appid, 0, '', '', false, '', 0.1);
+        exit(json_encode(array('success' => true)));
+    } else {
+        exit(json_encode(array('error' => true)));
+    }
+}
+elseif ($operation == 'dellibrary') {
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    //if (C::t('pichome_vapp')->update($appid, array('isdelete' => 1,'deluid'=>getglobal('uid'),'delusername'=>getglobal('username')))) {
     if (C::t('pichome_vapp')->update($appid, array('isdelete' => 1))) {
         dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=delete', 0, '', '', false, '', 0.1);
         exit(json_encode(array('success' => true)));
     } else {
         exit(json_encode(array('error' => true)));
     }
-} elseif ($operation == 'getpath') {
+}
+elseif ($operation == 'getpath') {
     require_once(DZZ_ROOT . './dzz/class/class_encode.php');
     $path = isset($_GET['path']) ? trim($_GET['path']) : '';
     $gettype = isset($_GET['gettype']) ? intval($_GET['gettype']) : 0;
@@ -176,10 +237,11 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
             if ($dh = @opendir($path)) {
                 while (($file = readdir($dh)) !== false) {
                     if ($file != '.' && $file != '..' && is_dir($path . BS . $file) && !preg_match('/^(' . $notallowdir . ')$/i', $file)) {
-                        $returnfile = $file;
+
+                        $returnfile = trim($file);
                         $p = new Encode_Core();
                         $charset = $p->get_encoding($file);
-                        if (CHARSET != $charset) $returnfile = diconv($returnfile, $charset, CHARSET);
+                        $returnfile = diconv($returnfile, $charset, CHARSET);
                         $datas[] = ['path' => $returnfile, 'charset' => $charset];
                     }
                 }
@@ -194,7 +256,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
                             $returnfile = $path . $file;
                             $p = new Encode_Core();
                             $charset = $p->get_encoding($file);
-                            if (CHARSET != $charset) $returnfile = diconv($returnfile, $charset, CHARSET);
+                            $returnfile = diconv($returnfile, $charset, CHARSET);
                             $datas[] = ['path' => $returnfile, 'charset' => $charset];
                         }
                     }
@@ -209,7 +271,8 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
 
     }
     exit(json_encode(array('data' => $datas)));
-} elseif ($operation == 'sort') {
+}
+elseif ($operation == 'sort') {
 	$appids = isset($_GET['appids']) ? trim($_GET['appids']) : '';
 	if (submitcheck('settingsubmit')) {
 	    if (!$appids) exit(json_encode(array('error' => true)));
@@ -221,7 +284,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
         }
 	    exit(json_encode(array('success' => true)));
 	}
-} else {
+}else {
     $theme = GetThemeColor();
     include template('pc/page/library');
 }

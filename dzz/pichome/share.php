@@ -4,7 +4,7 @@
     }
 	
 $sid = isset($_GET['sid']) ? dzzdecode($_GET['sid'],'',0):'';
-$sharedata = C::t('pichome_share')->fetch_by_id($sid);
+$sharedata = C::t('pichome_share')->fetch_by_idandtype($sid);
 $resourcesdata = $sharedata['resourcesdata'];
 $resourcesdata['share'] = 0;
 $colors = array();

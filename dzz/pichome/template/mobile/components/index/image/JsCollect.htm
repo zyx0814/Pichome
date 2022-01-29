@@ -1,0 +1,162 @@
+<script type="text/javascript">
+	Vue.component('collect-all', {
+		template: `<van-collapse v-model="parammodel.active" :border="false">
+						<van-collapse-item v-for="item in paramdata" :key="item.cid" :name="item.cid"  :class="{'active':parammodel.checkedvalue.indexOf(item.cid)>-1}" :ref="'collapse_'+item.cid">
+							<template #title>
+								<div @click.stop.self.prevent="select(item)">
+									{{item.catname}}
+								</div>
+							</template>
+							<template #right-icon>
+								<template v-if="!item.leaf">
+									<i @click.stop="toggle(item)" class="van-icon van-icon-arrow van-cell__right-icon"></i>
+								</template>
+								<template v-else>
+									<div style="width: 20px;"></div>
+								</template>
+							</template>
+							<div class="van-cell" v-if="item.loading">
+								<van-loading type="spinner" size="24px" />
+							</div>
+							<template v-if="item.children && item.children.length">
+								<collect-all
+									:parammodel="parammodel" 
+									:paramdata="item.children" 
+									@select="select" 
+									:expandedkeys="expandedkeys"
+									:keyword="keyword" 
+									@append="append"
+									:issearch="issearch"
+									:level="parseInt(level)+1"></collect-all>
+							</template>
+						</van-collapse-item>
+					</van-collapse>`,
+		props:['paramdata','parammodel','expandedkeys','keyword','level','issearch'],
+		data: function() {
+			return {
+				getnum:0
+			}
+		},
+		watch:{
+
+		},
+		created() {
+			if(this.level == 0){
+				this.getdata();
+			}else{
+				this.openChild(this.paramdata);
+			}
+		},
+		methods:{
+			toggle(item){
+				var self = this;
+				var cid = item.cid;
+				if(self.$refs['collapse_'+cid] && self.$refs['collapse_'+cid].length){
+					var expanded = self.$refs['collapse_'+cid][0].expanded;
+					if(!item.loaded){
+						self.getdata(item);
+					}
+					self.$nextTick(function(){
+						self.$refs['collapse_'+cid][0].toggle(!expanded);
+					});
+					
+				}
+			},
+			append(data){
+				var self = this;
+				self.$emit('append',data);
+			},
+			select(data){
+				var self = this;
+				self.$emit('select',data);
+			},
+			getdata(data){
+				var self = this;
+				var param = {};
+				if(data){
+					data.loading = true;
+					if(data.parent){
+						param['clid'] = data.clid;
+					}else{
+						param['clid'] = data.clid;
+						param['cid'] = data.cid;
+					}
+				}
+				$.post('index.php?mod=collection&op=collect&do=collectlist',param,function(json){
+					if(json.success){
+						var arr = [];
+						for(var i in json.success){
+							var item = json.success[i];
+							if(data){
+								item['cid'] = parseInt(item['cid']);
+								item['parent'] = false;
+							}else{
+								item['cid'] = 'p'+item['clid'];
+								item['catname'] = item['name'];
+								item['parent'] = true;
+							}
+							item['children'] = [];
+							item['loaded'] = false;
+							item['loading'] = false;
+							item['leaf'] = false;
+							if(self.issearch){
+								if(self.expandedkeys.indexOf(item.cid)>-1){
+									arr.push(item);
+								}
+							}else{
+								arr.push(item);
+							}
+							
+						}
+						if(data){
+							if(arr.length){
+								self.append({
+									data:data,
+									val:arr
+								});
+								data.leaf = false;
+							}else{
+								data.leaf = true;
+							}
+							data.loading = false;
+							data.loaded = true;
+						}else{
+							self.append({
+								type:'parent',
+								val:arr
+							});
+						}
+						if(self.getnum == 0){
+							self.$nextTick(function(){
+								self.getnum = 1;
+								self.openChild(arr);
+							});
+						}
+						
+					}else{
+						
+					}
+				},'json');
+			},
+			openChild(data){
+				if(this.expandedkeys.length){
+					for(var i in data){
+						var item = data[i];
+						if(parseInt(this.level) == 0){
+							if(this.expandedkeys.indexOf(item.cid)>-1){
+								this.getdata(item);
+							}
+						}else{
+							if(this.expandedkeys.indexOf(parseInt(item.cid))>-1){
+								this.getdata(item);
+							}
+						}
+							
+					}
+				}
+			}
+		},
+		mounted() {
+		},
+	});
+</script>

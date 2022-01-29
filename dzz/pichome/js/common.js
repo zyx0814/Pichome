@@ -1,6 +1,3 @@
-jQuery(document).ready(function() {
-
-});
 function debounce(fun, delay) {
 	var time;
 	return function(args) {

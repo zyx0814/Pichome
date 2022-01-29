@@ -37,10 +37,6 @@
 .detail-popup.full .header-top{
 	display: none;
 }
-.van-nav-bar .van-nav-bar__title,
-.van-nav-bar .van-icon {
-    color: var(--content-textHover);
-}
 
 .detail-popup .detail-popup-translate{
 	position: relative;

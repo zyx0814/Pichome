@@ -175,36 +175,45 @@ class localexport
                 $file = trim($file);
                 $file = str_replace(array('/', './', '\\'), BS, $file);
                 $filearr = explode("\t", $file);
-                $filepath = $filearr[0];
+                $filerelativepath = $filearr[0];
+                $filepath = str_replace($filedir . BS, '', $filerelativepath);
+                $p = new Encode_Core();
+                $this->charset = $p->get_encoding($filepath);
                 //如果是目录直接执行目录导入
                 if (isset($filearr[1]) && $filearr[1] == 'folder') {
-                    $filepath = str_replace($filedir . BS, '', $filepath);
                     if ($this->charset != CHARSET) $filepath = diconv($filepath, $this->charset, CHARSET);
-
                     $fid = $this->createfolerbypath($filepath);
 
                     $spl_object->next();
                     continue;
                 } else {
-                    //生成rid
-                    $rid = md5($filepath.$this->appid);
+                    $hasrid = 0;
+                    if($rid = DB::result_first("select rid from %t where path = %s and appid = %s",
+                        array('pichome_resources_attr',$filepath,$this->appid))){
+                        $hasrid = 1;
+                    }else{
+                        //生成rid
+                        $rid = $this->createRid();
+                    }
+                    $realfilepath = $filedir.BS.$filepath;
                     //如果文件不存在则删除记录
-                    if (!is_file($filepath)) {
-                        C::t('pichome_resources')->delete_by_rid($rid);
+                    if (!is_file($realfilepath)) {
+                        if($hasrid)C::t('pichome_resources')->delete_by_rid($rid);
                         $this->filenum -= 1;
                     } else {
-
-                        $mtime = filemtime($filepath);
-                        $ctime = filectime($filepath);
+                        //修改时间
+                        $mtime = filemtime($realfilepath);
+                        //创建时间
+                        $ctime = filectime($realfilepath);
                         //获取文件后缀
-                        $ext = substr(strrchr($filepath, '.'), 1);
+                        $ext = substr(strrchr($realfilepath, '.'), 1);
                         $ext = strtolower($ext);
                         //获取文件类型
                         $type = getTypeByExt($ext);
                         //获取文件大小
-                        $size = filesize($filepath);
+                        $size = filesize($realfilepath);
                         //获取图片信息，以取得宽高
-                        $imginfo = @getimagesize($filepath);
+                        $imginfo = @getimagesize($realfilepath);
                         //保存路径，用于之后获取文件使用
                         $savepath = str_replace(array('/', './', '\\'), '/', $filearr[0]);
                         $savepath = str_replace($this->path . '/', '', $savepath);
@@ -321,7 +330,17 @@ class localexport
         return array('success' => true);
 
     }
+    //生成rid
+    public function createRid(){
 
+        //订单年月
+        $ridmd = strtoupper(dechex(date('m'))) . date('d');
+        //订单时间戳
+        $ridms = substr(time(), -5) . substr(microtime(), 2, 5);
+        //订单号
+        $rid =  md5($ridmd.$ridms. sprintf('%02d', rand(0, 99)).$this->appid);
+        return $rid;
+    }
     //根据路径创建目录
     public function createfolerbypath($path, $pfid = '')
     {

@@ -2,8 +2,13 @@
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/index.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/screen.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/image.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/components/collect.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/components/addcollect.css?{VERHASH}"/>
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/wavesurfer.js?{VERHASH}"></script>
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/DomResize.js?{VERHASH}"></script>
+<!-- <script type="text/javascript" src="{MOD_PATH}/js/pc/components/collect.js?{VERHASH}"></script> -->
+<script type="text/javascript" src="{MOD_PATH}/js/pc/components/collectdialog.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/components/addcollect.js?{VERHASH}"></script>
 <style type="text/css">
 	.el-header{
 		border-bottom: 0;
@@ -173,6 +178,7 @@
 		mounted() {
 			var self = this;
 			this.HeaderPopoverSearchMounted();
+			this.ImageMounted();
 			$(document).resize(function(){
 				self.LayoutStructure();
 				self.DocumentResize += 1;

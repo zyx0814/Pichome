@@ -29,12 +29,13 @@ class table_pichome_resources extends dzz_table
 
     public function delete_by_appid($appid)
     {
+        $data = C::t('pichome_vapp')->fetch($appid);
         //$i = 0;
         $rids = [];
-        foreach (DB::fetch_all("select rid from %t where appid = %s limit 0,1000", array($this->_table, $appid)) as $v) {
+        foreach (DB::fetch_all("select rid from %t where appid = %s limit 0,100", array($this->_table, $appid)) as $v) {
             $rids[] = $v['rid'];
         }
-        if ($rids) $this->delete_by_rid($rids);
+        if ($rids) $this->delete_by_rid($rids,$data['deluid'],$data['delusername']);
         //return $i;
     }
 
@@ -44,7 +45,7 @@ class table_pichome_resources extends dzz_table
         return DB::result_first("select * from %t  where  path = %s", array($this->_table, $path));
     }
 
-    public function delete_by_rid($rids)
+    public function delete_by_rid($rids,$uid=0,$username='')
     {
         if (!is_array($rids)) $rids = (array)$rids;
         C::t('pichome_resources_attr')->delete_by_rid($rids);
@@ -55,6 +56,9 @@ class table_pichome_resources extends dzz_table
         C::t('pichome_share')->delete_by_rid($rids);
         C::t('pichome_ffmpeg_record')->delete($rids);
         C::t('pichome_imagickrecord')->delete($rids);
+        //$deldata = ['rids'=>$rids,'deluid'=>$uid,'delusername'=>$username];
+        //Hook::listen('pichomedatadeleteafter',$deldata);
+
         return $this->delete($rids);
     }
 
@@ -121,7 +125,40 @@ class table_pichome_resources extends dzz_table
         $resourcesdata['realpath'] = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
         return $resourcesdata;
     }
+    /*public function getdatabyrid($rid){
+        global $Opentype;
+        $data = parent::fetch($rid);
+        $data['fsize'] = formatsize($data['size']);
+        $data['mtime'] = dgmdate(round($data['mtime'] / 1000), 'Y/m/d H:i');
+        $data['dateline'] = dgmdate(round($data['dateline'] / 1000), 'Y/m/d H:i');
+        $data['name'] = str_replace(strrchr($data['name'], "."), "", $data['name']);
+        $data['btime'] = dgmdate(round($data['btime'] / 1000), 'Y/m/d H:i');
+        $data['dpath'] = dzzencode($data['rid'], '', 0, 0);
+        if (in_array($data['ext'], $Opentype['video'])) {
+            $data['opentype'] = 'video';
+        } elseif (in_array($data['ext'], $Opentype['text'])) {
+            $data['opentype'] = 'text';
+        } elseif (in_array($data['ext'], $Opentype['pdf'])) {
+            $data['opentype'] = 'pdf';
+        } elseif (in_array($data['ext'], $Opentype['image'])) {
+            $data['opentype'] = 'image';
+        } else {
+            $data['opentype'] = 'other';
+        }
+        $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+        $data = array_merge($data,$attrdata);
+        $colordata = C::t('pichome_palette')->fetch_colordata_by_rid($rid);
+        foreach ($colordata as $cv) {
+            $colorsarr[] = $cv;
+        }
+        $data['color'] = $colorsarr[0];
 
+        //array_multisort($datas, 'rid', SORT_ASC, $rids);
+        foreach (C::t('pichome_resourcestag')->fetch_all_tag_by_rids($rids) as $k => $v) {
+            $datas[$k]['tags'] = $v;
+            // $datas[$k]['tags'] = '•'.implode('•',$v);
+        }
+    }*/
     public function fetch_by_rid($rid)
     {
         global $Opentype;
@@ -130,6 +167,7 @@ class table_pichome_resources extends dzz_table
         //获取所有库分享和下载权限
         $downshare = C::t('pichome_vapp')->fetch_all_sharedownlod();
         $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+        if($attrdata['desc']) $attrdata['desc'] = strip_tags($attrdata['desc']);
         $resourcesdata = array_merge($resourcesdata, $attrdata);
         $resourcesdata['colors'] = C::t('pichome_palette')->fetch_colordata_by_rid($rid);
         $resourcesdata['ext'] = strtolower($resourcesdata['ext']);
@@ -234,7 +272,7 @@ class table_pichome_resources extends dzz_table
         $resourcesdata['foldernames'] = C::t('pichome_folderresources')->get_foldername_by_rid($rid);
         $resourcesdata['tag'] = C::t('pichome_resourcestag')->fetch_tag_by_rid($rid);
         $resourcesdata['dpath'] = dzzencode($rid, '', 0, 0);
-        //print_r($resourcesdata);die;
+
 
         return $resourcesdata;
     }
@@ -306,6 +344,11 @@ class table_pichome_resources extends dzz_table
                     $v['height'] = 128;
                 }
             }
+            $thumbwidth = getglobal('config/pichomethumbwidth') ? getglobal('config/pichomethumbwidth') : 900;
+            $thumbheight = getglobal('config/pichomethumbheight') ? getglobal('config/pichomethumbheight') : 900;
+            $thumsizearr = $this->getImageThumbsize($v['width'],$v['height'],$thumbwidth,$thumbheight);
+            $v['thumbwidth'] = $thumsizearr[0];
+            $v['thumbheight'] = $thumsizearr[1];
             //文件真实地址
             if ($downshare[$v['appid']]['iswebsitefile']) {
                 $originalimg = str_replace(DZZ_ROOT, '', $downshare[$v['appid']]['path'] . BS . $v['path']);
@@ -316,13 +359,50 @@ class table_pichome_resources extends dzz_table
                 $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($originalimg, '', 0, 0);
             }
 
-
             unset($v['path']);
             $returndata[] = $v;
         }
         return $returndata;
     }
+    public function getImageThumbsize($owidth,$oheight,$width,$height){
+        if($owidth>$width || $oheight>$height){
+            $or=$owidth/$oheight;
+            $r=$width/$height;
+            if($r>$or){
+                if($oheight<$height){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
 
+                    $width=ceil($height*$or);
+                    if($width < 242){
+                        $width = 242;
+                        $height = ceil($width/$or);
+                    }
+                }
+
+            }else{
+                if($owidth<$width){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
+                    $height=ceil($width/$or);
+                    $width = ceil($height*$or);
+                    if($width < 242){
+                        $width = 242;
+                        $height = ceil($width/$or);
+                    }
+                }
+            }
+
+        }else{
+            $width=$owidth;
+            $height=$oheight;
+        }
+        //Return the results
+        return array($width,$height);
+
+    }
     public function geticondata_by_rid($rid)
     {
         $resourcesdata = DB::fetch_first("select r.rid,r.appid,r.hasthumb,r.ext,r.type,ra.path as fpath,

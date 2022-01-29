@@ -11,7 +11,7 @@ $appid = isset($_GET['appid']) ? trim($_GET['appid']) : 0;
 $processname = 'DZZ_EXPORTCHECKFILE_LOCK_' . $appid;
 //dzz_process::unlock($processname);
 $locked = true;
-if (!dzz_process::islocked($processname, 60 * 5)) {
+if (!dzz_process::islocked($processname, 60*60*24)) {
     $locked = false;
 }
 if ($locked) {
@@ -21,7 +21,7 @@ if ($locked) {
 $force = isset($_GET['force']) ? intval($_GET['force']) : 0;
 $data = C::t('pichome_vapp')->fetch($appid);
 if (!$data) exit(json_encode(array('error' => 'no data')));
-if ($data['state'] != 3 || $data['isdelete'] != 0) exit(json_encode(array('error' => 'is deleted or state is not allow')));
+if ($data['state'] != 3 && $data['isdelete'] != 0) exit(json_encode(array('error' => 'is deleted or state is not allow')));
 if ($data['type'] == 0) {
     include_once dzz_libfile('eagleexport');
     $eagleexport = new eagleexport($data);
@@ -36,4 +36,8 @@ if ($data['type'] == 0) {
     $return = $billfishxport->execCheckFile();
 }
 dzz_process::unlock($processname);
+$data = C::t('pichome_vapp')->fetch($appid);
+if($data['state'] == 3){
+    dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
+}
     

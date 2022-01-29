@@ -2,11 +2,19 @@
 	<div>
 		<div id="top_header" style="padding: 4px 16px;">
 			<div class="header-content">
-				<div class="h-left">
+				<!-- <div class="h-left">
 					<a href="{MOD_URL}">
 						<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
 						<span class="text">$_G['setting'][sitename]</span>
 					</a>
+				</div> -->
+				<div class="h-left">
+					<div class="el-page-header__left" @click="goBack">
+						<i class="el-icon-back"></i>
+					</div>
+					<span class="text" >
+						<span v-cloak>$_G['setting'][sitename]</span>
+					</span>
 				</div>
 				<div class="h-center">
 				</div>
@@ -97,11 +105,11 @@
 						          confirmButtonText: '确定',
 						          cancelButtonText: '取消',
 						          type: 'warning'
-						        }).then(() => {
+						        }).then(function() {
 						         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
 						         		window.location.reload();
 						         	});
-						        }).catch(() => {
+						        }).catch(function() {
 						                   
 						        });
 					break;
@@ -111,6 +119,9 @@
 				}
 				
 			},
+			goBack(){
+				window.location.href=MOD_URL;
+			}
 		},
 		mounted() {
 

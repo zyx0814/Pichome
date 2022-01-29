@@ -1,3 +1,11 @@
+#Details_Iframe{
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+}
 #container_scroll .el-loading-mask{
 	background: var(--bg-content);
 	z-index: 20;
@@ -21,6 +29,11 @@
 	width: 100%;
 	height: 100%;
 }
+#container_scroll .container-not.center{
+	display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .image-container{
 	min-height: 100%;
 	position: relative;
@@ -35,11 +48,20 @@
 }
 .image-container .image-wrapper .image-item .image-inside{
 	padding: 0 4px;
+	position: relative;
 }
 .image-container .image-wrapper .image-item .image-inside .image-single{
 	cursor: pointer;
 	position: relative;
 	background: var(--bg-content);
+	border: 1px solid transparent;
+}
+.image-container .image-wrapper .image-item.checked .image-inside .image-single{
+	border: 1px solid var(--border-color-base);
+	border-radius: 18px;
+}
+.container2 .image-container .image-wrapper .image-item.checked .image-inside .image-single{
+	border-radius: 3px;
 }
 .image-container .image-wrapper .image-item .image-inside .image-single.radius{
 	border-radius: 18px;
@@ -108,14 +130,54 @@
 .image-container .image-wrapper .image-item .image-inside .message{
 	text-align: center;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .topFlex{
+
+.image-container .image-wrapper .image-item .image-inside .el-button-group{
 	position: absolute;
-	left: 8px;
+	z-index: 10;
+	left: 12px;
+	top: 8px;
+	display: none;
+}
+.image-container .image-wrapper .image-item .image-inside:hover .el-button-group{
+	display: block;
+}
+.image-container .image-wrapper .image-item .image-inside .el-button-group .reference{
+	margin-right: -1px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	float: left;
+	border-left: 0;
+	border-top-left-radius: 18px;
+	border-bottom-left-radius: 18px;
+}
+
+.container2 .image-container .image-wrapper .image-item .image-inside .el-button-group .reference{
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+.container2 .image-container .image-wrapper .image-item .image-inside .el-button-group.border .reference{
+	border-radius: 3px;
+	border-color: #f56c6c;
+}
+.image-container .image-wrapper .image-item .image-inside .el-button-group .el-dropdown__caret-button{
+	height: 36px;
+	padding: 0px 3px;
+	border-top-right-radius: 18px;
+	border-bottom-right-radius: 18px;
+	width: 30px;
+}
+.container2 .image-container .image-wrapper .image-item .image-inside .el-button-group .el-dropdown__caret-button{
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+.image-container .image-wrapper .image-item .image-inside .topFlex{
+	position: absolute;
+	right: 8px;
 	top: 8px;
 	overflow: hidden;
 	z-index: 10;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .circulars{
+.image-container .image-wrapper .image-item .image-inside .circulars{
 	background-color: var(--content-imgbg-btn);
 	color: var(--content-imgbg-txt);
 	border-radius: 50%;
@@ -130,17 +192,17 @@
 	display: none;
 	z-index: 10;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single.showoperation .circulars{
+.image-container .image-wrapper .image-item .image-inside:hover .circulars{
 	display: block;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .circulars:first-child{
+.image-container .image-wrapper .image-item .image-inside .circulars:first-child{
 	margin-left: 0;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .circulars:hover{
+.image-container .image-wrapper .image-item .image-inside .circulars:hover{
 	color: var(--content-imgbg-txtHover);
 	background-color: var(--content-imgbg-btnHover);
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .circulars.link{
+.image-container .image-wrapper .image-item .image-inside .circulars.link{
 	position: absolute;
 	bottom: 8px;
 	left: 8px;
@@ -151,13 +213,13 @@
 	z-index: 2;
 	margin-left: 0;
 }
-.image-container .image-wrapper .image-item .image-inside .image-single .circulars.link .el-link--inner{
+.image-container .image-wrapper .image-item .image-inside .circulars.link .el-link--inner{
 	font-size: 14px;
 	vertical-align: top;
 }
 
 
-.image-container .image-wrapper .image-item .image-inside .image-single .image-playurl .movies-box{
+.image-container .image-wrapper .image-item .image-inside .image-playurl .movies-box{
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -181,10 +243,13 @@
 	height: 100%;
 }
 .image-container .image-wrapper .image-item .image-inside .image-single .image-playurl .movies-box .voice{
-	position: absolute;
+    position: absolute;
+    right: 46px;
+    top: 7px;
+    z-index: 2;
+}
+.image-container .image-wrapper .image-item .image-inside .image-single .image-playurl.exhibit .movies-box .voice{
 	right: 8px;
-	top: 8px;
-	z-index: 2;
 }
 .image-container .image-wrapper .image-item .image-inside .image-single .image-playurl .movies-box .voice.yes .no,
 .image-container .image-wrapper .image-item .image-inside .image-single .image-playurl .movies-box .voice.no .yes{
@@ -277,4 +342,55 @@
 }
 .image-container .image-wrapper .image-item .image-inside .message .other .score.active{
 	color: var(--starsActive);
+}
+.image-container .image-wrapper .image-item .collect-checkeds{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 20;
+	display: none;
+	cursor: pointer;
+	/* border: 2px solid var(--border-color-base); */
+}
+.image-container .image-wrapper .image-item.checked .collect-checkeds{
+	display: block;
+}
+.image-container .image-wrapper .image-item .collect-checkeds .check{
+    position: absolute;
+    left: 12px;
+    top: 8px;
+    border-radius: 8px;
+    background: #000;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 24px;
+    color: #FFFFFF;
+}
+#imagelayout .collects-move-btn-box{
+	position: fixed;
+    bottom: 30px;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    text-align: center;
+}
+#imagelayout .collects-move-btn-box .item{
+	width: 58px;
+    height: 58px;
+    text-align: center;
+    line-height: 58px;
+    font-size: 22px;
+    background: var(--header-textHover);
+    border-radius: 50%;
+    color: var(--header-text);
+    display: inline-block;
+    box-shadow: rgb(0,0,0,0.1) 0px 0px 20px;
+    cursor: pointer;
+}
+#imagelayout .collects-move-btn-box .item:hover{
+    background: var(--header-textHover);
+    color: var(--header-iconHover);
 }

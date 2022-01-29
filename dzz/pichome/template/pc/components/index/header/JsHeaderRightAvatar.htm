@@ -2,6 +2,7 @@
 <el-dropdown trigger="click" @command="HeaderRightAvatar"  v-cloak>
 	<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
 	<el-dropdown-menu slot="dropdown" style="width: 165px;">
+		<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
 		<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 		<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 		<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
@@ -29,6 +30,9 @@
 		HeaderRightAvatar(type){
 			var self = this;
 			switch(type){
+				case 'collection':
+					window.location.href = DZZSCRIPT + '?mod=collection';
+				break;
 				case 'personal':
 					window.location.href = MOD_URL + '&op=user&do=personal';
 				break;
@@ -77,11 +81,11 @@
 						  confirmButtonText: '确定',
 						  cancelButtonText: '取消',
 						  type: 'warning'
-						}).then(() => {
+						}).then(function() {
 						 jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
 								window.location.reload();
 							});
-						}).catch(() => {
+						}).catch(function() {
 								   
 						});
 				break;

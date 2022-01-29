@@ -87,7 +87,7 @@ class billfishxport
         //修改导入状态为1
         C::t('pichome_vapp')->update($this->appid, array('state' => 1));
         //查询res_join_tag是否有文件id索引
-        $fecthsql = "SELECT * FROM sqlite_master WHERE type = 'index';";
+        $fecthsql = "SELECT * FROM sqlite_master WHERE type = 'index'";
         $indexdata =  $this->fetch_all($fecthsql);
         $indexarr = array_column($indexdata,'name');
         //如果标签表iid没有索引创建res_join_tag_iid_idx索引
@@ -107,6 +107,23 @@ class billfishxport
             C::t('pichome_vapp')->update($this->appid, array('state' => 2, 'filenum' => $this->filenum));
         }
         return array('success' => true);
+    }
+
+    //获取文件可访问的真实地址
+    public function getFileRealFileName($filepath,$filename){
+        $charsetarr = ['GBK','GB18030'];
+        $returnname = $filename;
+        if(!is_file($filepath.BS.$filename)){
+            foreach ($charsetarr as $v){
+                $filemetadataname = diconv($filename, CHARSET, $v);
+                if(is_file($filepath.BS.$filemetadataname)){
+                    $returnname = $filemetadataname;
+                    break;
+                }
+            }
+        }
+        return $returnname;
+
     }
 
     public function execExport($force = false)
@@ -168,8 +185,9 @@ class billfishxport
                     //定义属性表变量
                     $attrdata = [];
                     $attrdata['desc'] = $v['note'];
+                    $attrdata['link'] = $v['origin'];
                     //将名字记入搜索字段
-                    $attrdata['searchval'] = $setarr['name'].$attrdata['desc'];
+                    $attrdata['searchval'] = $setarr['name'].$attrdata['desc'].$attrdata['link'];
                     //处理目录数据
                     if ($v['fid']) {
                         $folderdata = $this->getFolderfid($v['fid']);
@@ -186,9 +204,11 @@ class billfishxport
                         $attrdata['path'] = $setarr['name'];
                     }
                     //目录数据处理完成
-
+                    $attrdata['path']  = $this->getFileRealFileName($this->path,$attrdata['path']);
                     //转码路径 记入属性表
-                    if (CHARSET != $this->charset) $attrdata['path'] = diconv($attrdata['path'],CHARSET, $this->charset);;
+                    //$p = new Encode_Core();
+                    //$this->charset = $p->get_encoding($attrdata['path']);
+                    //if (CHARSET != $this->charset) $attrdata['path'] = diconv($attrdata['path'],CHARSET, $this->charset);;
 
                     //标签数据开始
 

@@ -26,6 +26,29 @@ html,body,#dzzoffice{
 	padding: 0;
 	overflow: hidden;
 }
+.bs-main-container{
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+.pic-container{
+	height: 100%;
+    width: 100%;
+    overflow: hidden;
+	
+}
+.pic-container .pic-container-scroll{
+	height: 100%;
+    width: 100%;
+    overflow: auto;
+	position: relative;
+	padding-top: 46px;
+}
+.pic-container .img-container{
+	min-height: 100% ;
+    position: relative;
+	padding: 0 4px;
+}
 input::-webkit-input-placeholder { /* WebKit, Blink, Edge */
     color : var(--tip-color);
 }
@@ -45,9 +68,82 @@ input:-ms-input-placeholder { /* Internet Explorer 10-11 */
 input::-ms-input-placeholder { /* Microsoft Edge */
    color : var(--tip-color);
 }
+[v-cloak] {
+    display: none;
+}
+
+.page-popup{
+	background: var(--bg-content) !important;
+}
+.van-action-sheet__cancel, .van-action-sheet__item{
+	background-color: transparent;
+}
+.van-action-sheet__gap,
+.van-action-sheet__cancel:active,
+.van-action-sheet__item:active{
+	background-color: var(--bg-poperHover);
+}
+.van-action-sheet__cancel{
+	color: var(--header-text);
+}
+.custom-image.van-empty{
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	margin: auto;
+}
+.img-circle{
+	width: 2.1875rem;
+	height: 2.1875rem;
+	border-radius: 50%;
+	vertical-align: middle;
+}
+.Topcarousel{
+	border-radius: 50%;
+	text-align: center;
+	display: inline-block;
+	font-size: 1rem;
+	width: 2.1875rem;
+	height: 2.1875rem;
+	line-height: 2.1875rem;
+	color: #FFF;
+}
+#dzzoffice{
+	position: relative;
+	background: var(--bg-content);
+}
+.pic-logo{
+	height: 40px;
+	padding: 5px 0;
+}
+.pic-logo .h-left{
+    height: 30px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+    color: var(--header-text);
+    text-decoration: none;
+}
+.pic-logo .h-left img{
+    max-width: 100%;
+	max-height: 100%;
+	margin-right: 10px;
+}
+.van-nav-bar__title{
+	color: var(--header-text);
+}
 .van-nav-bar__content{
 	/* 46px */
 	height: 46px;
+}
+.van-nav-bar .van-icon{
+	color: var(--content-textHover);
+}
+.van-nav-bar__content .van-nav-bar__text{
+	color: var(--header-text);
 }
 .van-popup.van-notify.van-notify--warning{
 	background-color: #ff976a;
@@ -169,7 +265,9 @@ ul{
 .van-cell::after{
 	border-color: var(--border-color-base);
 }
-
+.van-cell--clickable:active{
+	background-color: var(--bg-poperHover);
+}
 .van-search{
 	background-color: transparent;
 }
@@ -188,6 +286,9 @@ ul{
 .van-tree-select__nav,.van-sidebar-item,.van-sidebar-item:active{
 	background-color: transparent;
 	color: var(--header-text);
+}
+.van-sidebar-item.van-sidebar-item--disabled{
+	opacity: 0.7;
 }
 .van-sidebar-item--select{
 	color: var(--header-active);
@@ -267,4 +368,173 @@ ul{
 	to {
 		transform: rotate(359deg)
 	}
+}
+.van-cell-group{
+	background-color: transparent;
+}
+.about-popup,
+.my-popup{
+	height: 100%;
+	width: 100%;
+	background: var(--bg-content);
+	color: var(--content-textHover);
+	overflow: hidden;
+	padding-top: 46px;
+}
+.about-popup .van-nav-bar,
+.my-popup .van-nav-bar{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+.about-popup .scroll-box,
+.my-popup .scroll-box{
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	padding-top: 0.9375rem;
+}
+.my-popup .scroll-box .van-cell-group{
+	background: transparent;
+}
+.my-popup .scroll-box .van-cell {
+	background: transparent;
+}
+.my-popup .scroll-box .van-cell::after{
+	display: none;
+}
+.my-popup .scroll-box .van-cell .van-cell__right-icon{
+	color: var(--header-text);
+}
+
+.about-popup .aboutlogo{
+	text-align: center;
+	padding-top: 3.125rem;
+	padding-bottom: 1.875rem;
+}
+.about-popup .aboutmessage{
+	padding: 0 2.1875rem;
+}
+.about-popup .aboutmessage .aboutlist{
+	margin-bottom: 1.25rem;
+	overflow: hidden;
+	font-size: 1rem;
+}
+.about-popup .aboutmessage .aboutlist .title{
+	float: left;
+}
+.about-popup .aboutmessage .aboutlist .address{
+    color: var(--color-primary);
+    font-size: 1rem;
+    vertical-align: sub;
+}
+@media screen and (min-width: 768px) {
+	.about-popup .aboutmessage{
+		padding: 0 6.25rem;
+	}
+}
+
+.pic-toolbar{
+	position: fixed;
+	width: 100%;
+	left: 0;
+	padding: 0 8%;
+	transition: all .3s;
+	transition:all .3s;
+	-moz-transition:all .3s; /* Firefox 4 */
+	-webkit-transition:all .3s; /* Safari and Chrome */
+	-o-transition:all .3s; /* Opera */
+	z-index: 100;
+}
+.pic-toolbar.footershow{
+	bottom: 3%;
+	opacity: 1;
+}
+.pic-toolbar.footerhide{
+	bottom: -2.9375rem;
+	opacity: 0;
+}
+.pic-toolbar .tabbar{
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: flex;
+	border-radius: 39px;
+	background: var(--bg-poper);
+	padding: 0.375rem 0;
+	color: var(--header-text);
+	/* box-shadow: 0px 0px 5px 1px var(--bg-poperHover); */
+}
+.pic-toolbar .tab-item{
+	-webkit-box-flex: 1;
+	-webkit-flex: 1;
+	flex: 1;
+	text-align: center;
+	font-size: 14px;
+}
+.pic-toolbar .tab-item .icon{
+	font-size: var(--font-32);
+}
+.pic-toolbar .tab-item img{
+	border-radius: 50%;
+    width: 2.1875rem;
+    height: 2.1875rem;
+    vertical-align: bottom;
+}
+
+.van-popup{
+	overflow: unset;
+}
+.van-popup .vam-popup-title{
+	height: 40px;
+    font-weight: 700;
+    position: absolute;
+    top: -40px;
+    left: 0;
+    width: 100%;
+    padding: 0 12px;
+    font-size: 18px;
+    color: #FFFFFF;
+}
+.footer-popup{
+	padding-bottom: 70px;
+}
+.footer-popup .btn-bottom{
+	padding: 10px;
+    height: 70px;
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+}
+.footer-popup .btn-bottom .van-button{
+    width: auto;
+    padding: 15px 20px;
+}
+.footer-popup .popup-search-input .van-field__right-icon{
+	padding-right: 0;
+}
+.footer-popup .popup-search-input .van-field__right-icon .van-icon{
+	font-size: 1.25rem;
+	color: var(--header-active);
+}
+
+.footer-popup .van-search-box{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+.footer-popup .van-search-box .van-field{
+	border: 0;
+	font-size: 0.875rem;
+}
+.van-notify--success {
+    background-color: #07c160;
+}
+.van-notify--danger {
+    background-color: #ee0a24;
+}
+.van-notify--warning {
+    background-color: #ff976a;
 }

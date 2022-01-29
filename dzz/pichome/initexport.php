@@ -2,9 +2,10 @@
     if (!defined('IN_OAOOA')) {
         exit('Access Denied');
     }
-    @set_time_limit(0);
-    @ini_set('memory_limit', -1);
-    @ini_set('max_execution_time', 0);
+@ignore_user_abort(true);
+@set_time_limit(0);
+@ini_set('memory_limit', -1);
+@ini_set('max_execution_time', 0);
     
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):0;
     $force = isset($_GET['force']) ? intval($_GET['force']):0;
@@ -23,6 +24,10 @@
         include_once DZZ_ROOT.'dzz'.BS.'billfish'.BS.'class'.BS.'class_billfishexport.php';
         $billfishxport = new billfishxport($data);
         $return = $billfishxport->initExport();
+    }
+    $data = C::t('pichome_vapp')->fetch($appid);
+    if($data['state'] == 2){
+        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
     }
     exit(json_encode(array('success'=>true)));
     

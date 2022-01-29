@@ -245,6 +245,11 @@ class image {
 				$w = ceil($y_ratio * $this->imginfo['width']);
 				$h = $this->param['thumbheight'];
 			}
+			if($w < 242){
+			    $w = $this->param['thumbwidth'] = 242;
+                $x_ratio = $this->param['thumbwidth'] / $this->imginfo['width'];
+			    $h = ceil($x_ratio*$this->imginfo['height']);
+            }
 		}
 		return array($x, $y, $w, $h);
 	}
@@ -356,6 +361,10 @@ class image {
 				}else{
 
 					$width=ceil($height*$or);
+					if($width < 242){
+					    $width = 242;
+					    $height = ceil($width/$or);
+                    }
 				}
 
 			}else{
@@ -364,6 +373,11 @@ class image {
 					$width=$owidth;
 				}else{
 					$height=ceil($width/$or);
+					$width = ceil($height*$or);
+					if($width < 242){
+                        $width = 242;
+                        $height = ceil($width/$or);
+                    }
 				}
 			}
 

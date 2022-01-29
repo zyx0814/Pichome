@@ -52,8 +52,8 @@
 				var str = JSON.parse(JSON.stringify(self.ImageDataList[findex]));
 				var rid = str.rid;
 				arr[rid] = str;
-				var w = parseInt(arr[rid]['width']);
-				var h = parseInt(arr[rid]['height']);
+				var w = parseInt(arr[rid]['thumbwidth']);
+				var h = parseInt(arr[rid]['thumbheight']);
 				var r = w / h;
 				var r1 = h / w;
 				if (h > 360) {

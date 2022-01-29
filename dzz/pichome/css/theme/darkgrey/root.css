@@ -8,6 +8,7 @@
 	--header-screenDel:#C33A54;/* 头部清除筛选的 × 背景色 */
 	
 	--bg-content:#383838;/* 内容背景色 */
+	--bg-contentopacity:rgb(56,56,56,0.6);/* 内容背景色透明 */
 	--content-text:#C4C4C4;/* 内容文字颜色 */
 	--content-textHover:#F6F6F6;/* 内容文字hover颜色 */
 	--content-imgbg:#303030;/* 图片背景色 */

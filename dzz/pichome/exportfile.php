@@ -3,16 +3,16 @@
     if (!defined('IN_OAOOA')) {
         exit('Access Denied');
     }
-	
-    @set_time_limit(0);
-    ini_set('memory_limit', -1);
-    @ini_set('max_execution_time', 0);
-   
+@ignore_user_abort(true);
+@set_time_limit(0);
+@ini_set('memory_limit', -1);
+@ini_set('max_execution_time', 0);
+
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):0;
     $processname = 'DZZ_EXPORTFILE_LOCK_'.$appid;
-   // dzz_process::unlock($processname);
+    //dzz_process::unlock($processname);
     $locked = true;
-    if (!dzz_process::islocked($processname, 60*5)) {
+    if (!dzz_process::islocked($processname, 60*60*24)) {
         $locked=false;
     }
     if ($locked) {
@@ -22,7 +22,7 @@
     $force = isset($_GET['force']) ? intval($_GET['force']):0;
     $data = C::t('pichome_vapp')->fetch($appid);
     if(!$data) exit(json_encode(array('error'=>'no data')));
-    if($data['state'] != 2  || $data['isdelete'] != 0) exit(json_encode(array('error'=>'is deleted or state is not allow')));
+    if($data['state'] != 2  && $data['isdelete'] != 0) exit(json_encode(array('error'=>'is deleted or state is not allow')));
     if($data['type'] == 0){
         include_once dzz_libfile('eagleexport');
         $eagleexport = new eagleexport($data);
@@ -38,5 +38,11 @@
         $return = $billfishxport->execExport();
     }
     dzz_process::unlock($processname);
-    exit('success');
+    $data = C::t('pichome_vapp')->fetch($appid);
+    if($data['state'] == 2){
+        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
+    }elseif($data['state'] == 3){
+        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
+    }
+   // exit('success');
     

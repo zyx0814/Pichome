@@ -8,10 +8,10 @@
 		</div>
 	</template>
 	<template #right>
-		<van-dropdown-menu>
+		<van-dropdown-menu v-if="ParamLibrary.data.length">
 			<van-dropdown-item @change="ChangeLibrary" v-model="ParamLibrary.activeId" :options="ParamLibrary.fdata" />
 		</van-dropdown-menu>
-		
+		<!-- <van-icon style="display: block;margin-left: 18px;" name="setting-o" @click="ParamImages.checked=true" size="18" /> -->
 	</template>
 </van-nav-bar>
 <div class="pic-container">
@@ -51,11 +51,13 @@
 <!--{template mobile/components/index/JsSort}-->
 <!--{template mobile/components/index/JsScreen}-->
 <!--{template mobile/components/index/JsMy}-->
+<!--{template mobile/components/index/image/more}-->
+<!--{template mobile/components/index/image/classify}-->
 <script type="text/javascript">
 	new Vue({
 		el: '#dzzoffice',
 		data: function() {
-			return $.extend({},MyData,SearchData,SortData,ImagesData,ScreenData,{
+			return $.extend({},MyData,SearchData,SortData,ImagesData,ScreenData,ImagesMoreData,ImagesClassifyData,{
 				ParamFooter:{
 					IsShow:'up',
 					data:{
@@ -63,7 +65,9 @@
 						search:{type:'search',icon:'icon ri-search-line',show:true},
 						screen:{type:'screen',icon:'icon ri-filter-2-fill',show:false},
 						sort:{type:'sort',icon:'icon ri-arrow-up-down-fill',show:true},
-						user:{type:'user',icon:'',show:true}
+						user:{type:'user',icon:'',show:true},
+						collectcheck:{type:'collectcheck',icon:'icon ri-star-fill',show:false},
+						outcheck:{type:'outcheck',icon:'icon ri-close-fill',show:false}
 					}
 				},
 				ParamDataInit:{
@@ -166,7 +170,7 @@
 			}
 			this.StartData();
 		},
-		methods:$.extend({},CommonJs,SearchJs,MyJs,ScreenJs,SortJs,ImagesJs,{
+		methods:$.extend({},CommonJs,SearchJs,MyJs,ScreenJs,SortJs,ImagesJs,ImagesMoreMethods,ImagesClassifyMethods,{
 			StartData(){
 				this.CommonLibrary();
 			},
@@ -179,6 +183,7 @@
 				window.location.reload();
 			},
 			handleFooterClick(type){
+				var self = this;
 				if(type == 'search'){
 					this.ParamSearch.PopupVisible = true;
 				}else if(type == 'screen'){
@@ -190,6 +195,16 @@
 					this.ScreenReset();
 					this.CommonSetFooterBadge();
 					this.CommonhandleHash();
+				}else if(type == 'outcheck'){
+					this.ParamImages.operation.rids = [];
+					this.ParamImages.checked = false;
+				}else if(type == 'collectcheck'){
+					if(!self.ParamImages.operation.rids.length){
+						self.$notify({ type: 'warning', message: '请先选择文件' });
+						return false;
+					}
+					this.ParamImages.operation.type = 'collect';
+					this.ImagesClassify.PopupVisible = true;
 				}
 			}
 			

@@ -1044,11 +1044,11 @@
 						          confirmButtonText: '确定',
 						          cancelButtonText: '取消',
 						          type: 'warning'
-						        }).then(() => {
+						        }).then(function() {
 						         jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
 						         		window.location.reload();
 						         	});
-						        }).catch(() => {
+						        }).catch(function() {
 						                   
 						        });
 					break;

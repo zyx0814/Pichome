@@ -1,0 +1,54 @@
+<van-action-sheet
+	style="padding-top: 10px;"
+	v-model="ImagesMore.visible"
+	:actions="ImagesMore.data"
+	cancel-text="取消"
+	@select="ImagesMoreSheetChange"
+	close-on-click-action>
+</van-action-sheet>
+<script type="text/javascript">
+	var ImagesMoreData = {
+		ImagesMore:{
+			visible:false,
+			dpath:'',
+			data:[
+				{ name: '收藏',type:'collect' },
+				{ name: '分享',type:'share' },
+				{ name: '下载',type:'down' },
+			]
+		}
+	};
+	var ImagesMoreMethods = {
+		ImagesMoreSheetChange(data){
+			var self = this;
+			switch(data.type){
+				case 'share':
+					$.post('{MOD_URL}&op=ajax&operation=createshare',{
+						rid:self.ParamImages.operation.rids.join(',')
+					},function(data){
+						if(data.success){
+							self.$dialog.confirm({
+								title: '',
+								confirmButtonText:'复制地址',
+								message: data.success,
+							}).then(function(){
+							    self.CommonCopyTxt(data.success)
+							}).catch(function(){
+							    // on cancel
+							});
+						}else{
+							self.$toast.fail('分享地址获取失败');
+						}
+					},'json');
+				break;
+				case 'down':
+					window.open(SITEURL+MOD_URL+'&op=download&dpath='+self.ImagesMore.dpath);
+				break;
+				case 'collect':
+					self.ParamImages.operation.type = data.type;
+					self.ImagesClassify.PopupVisible = true;
+				break;
+			}
+		}
+	};
+</script>

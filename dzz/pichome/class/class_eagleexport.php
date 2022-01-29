@@ -144,7 +144,22 @@ class eagleexport
         return array('success' => true);
     }
 
+    //获取文件可访问的真实地址
+    public function getFileRealFileName($filepath,$filename,$ext){
+        $charsetarr = ['GBK','GB18030'];
+        $returnname = $filename;
+        if(!is_file($filepath.BS.$filename.'.'.$ext)){
+            foreach ($charsetarr as $v){
+                $filemetadataname = diconv($filename, CHARSET, $v);
+                if(is_file($filepath.BS.$filemetadataname.'.'.$ext)){
+                    $returnname = $filemetadataname;
+                    break;
+                }
+            }
+        }
+        return $returnname;
 
+    }
     public function execExport($force = false)
     {
         $filedir = $this->path . BS.'images';
@@ -199,9 +214,7 @@ class eagleexport
                             C::t('pichome_resources')->delete_by_rid($rid);
                         }
                         else{
-                            $p = new Encode_Core();
-                            $charset = $p->get_encoding($tmppath);
-                            if (CHARSET != $charset) $filemetadataname = diconv($filemetadata['name'], CHARSET, $charset);
+                            $filemetadataname = $this->getFileRealFileName($tmppath,$filemetadata['name'],$filemetadata['ext']);
                             //文件名称
                             $filename = $filemetadataname . '.' . $filemetadata['ext'];
                             //缩略图名称
@@ -339,10 +352,8 @@ class eagleexport
                             $haspassword = C::t('pichome_folder')->check_haspasswrod($filemetadata['folders'], $this->appid);
 
                             if (!$haspassword){
-                                $p = new Encode_Core();
-                                $charset = $p->get_encoding($tmppath);
-                                if (CHARSET != $charset) $filemetadataname = diconv($filemetadata['name'], CHARSET, $charset);
-
+                                $filemetadataname = $this->getFileRealFileName($tmppath,$filemetadata['name'],$filemetadata['ext']);
+                                //echo $filemetadataname;die;
                                 $filename = $filemetadataname . '.' . $filemetadata['ext'];
                                 $thumbname = $filemetadataname . '_thumbnail.png';
                                 //echo $i.'middle:'.memory_get_usage()/1024 . '<br>';

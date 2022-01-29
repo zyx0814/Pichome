@@ -2,13 +2,19 @@
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/index.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/screen.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/image.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/components/collect.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/components/addcollect.css?{VERHASH}"/>
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/wavesurfer.js?{VERHASH}"></script>
 <script type="text/javascript" src="{MOD_PATH}/js/pc/plug/DomResize.js?{VERHASH}"></script>
+<!-- <script type="text/javascript" src="{MOD_PATH}/js/pc/components/collect.js?{VERHASH}"></script> -->
+<script type="text/javascript" src="{MOD_PATH}/js/pc/components/collectdialog.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/components/addcollect.js?{VERHASH}"></script>
 <style type="text/css">
 	.el-header{
 		border-bottom: 0;
 	}
 </style>
+<!--{template mobile/components/classify}-->
 <!--{template pc/frame/header_simple_end}-->
 <div id="dzzoffice">
 	<el-scrollbar id="container_scroll">
@@ -41,6 +47,7 @@
 		el: '#dzzoffice',
 		data: function() {
 			return $.extend({},JsCommonData,JsHeaderData,JsImageData,{
+				DocumentLeftWidth:0,
 				DocumentResize:0,
 				DocumentTemplate:1,
 				OpenDetailType:'new',
@@ -122,6 +129,7 @@
 		mounted() {
 			var self = this;
 			this.HeaderPopoverSearchMounted();
+			this.ImageMounted();
 			window.onresize = function(){
 				self.LayoutStructure();
 				if(!self.ImageParams.loading){

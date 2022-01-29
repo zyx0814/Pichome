@@ -85,7 +85,7 @@ class Encode_Core {
 		$ary[] = "JIS";//日文编码
 		$ary[] = "EUC-JP";//日文编码
 		$encoding= self::detect_utf_encoding($str);
-		if(empty($encoding) && self::is_gb2312($str)) return 'GBK';
+		//if(empty($encoding) && self::is_GBK($str)) return 'GBK';
 		if(empty($encoding)){
 			$encoding=mb_detect_encoding($str,$ary);
 		}

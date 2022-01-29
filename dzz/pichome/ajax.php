@@ -1497,4 +1497,35 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
 		C::t('user_setting')->update_by_skey('pichomeimageexpanded',$pichomeimageexpanded);
 		exit(json_encode(array('success' => true)));
 	}
+}elseif($operation == 'gethostip'){
+    $iphost = [];
+    $os = PHP_OS;
+    if(preg_match('/^WIN(.+?)/i',$os)){
+        $host= gethostname();
+    }else{
+        $host = $_SERVER['SERVER_NAME'];
+    }
+    $host = $_SERVER['SERVER_NAME'];
+
+    $ip = gethostbyname($host);
+    $ip = filter_var($ip,FILTER_VALIDATE_IP);
+    if(!$ip || strpos($ip,'127') === 0){
+        if(preg_match('/^WIN(.+?)/i',$os)){
+            $host= gethostname();
+        }else{
+            $host = $_SERVER['SERVER_NAME'];
+        }
+        $ip = gethostbyname($host);
+    }
+    if($_SERVER['SERVER_PORT'] == 443){
+        $siteurl = 'https://'.$_SERVER['SERVER_NAME'];
+    } elseif($_SERVER["SERVER_PORT"] == 80) {
+        $siteurl = 'http://'.$_SERVER['SERVER_NAME'];
+
+    }else{
+        $ip = $ip . ':' . $_SERVER["SERVER_PORT"];
+        $siteurl = 'http://'.$_SERVER['SERVER_NAME'] . ':' . $_SERVER["SERVER_PORT"];
+    }
+    $iphost = ['ip'=>$ip,'siteurl'=>$siteurl];
+    exit(json_encode($iphost));
 }

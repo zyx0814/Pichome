@@ -86,9 +86,6 @@
 	height: 100%;
 	width: 100%;
 }
-#container_scroll .el-scrollbar__wrap{
-	overflow-x: hidden;
-}
 #container_scroll .el-scrollbar__wrap .el-scrollbar__view{
 	min-height: 100%;
 	width: 100%;
@@ -98,14 +95,6 @@
 }
 #container_scroll .el-scrollbar__bar.is-vertical{
 	z-index: 10;
-}
-#Details_Iframe{
-	position: fixed;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1000;
 }
 .container2 .el-header{
 	padding: 0;

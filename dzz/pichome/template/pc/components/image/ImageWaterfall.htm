@@ -57,7 +57,7 @@
 				}else{
 					arr[i]['pwidth'] = pwidth;
 				}
-				var h = ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height)>120?ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height):120;
+				var h = ppwidth/parseFloat(arr[i].thumbwidth)*parseInt(arr[i].thumbheight)>120?ppwidth/parseFloat(arr[i].thumbwidth)*parseInt(arr[i].thumbheight):120;
 				arr[i]['pheight'] = h;
 				if (index < self.ImageWaterfall.columns) {
 					arr[i]['ptop'] = 0;

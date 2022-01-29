@@ -6,7 +6,7 @@
 		ImageAudioPlayMouseenter(tage){
 			var find = tage.find('.image-playurl');
 			
-			tage.addClass('showoperation');
+			tage.closest('.image-inside').addClass('showoperation');
 			var status = find.data('status');
 			var type = find.data('type');
 			if(type == 'video' || type == 'audio'){
@@ -23,7 +23,7 @@
 			}
 		},
 		ImageAudioPlayMouseleave(tage){
-			tage.removeClass('showoperation');
+			tage.closest('.image-inside').removeClass('showoperation');
 			tage.find('.image-playurl').removeClass('show');
 		},
 		ImageAudioPlayVideo(box){
