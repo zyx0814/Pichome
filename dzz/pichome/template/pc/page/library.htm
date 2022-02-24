@@ -96,12 +96,14 @@
 							<el-dropdown v-cloak trigger="click" @command="handleavatar">
 								<div id="dzz_avatar_img" class="small">{eval echo avatar_block($_G[uid]);} </div>
 								<el-dropdown-menu slot="dropdown" style="width: 165px;">
+									<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
 									<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 									<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 									<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
 									<el-divider></el-divider>
 									<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 									<el-dropdown-item command="library">库设置</el-dropdown-item>
+									<el-dropdown-item command="orguser">用户管理</el-dropdown-item>
 									<el-dropdown-item command="system">系统工具</el-dropdown-item>
 									<el-divider></el-divider>
 									<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
@@ -378,7 +380,7 @@
 				<el-button type="warning" @click="ImportDataDialogClick('eagle')" size="small">作为Eagle库导入</el-button>
 		  </span>
 		</el-dialog>
-		<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false">
+		<el-dialog :title="dialog.title" :visible.sync="dialog.Visible" :close-on-click-modal="false" :show-close="formdta.loading?false:true">
 			<el-form :model="formdta" label-width="140px">
 	<!-- 					<el-form-item label="开放权限：">
 					<el-radio-group v-model="formdta.personal">
@@ -386,6 +388,9 @@
 						<el-radio :label="1">私有</el-radio>
 					</el-radio-group>
 				</el-form-item> -->
+				<el-form-item label="库名称：">
+				    <el-input v-model="formdta.appname"></el-input>
+				  </el-form-item>
 				<el-form-item label="库位置：">
 				    <el-input v-model="formdta.path" readonly style="border: 0;">
 						<i slot="suffix" style="cursor: pointer;" class="el-input__icon el-icon-edit" @click="FormdtaPathClick"></i>
@@ -437,8 +442,8 @@
 <!-- 				<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary">
 					<el-button slot="reference" style="float: left;">删除</el-button>
 				</el-popconfirm> -->
-				<el-button @click="dialog.Visible = false">取 消</el-button>
-				<el-button type="primary" @click="handleSubmit">确 定</el-button>
+				<el-button @click="dialog.Visible = false" :disabled="formdta.loading">取 消</el-button>
+				<el-button type="primary" @click="handleSubmit" :loading="formdta.loading">确 定</el-button>
 			</div>
 		</el-dialog>
 	</el-container>
@@ -456,6 +461,8 @@
 					Visible:false,
 				},
 				formdta:{
+					appname:'',
+					loading:false,
 					appid:'',
 					path:'',
 					share:'0',
@@ -467,7 +474,8 @@
 					eagle:0,
 					allowext:'',
 					notallowext:'',
-					charset:''
+					charset:'',
+					
 				},
 				newscreens:[],
 				newClassfiy:[],
@@ -490,7 +498,8 @@
 					charset:'utf8',
 					force:0
 				},
-				ImportDataVisible:false
+				ImportDataVisible:false,
+				getinfonumtimestatus:''
 			}
 		},
 		watch:{
@@ -560,6 +569,7 @@
 			handleSubmit(){
 				var self = this;
 				var filter = [];
+				self.formdta.loading = true;
 				for(var c in self.newscreens){
 					var citem = self.newscreens[c];
 					if(self.formdta.screen.indexOf(citem.key)>-1){
@@ -590,6 +600,7 @@
 					settingsubmit:true,
 					formhash:'{FORMHASH}',
 					appid:self.formdta.appid,
+					appname:self.formdta.appname,
 					getinfo:self.formdta.getinfo,
 					share:self.formdta.share,
 					download:self.formdta.download,
@@ -600,6 +611,13 @@
 				$.post(MOD_URL+'&op=library&operation=fetch',param,function(data){
 					self.dialog.Visible = false;
 					if(data.success){
+						for(var x in self.tableData){
+							if(self.tableData[x].appid == self.formdta.appid){
+								self.tableData[x].getinfo = self.formdta.getinfo;
+								self.tableData[x].appname = self.formdta.appname;
+								self.tableDataForEach();
+							}
+						}
 						self.$message({
 							type:'success',
 							message:'设置成功'
@@ -607,6 +625,7 @@
 					}else{
 						self.$message.error('设置失败');
 					}
+					self.formdta.loading = false;
 				},'json');
 			},
 			handleSetting(appid,title){
@@ -674,6 +693,7 @@
 						self.dialog.Visible = true;
 						self.formdta = {
 							appid:appid,
+							appname:data.data.appname,
 							path:showVal,
 							type:data.data.type,
 							getinfo:data.data.getinfo,
@@ -686,6 +706,7 @@
 							eagle:parseInt(data.data.type),
 							allowext:data.data.allowext,
 							notallowext:data.data.notallowext,
+							loading:false
 						};
 					}else{
 						self.$message.error('数据获取失败');
@@ -785,12 +806,10 @@
 							
 						}else{
 							param['path'] = self.catalogue.defaultsearch+'/'+node.data.label;
-							
 						}
 					}else{
 						param['path'] = self.catalogue.search;
 					}
-					
 				}else{
 					if(node.level > 0){
 						if(node.level > 1){
@@ -924,6 +943,8 @@
 							fdata['percent'] = 0;
 							fdata['connect'] = 1;
 							fdata['type'] = self.catalogue.type;
+							fdata['getinfonum'] = 0;
+							
 							self.tableData.push(fdata);
 						}
 						
@@ -948,10 +969,8 @@
 								index = i;
 							}
 						}
-						if(self.tableData[index]['time']){
-							clearInterval(self.tableData[index]['time']);
-						}
 						self.tableData.splice(index,1);
+						self.tableDataForEach();
 					}else{
 						self.$message.error('删除失败');
 					}
@@ -966,41 +985,63 @@
 						if(parseInt(self.tableData[i].state) == 1 || parseInt(self.tableData[i].state) == 2 || parseInt(self.tableData[i].state) == 3){
 							self.handleimplement(i,self.tableData[i].appid)
 						}
-						self.getinfonum(self.tableData[i]);
+						self.tableDataForEach();
 					}
 					self.$nextTick(function(){
 						self.TableSortable();
 					});
 				},'json');
 			},
-			getinfonum(item){
+			tableDataForEach(){
 				var self = this;
-				if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
-					var index = 0;
-					for(var i in self.tableData){
-						if(self.tableData[i].appid == item.appid){
-							index = i;
-						}
+				var isInterval = false;
+				
+				for(var i in self.tableData){
+					var item = self.tableData[i];
+					if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
+						isInterval = true;
+						break;
 					}
-					if(!self.tableData[index]['getinfotime']){
-						self.tableData[index]['getinfotime'] = '';
+				}
+				if(isInterval){
+					self.getinfonumtime();
+				}else{
+					if(self.getinfonumtimestatus){
+						clearInterval(self.getinfonumtimestatus);
 					}
-					this.getinfonumtime(index,item.appid);
 				}
 			},
-			getinfonumtime(index,appid){
+			getinfonumtime(){
 				var self = this;
-				self.tableData[index]['getinfotime'] = setInterval(function(){
-					$.post(MOD_URL+'&op=library&operation=getinfonum',{
-						appid:appid
-					},function(data){
-						if(parseInt(self.tableData[index].getinfonum)==parseInt(self.tableData[index].filenum)){
-							clearInterval(self.tableData[index]['getinfotime']);
-						}else{
-							self.tableData[index].getinfonum = data.data.appid;
+				self.getinfonumtimestatus = setInterval(function(){
+					$.get(MOD_URL+'&op=library&operation=getinfonum',function(data){
+						var status = true;
+						for(var i in self.tableData){
+							for(var a in data.data){
+								if(self.tableData[i].appid == a){
+									if(parseInt(data.data[a])>0){
+										self.tableData[i].getinfonum = data.data[a];
+									}else{
+										self.tableData[i].getinfonum = 0;
+									}
+								}
+							}
+						}
+						for(var x in self.tableData){
+							for(var t in data.data){
+								if(self.tableData[x].appid == t){
+									if(parseInt(self.tableData[x].filenum) != parseInt(data.data[t])){
+										status = false;
+										return false;
+									}
+								}
+							}
+						}
+						if(status){
+							clearInterval(self.getinfonumtimestatus);
 						}
 					},'json');
-				},8000)
+				},5000)
 				
 			},
 			handleRefresh(appid){
@@ -1116,6 +1157,12 @@
 			},
 			handleavatar(type) {//头像点击
 				switch(type){
+					case 'collection':
+						window.location.href = DZZSCRIPT + '?mod=collection';
+					break;
+					case 'orguser':
+						window.open(SITEURL+'admin.php?mod=orguser');
+					break;
 					case 'personal':
 						window.location.href = MOD_URL + '&op=user&do=personal';
 					break;
@@ -1144,7 +1191,7 @@
 								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2022 欧奥图文</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>

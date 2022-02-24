@@ -516,7 +516,8 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $cid = isset($_GET['cid']) ? $_GET['cid']:'';
         if ($cid) {
             if ($cid == -1) {
-                $sql .= "  left join %t tr on isnull(tr.cid)";
+                $sql .= "  left join %t tr  on rt.tid=tr.tid ";
+                $wheresql .= " and isnull(tr.cid) ";
                 $params[] = 'pichome_tagrelation';
             } else {
                 $sql .= "  left join %t tr on tr.tid = rt.tid ";
@@ -1413,9 +1414,15 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $folderdata[$v['fid']] = ['fname'=>$v['fname'],'pathkey'=>$v['pathkey'],'appid'=>$v['appid']];
         $folderdata[$v['fid']]['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array('pichome_folder',$v['fid'])) ? false:true;
     }
+    if(!isset($_G['setting']['pichomefilterfileds'])){
+        $pichomefilterfileds = C::t('setting')->fetch_all('pichomefilterfileds');
+    }else{
+        $pichomefilterfileds = $_G['setting']['pichomefilterfileds'];
+    }
     if ($appid) {
         if ($data = DB::fetch_first("select * from %t where appid=%s ", array('pichome_vapp', $appid))) {
-            $data['filter'] = unserialize($data['filter']);
+
+            $data['filter'] = ($data['filter']) ? unserialize($data['filter']):$pichomefilterfileds;
             // if($data['filter']){
             foreach ($data['filter'] as $k => $v) {
                 if ($v['key'] == 'tag' && $v['chacked'] == 1) {
@@ -1438,13 +1445,10 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         } else {
             exit(json_encode(array('error' => true)));
         }
-    } else {
-        if (isset($_G['setting']['pichomefilterfileds'])) {
-            exit(json_encode(array('success' => true, 'data' => $_G['setting']['pichomefilterfileds'],'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
-        } else {
-            $setting = C::t('setting')->fetch_all('pichomefilterfileds');
-            exit(json_encode(array('success' => true, 'data' => $setting['pichomefilterfileds'],'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
-        }
+    } else{
+
+        exit(json_encode(array('success' => true, 'data' => $pichomefilterfileds,'folderdata'=>$folderdata,'tagdata'=>$tagdata,'shape'=>$shapelable)));
+
     }
 
 } elseif ($operation == 'createshare') {//分享

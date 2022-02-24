@@ -23,11 +23,13 @@ $data = C::t('pichome_vapp')->fetch($appid);
 if (!$data) exit(json_encode(array('error' => 'no data')));
 if ($data['state'] != 3 && $data['isdelete'] != 0) exit(json_encode(array('error' => 'is deleted or state is not allow')));
 if ($data['type'] == 0) {
-    include_once dzz_libfile('eagleexport');
+    include_once DZZ_ROOT.'dzz'.BS.'eagle'.BS.'class'.BS.'class_eagleexport.php';
+    //include_once dzz_libfile('eagleexport');
     $eagleexport = new eagleexport($data);
     $return = $eagleexport->execCheckFile();
 } elseif ($data['type'] == 1) {
-    include_once dzz_libfile('localexport');
+    include_once DZZ_ROOT.'dzz'.BS.'local'.BS.'class'.BS.'class_localexport.php';
+    //include_once dzz_libfile('localexport');
     $localexport = new localexport($data);
     $return = $localexport->execCheckFile();
 }elseif ($data['type'] == 2){

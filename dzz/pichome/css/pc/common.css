@@ -57,7 +57,10 @@ body{
 	line-height: 20px;
 	margin-top: 6px;
 }
-
+.highlight {
+    color: var(--leftTreeColor);
+    font-weight: 700;
+}
 .tipTxt:hover {
 	color: var(--content-text);
 }

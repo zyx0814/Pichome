@@ -3,7 +3,7 @@
 		<!-- <div class="left" v-cloak>找到文件&nbsp;{{ImageParams.counttotal}}&nbsp;个</div> -->
 		<div class="right" v-if="DocumentTemplate==2 && ImageDataIsExpanded"><el-checkbox v-model="ImageParams.expanded" @change="ImageExpandedChange">显示子分类内容</el-checkbox></div>
 	</div>
-	<div class="collects-move-btn-box" v-if="ImageCollect.show" :style="{'padding-left':DocumentLeftWidth+'px'}">
+	<!-- <div class="collects-move-btn-box" v-if="ImageCollect.show" :style="{'padding-left':DocumentLeftWidth+'px'}">
 		<el-tooltip class="item" effect="dark" content="收藏" placement="top">
 		    <div class="item" @click="ImageCollect.dialogVisible=true">
 		     	<i class="ri-star-fill"></i>
@@ -14,7 +14,7 @@
 		     	<i class="ri-close-circle-fill"></i>
 		    </div>
 		</el-tooltip>
-	</div>
+	</div> -->
 	<div class="image-container">
 		<div class="image-wrapper">
 			<template v-for="item in ImageDataListShow">

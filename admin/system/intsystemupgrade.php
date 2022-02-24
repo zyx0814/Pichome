@@ -227,6 +227,8 @@ if ($operation == 'patch' || $operation == 'cross') {
         $file = DZZ_ROOT . './data/update/pichome' . $version . '/updatelist.tmp';
         @unlink($file);
         @unlink(DZZ_ROOT . './install/update.php');
+		//打开站点
+		C::t('setting')->update('bbclosed', 0);
         C::t('cache') -> delete('upgrade_step');
         C::t('cache') -> delete('upgrade_run');
         C::t('setting') -> update('upgrade', '');

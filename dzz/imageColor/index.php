@@ -14,19 +14,21 @@ if(empty($appids)){
     exit('success');
 }
 $locked = true;
-for($i=0;$i<1;$i++){
+/*for($i=0;$i<1;$i++){
     $processname = 'DZZ_LOCK_PICHOMEGETCOLOR'.$i;
     if (!dzz_process::islocked($processname, 60*60)) {
         $locked=false;
         break;
     }
-}
+}*/
+$i = 0;
 $processname = 'DZZ_LOCK_PICHOMEGETCOLOR'.$i;
 $limit = 10;
 $start=$i*$limit;
 if (!dzz_process::islocked($processname, 60*60)) {
     $locked=false;
 }
+//dzz::unlock($processname);
 if ($locked) {
     exit(json_encode( array('error'=>'进程已被锁定请稍后再试')));
 }
@@ -62,7 +64,11 @@ order by thumbdonum asc,colordonum asc limit $start,$limit",array('pichome_imagi
         }
         //如果颜色和缩略图标记为已生成，标记该文件信息状态为已获取
         if($v['thumbstatus'] == 1 && $v['colorstatus'] == 1){
-            C::t('pichome_resources_attr')->update($v['rid'],array('isget'=>1));
+            if(!DB::result_first("select isget from %t where rid = %s",array('pichome_resources_attr',$v['rid']))){
+                C::t('pichome_resources_attr')->update($v['rid'],array('isget'=>1));
+                C::t('pichome_vapp')->add_getinfonum_by_appid($v['appid'], 1);
+            }
+
             dzz_process::unlock($processname1);
             continue;
         }
@@ -81,6 +87,6 @@ order by thumbdonum asc,colordonum asc limit $start,$limit",array('pichome_imagi
 }
 dzz_process::unlock($processname);
 if(DB::result_first("select count(*) from %t where thumbstatus = 0 or colorstatus = 0 ",array('pichome_imagickrecord'))){
-    dfsockopen(getglobal('localurl') . 'index.php?mod=imageColor&op=index', 0, '', '', false, '', 0.1);
+    dfsockopen(getglobal('localurl') . 'index.php?mod=imageColor&op=index', 0, '', '', false, '', 5*60);
 }
 exit('success'.$i);

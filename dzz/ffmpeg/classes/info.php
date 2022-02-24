@@ -43,6 +43,14 @@ class info
                 if (isset($info['duration'])) C::t('pichome_resources_attr')->update($data['rid'], array('duration' => $info['duration']));
                 if (isset($info['width'])) C::t('pichome_resources')->update($data['rid'], array('width' => $info['width'], 'height' => $info['height']));
                 C::t('pichome_ffmpeg_record')->update($data['rid'],array('infostatus'=>1));
+                $fdata = C::t('pichome_ffmpeg_record')->fetch($data['rid']);
+                if($fdata['thumbstatus'] == 1 && $fdata['infostatus'] == 1){
+                    if(!DB::result_first("select isget from %t where rid = %s",array('pichome_resources_attr',$data['rid']))) {
+                        C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
+                        C::t('pichome_vapp')->add_getinfonum_by_appid($data['appid'], 1);
+                    }
+
+                }
             }
 
         } catch (\Exception $e) {

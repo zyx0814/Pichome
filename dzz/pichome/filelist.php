@@ -484,6 +484,7 @@ if ($operation == 'filelist') {
         default:
             $orderarr[] = ' r.dateline ' . $asc;
     }
+    $orderarr[] = " r.rid ".$asc;
     $ordersql = implode(',', $orderarr);
     if (!empty($para)) $params = array_merge($params, $para);
     if (!empty($orderparams)) $params = array_merge($params, $orderparams);

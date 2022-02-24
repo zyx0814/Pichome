@@ -26,7 +26,7 @@
 				:filter-node-method="LeftTreeFilterNode"
 				highlight-current>
 				<div class="custom-tree-node" slot-scope="{ node, data }" :class="{'tree-node-color':node.level==1?Appid==data.fid:Appid==data.appid}">
-					<div class="name" v-cloak>{{ node.label }}</div>
+					<div class="name" v-cloak v-html="data.pfname"></div>
 					<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
 					<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
 				</div>
@@ -59,6 +59,7 @@
 			defaultChecked:'',
 			defaultOpenkeysInit:[],
 			defaultOpenkeys:[],
+			defaultOpenkeysSearch:[],
 			arrangement:[],
 			arrangementLast:[],
 		}
@@ -138,6 +139,7 @@
 					self.LeftTree.defaultChecked = self.Appid;
 					self.LeftTree.defaultOpenkeys = [];
 					self.LeftTree.defaultOpenkeysInit = [];
+					self.LeftTree.defaultOpenkeysSearch = [];
 					this.CommonGetImageData();
 				}
 			}
@@ -149,6 +151,7 @@
 		LeftClassifyFilterInput:debounce(function(val){//输入
 			var self = this;
 			self.LeftTree.defaultOpenkeys = [];
+			self.LeftTree.defaultOpenkeysSearch = [];
 			self.LeftTree.arrangementLast = [];
 			self.LeftTree.show = false;
 			self.Leftloading = true;
@@ -156,6 +159,12 @@
 				$.post(MOD_URL+'&op=ajax&operation=searchfolderbyname',{
 					keyword:val
 				},function(data){
+					for(var i in self.Librarys){
+						var item = self.Librarys[i];
+						if(item.appname.indexOf(val)>-1){
+							self.LeftTree.defaultOpenkeys.push(item.appid);
+						}
+					}
 					for(var b in data.folderdata){
 						var bitem = data.folderdata[b];
 						var pathkey = [];
@@ -163,7 +172,7 @@
 							self.LeftTree.arrangementLast.push(bitem.fid);
 						}
 						if(self.LeftTree.defaultOpenkeys.indexOf(bitem.appid)<0){
-							self.LeftTree.defaultOpenkeys.push(bitem.appid)
+							self.LeftTree.defaultOpenkeys.push(bitem.appid);
 						}
 						self.LeftTree.arrangement = [];
 						if(bitem.pathkey){
@@ -207,14 +216,15 @@
 		},
 		LeftGetTreeDataSubstringFinish(){
 			var self = this;
-			if(this.LeftTree.defaultOpenkeys.length){
+			if(self.LeftTree.defaultOpenkeys.length){
 				var status = false;
-				for(var i in this.LeftTree.defaultOpenkeys){
-					var node = self.$refs.lefttree.getNode(this.LeftTree.defaultOpenkeys[i]);
-					if(!node){
+				for(var i in self.LeftTree.defaultOpenkeys){
+					var id = self.LeftTree.defaultOpenkeys[i];
+					if(self.LeftTree.defaultOpenkeysSearch.indexOf(id)>-1){
+						status = true;
+					}else{
 						return false;
 					}
-					status = true;
 				}
 				if(status){
 					self.Leftloading = false;
@@ -227,43 +237,44 @@
 			var self = this;
 			if(node.level == 0){
 				var arr = [];
-				if(self.LeftTree.filterText){
-					for(var i in self.Librarys){
-						var item = self.Librarys[i];
+				var num = 0;
+				for(var i in self.Librarys){
+					var item = self.Librarys[i];
+					num += parseInt(item.filenum);
+					if(self.LeftTree.filterText){
 						if(self.LeftTree.defaultOpenkeys.indexOf(item.appid)>-1){
 							arr.push({
 								fid:item.appid,
 								fname:item.appname,
 								leaf:item.leaf,
 								filenum:item.filenum,
-								nosubfilenum:item.nosubfilenum
+								nosubfilenum:item.nosubfilenum,
+								pfname:self.CommonHighlight(item.appname,self.LeftTree.filterText)
 							});
+							self.LeftTree.defaultOpenkeysSearch.push(item.appid);
 						}
-					}
-				}else{
-					var num = 0;
-					for(var i in self.Librarys){
-						var item = self.Librarys[i];
-						num += parseInt(item.filenum);
+					}else{
 						arr.push({
 							fid:item.appid,
 							fname:item.appname,
 							leaf:item.leaf,
 							filenum:item.filenum,
-							nosubfilenum:item.nosubfilenum
+							nosubfilenum:item.nosubfilenum,
+							pfname:self.CommonHighlight(item.appname,self.LeftTree.filterText)
 						});
-					}
-					if(self.Librarys.length>1){
-						arr.unshift({
-							fid:'all',
-							fname:'全部库',
-							filenum:num,
-							leaf:true
-						});
+						self.LeftTree.defaultOpenkeysSearch.push(item.appid);
 					}
 					
 				}
-				
+				if(!self.LeftTree.filterText && self.Librarys.length>1){
+					arr.unshift({
+						fid:'all',
+						fname:'全部库',
+						pfname:'全部库',
+						filenum:num,
+						leaf:true
+					});
+				}
 				resolve(arr);
 				self.$nextTick(function(){
 					self.LeftGetTreeDataSubstringFinish();
@@ -277,11 +288,14 @@
 					var num = 0;
 					for(var i in data.folderdatanum){
 						var item = data.folderdatanum[i];
+						self.LeftTree.defaultOpenkeysSearch.push(item.fid);
 						if(self.LeftTree.filterText){
+							item['pfname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
 							if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
 								arr.push(item);
 							}
 						}else{
+							item['pfname'] = item['fname'];
 							arr.push(item);
 						}
 					}
@@ -300,11 +314,14 @@
 					var num = 0;
 					for(var i in data.folderdatanum){
 						var item = data.folderdatanum[i];
+						self.LeftTree.defaultOpenkeysSearch.push(item.fid);
 						if(self.LeftTree.filterText){
+							item['pfname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
 							if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
 								arr.push(item);
 							}
 						}else{
+							item['pfname'] = item['fname'];
 							arr.push(item);
 						}
 					}

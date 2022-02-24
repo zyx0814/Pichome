@@ -31,7 +31,7 @@ class billfishxport
     private $donum = 0;
     private $lastid = '';
     private $charset = 'UTF-8';
-    private $allowext = '';
+    private $version = '';
     private $notallowext = '';
     private $db = null;
 
@@ -47,6 +47,7 @@ class billfishxport
         $this->donum = $data['donum'];
         $this->filenum = $data['filenum'];
         $this->lastid = $data['lastid'];
+        $this->version = $data['version'];
         if ($data['charset']) $this->charset = $data['charset'];
         //尝试连接数据库
         $connect = $this->connect_db();
@@ -85,21 +86,43 @@ class billfishxport
     public function initExport()
     {
         //修改导入状态为1
-        C::t('pichome_vapp')->update($this->appid, array('state' => 1));
-        //查询res_join_tag是否有文件id索引
-        $fecthsql = "SELECT * FROM sqlite_master WHERE type = 'index'";
-        $indexdata =  $this->fetch_all($fecthsql);
-        $indexarr = array_column($indexdata,'name');
-        //如果标签表iid没有索引创建res_join_tag_iid_idx索引
-        if(!in_array('res_join_tag_iid',$indexarr)){
-            $createsql = "CREATE INDEX res_join_tag_iid ON res_join_tag ( iid ASC )";
-             $this->db->query($createsql);
+
+        $versionsql = " SELECT version from library where 1";
+        $versions = $this->fetch($versionsql);
+        $this->version = $versions['version'];
+        C::t('pichome_vapp')->update($this->appid, array('state' => 1,'version'=>intval($this->version)));
+        if($this->version >= 30){
+            //查询res_join_tag是否有文件id索引
+            $fecthsql = "SELECT * FROM sqlite_master WHERE type = 'index'";
+            $indexdata =  $this->fetch_all($fecthsql);
+            $indexarr = array_column($indexdata,'name');
+            //如果标签表iid没有索引创建res_join_tag_iid_idx索引
+            if(!in_array('res_join_tag_id',$indexarr)){
+                $createsql = "CREATE INDEX res_join_tag_id ON bf_tag_join_file (tag_id ASC )";
+                $this->db->query($createsql);
+            }
+
+            //查询待导入文件数
+            $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 ";
+            $data = $this->fetch($sql);
+            $this->filenum = $data['num'];
+        }else{
+            //查询res_join_tag是否有文件id索引
+            $fecthsql = "SELECT * FROM sqlite_master WHERE type = 'index'";
+            $indexdata =  $this->fetch_all($fecthsql);
+            $indexarr = array_column($indexdata,'name');
+            //如果标签表iid没有索引创建res_join_tag_iid_idx索引
+            if(!in_array('res_join_tag_iid',$indexarr)){
+                $createsql = "CREATE INDEX res_join_tag_iid ON res_join_tag ( iid ASC )";
+                $this->db->query($createsql);
+            }
+
+            //查询待导入文件数
+            $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 ";
+            $data = $this->fetch($sql);
+            $this->filenum = $data['num'];
         }
 
-        //查询待导入文件数
-        $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 ";
-        $data = $this->fetch($sql);
-        $this->filenum = $data['num'];
         //如果没有数据，视为导入成功
         if (!$this->filenum) {
             C::t('pichome_vapp')->update($this->appid, array('state' => 4));
@@ -128,6 +151,262 @@ class billfishxport
 
     public function execExport($force = false)
     {
+
+        if($this->version < 30){
+            $this->oldexport($force);
+        }else{
+            $this->export($force);
+        }
+
+    }
+    public function export($force = false){
+        //开始页数
+        if ($this->lastid) {
+            $start = $this->lastid;
+        } else $start = 1;
+        $lastid = $start;
+        $start = ($start-1)*$this->onceexportnum;
+        $sql = "select f.*,m.w,m.h,m.is_recycle,m.thumb_tid,mu.comments_detail,mu.note,mu.score,mu.origin from bf_file f
+         left join  bf_material m on m.file_id = f.id 
+         left join bf_material_userdata mu on mu.file_id=f.id
+         where 1 limit $start,$this->onceexportnum";
+        $datas = $this->fetch_all($sql);
+
+        foreach ($datas as $v) {
+            //查询文件是否在回收站
+            $id = $v['id'];//文件id
+            $rid = md5($this->appid . $id);
+
+            //如果文件在回收站
+            if ($v['is_recycle'] > 0) {
+                //如果已经有数据,标记为已删除
+                if (DB::fetch_first("select count(rid) from %t where rid = %s", array('pichome_resources', $rid))) {
+                    C::t('pichome_resources')->update($rid, array('isdelete' => 1));
+                }
+                //文件总数减1
+                $this->filenum -= 1;
+            }
+            else {
+                //获取文件后缀
+                $ext = strtolower(substr(strrchr($v['name'], '.'), 1));
+                //获取文件类型
+                $type = getTypeByExt($ext);
+
+                //出入主表数据
+                $setarr = [
+                    'rid' => $rid,
+                    'uid'=>$this->uid,
+                    'username'=>$this->username,
+                    'appid' => $this->appid,
+                    'ext' => $ext,
+                    'type' => $type,
+                    'name' => $v['name'],
+                    'mtime' => ($v['mtime']) ? $v['mtime'] * 1000 : $v['born'] * 1000,
+                    'dateline' => $v['ctime'] ? $v['ctime'] * 1000:$v['born']*1000,
+                    'btime' => $v['born'] ? $v['born']*1000:$v['mtime'] * 1000,
+                    'size' => $v['file_size'],
+                    'width' => $v['w'],
+                    'height' => $v['h'],
+                    'grade' => $v['score'],
+                    'apptype' => 2,
+                    'hasthumb' => $v['thumb_tid'] ? 1 : 0,
+                    'thumb' => $v['thumb']
+                ];
+
+                //数据插入主表
+                if (C::t('#billfish#billfish_record')->inser_data($v['id'], $setarr)) {
+                    //定义属性表变量
+                    $attrdata = [];
+                    $attrdata['desc'] = $v['note'];
+                    $attrdata['link'] = $v['origin'];
+                    //将名字记入搜索字段
+                    $attrdata['searchval'] = $setarr['name'].$attrdata['desc'].$attrdata['link'];
+                    //处理目录数据
+                    if ($v['pid']) {
+                        $folderdata = $this->getFolderfid($v['pid']);
+                        //处理目录数据
+                        $fid = $folderdata['fid'];
+                        $folderarr = [
+                            'fid' => $fid,
+                            'appid' => $this->appid,
+                            'rid' => $rid
+                        ];
+                        C::t('pichome_folderresources')->insert($folderarr);
+                        $attrdata['path'] = $folderdata['dirpath'] . BS . $setarr['name'];
+                    } else {
+                        $attrdata['path'] = $setarr['name'];
+                    }
+                    //目录数据处理完成
+                    $attrdata['path']  = $this->getFileRealFileName($this->path,$attrdata['path']);
+                    //转码路径 记入属性表
+                    //$p = new Encode_Core();
+                    //$this->charset = $p->get_encoding($attrdata['path']);
+                    //if (CHARSET != $this->charset) $attrdata['path'] = diconv($attrdata['path'],CHARSET, $this->charset);;
+
+                    //标签数据开始
+
+                    //查询文件标签id
+
+                    $sql = "select tag_id from bf_tag_join_file where file_id = $id";//耗时最多
+                    $tiddata = $this->fetch_all($sql);
+
+                    $tids = [];
+                    foreach ($tiddata as $val) {
+                        $tids[] = $val['tag_id'];
+                    }
+                    if (!empty($tids)) {
+                        $tidstr = dimplode($tids);
+                        //查询标签分类数据
+                        $sql = "select jg.gid,g.name from bf_tag_join_group jg 
+                            left join bf_tag_group g on g.id = jg.gid 
+                            where jg.tag_id in($tidstr) group by jg.gid";
+                        $taggroupdata = $this->fetch_all($sql);
+                        $relationgroupdata = [];
+                        //插入标签分类关系表及pichome分类返回原分类id对应pichome标签分类id
+                        foreach ($taggroupdata as $val) {
+                            $tmpreturn = C::t('#billfish#billfish_taggrouprecord')->insert_data($val, $this->appid);
+                            $relationgroupdata[$tmpreturn['bcid']] = $tmpreturn['cid'];
+                        }
+                        //处理标签表数据
+                        //查询标签名称,id 插入标签对照表 返回原标签id对应pichome标签id 将标签加入searchval
+                        $sql = " select t.id,t.name,j.gid from bf_tag t 
+                            left join  bf_tag_join_group j on j.tag_id = t.id where t.id in($tidstr)";
+                        $tagdata = $this->fetch_all($sql);
+                        $tagrelativedata = [];
+                        $taggroups =[];
+                        foreach ($tagdata as $val) {
+                            $tagsetarr = ['name' => $val['name'], 'lid' => $val['id']];
+                            $tmptagrelativedata = C::t('#billfish#billfish_tagrecord')->insert_data($tagsetarr, $this->appid);
+                            $tagrelativedata[$tmptagrelativedata['lid']] = $tmptagrelativedata['tid'];
+                            $attrdata['searchval'] .= $val['name'];
+                            if($val['gid']) $taggroups[] = ['gid'=>$val['gid'],'lid'=>$val['id']];
+                        }
+
+                        //处理标签与分类关系数据 查询原标签分类和标签id 插入pichome标签分类对应标签id
+                        //$sql = "select gid,lid from tag_join_group where lid in($tidstr)";
+                        //$taggroups = $this->fetch_all($sql);
+                        foreach ($taggroups as $val) {
+                            $tagrelarr = [
+                                'tid' => $tagrelativedata[$val['lid']],
+                                'cid' => $relationgroupdata[$val['gid']],
+                                'appid' => $this->appid,
+                            ];
+                            C::t('pichome_tagrelation')->insert($tagrelarr);
+                        }
+                        //处理标签文件关系数据
+                        $inserttids = $ftids = array_values($tagrelativedata);
+                        //查询pichome是否有标签数据
+                        $oattrtag = DB::result_first("select tag from %t where rid = %s", array('pichome_resources_attr', $rid));
+                        if ($oattrtag) {
+                            $ottids = explode(',', $oattrtag);
+                            //取得删除的标签
+                            $deltids = array_diff($ftids, $ottids);
+                            if (!empty($deltids)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltids);
+                            //取得插入的标签
+                            $inserttids = $deltids = array_diff($ottids, $ftids);
+                        }
+                        //插入标签关系表
+                        foreach ($inserttids as $val) {
+                            $tagresourcesattr = ['tid' => $val, 'rid' => $rid, 'appid' => $this->appid];
+                            C::t('pichome_resourcestag')->insert($tagresourcesattr);
+                        }
+                        //更新属性表标签数据
+                        $attrdata['tag'] = implode(',', $ftids);
+                    }
+
+
+
+                    //标签数据结束
+
+                    //开始处理颜色数据
+                    //查询颜色数据
+                    $sql = "select * from bf_material_color where file_id = $id";
+                    $bcolordata = $this->fetch_all($sql);
+                    //删除原颜色数据
+                    DB::delete('pichome_palette', array('rid' => $rid));
+                    foreach ($bcolordata as $val) {
+                        $colorarr = ['rid' => $rid,
+                            'color' => $val['color'],
+                            'weight' => $val['precent'],
+                            'r' => $val['r'],
+                            'g' => $val['g'],
+                            'b' => $val['b']
+                        ];
+                        C::t('pichome_palette')->insert($colorarr);
+                    }
+
+                    //颜色数据处理结束
+
+
+                    //处理标注数据
+
+                    //删除原标注数据
+                    C::t('pichome_comments')->delete_by_rid($rid);
+                    if ($v['comments_detail']) {
+                        $commentdata = json_decode($v['comments_detail'],true);
+                        foreach ($commentdata as $commentval) {
+                            $tcommentval['id'] = random(13) . $this->appid;
+                            $tentval['appid'] = $this->appid;
+                            $tcommentval['rid'] = $rid;
+                            $tcommentval['x'] = number_format($commentval['x'], 2);
+                            $tcommentval['y'] = number_format($commentval['y'], 2);
+                            $tcommentval['width'] = number_format($commentval['cx'], 2);
+                            $tcommentval['height'] = number_format($commentval['cy'], 2);
+                            $tcommentval['annotation'] = $commentval['comment'];
+                            try {
+                                C::t('pichome_comments')->insert($tcommentval);
+                                $setarr['searchval'] .= $tcommentval['annotation'];
+                            } catch (Exception $e) {
+
+                            }
+
+                        }
+
+                    }
+                    //标注数据处理结束
+
+                    //处理音视频时长数据
+                    //查询音频时长
+                    $sql = "select duration from bf_material_video where file_id = $id";
+                    $videodata = $this->fetch($sql);
+                    if(isset($videodata['duration'])) $attrdata['duration'] = $videodata['duration'];
+                    //查询视频时长
+                    $sql = "select duration from bf_material_audio where file_id = $id";
+                    $audiodata = $this->fetch($sql);
+                    if(isset($audiodata['duration'])) $attrdata['duration'] = $audiodata['duration'];
+                    //时长处理结束
+
+                    //插入属性表数据
+                    $attrdata['rid'] = $rid;
+                    $attrdata['appid'] = $this->appid;
+                    C::t('pichome_resources_attr')->insert($attrdata);
+                    $this->donum += 1;
+
+                }
+                else{
+                    //文件总数减1
+                    $this->filenum -= 1;
+                }
+            }
+
+
+            //导入百分比
+            $percent = floor(($this->donum / $this->filenum) * 100);
+            $percent = ($percent > 100) ? 100 : $percent;
+            $state = ($percent >= 100) ? 3 : 2;
+            if ($state == 3) {
+                $lastid = 0;
+            }
+            //记录导入起始位置，以备中断后从此处,更改导入状态
+            C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state));
+        }
+        $time4= microtime(true);
+
+        $lastid = $lastid+1;
+        C::t('pichome_vapp')->update($this->appid,array('lastid' => $lastid));
+        return array('success' => true);
+    }
+    public function oldexport($force = false){
         //开始页数
         if ($this->lastid) {
             $start = $this->lastid;
@@ -368,7 +647,6 @@ class billfishxport
         $time4= microtime(true);
 
         $lastid = $lastid+1;
-
         C::t('pichome_vapp')->update($this->appid,array('lastid' => $lastid));
         return array('success' => true);
 
@@ -377,8 +655,12 @@ class billfishxport
     public function getFolderfid($bfid, $dirpath = '')
     {
         $parentfolderdata = [];
+        if($this->version < 30){
+            $sql = "select * from folder where id = $bfid";
+        }else{
+            $sql = "select * from bf_folder where id = $bfid";
+        }
 
-        $sql = "select * from folder where id = $bfid";
         $folderdata = $this->fetch($sql);
         $dirpath = $folderdata['name'] . ($dirpath ? BS . $dirpath : '');
         if ($folderdata['pid']) {
@@ -389,7 +671,8 @@ class billfishxport
         $setarr = [
             'pfid' => isset($parentfolderdata['fid']) ? $parentfolderdata['fid'] : '',
             'fname' => $folderdata['name'],
-            'appid' => $this->appid
+            'appid' => $this->appid,
+            'disp'=>($this->version < 30) ? $folderdata['seq']:round($folderdata['seq']*1000000000)
         ];
         $return = C::t('#billfish#billfish_folderrecord')->insert_data($bfid, $setarr);
         $return['dirpath'] = $dirpath;
@@ -426,9 +709,15 @@ class billfishxport
             //检查不存在的标签删除
             $tagtotal = DB::result_first("select count(id) from %t where appid = %s",array('billfish_tagrecord',$this->appid));
             $this->check_notexists_tag($tagtotal);
-            //删除创建的索引
-            $sql = 'DROP INDEX res_join_tag_iid';
-            $this->db->query($sql);
+            if($this->version < 30){
+                //删除创建的索引
+                $sql = 'DROP INDEX res_join_tag_iid';
+                $this->db->query($sql);
+            }else{
+                $sql = 'DROP INDEX res_join_tag_id';
+                $this->db->query($sql);
+            }
+
 
             $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$this->appid));
             $nosubfilenum = $total - $hascatnum;
@@ -438,8 +727,13 @@ class billfishxport
         foreach ($data as $v) {
             $rid = $v['rid'];
             $iid = DB::result_first("select bid from %t where rid = %s and appid = %s",array('billfish_record',$rid,$this->appid));
-            //查询billfish中是否有该数据
-            $sql = "select count(*) as num from source where id = $iid";
+            if($this->version < 30){
+                $sql = "select count(*) as num from source where id = $iid";
+            }else{
+                //查询billfish中是否有该数据
+                $sql = "select count(*) as num from bf_file where id = $iid";
+            }
+
             $numdata = $this->fetch($sql);
             if(!isset($numdata['num']) || !$numdata['num']){
                 $delrids[] = $rid;
@@ -468,7 +762,6 @@ class billfishxport
     }
     //检查目录数据
     public function check_notexists_folder($total){
-
         $tmpkey = 'pichomecheckfolder' . $this->appid;
         $folderstart = C::t('cache')->fetch($tmpkey);
         if (!$folderstart) {
@@ -487,8 +780,13 @@ class billfishxport
             }
 
             $bfidstr = dimplode($bfids);
+            if($this->version < 30){
+                $sql = "select id from folder where id in($bfidstr)";
+            }else{
+                $sql = "select id from bf_folder where id in($bfidstr)";
+            }
             //查询不存的目录
-            $sql = "select id from folder where id in($bfidstr)";
+
             $bfolder = $this->fetch_all($sql);
             $blfids = [];
             foreach ($bfolder as $val){
@@ -526,7 +824,10 @@ class billfishxport
                 return true;
             }
             $lidstr = dimplode(',',$lids);
-            $sql = "select id from tag where id in($lidstr)";
+            if($this->version < 30){
+                $sql = "select id from tag where id in($lidstr)";
+            }
+            else $sql = "select id from bf_tag where id in($lidstr)";
             $blids =[] ;
             foreach($this->fetch_all($sql) as $v){
                 $blids[] = $v['id'];

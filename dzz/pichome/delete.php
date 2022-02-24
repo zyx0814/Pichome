@@ -10,6 +10,7 @@ $processname = 'DZZ_LOCK_PICHOMEDELETE';
 if (!dzz_process::islocked($processname, 60*60)) {
     $locked=false;
 }
+//dzz_process::unlock($processname);
 if ($locked) {
     exit(json_encode( array('error'=>'进程已被锁定请稍后再试')));
 }

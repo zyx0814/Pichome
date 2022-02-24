@@ -833,10 +833,10 @@
 			handleCommandColor(val){
 				if(val == 'common'){
 					<!--{if $opentype=='current'}-->
-					window.parent.window.location.hash = '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+					window.parent.window.location.hash = '#color=' + this.ColorPopver.base;
 					window.parent.window.location.reload()
 					<!--{else}-->
-					window.location.href = '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+					window.location.href = '#color=' + this.ColorPopver.base;
 					<!--{/if}-->
 				}else{
 					CopyTxt(this,val)
@@ -844,7 +844,7 @@
 			},
 
 			handleView(){
-				window.open(SITEURL+this.imagesData.icondata);
+				window.open(this.imagesData.originalimg);
 			},
 			handleShare() {
 				var self = this;
@@ -889,10 +889,10 @@
 			},
 			handleClickTag(tid){
 				<!--{if $opentype=='current'}-->
-				window.parent.window.location.hash = '#appid=' + this.imagesData.appid + '&tag=' + tid;
+				window.parent.window.location.hash = '#tag=' + tid;
 				window.parent.window.location.reload()
 				<!--{else}-->
-				window.location.href = '#appid=' + this.imagesData.appid + '&tag=' + tid;
+				window.location.href = '#tag=' + tid;
 				<!--{/if}-->
 				
 			},
@@ -1024,7 +1024,7 @@
 								<span class="title">版本信息：</span><span class="mes">Beat 1</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2022 欧奥图文</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>

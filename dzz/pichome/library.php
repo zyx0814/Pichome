@@ -11,6 +11,7 @@ if ($operation == 'fetch') {
     if (submitcheck('settingsubmit')) {
         if (!$appid) exit(json_encode(array('error' => true)));
         $setarr = [
+            'appname' => isset($_GET['appname']) ? trim($_GET['appname']) : '',
             'filter' => isset($_GET['filter']) ? serialize($_GET['filter']) : '',
             'share' => isset($_GET['share']) ? intval($_GET['share']) : 0,
             'download' => isset($_GET['download']) ? intval($_GET['download']) : 0,
@@ -27,15 +28,20 @@ if ($operation == 'fetch') {
         }
         exit(json_encode(array('success' => true)));
     } else {
+        require_once(DZZ_ROOT . './dzz/class/class_encode.php');
         if ($data = DB::fetch_first("select * from %t where appid=%s and isdelete = 0 ", array('pichome_vapp', $appid))) {
-            if($data['charset'] != CHARSET)$data['convertpath'] = diconv($data['path'],$data['charset'],CHARSET);
-            else $data['convertpath'] = $data['path'];
+            $p = new Encode_Core();
+            $charset = $p->get_encoding($data['path']);
+            //echo $charset;die
+            if($data['charset'] != CHARSET){
+                //echo $val['path'];die;
+                $data['convertpath'] = diconv($data['path'], $charset, CHARSET);
+            } else $data['convertpath'] = $data['path'];
             $data['path'] = urlencode($data['path']);
             $data['filter'] = unserialize($data['filter']);
-            $getinfonum = 0;
-            $data['getinfonum'] = DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid 
+            /*$data['getinfonum'] = DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid
 where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or (ra.isget=1))",
-                array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$appid));
+                array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$appid));*/
             $catdata = C::t('pichome_taggroup')->fetch_by_appid($appid);
             if (($data['state'] == 2)) {
                 $processname = 'DZZ_PAGEEXPORTFILE_LOCK_' . $appid;
@@ -43,7 +49,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
                 if (!dzz_process::islocked($processname, 60 * 5)) {
                     $locked = false;
                 }
-                if ($locked) {
+                if (!$locked) {
                     dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
                 }
 
@@ -53,7 +59,7 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
                 if (!dzz_process::islocked($processname, 60 * 5)) {
                     $locked = false;
                 }
-                if ($locked) {
+                if (!$locked) {
                     dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
                 }
             }
@@ -65,24 +71,24 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
 }
 elseif ($operation == 'getdata') {
     $data = array();
+    require_once(DZZ_ROOT . './dzz/class/class_encode.php');
     foreach (DB::fetch_all("select * from %t where isdelete = 0 order by disp", array('pichome_vapp')) as $val) {
         $val['connect'] = (is_dir($val['path'])) ? 1:0;
+        $p = new Encode_Core();
+        $charset = $p->get_encoding($val['path']);
+        //echo $charset;die
         if($val['charset'] != CHARSET){
             //echo $val['path'];die;
-            $val['path'] = diconv($val['path'], $val['charset'], CHARSET);
+            $val['path'] = diconv($val['path'], $charset, CHARSET);
         }
         $data[] = $val;
     }
     exit(json_encode(array('data' => $data)));
 
-} elseif($operation == 'getinfonum'){//已获取文件信息个数
+}elseif($operation == 'getinfonum'){//已获取文件信息个数
     $returndata = [];
-    foreach(DB::fetch_all("select appid from %t where isdelete = 0 and getinfo = 1 and `type` = 1 and getinfonum < filenum", array('pichome_vapp')) as $v){
-         $getinfonum= DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid 
-where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or (ra.isget=1))",
-            array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$v['appid']));
-        C::t('pichome_vapp')->update($v['appid'],array('getinfonum'=>$getinfonum));
-            $returndata['appid'] = $getinfonum;
+    foreach(DB::fetch_all("select appid,getinfonum from %t where isdelete = 0 and getinfo = 1 and `type` = 1 and getinfonum < filenum", array('pichome_vapp')) as $v){
+        $returndata[$v['appid']] = $v['getinfonum'];
     }
     exit(json_encode(array('data' => $returndata)));
 }

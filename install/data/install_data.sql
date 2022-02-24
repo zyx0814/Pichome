@@ -47,7 +47,12 @@ INSERT INTO dzz_hooks (id, app_market_id, `name`, description, `type`, update_ti
 (21, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\getcolor', 1, 0),
 (22, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
 (23, 0, 'getpichomethumb', ' ', 1, 0, 'dzz\\billfish\\classes\\getpichomethumb', 1, 0),
-(24, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\billfish\\classes\\pichomevappdelete', 1, 0);
+(24, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\billfish\\classes\\pichomevappdelete', 1, 0),
+(25, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\eagle\\classes\\deleteafter', 1, 0),
+(26, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\eagle\\classes\\pichomevappdelete', 1, 0),
+(27, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\billfish\\classes\\delpichomefolderafter', 1, 0),
+(28, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\eagle\\classes\\delpichomefolderafter', 1, 0),
+(29, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\local\\classes\\deleteafter', 1, 0);
 
 
 

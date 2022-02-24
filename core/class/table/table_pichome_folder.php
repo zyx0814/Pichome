@@ -19,6 +19,8 @@
            foreach(DB::fetch_all("select fid from %t where appid = %s",array($this->_table,$appid)) as $v){
                $fids[] = $v['fid'];
            }
+           $hookdata = ['appid'=>$appid];
+           Hook::listen("delpichomefolderafter",$hookdata);
            return parent::delete($fids);
        }
        //插入和更新目录数据
@@ -52,6 +54,17 @@
                }
            }
            return $folderarr;
+       }
+
+       public function insert_data($setarr){
+           $fid = $setarr['fid'];
+           if($fname = DB::result_first("select count(*) from %t where fid = %s",array($this->_table,$setarr['fid']))){
+               unset($setarr['fid']);
+                parent::update($fid,$setarr);
+           }else{
+               parent::insert($setarr);
+           }
+           return $fid;
        }
        //检查目录是否包含密码,多个目录时，只有都包含密码才视为包含密码
        public function check_haspasswrod($folderids,$appid){
@@ -109,7 +122,7 @@
             
             $folderdata = [];
 			if(!empty($pfid)){
-				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid in(%n)",array($this->_table,$appid,$pfid)) as $v){
+				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid in(%n) order by disp asc",array($this->_table,$appid,$pfid)) as $v){
 				    $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
                     left join %t f on fr.fid = f.fid
                     where fr.appid = %s and f.pathkey  like %s",array('pichome_folderresources','pichome_folder',$appid,$v['pathkey'].'%'));
@@ -118,7 +131,7 @@
 				   
 				}
 			}else{
-				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid = ''",array($this->_table,$appid)) as $v){
+				foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid = '' order by disp asc",array($this->_table,$appid)) as $v){
                     $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
                     left join %t f on fr.fid = f.fid
                     where fr.appid = %s and f.pathkey  like %s",array('pichome_folderresources','pichome_folder',$appid,$v['pathkey'].'%'));
@@ -148,6 +161,24 @@
             $cloumarr = array_column($folderdata,'len');
             array_multisort($cloumarr,SORT_ASC,$folderdata);
             return $folderdata;
+        }
+
+        public function createfidbyappid($appid){
+            $fid = random(13).$appid;
+            if(DB::result_first("select count(fid) from %t where fid = %s and appid = %s",array($this->_table,$fid,$appid))){
+                $fid = $this->createfidbyappid($appid);
+            }
+            return $fid;
+        }
+
+        public function delete_by_fids($fids){
+            if(!is_array($fids)) $fids = (array)$fids;
+            if(!empty($fids)){
+                DB::delete('pichome_folderresources',"fid in (".dimplode($fids).")");
+                parent::delete($fids);
+                return true;
+            }
+
         }
 
     }

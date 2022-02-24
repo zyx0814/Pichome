@@ -24,18 +24,33 @@
     if(!$data) exit(json_encode(array('error'=>'no data')));
     if($data['state'] != 2  && $data['isdelete'] != 0) exit(json_encode(array('error'=>'is deleted or state is not allow')));
     if($data['type'] == 0){
-        include_once dzz_libfile('eagleexport');
+        include_once DZZ_ROOT.'dzz'.BS.'eagle'.BS.'class'.BS.'class_eagleexport.php';
+        //include_once dzz_libfile('eagleexport');
         $eagleexport = new eagleexport($data);
-        $return = $eagleexport->execExport($force);
+        try{
+            $return = $eagleexport->execExport($force);
+        }catch (Exception $e){
+            dzz_process::unlock($processname);
+        }
+
     }elseif($data['type'] == 1){
-        include_once dzz_libfile('localexport');
+        include_once DZZ_ROOT.'dzz'.BS.'local'.BS.'class'.BS.'class_localexport.php';
+        //include_once dzz_libfile('localexport');
         $localexport = new localexport($data);
         //执行导入文件
-        $return = $localexport->execExport($force);
+        try{
+            $return = $localexport->execExport($force);
+        }catch (Exception $e){
+            dzz_process::unlock($processname);
+        }
     }elseif ($data['type'] == 2){
         include_once DZZ_ROOT.'dzz'.BS.'billfish'.BS.'class'.BS.'class_billfishexport.php';
         $billfishxport = new billfishxport($data);
-        $return = $billfishxport->execExport();
+        try{
+            $return = $billfishxport->execExport($force);
+        }catch (Exception $e){
+            dzz_process::unlock($processname);
+        }
     }
     dzz_process::unlock($processname);
     $data = C::t('pichome_vapp')->fetch($appid);

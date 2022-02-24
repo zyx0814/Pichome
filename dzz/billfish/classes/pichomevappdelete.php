@@ -9,12 +9,15 @@ use \fmpeg as fmpeg;
 class pichomevappdelete
 {
 
-    public function run($appid)
+    public function run($data)
     {
-        C::t("#billfish#billfish_record")->delete_by_appid($appid);
-        C::t("#billfish#billfish_folderrecord")->delete_by_appid($appid);
-        C::t("#billfish#billfish_tagrecord")->delete_by_appid($appid);
-        C::t("#billfish#billfish_taggrouprecord")->delete_by_appid($appid);
+        if($data['type'] == 2){
+            C::t("#billfish#billfish_record")->delete_by_appid($data['appid']);
+            C::t("#billfish#billfish_folderrecord")->delete_by_appid($data['appid']);
+            C::t("#billfish#billfish_tagrecord")->delete_by_appid($data['appid']);
+            C::t("#billfish#billfish_taggrouprecord")->delete_by_appid($data['appid']);
+        }
+        return true;
 
     }
 

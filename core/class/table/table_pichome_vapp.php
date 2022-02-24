@@ -99,8 +99,9 @@
                 if(is_dir(getglobal('setting/attachdir').'pichomethumb/'.$appid)){
                     removedirectory(getglobal('setting/attachdir').'pichomethumb/'.$appid);
                 }
-                if($appdata['type'] > 1){
-                    Hook::listen('pichomevappdelete',$appid);
+                if($appdata['type'] !== 1){
+                    $hookdata = ['appid'=>$appid,'apptype'=>$appdata['type']];
+                    Hook::listen('pichomevappdelete',$hookdata);
                 }
                 return parent::delete($appid);
             }
@@ -113,5 +114,21 @@
                 $downshare[$v['appid']]=$v;
             }
             return $downshare;
+        }
+
+        public function add_getinfonum_by_appid($appid,$ceof = 1){
+            $appdata = C::t('pichome_vapp')->fetch($appid);
+            if($ceof < 0){
+                if($appdata['getinfonum'] == 0) return true;
+                elseif($appdata['getinfonum'] < abs($ceof))$ceof = -$appdata['getinfonum'];
+
+            }
+
+            if ($ceof > 0) {
+                DB::query("update %t set getinfonum=getinfonum+%d where appid = %s", array($this->_table, $ceof, $appid));
+            } else {
+                DB::query("update %t set getinfonum=getinfonum-%d where appid = %s", array($this->_table, abs($ceof), $appid));
+            }
+            $this->clear_cache($appid);
         }
     }

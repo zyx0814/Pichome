@@ -20,13 +20,14 @@ if(empty($appids)){
     exit('success');
 }
 $locked = true;
-for($i=0;$i<1;$i++){
+/*for($i=0;$i<1;$i++){
     $processname = 'DZZ_LOCK_PICHOMEGETVIDOTHUMB'.$i;
     if (!dzz_process::islocked($processname, 60*60)) {
         $locked=false;
         break;
     }
-}
+}*/
+$i = 0;
 $processname = 'DZZ_LOCK_PICHOMEGETVIDOTHUMB'.$i;
 $limit = 10;
 $start=$i*$limit;
@@ -60,7 +61,10 @@ order by thumbdonum asc limit $start,$limit",array('pichome_ffmpeg_record',$appi
         }
         //如果信息和缩略图标记为已生成，标记该文件信息状态为已获取
         if($v['thumbstatus'] == 1 && $v['infostatus'] == 1){
-            C::t('pichome_resources_attr')->update($v['rid'],array('isget'=>1));
+            if(!DB::result_first("select isget from %t where rid = %s",array('pichome_resources_attr',$v['rid']))) {
+                C::t('pichome_resources_attr')->update($v['rid'], array('isget' => 1));
+                C::t('pichome_vapp')->add_getinfonum_by_appid($v['appid'], 1);
+            }
             dzz_process::unlock($processname1);
             continue;
         }
@@ -72,6 +76,6 @@ order by thumbdonum asc limit $start,$limit",array('pichome_ffmpeg_record',$appi
 }
 dzz_process::unlock($processname);
 if(DB::result_first("select * from %t where thumbstatus = 0  ",array('pichome_ffmpeg_record'))){
-    dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=thumb', 0, '', '', false, '', 0.1);
+    dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=thumb', 0, '', '', false, '', 5*60);
 }
 exit('success');

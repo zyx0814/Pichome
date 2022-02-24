@@ -23,13 +23,17 @@
 						<el-dropdown v-cloak trigger="click" @command="handleavatar">
 							<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
 							<el-dropdown-menu slot="dropdown" style="width: 165px;">
+								<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
 								<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 								<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 								<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+								<!--{if $_G['adminid']==1}-->
 								<el-divider></el-divider>
 								<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 								<el-dropdown-item command="library">库设置</el-dropdown-item>
+								<el-dropdown-item command="orguser">用户管理</el-dropdown-item>
 								<el-dropdown-item command="system">系统工具</el-dropdown-item>
+								<!--{/if}-->
 								<el-divider></el-divider>
 								<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
 								<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
@@ -57,6 +61,9 @@
 		methods:{
 			handleavatar(type) {//头像点击
 				switch(type){
+					case 'collection':
+						window.location.href = DZZSCRIPT + '?mod=collection';
+					break;
 					case 'personal':
 						window.location.href = MOD_URL + '&op=user&do=personal';
 					break;
@@ -85,7 +92,7 @@
 								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2021 欧奥图文</span>
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2022 欧奥图文</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>
@@ -115,6 +122,9 @@
 					break;
 					case 'system':
 						window.open(SITEURL+'admin.php?mod=system');
+					break;
+					case 'orguser':
+						window.open(SITEURL+'admin.php?mod=orguser');
 					break;
 				}
 				

@@ -75,6 +75,8 @@ class getColor
                 $palette = new ImagePalette($img, 1, 10, $lib, $this->palette);
                 $palettes = $palette->palette;
             } catch (\Exception $e) {
+                $processname1 = 'PICHOMEGETCOLOR_'.$data['rid'];
+                dzz_process::unlock($processname1);
                 runlog('imageColor', $e->getMessage() . ' img=' . $img);
             }
 
@@ -87,7 +89,7 @@ class getColor
                 foreach ($palettes as $k => $v) {
                     $color = new \Color($k);
                     $rgbcolor = $color->toRgb();
-                    $data = [
+                    $tdata = [
                         'rid' => $data['rid'],
                         'color' => $k,
                         'r' => $rgbcolor[0],
@@ -95,9 +97,12 @@ class getColor
                         'b' => $rgbcolor[2],
                         'weight' => $v
                     ];
-                    C::t('pichome_palette')->insert($data);
+                    C::t('pichome_palette')->insert($tdata);
                     C::t('pichome_imagickrecord')->update($data['rid'], array('colorstatus' => 1));
-                    C::t('pichome_resources_attr')->update($data['rid'], array('isget' => 1));
+                    if(!DB::result_first("select isget from %t where rid = %s",array('pichome_resources_attr',$data['rid']))) {
+                        C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
+                        C::t('pichome_vapp')->add_getinfonum_by_appid($data['appid'], 1);
+                    }
                 }
 
 
@@ -144,24 +149,34 @@ class getColor
         $im->setResolution($width, $height);   //设置图像分辨率
         $im->setCompressionQuality(80); //压缩比
         try {
+
             $im->readImage($data['realpath'] . '[0]'); //设置读取pdf的第一页
         } catch (\Exception $e) {
             runlog('pdfthumb', iconv("gbk", 'utf-8', $e->getMessage()));
         }
 
         //$im->thumbnailImage(200, 100, true); // 改变图像的大小
-        $im->scaleImage($width, $height, true); //缩放大小图像
+        //缩放大小图像
+        try {
+            $im->scaleImage($width, $height, true);
+        }catch (\Exception $e){
+            runlog('pdfthumb', iconv("gbk", 'utf-8', $e->getMessage()));
+        }
         $filename = getglobal('setting/attachdir') . './' . $target;
+        try {
+            if ($im->writeImage($filename) == true) {
+                $imginfo = @getimagesize($filename);
+                $resourcesarr = [
+                    'width' => $imginfo[0] ? $imginfo[0]:0,
+                    'height' =>$imginfo[1] ? $imginfo[1]:0
+                ];
+                C::t('pichome_resources')->update($data['rid'],$resourcesarr);
+                C::t('pichome_imagickrecord')->update($data['rid'], array('thumbstatus' => 1,'colorstatus'=>1,'path'=>$filename));
+                C::t('pichome_resources')->update($data['rid'], array('hasthumb' => 1));
+            }
 
-        if ($im->writeImage($filename) == true) {
-            $imginfo = @getimagesize($filename);
-            $resourcesarr = [
-                'width' => $imginfo[0] ? $imginfo[0]:0,
-                'height' =>$imginfo[1] ? $imginfo[1]:0
-            ];
-            C::t('pichome_resources')->update($data['rid'],$resourcesarr);
-            C::t('pichome_imagickrecord')->update($data['rid'], array('thumbstatus' => 1,'colorstatus'=>1,'path'=>$filename));
-            C::t('pichome_resources')->update($data['rid'], array('hasthumb' => 1));
+        }catch (\Exception $e){
+            runlog('pdfthumb', iconv("gbk", 'utf-8', $e->getMessage()));
         }
 
     }

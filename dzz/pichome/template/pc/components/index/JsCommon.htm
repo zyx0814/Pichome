@@ -109,6 +109,24 @@
 				return decodeURIComponent(r[2]);
 			}
 		},
+		CommonHighlight(text,words){
+			// 默认的标签，如果没有指定，使用span
+			var i, len = words.length,
+			re;
+			//匹配每一个特殊字符 ，进行转义
+			var specialStr = ["*", ".", "?", "+", "$", "^", "[", "]", "{", "}", "|", "\\", "(", ")", "/", "%"]; 
+			$.each(specialStr, function(i, item) {
+				if(words.indexOf(item) != -1) {
+					words = words.replace(new RegExp("\\" + item, 'g'), "\\" + item);
+				}
+			});
+			//匹配整个关键词
+			re = new RegExp(words, 'g');
+			if(re.test(text)) {
+				text = text.replace(re, '<span class="highlight">$&</span>');
+			}
+			return text;
+		},
 		CommonDeleteAll(){
 			this.HeaderKeyword = '';
 			this.ScreenDeleteAll();

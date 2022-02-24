@@ -107,7 +107,7 @@
 	z-index: 1;
 }
 .seasrch-popup .search-val-box .highlight{
-	color: var(--header-active);
+	color: var(--leftTreeColor);
 	font-weight: 700;
 }
 
