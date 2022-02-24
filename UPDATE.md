@@ -1,6 +1,6 @@
 ## PicHome beta3.3 更新说明
 
-### 1.billfish数据支持，兼容新版和旧版billfish数据导入
+### 1.billfish数据支持，兼容billfish2.5版本数据导入
 
 ### 2.eagle数据支持，兼容新旧版本eagle数据导入
 
