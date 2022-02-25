@@ -12,7 +12,7 @@ class getpichomethumb
     public function run(&$data)
     {
         $thumbid = DB::result_first("select thumb from %t where appid = %s and rid = %s", array('billfish_record', $data['appid'], $data['rid']));
-        if(isset($data['version']) && $data['version'] > 16){
+        if(isset($data['version']) && $data['version'] >=30){
             $bid = DB::result_first("select bid from %t where rid = %s",array('billfish_record',$data['rid']));
             $thumbdir = dechex($bid);
             $thumbdir = (string) $thumbdir;

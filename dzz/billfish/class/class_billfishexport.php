@@ -103,7 +103,8 @@ class billfishxport
             }
 
             //查询待导入文件数
-            $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 ";
+            // $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 ";
+            $sql = "select count(id) as num from bf_file where 1";
             $data = $this->fetch($sql);
             $this->filenum = $data['num'];
         }else{
@@ -118,11 +119,11 @@ class billfishxport
             }
 
             //查询待导入文件数
-            $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 ";
+            //$sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 ";
+            $sql = "select count(id) as num from source where 1 ";
             $data = $this->fetch($sql);
             $this->filenum = $data['num'];
         }
-
         //如果没有数据，视为导入成功
         if (!$this->filenum) {
             C::t('pichome_vapp')->update($this->appid, array('state' => 4));
@@ -399,11 +400,13 @@ class billfishxport
             }
             //记录导入起始位置，以备中断后从此处,更改导入状态
             C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state));
-        }
-        $time4= microtime(true);
 
-        $lastid = $lastid+1;
-        C::t('pichome_vapp')->update($this->appid,array('lastid' => $lastid));
+        }
+        if($state == 2){
+            $lastid = $lastid+1;
+            C::t('pichome_vapp')->update($this->appid,array('lastid' => $lastid));
+        }
+
         return array('success' => true);
     }
     public function oldexport($force = false){
@@ -641,10 +644,10 @@ class billfishxport
             if ($state == 3) {
                 $lastid = 0;
             }
+
             //记录导入起始位置，以备中断后从此处,更改导入状态
             C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state));
         }
-        $time4= microtime(true);
 
         $lastid = $lastid+1;
         C::t('pichome_vapp')->update($this->appid,array('lastid' => $lastid));
@@ -727,11 +730,12 @@ class billfishxport
         foreach ($data as $v) {
             $rid = $v['rid'];
             $iid = DB::result_first("select bid from %t where rid = %s and appid = %s",array('billfish_record',$rid,$this->appid));
+
             if($this->version < 30){
-                $sql = "select count(*) as num from source where id = $iid";
+                $sql = "select count(s.id) as numsource s left join res_prop rp on s.id = rp.iid where rp.action =0 and s.id = $iid";
             }else{
                 //查询billfish中是否有该数据
-                $sql = "select count(*) as num from bf_file where id = $iid";
+                $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 and  f.id = $iid";
             }
 
             $numdata = $this->fetch($sql);
