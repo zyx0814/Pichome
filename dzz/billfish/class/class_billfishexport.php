@@ -732,7 +732,7 @@ class billfishxport
             $iid = DB::result_first("select bid from %t where rid = %s and appid = %s",array('billfish_record',$rid,$this->appid));
 
             if($this->version < 30){
-                $sql = "select count(s.id) as numsource s left join res_prop rp on s.id = rp.iid where rp.action =0 and s.id = $iid";
+                $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 and s.id = $iid";
             }else{
                 //查询billfish中是否有该数据
                 $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 and  f.id = $iid";
