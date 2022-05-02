@@ -1,7 +1,11 @@
 <el-menu>
+	<el-menu-item <!--{if $_GET['do'] =='authorize'}-->class="is-active"<!--{else}-->@click="handleRouter('authorize')"<!--{/if}-->>
+		<span slot="title">授权信息</span>
+	</el-menu-item>
 	<el-menu-item <!--{if $_GET['do'] =='basic'}-->class="is-active"<!--{else}-->@click="handleRouter('basic')"<!--{/if}-->>
 		<span slot="title">基本信息</span>
 	</el-menu-item>
+	
 	<el-menu-item <!--{if $_GET['do'] =='loginpage'}-->class="is-active"<!--{else}-->@click="handleRouter('loginpage')"<!--{/if}-->>
 		<span slot="title">登录页设置</span>
 	</el-menu-item>

@@ -31,6 +31,30 @@ body,
 body{
 	background-color: var(--bg-content);
 }
+.el-notification__group{
+	width: 100%;
+}
+.el-notification__content p{
+	word-wrap: break-word;
+}
+.el-popper[x-placement^=bottom] {
+	margin-top: 5px
+}
+.el-popper[x-placement^=right] {
+	margin-left: 5px
+}
+.el-popper[x-placement^=top] {
+	margin-bottom: 5px
+}
+.el-popper[x-placement^=left] {
+	margin-right: 5px
+}
+.el-popper[x-placement^=bottom] .popper__arrow,
+.el-popper[x-placement^=top] .popper__arrow,
+.el-popper[x-placement^=left] .popper__arrow,
+.el-popper[x-placement^=right] .popper__arrow{
+	display: none;
+}
 .el-page-header__left{
 	z-index: 100;
 	color: var(--header-text);
@@ -331,6 +355,9 @@ body{
 .el-scrollbar__wrap {
     overflow-x: hidden;
 }
+.el-select-dropdown__wrap.el-scrollbar__wrap {
+    overflow-x: scroll;
+}
 #copyInput{
 	opacity: 0;
 	position: fixed;
@@ -452,7 +479,7 @@ ul{
 	text-decoration: none;
 }
 .container2 #top_header .header-content .h-left{
-    width: 264px;
+    width: 267px;
     justify-content: left;
     background: var(--bg-header);
     margin-left: -20px;
@@ -616,4 +643,19 @@ ul{
 #systemNotice .panel-body a{
 	color: var(--header-text);
 	text-decoration: none;
+}
+.InputKeyword .el-popover-search .search-goback{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+    text-align: center;
+    background-color: var(--bg-input);
+    z-index: 10;
+    font-size: 26px;
+    cursor: pointer;
+	color: var(--header-active);
+}
+.InputKeyword .el-popover-search .search-goback:hover{
+	background:var(--bg-poperHover);
 }

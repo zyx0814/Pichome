@@ -1,0 +1,240 @@
+<!--{template pc/frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/admin.css?{VERHASH}"/>
+<style type="text/css">
+	.el-input.is-disabled .el-input__inner{
+		background-color: var(--bg-poperHover);
+		color: var(--header-text);
+		border: 1px solid var(--border-color-base);
+	}
+	.register-dialog .el-dialog__header{
+		display: none;
+	}
+	.register-dialog .main-title{
+		font-size: 22px;
+		margin: 11px 0;
+		margin-bottom: 25px;
+		color: var(--header-active);
+		vertical-align: middle;
+		text-align: center;
+	}
+	.register-dialog .main-title a{
+		color: var(--starsActive);
+	}
+	.register-dialog .sub-title{
+		text-align: center;
+		font-size: 22px;
+		margin: 11px 0;
+		color: var(--header-active);
+		vertical-align: middle;
+	}
+	.register-dialog .tip{
+		color: var(--leftTreeColor);
+		line-height: 50px;
+		text-align: center;
+		font-size: 16px;
+		margin-top: 15px;
+		display: block;
+		text-decoration: none;
+	}
+</style>
+<!--{template pc/frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header height="auto" style="padding: 0;z-index: 10;">
+			<page-header :isscreenshow="false"></page-header>
+		</el-header>
+		<el-container>
+		    <el-aside width="260px">
+				<!--{template pc/page/adminLeft}-->
+			</el-aside>
+		    <el-main>
+				<div class="page-content">
+					<div id="center_title">授权信息</div>
+					<el-scrollbar class="page-component__scroll" v-loading="loading">
+						<div class="content" style="padding: 16px 25px;">
+							<el-form ref="form" :model="formdata" label-width="200px">
+								<el-form-item label="版本信息：">
+									<el-input class="maxWidth" disabled v-model="formdata.versions"></el-input>
+								</el-form-item>
+								<el-form-item label="授权用户数：">
+									<el-input class="maxWidth" disabled v-model="formdata.num"></el-input>
+									<!--{if !defined('NOLIMITUSER')}-->
+									<el-button icon="el-icon-plus" style="margin-left: 6px;width: 122px;" type="primary" size="small" @click="handleAddUser()">增购用户</el-button>
+									<!--{/if}-->
+									<p class="tipTxt">增购任意数量用户后，系统即可升级为团队版</p>
+								</el-form-item>
+								<el-form-item label="机器识别码：">
+									<el-input class="maxWidth" disabled v-model="formdata.code"></el-input>
+									<el-button icon="el-icon-copy-document" style="margin-left: 6px;width: 122px;" type="primary" size="small" @click="handleCopyCode">复制识别码</el-button>
+									<p class="tipTxt">增购用户时需复制机器识别码，用于授权文件绑定</p>
+								</el-form-item>
+								<el-form-item label="授权时间：">
+									<el-input class="maxWidth" disabled v-model="formdata.time"></el-input>
+									<el-button type="primary" icon="el-icon-download" size="small" style="margin-left: 6px;width: 122px;" @click="handleupdate">在线获取授权</el-button>
+									<el-upload
+										style="display: inline-block;"
+										:show-file-list="false"
+										accept=".lic"
+										action="{MOD_URL}&op=admin&do=authorize&operation=upload"
+										:on-success="handleUploadSuccess">
+										<el-button slot="trigger" icon="el-icon-upload2" style="margin-left: 6px;" size="small">上传授权文件</el-button>
+									</el-upload>
+									<p class="tipTxt">点击在线获取授权，或手动上传授权文件</p>
+								</el-form-item>
+							</el-form>
+							<div style="padding-top: 20px;">
+								<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-bottom: 10px;">
+									<div style="width: 200px;text-align:right;padding-right: 12px;">购买规则：</div>
+								</div>
+								<div class="tipTxt" style="padding-left: 117px;line-height: 25px;font-size: 14px;">
+									<p class="">1、个人版1用户永久免费使用，增购1用户，系统即可升级为团队版</p>
+									<p class="">2、99元/用户，需要多少用户购买多少即可。也可以随着人员增加陆续增购用户。累计购买100用户后，系统自动升级为无限用户</p>
+									<p class="">3、如果是首次增购用户，增购用户后可在系统工具中在线更新系统到团队版程序</p>
+								</div>
+								<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-top: 20px;margin-bottom: 10px;">
+									<div style="width: 200px;text-align:right;padding-right: 12px;">购买方法：</div>
+								</div>
+								<div class="tipTxt" style="padding-left: 117px;font-size: 14px;">
+										<p class="">1、在线购买自动更新方法：</p>
+										<el-image
+											src="dzz/pichome/image/authorize1.png"
+										    fit="contain"></el-image>
+							
+										<p class="">2、手动购买上传更新方法：</p>
+										<el-image
+											src="dzz/pichome/image/authorize2.png"
+										    fit="contain"></el-image>
+									<p class=""></p>
+								</div>
+							</div>
+						</div>
+					</el-scrollbar>
+				</div>
+						
+			</el-main>
+		  </el-container>
+	</el-container>
+	<el-dialog
+		custom-class="register-dialog"
+		:visible.sync="dialogVisible"
+		:show-close="false"
+		@closed="registerdialogClose"
+		width="410px">
+		<div class="main-title">输入<a href="https://oaooa.com/member" target="_blank">欧奥官网用户中心</a>的账号密码</div>
+		<div class="sub-title">验证后自动更新授权文件</div>
+		<el-form :model="registerform" @submit.native.prevent style="width: 350px;margin: 0 auto;padding-top: 30px;" :rules="rules" ref="ruleForm">
+			<el-form-item label="" prop="username">
+				<el-input v-model="registerform.username" type="text" placeholder="欧奥用户中心账号"></el-input>
+			</el-form-item>
+			<el-form-item label="" prop="password">
+				<el-input v-model="registerform.password" type="password" placeholder="欧奥用户中心密码" autocomplete="new-password"></el-input>
+			</el-form-item>
+			<el-form-item style="margin: 0;">
+				<el-button type="primary" native-type="submit" style="width: 100%;" @click="registerSubmit()">提交获取</el-button>
+			</el-form-item>
+		</el-form>
+		<a class="tip" href="https://oaooa.com/user.php?mod=login&op=logging&action=lostpasswd" target="_blank">如忘记密码可在欧奥用户中心使用找回密码</a>
+	</el-dialog>
+</div>
+<!--{template pc/components/headerAdmin/index}-->
+<script type="text/javascript">
+	new Vue({
+		el: '#dzzoffice',
+		data() {
+			return {
+				loading:false,
+				formdata:{
+					versions:'{$version}',//版本信息
+					num:'{$limitusernum}',//授权用户数
+					code:'{$_G[setting][machinecode]}',//机器识别码
+					time:'{$authdate}',//授权时间
+				},
+				dialogVisible:false,
+				registerform:{
+					username:'',
+					password:''
+				},
+				rules: {
+					username: [
+						{ required: true, message: '请输入账号', trigger: 'blur' },
+					],
+					password: [
+						{ required: true, message: '请输入密码', trigger: 'blur' },
+					],
+				}
+			}
+		},
+		watch:{
+
+		},
+		created() {
+			var self = this;
+			<!--{if defined('LICENSE_VERSION') && LICENSE_VERSION != CORE_VERSION_LEVEL}-->
+			self.$alert('您的系统现在为个人版，可以升级到团队版程序。', '授权文件更新成功', {
+				confirmButtonText: '开始升级',
+				cancelButtonText:'关闭窗口',
+				showCancelButton:true,
+				callback: function(action ){
+					if(action == 'confirm'){
+						window.location.href = '/admin.php?mod=system#/systemupgrade';
+					}
+				}
+			});
+			<!--{/if}-->
+		},
+		methods: {
+			handleupdate(){
+				this.dialogVisible = true;
+			},
+			handleRouter(type){
+				window.location.href = MOD_URL+'&op=admin&do='+type;
+			},
+			handleUploadSuccess(response){
+				var self = this;
+				if(response.success){
+					window.location.reload();
+				}else{
+					self.$message.error('上传文件失败');
+				}
+			},
+			registerSubmit(){
+				var self = this;
+				self.$refs['ruleForm'].validate(function(valid){
+					if (valid) {
+						$.post(MOD_URL+'&op=admin&do=updateauth',{
+							submit:true,
+							formhash:'{FORMHASH}',
+							username:self.registerform.username,
+							password:self.registerform.password
+						},function(json){
+							if(json.success){
+								window.location.reload();
+							}else{
+								self.$message.error(json.error);
+							}
+							self.dialogVisible = false;
+						},'json')
+					} else {
+						console.log('error submit!!');
+						return false;
+					}
+				});
+			},
+			registerdialogClose(){
+				var self = this;
+				self.$refs['ruleForm'].resetFields();
+			},
+			handleCopyCode(){
+				CopyTxt(this,this.formdata.code);
+			},
+			handleAddUser(){
+				window.open('https://oaooa.com/index.php?mod=member&op=buy&id=1&mcode='+this.formdata.code)
+			}
+		},
+		mounted() {
+			
+		}
+	})
+</script>
+
+<!--{template pc/frame/footer_simple}-->

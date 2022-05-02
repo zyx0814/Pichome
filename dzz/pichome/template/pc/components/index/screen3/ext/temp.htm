@@ -1,0 +1,17 @@
+<div class="block">
+	<div class="title">类型</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" :class="{'active':!ScreenValue.ext.value.length}" @click="ScreenExtEmptyClick()">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<template v-for="eitem in ScreenValue.ext.data">
+				<li class="single" :class="{'active':ScreenValue.ext.value.indexOf(eitem)>-1}" @click="ScreenExtClick(eitem)">
+					<span>{{eitem}}</span>
+				</li>
+			</template>
+		</ul>
+	</div>
+</div>

@@ -63,9 +63,15 @@ class eagleexport
         //目录数据
         $folderdata = $appdatas['folders'];
         $efids = C::t('#eagle#eagle_folderrecord')->insert_folderdata_by_appid($this->appid, $folderdata);
-        $delids = DB::fetch_all("select id from %t where efid not in(%n) and appid = %s",array('eagle_folderrecord',$efids,$this->appid));
-
-       //对比目录数据
+        $delids = [];
+        foreach(DB::fetch_all("select id from %t where efid not in(%n) and appid = %s",array('eagle_folderrecord',$efids,$this->appid)) as $delid){
+            $delids[] = $delid['id'];
+        }
+        //删除多余目录
+        foreach(DB::fetch_all("select  f.fid from %t f left join %t ef  on f.fid=ef.fid where f.appid = %s and ISNULL(ef.id)",array('pichome_folder','eagle_folderrecord',$this->appid)) as $dv){
+            C::t('pichome_folder')->delete_by_fids($dv);
+        }
+        //对比目录数据
         if($delids)C::t('#eagle#eagle_folderrecord')->delete_by_ids($delids);
         //标签数据
         $tagdata = $appdatas['tagsGroups'];
@@ -132,14 +138,17 @@ class eagleexport
                 closedir($dch);
                 if ($filenum) $this->filenum = $filenum;
             } else {
-                C::t('pichome_vapp')->update($this->appid, array('state' => 0));
+                C::t('pichome_vapp')->update($this->appid, array('state' => -1));
                 return array('error' => 'Read Dir Failer');
             }
-
+            $this->initFoldertag();
             C::t('pichome_vapp')->update($this->appid, array('filenum' => $this->filenum, 'state' => 2));
+        }else{
+            $this->initFoldertag();
+            C::t('pichome_vapp')->update($this->appid, array('state' => 2));
         }
-        C::t('pichome_vapp')->update($this->appid, array('state' => 2));
-        $this->initFoldertag();
+
+
         return array('success' => true);
     }
 
@@ -229,9 +238,10 @@ class eagleexport
                     $metadata = file_get_contents($metadatajsonfile);
                     $filemetadata = json_decode($metadata, true);
                     //如果是删除状态，并且已有数据则执行删除
-                    if ($filemetadata['isDeleted'] && $rid) {
-                        C::t('pichome_resources')->delete_by_rid($rid);
-                    } else {
+                    if ($filemetadata['isDeleted']) {
+                        if($rid)C::t('pichome_resources')->delete_by_rid($rid);
+                    }
+                    else {
                         //如果不是新生成rid
                         if ($rid) {
                             $data = C::t('pichome_resources')->fetch($rid);
@@ -246,136 +256,150 @@ class eagleexport
                                 $file = $tmppath . BS . $filename;
                                 //缩略图路径
                                 $thumbfile = $tmppath . BS . $thumbname;
-
-                                //如果mtime发生变化则删除原数据，重新导入
-                                if ($data['mtime'] < $filemetadata['mtime']) {
-                                    C::t('pichome_resources')->delete_by_rid($rid);
-                                    $filemetadata['rid'] = $this->createrid();
-                                    $filemetadata['filename'] = $filemetadata['name'];
-                                    $filemetadata['file'] = $file;
-                                    $filemetadata['thumbfile'] = $thumbfile;
-                                    $filemetadata['rid'] = $rid;
-                                    $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime'] : $filemetadata['modificationTime'];
-                                    $filemetadata['btime'] = $filemetadata['btime'] ? $filemetadata['btime'] : $filemetadata['modificationTime'];
-                                    $filemetadata['dateline'] = $filemetadata['lastModified'];
-                                    $filemetadata['lastdate'] = $flastdate;
-                                    $this->exportfile($id,$filemetadata);
-                                    unset($filemetadata);
+                                $realfids = [];
+                                if(!empty($filemetadata['folders'])){
+                                    $realfids = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
                                 }
-                                else {
-                                    //信息表数据记录
-                                    $setarr = [];
-                                    $setarr['searchval'] = $filemetadata['name'];
-                                    //查询原数据中的属性信息
-                                    $attrdata = C::t('pichome_resources_attr')->fetch($rid);
-                                    $filename = $filemetadata['name'] . '.' . $filemetadata['ext'];
-                                    //检查reources数据变化
-                                    $resourcesarr = [
-                                        'name' => $filename,
-                                        'dateline' => $filemetadata['lastModified'],
-                                        'isdelete' => $filemetadata['isDeleted'],
-                                        'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0,
-                                        'lastdate' => $flastdate
-                                    ];
-                                    $file = str_replace('/', BS, $file);
-                                    $attachment = str_replace($this->path . BS, '', $file);
-                                    $path = str_replace('/', BS, $attachment);
-                                    $thumb = (is_file($thumbfile)) ? 1 : 0;
-                                    $setarr['path'] = $path;
-                                    $resourcesarr['hasthumb'] = $thumb;
-                                    $resourcesarr['rid'] = $rid;
-                                    if (C::t('#eagle#eagle_record')->insert_data($id, $resourcesarr)) {
-                                        //检查标签变化
-                                        //标签数据
-                                        $tags = $filemetadata['tags'];
-                                        $setarr['searchval'] .= implode('', $tags);
-                                        //现有标签
-                                        $tagids = [];
-                                        //原有标签
-                                        $oldtids = [];
-                                        if ($attrdata['tag']) $oldtids = explode(',', $attrdata['tag']);
+                                $haspassword = false;
+                                if(!empty($realfids)){
+                                    //如果目录含有密码则不导入数据直接跳过
+                                    $haspassword = C::t('pichome_folder')->check_haspasswrod($realfids, $this->appid);
+                                }
+                                if($haspassword){
+                                    C::t('pichome_resources')->delete_by_rid($rid);
+                                }
+                                else{
+                                    //如果mtime发生变化则删除原数据，重新导入
+                                    if ($data['mtime'] < $filemetadata['mtime']) {
+                                        C::t('pichome_resources')->delete_by_rid($rid);
+                                        $filemetadata['rid'] = $this->createrid();
+                                        $filemetadata['filename'] = $filemetadata['name'];
+                                        $filemetadata['file'] = $file;
+                                        $filemetadata['thumbfile'] = $thumbfile;
+                                        $filemetadata['rid'] = $rid;
+                                        $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime'] : $filemetadata['modificationTime'];
+                                        $filemetadata['btime'] = $filemetadata['btime'] ? $filemetadata['btime'] : $filemetadata['modificationTime'];
+                                        $filemetadata['dateline'] = $filemetadata['lastModified'];
+                                        $filemetadata['lastdate'] = $flastdate;
+                                        $this->exportfile($id,$filemetadata);
+                                        unset($filemetadata);
+                                    }
+                                    else {
+                                        //信息表数据记录
+                                        $setarr = [];
+                                        $setarr['searchval'] = $filemetadata['name'];
+                                        //查询原数据中的属性信息
+                                        $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+                                        $filename = $filemetadata['name'] . '.' . $filemetadata['ext'];
+                                        //检查reources数据变化
+                                        $resourcesarr = [
+                                            'name' => $filename,
+                                            'dateline' => $filemetadata['lastModified'],
+                                            'isdelete' => $filemetadata['isDeleted'],
+                                            'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0,
+                                            'lastdate' => $flastdate,
+                                            'width' => $filemetadata['width'] ? $filemetadata['width'] : 0,
+                                            'height' => $filemetadata['height'] ? $filemetadata['height'] : 0,
+                                            'appid'=>$this->appid
+                                        ];
+                                        $file = str_replace('/', BS, $file);
+                                        $attachment = str_replace($this->path . BS, '', $file);
+                                        $path = str_replace('/', BS, $attachment);
+                                        $thumb = (is_file($thumbfile)) ? 1 : 0;
+                                        $setarr['path'] = $path;
+                                        $resourcesarr['hasthumb'] = $thumb;
+                                        $resourcesarr['rid'] = $rid;
+                                        if (C::t('#eagle#eagle_record')->insert_data($id, $resourcesarr)) {
+                                            //检查标签变化
+                                            //标签数据
+                                            $tags = $filemetadata['tags'];
+                                            $setarr['searchval'] .= implode('', $tags);
+                                            //现有标签
+                                            $tagids = [];
+                                            //原有标签
+                                            $oldtids = [];
+                                            if ($attrdata['tag']) $oldtids = explode(',', $attrdata['tag']);
 
-                                        if (!empty($tags)) {
-                                            $tagids = $this->addtag($tags);
-                                            $setarr['tag'] = implode(',', $tagids);
-                                        }
-                                        $addtags = array_diff($tagids, $oldtids);
-                                        $deltags = array_diff($oldtids, $tagids);
+                                            if (!empty($tags)) {
+                                                $tagids = $this->addtag($tags);
+                                                $setarr['tag'] = implode(',', $tagids);
+                                            }
+                                            $addtags = array_diff($tagids, $oldtids);
+                                            $deltags = array_diff($oldtids, $tagids);
 
-                                        if (!empty($deltags)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltags);
-                                        foreach ($addtags as $tid) {
-                                            $rtag = ['appid' => $this->appid, 'rid' => $rid, 'tid' => $tid];
-                                            C::t('pichome_resourcestag')->insert($rtag);
-                                        }
+                                            if (!empty($deltags)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltags);
+                                            foreach ($addtags as $tid) {
+                                                $rtag = ['appid' => $this->appid, 'rid' => $rid, 'tid' => $tid];
+                                                C::t('pichome_resourcestag')->insert($rtag);
+                                            }
 
-                                        //检查标注变化
-                                        if (isset($filemetadata['comments'])) {
-                                            $cids = [];
-                                            foreach ($filemetadata['comments'] as $commentval) {
-                                                $tcommentval['id'] = $commentval['id'] . $this->appid;
-                                                $tcommentval['appid'] = $this->appid;
-                                                $tcommentval['rid'] = $rid;
-                                                $tcommentval['x'] = number_format($commentval['x'], 2);
-                                                $tcommentval['y'] = number_format($commentval['y'], 2);
-                                                $tcommentval['width'] = $commentval['width'];
-                                                $tcommentval['height'] = $commentval['height'];
-                                                $tcommentval['annotation'] = $commentval['annotation'];
-                                                $tcommentval['lastModified'] = $commentval['lastModified'];
-                                                try {
-                                                    C::t('pichome_comments')->insert($tcommentval);
-                                                    $setarr['searchval'] .= $tcommentval['annotation'];
-                                                } catch (Exception $e) {
+                                            //检查标注变化
+                                            if (isset($filemetadata['comments'])) {
+                                                $cids = [];
+                                                foreach ($filemetadata['comments'] as $commentval) {
+                                                    $tcommentval['id'] = $commentval['id'] . $this->appid;
+                                                    $tcommentval['appid'] = $this->appid;
+                                                    $tcommentval['rid'] = $rid;
+                                                    $tcommentval['x'] = number_format($commentval['x'], 2);
+                                                    $tcommentval['y'] = number_format($commentval['y'], 2);
+                                                    $tcommentval['width'] = $commentval['width'];
+                                                    $tcommentval['height'] = $commentval['height'];
+                                                    $tcommentval['annotation'] = $commentval['annotation'];
+                                                    $tcommentval['lastModified'] = $commentval['lastModified'];
+                                                    try {
+                                                        C::t('pichome_comments')->insert($tcommentval);
+                                                        $setarr['searchval'] .= $tcommentval['annotation'];
+                                                    } catch (Exception $e) {
+
+                                                    }
+                                                    $cids[] = $tcommentval['id'];
+                                                    unset($tcommentval);
 
                                                 }
-                                                $cids[] = $tcommentval['id'];
-                                                unset($tcommentval);
-
+                                                $ocids = C::t('pichome_comments')->fetch_id_by_rid($rid);
+                                                $delcids = array_diff($ocids, $cids);
+                                                if (!empty($delcids)) C::t('pichome_comments')->delete($delcids);
+                                            } else {
+                                                C::t('pichome_comments')->delete_by_rid($rid);
                                             }
-                                            $ocids = C::t('pichome_comments')->fetch_id_by_rid($rid);
-                                            $delcids = array_diff($ocids, $cids);
-                                            if (!empty($delcids)) C::t('pichome_comments')->delete($delcids);
-                                        } else {
-                                            C::t('pichome_comments')->delete_by_rid($rid);
-                                        }
 
-                                        $rfids = [];
-                                        $orfids = C::t('pichome_folderresources')->fetch_id_by_rid($rid);
-                                        C::t('pichome_folderresources')->delete($orfids);
-                                        $setarr['searchval'] .= $resourcesarr['name'];
-                                        //$fids = [];
-                                        if(!empty($filemetadata['folders'])){
-                                            $realfids = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
-                                        }
+                                            $rfids = [];
+                                            $orfids = C::t('pichome_folderresources')->fetch_id_by_rid($rid);
+                                            C::t('pichome_folderresources')->delete($orfids);
+                                            $setarr['searchval'] .= $resourcesarr['name'];
 
-                                        //检查目录变化
-                                        foreach ($realfids as $fv) {
-                                            $fid = trim($fv) . $this->appid;
-                                            if (!C::t('pichome_folder')->check_password_byfid($fid)) {
-                                                $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
-                                                C::t('pichome_folderresources')->insert($frsetarr);
-                                                // $fids[] = $fid;
+
+                                            //检查目录变化
+                                            foreach ($realfids as $fv) {
+                                                $fid =$fv;
+                                                if (!C::t('pichome_folder')->check_password_byfid($fid)) {
+                                                    $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
+                                                    C::t('pichome_folderresources')->insert($frsetarr);
+                                                    // $fids[] = $fid;
+                                                }
                                             }
+                                            //尝试更新属性表数据
+                                            $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
+                                            //描述数据
+                                            $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
+                                            $setarr['searchval'] .= $setarr['desc'] . $setarr['link'];
+                                            if ($filemetadata['duration']) $setarr['duration'] = number_format($filemetadata['duration'], 2);
+                                            $setarr['rid'] = $rid;
+                                            C::t('pichome_resources_attr')->insert($setarr);
+                                            unset($filemetadata);
+                                            unset($setarr);
                                         }
-                                        //尝试更新属性表数据
-                                        $setarr['link'] = $filemetadata['url'] ? trim($filemetadata['url']) : '';
-                                        //描述数据
-                                        $setarr['desc'] = $filemetadata['annotation'] ? $filemetadata['annotation'] : '';
-                                        $setarr['searchval'] .= $setarr['desc'] . $setarr['link'];
-                                        if ($filemetadata['duration']) $setarr['duration'] = number_format($filemetadata['duration'], 2);
-                                        $setarr['rid'] = $rid;
-                                        C::t('pichome_resources_attr')->insert($setarr);
-                                        unset($filemetadata);
-                                        unset($setarr);
                                     }
                                 }
+
 
                             }
                             else{
                                 if(!$rdata){
                                     $setarr = [
-                                       'appid'=>$this->appid,
-                                       'rid'=>$rid,
-                                       'eid'=>$id,
+                                        'appid'=>$this->appid,
+                                        'rid'=>$rid,
+                                        'eid'=>$id,
                                         'dateline'=>$flastdate
                                     ];
                                     C::t('#eagle#eagle_record')->insert($setarr);
@@ -383,6 +407,7 @@ class eagleexport
                             }
 
                         } else {
+                            $realfids = [];
                             if(!empty($filemetadata['folders'])){
                                 $realfids = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
                             }
@@ -436,6 +461,8 @@ class eagleexport
                     $spl_object = false;
                     @unlink($this->readtxt . 'eagleexport' . md5($this->path) . '.txt');
                     $lastid = 0;
+                    $percent = 0;
+                    $this->donum = 0;
                 } else {
                     $lastid = $this->donum;
                 }
@@ -476,6 +503,8 @@ class eagleexport
                 C::t('pichome_folder')->update($v['fid'], array('filenum' => $v['num']));
 
             }
+            //修正eagle对照表数据
+            //DB::delete('eagle_record',array('appid'=>''));
             //修正库中文件数
             $total = DB::result_first("select count(rid) from %t where appid = %s ", array('pichome_resources', $this->appid));
             $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s", array('pichome_folderresources', $this->appid));
@@ -489,12 +518,15 @@ class eagleexport
             } else {
                 $id = C::t('#eagle#eagle_record')->fetch_eid_by_rid($v['rid'],$this->appid);
                 if(!$id){
-                    $id = str_replace($this->appid, '', $v['rid']);
-                }
-                $filejson = $this->path . BS . 'images' . BS . $id . '.info' . BS . 'metadata.json';
-                if (!is_file($filejson)) {
+                    //$id = str_replace($this->appid, '', $v['rid']);
                     $delrids[] = $v['rid'];
+                }else{
+                    $filejson = $this->path . BS . 'images' . BS . $id . '.info' . BS . 'metadata.json';
+                    if (!is_file($filejson)) {
+                        $delrids[] = $v['rid'];
+                    }
                 }
+
             }
 
 

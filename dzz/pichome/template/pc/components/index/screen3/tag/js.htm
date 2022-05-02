@@ -1,0 +1,221 @@
+<script type="text/javascript">
+	var JsScreenTagMethods = {
+		ScreenTagEmptyClick(){
+			if(this.ScreenValue.tag.value.length){
+				this.ScreenValue.tag.value = [];
+				this.ScreenValue.tag.text = [];
+				this.ScreenSubmit();
+			}
+		},
+		ScreenTagGroupEmptyClick(cid){
+			if(this.ScreenValue.tag.group[cid] && this.ScreenValue.tag.group[cid].value.length){
+				for(var c in this.ScreenValue.tag.group[cid].value){
+					var tid = this.ScreenValue.tag.group[cid].value[c];
+					var index = this.ScreenValue.tag.value.indexOf(tid);
+					if(index>-1){
+						this.ScreenValue.tag.value.splice(index,1);
+					}
+				}
+				this.ScreenValue.tag.group[cid].value = [];
+				for(var t in this.ScreenValue.tag.group[cid].text){
+					var txt = this.ScreenValue.tag.group[cid].text[t];
+					var index = this.ScreenValue.tag.text.indexOf(txt);
+					if(index>-1){
+						this.ScreenValue.tag.text.splice(index,1);
+					}
+				}
+				this.ScreenValue.tag.group[cid].text = [];
+				this.ScreenSubmit();
+			}
+		},
+		ScreenTagClick(id,text){
+			var index = this.ScreenValue.tag.value.indexOf(id);
+			if(index>-1){
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.tag.value.splice(index,1);
+					var txtindex = this.ScreenValue.tag.text.indexOf(text);
+					this.ScreenValue.tag.text.splice(txtindex,1);
+				}else{
+					this.ScreenValue.tag.value = [];
+					this.ScreenValue.tag.text = [];
+				}
+			}else{
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.tag.value.push(id);
+					this.ScreenValue.tag.text.push(text);
+				}else{
+					this.ScreenValue.tag.value = [id];
+					this.ScreenValue.tag.text = [text];
+				}
+				
+			}
+			this.ScreenSubmit();
+		},
+		ScreenTagGroupClick(cid,tid,text){
+			if(this.ScreenValue.tag.group[cid]){
+				var index = this.ScreenValue.tag.group[cid].value.indexOf(tid);
+				if(index<0){
+					if(parseInt(this.ScreenIsRadio)){
+						this.ScreenValue.tag.group[cid].value.push(tid);
+						this.ScreenValue.tag.group[cid].text.push(text);
+					}else{
+						this.ScreenValue.tag.group[cid].value = [tid];
+						this.ScreenValue.tag.group[cid].text = [text];
+					}
+				}else{
+					var tindex = this.ScreenValue.tag.group[cid].text.indexOf(text);
+					if(parseInt(this.ScreenIsRadio)){
+						if(tindex>-1){
+							this.ScreenValue.tag.group[cid].text.splice(tindex,1);
+						}
+						if(index>-1){
+							this.ScreenValue.tag.group[cid].value.splice(index,1);
+						}
+					}else{
+						this.ScreenValue.tag.group[cid].value = [];
+						this.ScreenValue.tag.group[cid].text = [];
+					}
+				}
+				// this.ScreenValue.tag.value = [];
+				// this.ScreenValue.tag.text = [];
+				var farr = [];
+				var tarr = [];
+				
+				for(var i in this.ScreenValue.tag.group){
+					var item = this.ScreenValue.tag.group[i];
+					var vals = [];
+					var txts = [];
+					if(item.value && item.value.length){
+						vals = item.value;
+					}
+					if(item.text && item.text.length){
+						txts = item.text;
+					}
+					farr = farr.concat(vals);
+					tarr = tarr.concat(txts);
+				}
+				this.ScreenValue.tag.value = farr;
+				this.ScreenValue.tag.text = tarr;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenTagMoreClick(){
+			this.ScreenValue.tag.isopen = !this.ScreenValue.tag.isopen;
+			if(this.ScreenValue.tag.isopen){
+				this.ScreenTagScrollSubmit();
+			}
+		},
+		ScreenTagGroupMoreClick(cid){
+			var self = this;
+			this.ScreenValue.tag.group[cid].isopen = !this.ScreenValue.tag.group[cid].isopen;
+			self.$forceUpdate();
+			if(this.ScreenValue.tag.group[cid].isopen && parseInt(this.ScreenValue.tag.group[cid].page) == 1){
+				this.ScreenTagGroupScrollSubmit(cid);
+			}
+			
+		},
+		ScreenTagScroll(){
+			var self = this;
+			$('.tag-Scroll .el-scrollbar__wrap').scroll(function(){
+				var scrollTop = this.scrollTop;
+				if(scrollTop+$(this).height()>=this.scrollHeight){
+					if(!self.ScreenValue.tag.finish && !self.ScreenValue.tag.valloading && !self.ScreenValue.tag.loading){
+						self.ScreenTagScrollSubmit();
+					}
+				}
+			});
+			
+		},
+		ScreenTagScrollSubmit(){
+			var self = this;
+			self.ScreenValue.tag.valloading = true;
+			var param = {};
+			if(self.Appid && self.Appid!='all'){
+				param['appid'] = self.Appid;
+			}
+			// param['prepage'] = 50;
+			self.ScreenValue.tag.page +=1;
+			param['page'] = self.ScreenValue.tag.page;
+						
+			$.post(MOD_URL+'&op=ajax&operation=getMoretag',param,function(data){
+				for(var g in data.tag){
+					data.tag[g].tid = parseInt(data.tag[g].tid);
+					self.ScreenValue.tag.data.push(data.tag[g]);
+				}
+				self.ScreenValue.tag.finish = !data.next;
+				self.ScreenValue.tag.valloading = false;
+			},'json');
+		},
+		ScreenTagGroupScroll(){
+			var self = this;
+			for(var x in self.ScreenValue.tag.group){
+				var item = self.ScreenValue.tag.group[x];
+				if(item.data && item.data.length){
+					this.ScreenTagGroupAddScroll(x);
+				}
+			}
+		},
+		ScreenTagGroupAddScroll(cid){
+			var self = this;
+			self.$nextTick(function(){
+				if(self.$refs['scrollbarTag'+cid] && !self.$refs['scrollbarTag'+cid].length){
+					return false;
+				}
+				var scrollbarEl = self.$refs['scrollbarTag'+cid][0].wrap;
+				scrollbarEl.onscroll = function(){
+					var recode = self.ScreenValue.tag.group[cid];
+					var valloading = recode.valloading;
+					var loading = recode.loading;
+					var finish = recode.finish;
+					if(!finish && !loading && !valloading && this.scrollTop+$(this).height()>=this.scrollHeight){
+						self.ScreenTagGroupScrollSubmit(cid);
+					}
+				}
+			});
+		},
+		ScreenTagGroupScrollSubmit(cid){
+			var self = this;
+			var recode = self.ScreenValue.tag.group[cid];
+			recode.valloading = true;
+			recode.page += 1;
+			var param = {};
+			param['page'] = recode.page;
+			if(self.Appid && self.Appid!='all'){
+				param['appid'] = self.Appid;
+			}
+			param['cid'] = cid;
+			$.post(MOD_URL+'&op=ajax&operation=getMoretag',param,function(json){
+				for(var g in json.tag){
+					json.tag[g].tid = parseInt(json.tag[g].tid);
+					recode.data.push(json.tag[g]);
+				}
+				recode.valloading = false;
+				recode.finish = !json.next;
+				self.$forceUpdate();
+			},'json');
+		},
+		ScreenTaggroupDelete(cid,issubmit){
+			if(this.ScreenValue.tag.group[cid]){
+				for(var i in this.ScreenValue.tag.group[cid].value){
+					var id = this.ScreenValue.tag.group[cid].value[i];
+					var index = this.ScreenValue.tag.value.indexOf(id);
+					if(index>-1){
+						this.ScreenValue.tag.value.splice(index,1);
+					}
+				}
+				this.ScreenValue.tag.group[cid].value = [];
+				for(var i in this.ScreenValue.tag.group[cid].text){
+					var txt = this.ScreenValue.tag.group[cid].text[i];
+					var tindex = this.ScreenValue.tag.text.indexOf(txt);
+					if(tindex>-1){
+						this.ScreenValue.tag.text.splice(tindex,1);
+					}
+				}
+				this.ScreenValue.tag.group[cid].text = [];
+				if(!issubmit){
+					this.ScreenSubmit();
+				}
+			}
+		},
+	};
+</script>

@@ -1,0 +1,47 @@
+<div class="block">
+	<div class="title">创建时间</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenMtimeEmptyClick" :class="{'active':!ScreenValue.mtime.value&&!ScreenValue.mtime.datelinepicker.length}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single" @click="ScreenMtimeClick('今日')" :class="{'active':ScreenValue.mtime.value=='今日'}">
+				<span>今日</span>
+			</li>
+			<li class="single" @click="ScreenMtimeClick('昨日')" :class="{'active':ScreenValue.mtime.value=='昨日'}">
+				<span>昨日</span>
+			</li>
+			<li class="single" @click="ScreenMtimeClick('最近7日')" :class="{'active':ScreenValue.mtime.value=='最近7日'}">
+				<span>最近7日</span>
+			</li>
+			<li class="single" @click="ScreenMtimeClick('最近30日')" :class="{'active':ScreenValue.mtime.value=='最近30日'}">
+				<span>最近30日</span>
+			</li>
+			<li class="single" @click="ScreenMtimeClick('最近90日')" :class="{'active':ScreenValue.mtime.value=='最近90日'}">
+				<span>最近90日</span>
+			</li>
+			<li class="single" @click="ScreenMtimeClick('最近365日')" :class="{'active':ScreenValue.mtime.value=='最近365日'}">
+				<span>最近365日</span>
+			</li>
+			<li class="single" @click="ScreenValue.mtime.custom=!ScreenValue.mtime.custom" :class="{'active':ScreenValue.mtime.custom}">
+				<span>自定义范围</span>
+			</li>
+			<li class="single notborder notpadding" v-if="ScreenValue.mtime.custom">
+				<el-date-picker
+					class="dateline max-width" 
+					v-model="ScreenValue.mtime.datelinepicker" 
+					@change="ScreenMtimePicker"
+					size="small" 
+					:clearable="false" 
+					value-format="yyyy-MM-dd"
+					type="daterange" 
+					range-separator="至" 
+					start-placeholder="开始日期" 
+					end-placeholder="结束日期">
+				</el-date-picker>
+			</li>
+		</ul>
+	</div>
+</div>

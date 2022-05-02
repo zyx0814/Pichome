@@ -188,7 +188,7 @@ class dzz_app extends dzz_base{
 		}
         $url = parse_url($_G['siteurl']);
         $_G['siteroot'] = isset($url['path']) ? $url['path'] : '';
-        $_G['siteport'] = empty($_SERVER['SERVER_PORT']) || $_SERVER['SERVER_PORT'] == '80' || $_SERVER['SERVER_PORT'] == '443' ? '' : ':'.$_SERVER['SERVER_PORT'];
+        $_G['siteport'] = (empty($_SERVER['SERVER_PORT']) || $_SERVER['SERVER_PORT'] == '80' || $_SERVER['SERVER_PORT'] == '443' || $_SERVER['HTTP_X_FORWARDED_PORT'] == '443')? '' : ':'.$_SERVER['SERVER_PORT'];
 
         if(defined('SUB_DIR')) {
             $_G['siteurl'] = str_replace(SUB_DIR, '/', $_G['siteurl']);
@@ -208,6 +208,8 @@ class dzz_app extends dzz_base{
         }elseif($_SERVER['SERVER_PORT'] == 443){ //其他
             return TRUE;
         }elseif($_SERVER['REQUEST_SCHEME'] == 'https'){ //其他
+            return TRUE;
+		 }elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'){ //其他
             return TRUE;
         }
         return FALSE;
@@ -363,18 +365,19 @@ class dzz_app extends dzz_base{
 
         $allowgzip = $this->config['output']['gzip'] && empty($this->var['inajax']) && EXT_OBGZIP;
         setglobal('gzipcompress', $allowgzip);
-		if($this->config['localurl']){
-			 setglobal('localurl', $this->config['localurl']);
-		}
+
         if(!ob_start($allowgzip ? 'ob_gzhandler' : null)) {
             ob_start();
         }
-		
+
         setglobal('charset', $this->config['output']['charset']);
         define('CHARSET', $this->config['output']['charset']);
         if($this->config['output']['forceheader']) {
             @header('Content-Type: text/html; charset='.CHARSET);
         }
+		if($this->config['localurl']){
+			 setglobal('localurl', $this->config['localurl']);
+		}
 
     }
 
@@ -508,6 +511,15 @@ class dzz_app extends dzz_base{
         }
 
         setglobal('uid', getglobal('uid', 'member'));
+        if($this->var['member']['adminid']){
+            setglobal('pichomelevel',5);
+        }else{
+           $pichomelevel =  C::t('user_setting')->fetch_by_skey('pichomelevel',getglobal('uid', 'member'));
+            $pichomelevel = $pichomelevel ? intval($pichomelevel):0;
+            setglobal('pichomelevel',$pichomelevel);
+        }
+
+
         //设置语言；
 		$langlist=$this->var['config']['output']['language_list'];
 		if($language=getcookie('language')){

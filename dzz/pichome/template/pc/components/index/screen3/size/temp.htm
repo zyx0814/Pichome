@@ -1,0 +1,50 @@
+<div class="block">
+	<div class="title">尺寸</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenSizeClick()" :class="{'active':!ScreenValue.size.wstart&&!ScreenValue.size.wend&!ScreenValue.size.hstart&!ScreenValue.size.hend}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single notborder notpadding">
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最小宽"
+					v-model.number="ScreenValue.size.wstart"
+					@input="ScreenSizeInput"
+					clearable>
+				</el-input>
+				&nbsp;-&nbsp;
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最大宽"
+					v-model.number="ScreenValue.size.wend"
+					@input="ScreenSizeInput"
+					clearable>
+				</el-input>
+			</li>
+			<li class="single notborder notpadding">
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最小高"
+					v-model.number="ScreenValue.size.hstart"
+					@input="ScreenSizeInput"
+					clearable>
+				</el-input>
+				&nbsp;-&nbsp;
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最大高"
+					v-model.number="ScreenValue.size.hend"
+					@input="ScreenSizeInput"
+					clearable>
+				</el-input>
+			</li>
+		</ul>
+	</div>
+</div>

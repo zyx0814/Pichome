@@ -22,25 +22,7 @@
 .van-nav-bar .library-box .van-icon{
 	color: var(--header-text);
 }
-.header-top{
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	transition: all .3s;
-	transition: all .3s;
-	-moz-transition: all .3s;
-	-webkit-transition: all .3s;
-	-o-transition: all .3s;
-	background: var(--bg-content);
-}
-.header-top.headerhide{
-	top: -46px;
-	opacity: 0;
-}
-.header-top .van-dropdown-menu__bar{
-	height: 46px;
-}
+
 
 .seasrch-popup{
 	padding-top: 56px;

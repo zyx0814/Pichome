@@ -4,85 +4,119 @@
 	<div class="txtScroll-box" v-cloak>
 		<div id="txtScroll" class="txtScroll">
 			<div v-if="HeaderKeyword" class="txtKeyword list">{{HeaderKeyword}}</div>
-			<div class="txtScrent list" v-if="ScreenValue.classify.value.length">
+			<div class="txtScrent list" v-if="DocumentTemplate != 2 && ScreenValue.classify.text.length">
 				分类：{{ScreenValue.classify.text.join(',')}}<span class="delBtn el-icon-close" @click.stop="ScreenDelete('classify')"></span>
 			</div>
-			<div class="txtScrent list" v-if="ScreenValue.tag.value.length">
-				标签：{{ScreenValue.tag.text.join(',')}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('tag')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.color.value">
-				<span class="color" :style="{background: ScreenValue.color.value}"></span>
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('color')"></span>
-			</div>
-			
-			<template v-if="parseInt(ScreenValue.link.value)>-1">
-				<div class="txtScrent list" v-if="ScreenValue.link.value=='1'&&ScreenValue.link.input">链接：{{ScreenValue.link.input}}
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
-				</div>
-				<div class="txtScrent list" v-else-if="ScreenValue.link.value=='1'">链接：有
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
-				</div>
-				<div class="txtScrent list" v-else-if="ScreenValue.link.value=='0'">链接：没有
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
-				</div>
+			<template v-for="item in ScreenData">
+				<template v-if="item.key == 'tag'">
+					<template v-if="parseInt(item.showtype)">
+						<template v-for="bitem in item.group">
+							<div class="txtScrent list" v-if="parseInt(bitem.checked) && ScreenValue.tag.group[bitem.cid] && ScreenValue.tag.group[bitem.cid].text.length">
+								{{bitem.catname}}：{{ScreenValue.tag.group[bitem.cid].text.join(',')}}
+								<span class="delBtn el-icon-close" @click.stop="ScreenDelete('grouptag',bitem.cid)"></span>
+							</div>
+						</template>
+					</template>
+					<template v-else>
+						<div class="txtScrent list" v-if="ScreenValue.tag.value.length">
+							{{item.text}}：{{ScreenValue.tag.text.join(',')}}
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('tag')"></span>
+						</div>
+					</template>
+				</template>
+				<template v-else-if="item.key == 'color'">
+					<div class="txtScrent list" v-if="ScreenValue.color.value">
+						<span class="color" :style="{background: ScreenValue.color.value}"></span>
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('color')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'link'">
+					<template v-if="parseInt(ScreenValue.link.value)>-1">
+						<div class="txtScrent list" v-if="ScreenValue.link.value=='1'&&ScreenValue.link.input">{{item.text}}：{{ScreenValue.link.input}}
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+						</div>
+						<div class="txtScrent list" v-else-if="ScreenValue.link.value=='1'">{{item.text}}：有
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+						</div>
+						<div class="txtScrent list" v-else-if="ScreenValue.link.value=='0'">{{item.text}}：没有
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('link')"></span>
+						</div>
+					</template>
+				</template>
+				<template v-else-if="item.key == 'desc'">
+					<template v-if="parseInt(ScreenValue.desc.value)>-1">
+						<div class="txtScrent list" v-if="ScreenValue.desc.value=='1'&&ScreenValue.desc.input">{{item.text}}：{{ScreenValue.desc.input}}
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+						</div>
+						<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='1'">{{item.text}}：有
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+						</div>
+						<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='0'">{{item.text}}：没有
+							<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
+						</div>
+					</template>
+				</template>
+				<template v-else-if="item.key == 'duration'">
+					<div class="txtScrent list" v-if="ScreenValue.duration.start || ScreenValue.duration.end">
+						{{item.text}}：
+						<template v-if="ScreenValue.duration.start&&ScreenValue.duration.end">{{ScreenValue.duration.start}}≤时长≤{{ScreenValue.duration.end}}</template>
+						<template v-else-if="ScreenValue.duration.start">时长≥{{ScreenValue.duration.start}}</template>
+						<template v-else="ScreenValue.duration.end">时长≤{{ScreenValue.duration.end}}</template>
+						<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('duration')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'size'">
+					<div class="txtScrent list" v-if="ScreenValue.size.wstart||ScreenValue.size.wend||ScreenValue.size.hstart||ScreenValue.size.hend">
+						{{item.text}}：
+						<template v-if="ScreenValue.size.wstart&&ScreenValue.size.wend">{{ScreenValue.size.wstart}}≤宽≤{{ScreenValue.size.wend}}</template>
+						<template v-else-if="ScreenValue.size.wstart">宽≥{{ScreenValue.size.wstart}}</template>
+						<template v-else-if="ScreenValue.size.wend">宽≤{{ScreenValue.size.wend}}</template>
+						<template v-if="ScreenValue.size.hstart && ScreenValue.size.hend">,</template>
+						<template v-if="ScreenValue.size.hstart&&ScreenValue.size.hend">{{ScreenValue.size.hstart}}≤高≤{{ScreenValue.size.hend}}</template>
+						<template v-else-if="ScreenValue.size.hstart">高≥{{ScreenValue.size.hstart}}</template>
+						<template v-else-if="ScreenValue.size.hend">高≤{{ScreenValue.size.hend}}</template>
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('size')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'ext'">
+					<div class="txtScrent list" v-if="ScreenValue.ext.value.length">
+						{{item.text}}：{{ScreenValue.ext.value.join(',')}}
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('ext')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'shape'">
+					<div class="txtScrent list" v-if="ScreenValue.shape.value.length||(ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height)">
+						<!-- 形状： -->
+						{{item.text}}：{{ScreenValue.shape.text.join(',')}}<template v-if="ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height">,{{ScreenValue.shape.width}}:{{ScreenValue.shape.height}}</template>
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('shape')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'grade'">
+					<div class="txtScrent list" v-if="ScreenValue.grade.value.length">
+						{{item.text}}：{{ScreenValue.grade.text.join(',')}}
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('grade')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'btime'">
+					<div class="txtScrent list" v-if="ScreenValue.btime.value" style="max-width:222px;">
+						{{item.text}}：{{ScreenValue.btime.value}}
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('btime')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'mtime'">
+					<div class="txtScrent list" v-if="ScreenValue.mtime.value" style="max-width:222px;">
+						{{item.text}}：{{ScreenValue.mtime.value}}
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('mtime')"></span>
+					</div>
+				</template>
+				<template v-else-if="item.key == 'dateline'">
+					<div class="txtScrent list" v-if="ScreenValue.dateline.value" style="max-width:222px;">
+						{{item.text}}：{{ScreenValue.dateline.value}}
+						<span class="delBtn el-icon-close" @click.stop="ScreenDelete('dateline')"></span>
+					</div>	
+				</template>
 			</template>
-			<template v-if="parseInt(ScreenValue.desc.value)>-1">
-				<div class="txtScrent list" v-if="ScreenValue.desc.value=='1'&&ScreenValue.desc.input">注释：{{ScreenValue.desc.input}}
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
-				</div>
-				<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='1'">注释：有
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
-				</div>
-				<div class="txtScrent list" v-else-if="ScreenValue.desc.value=='0'">注释：没有
-					<span class="delBtn el-icon-close" @click.stop="ScreenDelete('desc')"></span>
-				</div>
-			</template>
-			
-			<div class="txtScrent list" v-if="ScreenValue.duration.start || ScreenValue.duration.end">
-				<template v-if="ScreenValue.duration.start&&ScreenValue.duration.end">{{ScreenValue.duration.start}}≤时长≤{{ScreenValue.duration.end}}</template>
-				<template v-else-if="ScreenValue.duration.start">时长≥{{ScreenValue.duration.start}}</template>
-				<template v-else="ScreenValue.duration.end">时长≤{{ScreenValue.duration.end}}</template>
-				<template v-if="ScreenValue.duration.dunit=='s'">秒</template><template v-else>分</template>
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('duration')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.size.wstart||ScreenValue.size.wend||ScreenValue.size.hstart||ScreenValue.size.hend">
-				<template v-if="ScreenValue.size.wstart&&ScreenValue.size.wend">{{ScreenValue.size.wstart}}≤宽≤{{ScreenValue.size.wend}}</template>
-				<template v-else-if="ScreenValue.size.wstart">宽≥{{ScreenValue.size.wstart}}</template>
-				<template v-else-if="ScreenValue.size.wend">宽≤{{ScreenValue.size.wend}}</template>
-				<template v-if="ScreenValue.size.hstart && ScreenValue.size.hend">,</template>
-				<template v-if="ScreenValue.size.hstart&&ScreenValue.size.hend">{{ScreenValue.size.hstart}}≤高≤{{ScreenValue.size.hend}}</template>
-				<template v-else-if="ScreenValue.size.hstart">高≥{{ScreenValue.size.hstart}}</template>
-				<template v-else-if="ScreenValue.size.hend">高≤{{ScreenValue.size.hend}}</template>
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('size')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.ext.value.length">
-				{{ScreenValue.ext.value.join(',')}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('ext')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.shape.value.length||(ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height)">
-				<!-- 形状： -->
-				{{ScreenValue.shape.text.join(',')}}<template v-if="ScreenValue.shape.custom&&ScreenValue.shape.width&&ScreenValue.shape.height">,{{ScreenValue.shape.width}}:{{ScreenValue.shape.height}}</template>
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('shape')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.grade.value.length">
-				评分：{{ScreenValue.grade.text.join(',')}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('grade')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.btime.value" style="max-width:222px;">
-				添加时间：{{ScreenValue.btime.value}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('btime')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.mtime.value" style="max-width:222px;">
-				创建时间：{{ScreenValue.mtime.value}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('mtime')"></span>
-			</div>
-			<div class="txtScrent list" v-if="ScreenValue.dateline.value" style="max-width:222px;">
-				修改时间：{{ScreenValue.dateline.value}}
-				<span class="delBtn el-icon-close" @click.stop="ScreenDelete('dateline')"></span>
-			</div>	
-
-
 		</div>
 	</div>
 	<div class="arrow-left ri-arrow-left-s-line arrow" @click.stop="HdeaderSearchScreenScroll('left')"></div>

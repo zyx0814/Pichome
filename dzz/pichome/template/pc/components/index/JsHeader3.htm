@@ -1,0 +1,25 @@
+<div id="top_header">
+	<div class="header-content">
+		<div class="h-left">
+			<a href="{MOD_URL}">
+				<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+				<span class="text">$_G['setting'][sitename]</span>
+			</a>
+		</div>
+		<div class="h-center">
+			<!--{template pc/components/index/header/JsHdeaderSearch1}-->
+		</div>
+		<div class="h-right">
+			<!--{template pc/components/index/header/JsHeaderRight}-->
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	var JsHeaderData = $.extend({},JsHdeaderSearchData,JsHeaderRightData,{
+		
+	});
+	var JsHeaderMethods = $.extend({},JsHdeaderSearchMethods,JsHeaderRightMethods,{
+		
+	});
+</script>

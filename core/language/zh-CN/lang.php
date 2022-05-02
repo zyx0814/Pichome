@@ -6,6 +6,7 @@ $lang = array (
 	'license_user_sum'=>'授权用户数',
 	'license_version'=>'授权版本',
 	'license_to'=>'授权对象',
+	'auth_unmatch'=>'授权不匹配',
 	'V_Enterprise'=>'企业版',
 	'V_Tcloud'=>'腾讯云版',
 	'V_Custom'=>'定制版',

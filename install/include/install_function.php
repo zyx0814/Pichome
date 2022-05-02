@@ -1162,10 +1162,10 @@ function dhtmlspecialchars($string) {
 	}
 	return $string;
 }
-function upgradeinformation($uniqueid,$sitename) {
+function upgradeinformation($sitename) {
    
     $update = array();
-    $update[ 'uniqueid' ] = $uniqueid;
+    //$update[ 'mcode' ] = $uniqueid;
     $update[ 'usum' ] = 1;
     $update[ 'siteurl' ] = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'];
     $update[ 'sitename' ] = $sitename;
@@ -1173,12 +1173,13 @@ function upgradeinformation($uniqueid,$sitename) {
     $update[ 'version_level' ] = CORE_VERSION_LEVEL;
     $update[ 'release' ] = CORE_RELEASE;
     $update[ 'fixbug' ] = CORE_FIXBUG;
-    
+    $update[ 'license_version' ] = 'LICENSE_VERSION';
+    $update[ 'license_limit' ] = 'LICENSE_LIMIT';
     $data = '';
     foreach ( $update as $key => $value ) {
       $data .= $key . '=' . rawurlencode( $value ) . '&';
     }
-    $upgradeurl = OFFICIAL . "market/system/info/" . rawurlencode( base64_encode( $data ) ) . "/" . time();
+    $upgradeurl = OFFICIAL . "authlicense/count/info/" . rawurlencode( base64_encode( $data ) ) . "/" . time();
     dfopen( $upgradeurl );
   }
     function quote($str, $noarray = false) {

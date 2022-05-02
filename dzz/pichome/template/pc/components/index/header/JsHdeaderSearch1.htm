@@ -1,6 +1,6 @@
 <div class="result-section">
 	<!--{template pc/components/index/JsLibrary}-->
-	<div class="input-box" :class="DocumentTemplate=='1'&&Librarys.length<2?'radius':''">
+	<div class="input-box" :class="DocumentTemplate!='2'&&Librarys.length<2?'radius':''">
 		<div class="InputKeyword" :class="{'notradius':DocumentTemplate=='2'}" @click="HeaderPopoverSearchShow">
 			<!--{template pc/components/index/header/JsHdeaderSearchInput}-->
 			<!--{template pc/components/index/header/JsHdeaderSearchScreen}-->
@@ -26,7 +26,8 @@
 			$('.InputKeyword').addClass('focus');
 			$('.search-keyword input').focus();
 			this.HeaderSearch.width = $('.el-header').find('.input-box').width();
-			this.HeaderSearch.height = $('body').height()*0.6;
+			// this.HeaderSearch.height = $('body').height()*0.6;
+			this.HeaderSearch.height = 335;
 			var host = window.sessionStorage.getItem('HostKeyword');
 			if(host){
 				self.HeaderSearch.recenttag = host.split(',');

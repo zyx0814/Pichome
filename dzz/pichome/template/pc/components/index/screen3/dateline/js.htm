@@ -1,0 +1,29 @@
+<script type="text/javascript">
+	var JsScreenDatelineMethods = {
+		ScreenDatelineEmptyClick(){
+			if(this.ScreenValue.dateline.value || this.ScreenValue.dateline.datelinepicker.length){
+				this.ScreenValue.dateline.datelinepicker = [];
+				this.ScreenValue.dateline.custom = false;
+				this.ScreenValue.dateline.value = '';
+				this.ScreenSubmit();
+			}
+		},
+		ScreenDatelineClick(val){
+			if(val==this.ScreenValue.dateline.value){
+				this.ScreenValue.dateline.datelinepicker = [];
+				this.ScreenValue.dateline.value = '';
+			}else{
+				this.ScreenValue.dateline.datelinepicker = [];
+				this.ScreenValue.dateline.custom = false;
+				this.ScreenValue.dateline.value = val;
+			}
+			this.ScreenSubmit();
+		},
+		ScreenDatelinePicker(val){
+			if(val.length){
+				this.ScreenValue.dateline.value = val.join('_');
+				this.ScreenSubmit();
+			}
+		},
+	};
+</script>

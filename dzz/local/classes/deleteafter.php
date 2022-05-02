@@ -18,6 +18,7 @@ class deleteafter
                 $delnum = count($data['rids']);
                 C::t('pichome_vapp')->add_getinfonum_by_appid($appid,-$delnum);
             }
+            C::t('#local#local_record')->delete_by_rids($data['rids']);
         }
 
 

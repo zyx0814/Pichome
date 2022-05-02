@@ -9,13 +9,40 @@
 if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
-$fpath = isset($_GET['fpath']) ? trim($_GET['fpath']):'';
-if(!$fpath = dzzdecode(rawurldecode($fpath), '', 0)){
-    if (!$path = dzzdecode(rawurldecode($_GET['path']), '', 0)) {
-        @header('HTTP/1.1 404 Not Found');
-        @header('Status: 404 Not Found');
+global $_G;
+$path = isset($_GET['path']) ? trim($_GET['path']):'';
+if(!$path = dzzdecode($path,'',0)){
+    @header('HTTP/1.1 404 Not Found');
+    @header('Status: 404 Not Found');
+}
+$patharr = explode('_',$path);
+$perm = isset($patharr[1]) ? intval($patharr[1]):0;
+if($perm&1){//是否获取真实文件地址
+    $rid = $patharr[0];
+    $hasperm = true;
+    $resourcesdata = C::t('pichome_resources')->fetch($rid);
+    if(!$resourcesdata){
+        exit('file is not exists');
+    }
+    $resourattrdata = C::t('pichome_resources_attr')->fetch($rid);
+    $resourcesdata = array_merge($resourcesdata, $resourattrdata);
+    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
+    if($perm&2){//判断是否忽略权限
+        $hasperm = true;
+    }else{
+        if($_G['adminid']== 1){
+            $hasperm = true;
+        }else{
+            $hasperm = ($appdata['download']) ? true:false;
+        }
 
     }
+    if(!$hasperm){
+        @header('HTTP/1.1 403 No Perm');
+        @header('Status: 404 No Perm');
+    }
+    $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
+}else{//获取缩略图
     $rid = $path;
     $resourcesdata = C::t('pichome_resources')->fetch($rid);
     if(!$resourcesdata){
@@ -50,8 +77,6 @@ if(!$fpath = dzzdecode(rawurldecode($fpath), '', 0)){
             $thumbpath = geticonfromext($resourcesdata['ext'], $resourcesdata['type']);
         }
     }
-}else{
-    $thumbpath = $fpath;
 }
 
 $url = $thumbpath;

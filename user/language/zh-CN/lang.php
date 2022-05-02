@@ -224,5 +224,6 @@ $lang=array (
 	'sms_auth_login'=>'登录短信验证',
 	'sms_phone_empty'=>'手机号码不能为空',
 	'sms_code_empty'=>'短信验证码不能为空',
+    'personversion_no_create_unablelogin'=>'个人版只允许创始人登录'
 
 );

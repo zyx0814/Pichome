@@ -12,7 +12,6 @@
 			visible:false,
 			dpath:'',
 			data:[
-				// { name: '收藏',type:'collect' },
 				{ name: '分享',type:'share' },
 				{ name: '下载',type:'down' },
 			]
@@ -44,9 +43,28 @@
 				case 'down':
 					window.open(SITEURL+MOD_URL+'&op=download&dpath='+self.ImagesMore.dpath);
 				break;
-				case 'collect':
-					self.ParamImages.operation.type = data.type;
-					self.ImagesClassify.PopupVisible = true;
+				case 'address':
+					$.post('{MOD_URL}&op=ajax&operation=realfianllypath',{
+						rid:self.ParamImages.operation.rids.join(',')
+					},function(data){
+						if(data.realfianllypath){
+							self.$dialog.confirm({
+								title: '',
+								confirmButtonText:'复制地址',
+								message: data.realfianllypath,
+							}).then(function(){
+							    self.CommonCopyTxt(data.realfianllypath)
+							}).catch(function(){
+							    // on cancel
+							});
+						}else{
+							self.$message({
+							  message: '获取固定地址失败',
+							  type: 'error'
+							});
+						}
+					},'json')
+					
 				break;
 			}
 		}

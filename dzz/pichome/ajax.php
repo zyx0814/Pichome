@@ -29,21 +29,27 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
 } elseif ($operation == 'getsearchfolder') {//最近搜索目录和目录信息
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $pfids = isset($_GET['pfids']) ? trim($_GET['pfids']):'';
+    $isall = isset($_GET['isall']) ? intval($_GET['isall']):0;
     if($pfids)$pfids = explode(',',$pfids);
     else $pfids = [];
-    $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
+    if($isall){
+        $folderdatanum = C::t('pichome_folder')->fetch_all_folder_by_appid($appid);
+    }else{
+        $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
+    }
     exit(json_encode(array( 'folderdatanum' => $folderdatanum)));
 }elseif($operation == 'searchfolderbyname'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']):'';
     $folderdatanum = C::t('pichome_folder')->search_by_fname($keyword,$appid);
     exit(json_encode(array( 'folderdata' => $folderdatanum)));
-} elseif ($operation == 'searchmenu_num') {
+}
+elseif ($operation == 'searchmenu_num') {
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     //是否获取标签数量
     $hasnum = isset($_GET['hasnum']) ? intval($_GET['hasnum']):0;
-    $prepage = 15;
+	$prepage = isset($_GET['prepage']) ? intval($_GET['prepage']):15;
     $pagelimit = 'limit '.($page - 1) * $prepage . ',' . $prepage;
     $cid = isset($_GET['cid']) ? trim($_GET['cid']) : '';
     $tagkeyword = isset($_GET['tagkeyword']) ? htmlspecialchars($_GET['tagkeyword']) : '';
@@ -59,6 +65,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $params = ['pichome_resources'];
     }
     $wheresql = " r.isdelete < 1 ";
+
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $vappids = [];
@@ -438,39 +445,65 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //标签条件
     if (isset($_GET['tag'])) {
         $tagwherearr = [];
-        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= " left join %t ra on r.rid = ra.rid";
-            $params[] = 'pichome_resources_attr';
-        }
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
+        /*     if (!in_array('pichome_resources_attr', $params)) {
+                 $sql .= "left join %t ra on r.rid = ra.rid";
+                 $params[] = 'pichome_resources_attr';
+             }
+             $tag = trim($_GET['tag']);
+             if ($tag == -1) {
+                 $wheresql .= " and ra.tag =  '' ";
+             }
+             else {
+                 $tagval = explode(',', trim($_GET['tag']));
+                 if (!empty($tagval)) {
+                     foreach ($tagval as $v) {
+                         $tagwherearr[] = " find_in_set(%d,ra.tag)";
+                         $para[] = $v;
+                     }
+                     if ($tagrelative) {
+                         $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
+                     } else {
+                         $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+                     }
+                 }
+
+             }*/
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
         $tag = trim($_GET['tag']);
         if ($tag == -1) {
-            $wheresql .= " and ra.tag =  '' ";
+            if (!in_array('pichome_resourcestag', $params)) {
+                $sql .= "left join %t rt on r.rid = rt.rid";
+                $params[] = 'pichome_resourcestag';
+            }
+            $wheresql .= " and isnull(rt.tid) ";
         } else {
-            $tagval = explode(',', trim($_GET['tag']));
-            if(!empty($tagval)){
-                $seltagdata=[];
-                if($appid){
-                    foreach(DB::fetch_all("select t.tagname,t.tid,tr.cid from %t  t  left  join %t tr on t.tid = tr.tid where t.tid in(%n) and tr.appid=%s",array('pichome_tag','pichome_tagrelation',$tagval,$appid)) as $tv){
-                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']),'cid'=>$tv['cid']);
-                    }
-                }else{
-                    foreach(DB::fetch_all("select tagname,tid from %t where tid in(%n) ",array('pichome_tag',$tagval)) as $tv){
-                        $seltagdata[] = array('tagname'=>$tv['tagname'],'tid'=>intval($tv['tid']));
-                    }
-                }
-
-            }
-            foreach ($tagval as $v) {
-                $tagwherearr[] = " find_in_set(%d,ra.tag)";
-                $para[] = $v;
-            }
             if ($tagrelative) {
-                $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach ($tagval as $k => $v) {
+                    $sql .= ' left join %t rt' . ($k + 1) . ' on rt' . ($k + 1) . '.rid = r.rid and rt' . ($k + 1) . '.tid = %d';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= ' and !isnull(rt' . ($k + 1) . '.tid)';
+                    $params[] = $v;
+                }
             } else {
-                $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= '  and rt'.($k+1).'.tid = %d';
+                    $para[] = $v;
+                }
+                /*if (!in_array('pichome_resourcestag', $params)) {
+                    $sql .= "left join %t rt on r.rid = rt.rid";
+                    $params[] = 'pichome_resourcestag';
+                }
+                $wheresql .= ' and rt.tid in(%n) ';
+                $tagval = explode(',', trim($_GET['tag']));
+                $para[] = $tagval;*/
             }
         }
+
 
     }
     $timedataarr = array(
@@ -761,7 +794,6 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             }
         }
         //将今天昨天归类到最近七天，将最近七天归到最近30天，将近30天归到最近90天，将最近90天归到最近365天
-        //将今天昨天归类到最近七天，将最近七天归到最近30天，将近30天归到最近90天，将最近90天归到最近365天
         $data[-7]['num'] = (isset($data[-7]['num']) ? intval($data[-7]['num']) : 0) + (isset($data[1]['num']) ? intval($data[1]['num']) : 0) + (isset($data[-1]['num']) ? intval($data[-1]['num']) : 0);
         if ($data[-7]['num']) $data[-7] = array('num' => $data[-7]['num'], 'val' => $timedataarr[-7]['val'], 'label' => $timedataarr[-7]['label']);
         $data[-30]['num'] = (isset($data[-30]['num']) ? intval($data[-30]['num']) : 0) + (isset($data[-7]['num']) ? intval($data[-7]['num']) : 0);
@@ -806,7 +838,8 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         }
     }
     exit(json_encode($data));
-} elseif ($operation == 'search_menu') {
+}
+elseif ($operation == 'search_menu') {
 
     $skey = isset($_GET['skey']) ? trim($_GET['skey']) : '';
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
@@ -825,6 +858,30 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }
     $wheresql = " r.isdelete < 1 ";
 
+    //用户权限等级
+        $ulevel = $_G['pichomelevel'];
+        $leveltids =[];
+        foreach(DB::fetch_all("select tid,tagname from %t where tagname in(%n)",array('pichome_tag',['LV1','LV2','LV3','LV4','LV5'])) as $v){
+            $tidperm = str_replace('LV','',$v['tagname']);
+            $leveltids[$tidperm] = $v['tid'];
+        }
+    //用户无权限标签id
+        $nopermtids = [];
+        foreach($leveltids as $k =>$val){
+            if($k > $ulevel){
+                $nopermtids[] = $val;
+            }
+        }
+    if(!empty($nopermtids)){
+        $sql .= "left join %t ra on r.rid = ra.rid";
+        $params[] = 'pichome_resources_attr';
+        foreach ($nopermtids as $v) {
+            $tagwherearr[] = " !find_in_set(%d,ra.tag)";
+            $para[] = $v;
+        }
+        $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+
+    }
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $vappids = [];
     $vappids = [];
@@ -941,26 +998,37 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     //标签条件
     if (isset($_GET['tag'])) {
         $tagwherearr = [];
-        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "  left join %t ra on r.rid = ra.rid";
-            $params[] = 'pichome_resources_attr';
-        }
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
+
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
         $tag = trim($_GET['tag']);
         if ($tag == -1) {
-            $wheresql .= " and ra.tag =  '' ";
-        } else {
-            $tagval = explode(',', trim($_GET['tag']));
-            foreach ($tagval as $v) {
-                $tagwherearr[] = " find_in_set(%d,ra.tag)";
-                $para[] = $v;
+            if (!in_array('pichome_resourcestag', $params)) {
+                $sql .= "left join %t rt on r.rid = rt.rid";
+                $params[] = 'pichome_resourcestag';
             }
+            $wheresql .= " and isnull(rt.tid) ";
+        } else {
             if ($tagrelative) {
-                $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach ($tagval as $k => $v) {
+                    $sql .= ' left join %t rt' . ($k + 1) . ' on rt' . ($k + 1) . '.rid = r.rid and rt' . ($k + 1) . '.tid = %d';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= ' and !isnull(rt' . ($k + 1) . '.tid) ';
+                    $params[] = $v;
+                }
             } else {
-                $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= '  and rt'.($k+1).'.tid = %d ';
+                    $para[] = $v;
+                }
+
             }
         }
+
 
     }
 
@@ -1303,7 +1371,8 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         $data['catdata'] = $catdata;
     }
     exit(json_encode($data));
-} elseif ($operation == 'getsearchmenudata') {//获取筛选项
+}
+elseif ($operation == 'getsearchmenudata') {//获取筛选项
 
 } elseif ($operation == 'setshow') {//设置显示字段
     $showfileds = isset($_GET['showfileds']) ? trim($_GET['showfileds']) : '';
@@ -1377,7 +1446,8 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
         C::t('user_setting')->update_by_skey('pichomeuserscreen', $screen, $uid);
         exit(json_encode(array('success' => true)));
     }
-} elseif ($operation == 'getscreen') {//获取筛选项
+}
+elseif ($operation == 'getscreen') {//获取筛选项
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $tagval = $_GET['tag'] ? explode(',',trim($_GET['tag'])):[];
     $shape = $_GET['shape'] ? trim($_GET['shape']):'';
@@ -1392,7 +1462,6 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
             $shapelable[] = $lableshape[$s]['val'];
         }
     }
-
     $tagdata=[];
     if(!empty($tagval)){
         if($appid){
@@ -1412,7 +1481,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     $folderdata = [];
     foreach(DB::fetch_all("select fname,fid,pathkey,appid from %t where fid in(%n)",array('pichome_folder',$fidarr)) as $v){
         $folderdata[$v['fid']] = ['fname'=>$v['fname'],'pathkey'=>$v['pathkey'],'appid'=>$v['appid']];
-        $folderdata[$v['fid']]['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array('pichome_folder',$v['fid'])) ? false:true;
+        $folderdata[$v['fid']]['leaf'] = DB::result_first("select count(fid) from %t where pfid = %s",array('pichome_folder',$v['fid'])) ? false:true;
     }
     if(!isset($_G['setting']['pichomefilterfileds'])){
         $pichomefilterfileds = C::t('setting')->fetch_all('pichomefilterfileds');
@@ -1421,7 +1490,7 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }
     if ($appid) {
         if ($data = DB::fetch_first("select * from %t where appid=%s ", array('pichome_vapp', $appid))) {
-
+			array_unshift($pichomefilterfileds,array('key'=>'classify','text'=>'分类','checked'=>1));
             $data['filter'] = ($data['filter']) ? unserialize($data['filter']):$pichomefilterfileds;
             // if($data['filter']){
             foreach ($data['filter'] as $k => $v) {
@@ -1501,35 +1570,168 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
 		C::t('user_setting')->update_by_skey('pichomeimageexpanded',$pichomeimageexpanded);
 		exit(json_encode(array('success' => true)));
 	}
-}elseif($operation == 'gethostip'){
-    $iphost = [];
-    $os = PHP_OS;
-    if(preg_match('/^WIN(.+?)/i',$os)){
-        $host= gethostname();
-    }else{
-        $host = $_SERVER['SERVER_NAME'];
-    }
-    $host = $_SERVER['SERVER_NAME'];
+} elseif($operation == 'tagrelativesetting'){
+	$pichometagrelative = $_GET['pichometagrelative'];
+	C::t('user_setting')->update_by_skey('pichometagrelative',$pichometagrelative);
+	exit(json_encode(array('success' => true)));
+} elseif($operation == 'multipleselection'){
+	$multipleselection = $_GET['multipleselection'];
+	C::t('user_setting')->update_by_skey('pichomemultipleselection',$multipleselection);
+	exit(json_encode(array('success' => true)));
+}elseif($operation == 'getsearchmenu_data'){
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $skey = isset($_GET['skey']) ? trim($_GET['skey']):'';
+    $cid = isset($_GET['cid']) ? trim($_GET['cid']):'';
+    $cids = ($cid) ? explode(',',$cid):[];
+    $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']):50;
+    $limitsql = "limit 0," . $perpage;
+    $skearr = explode(',',$skey);
+    $datas = [];
+    foreach($skearr as $v){
+        if($v == 'tag'){
+            $datas['tag'] = [];
+            if($appid){
+                if(count($cids)){
+                    if(in_array(-1,$cids)){
+                        $nocatindex = array_search(-1,$cids);
+                        unset($cids[$nocatindex]);
+                        foreach(DB::fetch_all("select distinct t.tid,t.tagname,vt.hots from %t vt 
+                            left join  %t tr on tr.tid=vt.tid 
+                            left join %t t on t.tid=vt.tid where isnull(tr.cid) and vt.appid = %s ORDER BY vt.hots DESC $limitsql ",
+                            array('pichome_vapp_tag','pichome_tagrelation','pichome_tag',$appid)) as $tdata){
+                            $datas['tag'][-1]['tags'][] = ['tid'=>$tdata['tid'],'tagname'=>$tdata['tagname']];
+                            $tmpnum += 1;
+                        }
+                        if($tmpnum >= $perpage)  $datas['tag'][-1]['next'] = true;
+                        else $datas['tag'][-1]['next'] = false;
+                    }
+                    if(count($cids)){
+                        $taggroupdata = DB::fetch_all("select * from %t where cid in(%n) and appid = %s",array('pichome_taggroup',$cids,$appid));
+                        foreach($taggroupdata as $tg){
+                            $datas['tag'][$tg['cid']] = ['catname'=>$tg['catname'],'cid'=>$tg['cid']];
+                            $datas['tag'][$tg['cid']]['tags'] = [];
+                            $tmpnum = 0;
+                            foreach(DB::fetch_all("select distinct t.tid,t.tagname,vt.hots from %t vt 
+                            left join  %t tr on tr.tid=vt.tid 
+                            left join %t t on t.tid=vt.tid where tr.cid=%s and vt.appid = %s ORDER BY vt.hots DESC $limitsql ",
+                                array('pichome_vapp_tag','pichome_tagrelation','pichome_tag',$tg['cid'],$appid)) as $tdata){
+                                $datas['tag'][$tg['cid']]['tags'][] = ['tid'=>$tdata['tid'],'tagname'=>$tdata['tagname']];
+                                $tmpnum += 1;
+                            }
+                            if($tmpnum >= $perpage)  $datas['tag'][$tg['cid']]['next'] = true;
+                            else $datas['tag'][$tg['cid']]['next'] = false;
+                        }
+                    }
 
-    $ip = gethostbyname($host);
-    $ip = filter_var($ip,FILTER_VALIDATE_IP);
-    if(!$ip || strpos($ip,'127') === 0){
-        if(preg_match('/^WIN(.+?)/i',$os)){
-            $host= gethostname();
-        }else{
-            $host = $_SERVER['SERVER_NAME'];
+                }
+                else{
+                    $params = [ 'pichome_vapp_tag','pichome_tag',$appid];
+                    $tmpnum = 0;
+                    foreach(DB::fetch_all("select distinct t.tid,t.tagname from %t vt left join %t 
+                        t on vt.tid=t.tid where vt.appid = %s order by vt.hots desc $limitsql",$params) as $tv){
+                        $datas['tag']['data'][] = ['tid'=>$tv['tid'],'tagname'=>$tv['tagname']];
+                        $tmpnum += 1;
+                    }
+                    if($tmpnum >= $perpage) $datas['tag']['next'] = true;
+                    else $datas['tag']['next'] = false;
+                    // print_r($datas);die;
+                }
+
+
+            }else{
+                $params = [ 'pichome_tag'];
+                $tmpnum = 0;
+                foreach(DB::fetch_all("select * from %t where 1 order by hots desc $limitsql",$params) as $tv){
+                    $datas['tag']['data'][] = ['tid'=>$tv['tid'],'tagname'=>$tv['tagname']];
+                    $tmpnum += 1;
+                }
+                if($tmpnum >= $perpage) $datas['tag']['next'] = true;
+                else $datas['tag']['next'] = false;
+            }
+
+        }elseif($v == 'ext'){
+            $params = ['pichome_resources'];
+            $wheresql = ' isdelete < 1 ';
+            if($appid){
+                $params[] = $appid;
+                $wheresql .= " and appid = %s ";
+            }
+            $datas['ext'] =[];
+            foreach(DB::fetch_all("select ext from %t  where $wheresql group by ext", $params) as $ev){
+                $datas['ext'][] = $ev['ext'];
+            }
         }
-        $ip = gethostbyname($host);
     }
-    if($_SERVER['SERVER_PORT'] == 443){
-        $siteurl = 'https://'.$_SERVER['SERVER_NAME'];
-    } elseif($_SERVER["SERVER_PORT"] == 80) {
-        $siteurl = 'http://'.$_SERVER['SERVER_NAME'];
+    exit(json_encode($datas));
 
-    }else{
-        $ip = $ip . ':' . $_SERVER["SERVER_PORT"];
-        $siteurl = 'http://'.$_SERVER['SERVER_NAME'] . ':' . $_SERVER["SERVER_PORT"];
-    }
-    $iphost = ['ip'=>$ip,'siteurl'=>$siteurl];
-    exit(json_encode($iphost));
 }
+elseif($operation == 'getMoretag'){
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $cid = isset($_GET['cid']) ? trim($_GET['cid']):'';
+    $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']):50;
+    $page = isset($_GET['page']) ? intval($_GET['page']):1;
+    $start = ($page - 1) * $perpage;
+    $limitsql = "limit $start," . $perpage;
+    $datas = [];
+    if($appid){
+        if($cid){
+            if($cid == -1){
+                $tmpnum = 0;
+                foreach(DB::fetch_all("select distinct t.tid,t.tagname,vt.hots from %t vt 
+                        left join  %t tr on tr.tid=vt.tid 
+                        left join %t t on t.tid=vt.tid where isnull(tr.cid) and  vt.appid = %s ORDER BY vt.hots DESC $limitsql ",
+                    array('pichome_vapp_tag','pichome_tagrelation','pichome_tag',$appid)) as $tdata){
+                    $datas['tag'][] = ['tid'=>$tdata['tid'],'tagname'=>$tdata['tagname']];
+                    $tmpnum += 1;
+                }
+                if($tmpnum >= $perpage)  $datas['next'] = true;
+                else $datas['next'] = false;
+            }else{
+                $tmpnum = 0;
+                foreach(DB::fetch_all("select distinct t.tid,t.tagname,vt.hots from %t vt 
+                        left join  %t tr on tr.tid=vt.tid 
+                        left join %t t on t.tid=vt.tid where tr.cid=%s and vt.appid = %s ORDER BY vt.hots DESC $limitsql ",
+                    array('pichome_vapp_tag','pichome_tagrelation','pichome_tag',$cid,$appid)) as $tdata){
+                    $datas['tag'][] = ['tid'=>$tdata['tid'],'tagname'=>$tdata['tagname']];
+                    $tmpnum += 1;
+                }
+                if($tmpnum >= $perpage)  $datas['next'] = true;
+                else $datas['next'] = false;
+            }
+
+        }
+
+        else{
+            $params = [ 'pichome_vapp_tag','pichome_tag',$appid];
+            $tmpnum = 0;
+            foreach(DB::fetch_all("select distinct t.tid,t.tagname from %t vt left join %t 
+                        t on vt.tid=t.tid where vt.appid = %s order by vt.hots desc $limitsql",$params) as $tv){
+                $datas['tag'][] = ['tid'=>$tv['tid'],'tagname'=>$tv['tagname']];
+                $tmpnum += 1;
+            }
+
+            if($tmpnum >= $perpage) $datas['next'] = true;
+            else $datas['next'] = false;
+        }
+    }else{
+        $params = [ 'pichome_vapp_tag','pichome_tag'];
+        $tmpnum = 0;
+        foreach(DB::fetch_all("select distinct t.tid,t.tagname from %t vt left join %t 
+                        t on vt.tid=t.tid where 1  order by vt.hots desc $limitsql",$params) as $tv){
+            $datas['tag'][] = ['tid'=>$tv['tid'],'tagname'=>$tv['tagname']];
+            $tmpnum += 1;
+        }
+        if($tmpnum >= $perpage) $datas['next'] = true;
+        else $datas['next'] = false;
+    }
+    exit(json_encode($datas));
+}
+elseif($operation == 'realfianllypath') {
+    $rid = isset($_GET['rid']) ? trim($_GET['rid']) : '';
+    $data = [];
+    if ($_G['adminid'] == 1) {
+        $data['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg' . '&path=' . dzzencode($rid.'_3', '', 0, 0);
+    }
+    exit(json_encode($data));
+}
+

@@ -41,7 +41,7 @@
 								<div class="text" v-if="ParamSort.showinformation.value.indexOf('name')>-1||ParamSort.showinformation.value.indexOf('extension')>-1">
 									<template v-if="ParamSort.showinformation.value.indexOf('name')>-1" v-cloak>{{item.name}}</template><template v-if="ParamSort.showinformation.value.indexOf('extension')>-1" v-cloak>.{{item.ext}}</template>
 								</div>
-								<div v-if="!ParamImages.checked" class="circulars" @click.stop="ImagesMoreClick(item.rid,item.dpath)">
+								<div v-if="!ParamImages.checked" class="circulars" @click.stop="ImagesMoreClick(item)">
 									<i class="ri-more-fill"></i>
 								</div>
 							</div>
@@ -99,6 +99,7 @@
 
 <script type="text/javascript">
 	var ImagesData = $.extend({},{
+		DocumentAdminId:'$_G[adminid]',
 		ParamImages:{
 			resize:0,
 			data:[],
@@ -176,16 +177,16 @@
 					this.ParamFooter.data.screen.show = false;
 					this.ParamFooter.data.sort.show = false;
 					this.ParamFooter.data.user.show = false;
-					this.ParamFooter.data.collectcheck.show = true;
-					this.ParamFooter.data.outcheck.show = true;
+					// this.ParamFooter.data.collectcheck.show = true;
+					// this.ParamFooter.data.outcheck.show = true;
 				}else{
 					this.CommonSetFooterBadge();
 					this.ParamFooter.data.search.show = true;
 					this.ParamFooter.data.screen.show = true;
 					this.ParamFooter.data.sort.show = true;
 					this.ParamFooter.data.user.show = true;
-					this.ParamFooter.data.collectcheck.show = false;
-					this.ParamFooter.data.outcheck.show = false;
+					// this.ParamFooter.data.collectcheck.show = false;
+					// this.ParamFooter.data.outcheck.show = false;
 				}
 				this.ParamImages.type = 'refresh';
 				this.ImagesLayoutInit();
@@ -213,9 +214,19 @@
 		}
 	};
 	var ImagesJs = $.extend({},{
-		ImagesMoreClick(rid,dpath){
-			this.ParamImages.operation.rids = [rid];
-			this.ImagesMore.dpath = dpath;
+		ImagesMoreClick(item){
+			this.ParamImages.operation.rids = [item.rid];
+			this.ImagesMore.data = [];
+			if(parseInt(item.share) || parseInt(this.DocumentAdminId)){
+				this.ImagesMore.data.push({ name: '分享',type:'share' });
+			}
+			if(parseInt(item.download) || parseInt(this.DocumentAdminId)){
+				this.ImagesMore.data.push({ name: '下载',type:'down' });
+			}
+			if(parseInt(this.DocumentAdminId)){
+				this.ImagesMore.data.push({ name:'固定地址',type:'address' });
+			}
+			this.ImagesMore.dpath = item.dpath;
 			this.ImagesMore.visible = true;
 		},
 		ImagesDetailClick(rid,index){
@@ -255,7 +266,7 @@
 				beforeScrollTop = afterScrollTop;
 				self.ParamFooter.IsShow = updown > 0 ? "down" : "up";  //判断往上还是往下
 				self.ImagesLayoutScrollShow();
-				if($(this).scrollTop()+$(this).height()>=this.scrollHeight-80){
+				if($(this).scrollTop()+$(this).outerHeight()>=this.scrollHeight-80){
 					if(ParamBasic.page>=ParamBasic.totalpage || self.ParamImages.loading || self.ParamImages.valloading){
 						return false;
 					}

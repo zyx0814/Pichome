@@ -1,0 +1,19 @@
+<script type="text/javascript">
+	var JsScreenDurationMethods = {
+		ScreenDurationClick(){
+			if(this.ScreenValue.duration.start || this.ScreenValue.duration.end){
+				this.ScreenValue.duration.start = '';
+				this.ScreenValue.duration.end = '';
+				this.ScreenSubmit();
+			}
+		},
+		ScreenDurationInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+		ScreenDurationdunit(){
+			if(this.ScreenValue.duration.start || this.ScreenValue.duration.end){
+				this.ScreenSubmit();
+			}
+		}
+	};
+</script>

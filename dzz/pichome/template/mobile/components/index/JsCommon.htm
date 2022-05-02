@@ -5,12 +5,15 @@
 				this.ParamImages.loading = false;
 				return false;
 			}
-			this.ParamLibrary.fdata = [{
-					text: '全部库',
-					value: '',
-					download:0,
-					share:0,
-				}];
+			
+			if(this.ParamLibrary.data.length > 1){
+				this.ParamLibrary.fdata = [{
+						text: '全部库',
+						value: '',
+						download:0,
+						share:0,
+					}];
+			}
 			for(var i in this.ParamLibrary.data){
 				var item = this.ParamLibrary.data[i];
 				var str = {
@@ -23,8 +26,8 @@
 			}
 			if(this.ParamLibrary.fdata.length == 1){
 				var data = this.ParamLibrary.fdata[0];
-				this.ParamLibrary.activeId = data['appid'];
-				this.ParamLibrary.activeTxt = data['appname'];
+				this.ParamLibrary.activeId = data['value'];
+				this.ParamLibrary.activeTxt = data['text'];
 			}
 			this.CommonhandleHash('refresh');
 		},
@@ -422,6 +425,7 @@
 						}else{
 							item.badge = self.ParamScreen.value[type].value.length || '';
 						}
+						
 					break;
 					case 'color':
 					case 'link':
@@ -514,17 +518,7 @@
 				}
 				self.ParamBasic.total = information.param.total;
 				if(isreload == 'refresh'){
-					if(information.param.tagdata){
-						var tstr = {};
-						for(var t in information.param.tagdata){
-							var titem = information.param.tagdata[t];
-							if(!tstr[titem.cid]){
-								tstr[titem.cid] = [];
-							}
-							tstr[titem.cid].push(titem.tid);
-						}
-						self.ParamScreen.value.tag.refreshval = tstr;
-					}
+					
 					self.CommonGetScreenData();
 				}
 			},'json');
@@ -545,13 +539,26 @@
 			if(self.ParamScreen.value.classify.realvalue && self.ParamScreen.value.classify.realvalue.length){
 				param['fids'] = self.ParamScreen.value.classify.realvalue.join(',');
 			}
+			if(self.ParamScreen.value.tag.value && self.ParamScreen.value.tag.value.length){
+				param['tag'] = self.ParamScreen.value.tag.value.join(',');
+			}
 			$.post(MOD_URL+'&op=ajax&operation=getscreen',param,function(data){
 				if(data.success){
 					var fdata = data.data;
 					var arr = [];
 					var grouparr = {};
 					var index = 0;
-					
+
+					var tstr = {};
+					for(var t in data.tagdata){
+						var titem = data.tagdata[t];
+						if(!tstr[titem.cid]){
+							tstr[titem.cid] = [];
+						}
+						tstr[titem.cid].push(titem.tid);
+					}
+					self.ParamScreen.value.tag.refreshval = tstr;
+			
 					for(var i in fdata){
 						var item = fdata[i];
 						if(parseInt(item.checked)){

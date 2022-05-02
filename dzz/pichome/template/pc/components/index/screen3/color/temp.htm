@@ -1,0 +1,51 @@
+<div class="block">
+	<div class="title">颜色</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" :class="{'active':!ScreenValue.color.value}" @click="ScreenColorEmptyClick()">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul screening-color">
+			
+			<template v-for="item in ScreenValue.color.data">
+				<template v-if="item == '#FFFFFF'">
+					<li class="single" :style="{'background': item}" :class="{'active':ScreenValue.color.value==item}" @click="ScreenColorClick(item)" style="border: 1px solid var(--border-color-base);">
+						<i class="icon el-icon-check" style="color: #000000;"></i>
+					</li>
+				</template>
+				<template v-else-if="item == '#111111'">
+					<li class="single" :style="{'background': item}" :class="{'active':ScreenValue.color.value==item}" @click="ScreenColorClick(item)">
+						<i class="icon el-icon-check" style="color: #FFFFFF;"></i>
+					</li>
+				</template>
+				<template v-else>
+					<li class="single" :style="{'background': item}" :class="{'active':ScreenValue.color.value==item}" @click="ScreenColorClick(item)">
+						<i class="icon el-icon-check"></i>
+					</li>
+				</template>
+				
+			</template>
+			<li class="single" :class="{'active':ScreenValue.color.custom}" @click="ScreenColorCustomClick(!ScreenValue.color.custom)">
+				<span>自定义</span>
+			</li>
+			<li class="single notborder notpadding" v-if="ScreenValue.color.custom">
+				<div class="color-disk">
+					<el-input
+						 v-model="ScreenValue.color.value" 
+						 type="text" 
+						 @input="ScreenColorInput"
+						size="small">
+						<span slot="prefix" class="show" :style="{background:ScreenValue.color.value}"></span>
+					   <template slot="append">
+						   <span class="icon">
+							 <el-color-picker v-model="ScreenValue.color.value" color-format="hex" @change="ScreenColorPicker"></el-color-picker>
+							<img src="{MOD_PATH}/image/palette.png">
+						   </span>
+					   </template>
+					  </el-input>
+				</div>
+			</li>
+		</ul>
+	</div>
+</div>

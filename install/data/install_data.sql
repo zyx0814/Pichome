@@ -33,12 +33,14 @@ INSERT INTO dzz_hooks (id, app_market_id, `name`, description, `type`, update_ti
 (5, 0, 'dzz_initbefore', '', 0, 0, 'user\\classes\\init|user', 1, 0),
 (6, 0, 'dzz_initbefore', '', 0, 0, 'misc\\classes\\init|misc', 1, 0),
 (7, 0, 'dzz_initafter', '', 1, 0, 'user\\classes\\route|user', 1, 0),
-(8, 0, 'app_run', '', 1, 0, 'core\\dzz\\apprun', 1, 0),
-(9, 0, 'mod_run', '', 1, 0, 'core\\dzz\\modrun', 1, 0),
-(10, 0, 'adminlogin', '', 1, 0, 'admin\\login\\classes\\adminlogin', 1, 0),
-(12, 0, 'mod_start', '', 1, 0, 'core\\dzz\\modroute', 1, 0),
-(13, 0, 'login_check', '', 1, 0, 'user\\login\\classes\\logincheck|user', 1, 0),
-(14, 0, 'login_valchk', '', 1, 0, 'user\\login\\classes\\loginvalchk|user/login', 1, 0),
+(8, 0, 'dzz_initafter', ' ', 1, 0, 'core\\dzz\\ulimit', 1, 0),
+(9, 0, 'sysreg', ' ', 1, 0, 'core\\dzz\\sysreg', 1, 0),
+(10, 0, 'app_run', '', 1, 0, 'core\\dzz\\apprun', 1, 0),
+(11, 0, 'mod_run', '', 1, 0, 'core\\dzz\\modrun', 1, 0),
+(12, 0, 'adminlogin', '', 1, 0, 'admin\\login\\classes\\adminlogin', 1, 0),
+(13, 0, 'mod_start', '', 1, 0, 'core\\dzz\\modroute', 1, 0),
+(14, 0, 'login_check', '', 1, 0, 'user\\login\\classes\\logincheck|user', 1, 0),
+(15, 0, 'login_valchk', '', 1, 0, 'user\\login\\classes\\loginvalchk|user/login', 1, 0),
 (16, 0, 'email_chk', '', 1, 0, 'user\\profile\\classes\\emailchk|user', 1, 0),
 (17, 0, 'register_before', '', 1, 0, 'user\\register\\classes\\register|user', 1, 0),
 (18, 0, 'check_val', '', 1, 0, 'user\\register\\classes\\checkvalue|user', 1, 0),
@@ -52,7 +54,11 @@ INSERT INTO dzz_hooks (id, app_market_id, `name`, description, `type`, update_ti
 (26, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\eagle\\classes\\pichomevappdelete', 1, 0),
 (27, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\billfish\\classes\\delpichomefolderafter', 1, 0),
 (28, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\eagle\\classes\\delpichomefolderafter', 1, 0),
-(29, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\local\\classes\\deleteafter', 1, 0);
+(29, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\local\\classes\\deleteafter', 1, 0),
+(30, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\local\\classes\\pichomevappdelete', 1, 0),
+(31, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\billfish\\classes\\deleteafter', 1, 0),
+(32, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\local\\classes\\pichomevappdelete', 1, 0),
+(33, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\billfish\\classes\\deleteafter', 1, 0);
 
 
 
@@ -169,7 +175,7 @@ INSERT INTO `dzz_setting` VALUES('defaultdepartment', '1');
 
 
 INSERT INTO `dzz_setting` VALUES ('pichomefilterfileds', 'a:12:{i:0;a:3:{s:3:\"key\";s:3:\"tag\";s:4:\"text\";s:6:\"标签\";s:7:\"checked\";s:1:\"1\";}i:1;a:3:{s:3:\"key\";s:5:\"color\";s:4:\"text\";s:6:\"颜色\";s:7:\"checked\";s:1:\"1\";}i:2;a:3:{s:3:\"key\";s:4:\"link\";s:4:\"text\";s:6:\"链接\";s:7:\"checked\";s:1:\"1\";}i:3;a:3:{s:3:\"key\";s:4:\"desc\";s:4:\"text\";s:6:\"注释\";s:7:\"checked\";s:1:\"1\";}i:4;a:3:{s:3:\"key\";s:8:\"duration\";s:4:\"text\";s:6:\"时长\";s:7:\"checked\";s:1:\"1\";}i:5;a:3:{s:3:\"key\";s:4:\"size\";s:4:\"text\";s:6:\"尺寸\";s:7:\"checked\";s:1:\"1\";}i:6;a:3:{s:3:\"key\";s:3:\"ext\";s:4:\"text\";s:6:\"类型\";s:7:\"checked\";s:1:\"1\";}i:7;a:3:{s:3:\"key\";s:5:\"shape\";s:4:\"text\";s:6:\"形状\";s:7:\"checked\";s:1:\"1\";}i:8;a:3:{s:3:\"key\";s:5:\"grade\";s:4:\"text\";s:6:\"评分\";s:7:\"checked\";s:1:\"1\";}i:9;a:3:{s:3:\"key\";s:5:\"btime\";s:4:\"text\";s:12:\"添加时间\";s:7:\"checked\";s:1:\"1\";}i:10;a:3:{s:3:\"key\";s:8:\"dateline\";s:4:\"text\";s:12:\"修改日期\";s:7:\"checked\";s:1:\"1\";}i:11;a:3:{s:3:\"key\";s:5:\"mtime\";s:4:\"text\";s:12:\"创建日期\";s:7:\"checked\";s:1:\"1\";}}');
-INSERT INTO `dzz_setting` VALUES ('overt', '1');
+INSERT INTO `dzz_setting` VALUES ('overt', 0);
 INSERT INTO `dzz_setting` VALUES ('pichomepagesetting', 'a:7:{s:5:\"theme\";s:0:\"\";s:6:\"layout\";s:9:\"waterFall\";s:4:\"show\";s:10:\"name,other\";s:5:\"other\";s:5:\"mtime\";s:4:\"sort\";s:1:\"1\";s:4:\"desc\";s:4:\"desc\";s:8:\"opentype\";s:3:\"new\";}');
 INSERT INTO `dzz_setting` VALUES ('pichomeimportallowext', '*.jpg,*.jpeg,*.gif,*.png,*.webp,*.pdf,*.txt,*.mp3,*.mp4,*.webm,*.ogv,*.ogg,*.wav,*.m3u8,*.hls,*.mpg,*.mpeg,*.flv,*.m4v');
 INSERT INTO `dzz_setting` VALUES ('pichomeimportnotdir', 'patch,srv,run,lib64,sys,bin,media,boot,etc,sbin,lib,dev,root,usr,proc,tmp,lost+found,lib32,etc.defaults,var.defaults,@*,.*,$*');

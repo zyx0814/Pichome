@@ -1,0 +1,166 @@
+<!--{template pc/frame/header_simple_start}-->
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/index.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/screen.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/css/pc/image.css?{VERHASH}"/>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/plug/wavesurfer.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/js/pc/plug/DomResize.js?{VERHASH}"></script>
+<style type="text/css">
+	.el-header{
+		border-bottom: 0;
+	}
+</style>
+<!--{template mobile/components/classify}-->
+<!--{template pc/frame/header_simple_end}-->
+<div id="dzzoffice">
+	<el-scrollbar id="container_scroll">
+		<el-container class="container3">
+			<el-header class="fixed" height="auto" style="padding: 0;z-index: 1000;">
+				<div class="header-wrapper">
+					<!--{template pc/components/index/JsHeader3}-->
+				</div>
+			</el-header>
+			
+			
+			<div class="page-padding"></div>
+			<el-header height="auto" style="padding: 0 13px;">
+				<!--{template pc/components/index/screen3/index}-->
+			</el-header>
+			<div class="page-content" style="min-height: 260px;" :style="{position:HeaderRightBtnScreen.show&&Screenshow?'relative':''}" v-loading="ImageParams.loading">
+				<!-- <div class="container-scroll-loading" v-if="ImageParams.loading" style="position: absolute;width: 100%;height: 150px;left: 0;top: 0;">
+					<div v-loading="ImageParams.loading" style="width: 100%;height: 100%;">
+						
+					</div>
+				</div> -->
+				<!--{template pc/components/index/Jsimage}-->
+				<el-backtop target="#container_scroll>.el-scrollbar__wrap"></el-backtop>
+			</div>
+			
+		</el-container>
+	</el-scrollbar>
+	<div id="Details_Iframe" v-if="DetailsIframe">
+		<iframe id="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
+	</div>
+</div>
+<!--{template pc/components/index/JsCommon}-->
+<script type="text/javascript">
+	var pvue = new Vue({
+		el: '#dzzoffice',
+		data: function() {
+			return $.extend({},JsCommonData,JsHeaderData,JsScreenData,JsImageData,{
+				DocumentLeftWidth:0,
+				DocumentResize:0,
+				DocumentTemplate:3,
+				OpenDetailType:'new',
+				DetailsIframe :'',
+			});
+		},
+		watch:Object.assign({},JsImageWatch,{
+			DocumentResize:debounce(function(val){
+				var self = this;
+				self.$nextTick(function(){
+					if(!self.ImageParams.loading){
+						self.ImageParams.scroll = false;
+						self.ImageInit();
+					}
+				});
+			},500),
+			'HeaderRightBtnScreen.active':{
+				handler(){
+					var self = this;
+					self.$nextTick(function(){
+						self.LayoutStructure();
+						self.ImageParams.scroll = false;
+						self.ImageInit();
+					});
+				},
+				deep:true
+			},
+			DocumentLeftShow:{
+				handler(){
+					var self = this;
+					self.$nextTick(function(){
+						if(!self.ImageParams.loading){
+							self.ImageParams.scroll = false;
+							self.ImageInit();
+						}
+					});
+				},
+				deep:true
+			},
+			'HeaderRightBtnDisplay.value':{
+				handler(){
+					var self = this;
+					self.$nextTick(function(){
+						if(!self.ImageParams.loading){
+							self.ImageParams.scroll = false;
+							self.ImageInit();
+						}
+					});
+				},
+				deep:true
+			},
+		}),
+		computed:{
+
+		},
+		created() {
+			var self = this;
+			this.LibraryCreate();
+			this.HeaderCenterCreate();
+			this.HeaderRightBtnCreate();
+			this.ScreenCreate();
+			this.ImageCreate();
+			var pagesetting = $pagesetting;
+			<!--{if $_G[uid]}-->
+			if(pagesetting && pagesetting.opentype){
+				this.OpenDetailType = pagesetting.opentype;
+			}
+			<!--{/if}-->
+		},
+		methods: $.extend({},JsCommonMethods,JsHeaderMethods,JsScreenMethods,JsImageMethods,{
+			LayoutStructure(){
+				var padding = $('.header-wrapper').height();
+				$('.page-padding').css({
+					'padding-top':padding+'px'
+				});
+			},
+		}),
+		mounted() {
+			var self = this;
+			this.HeaderPopoverSearchMounted();
+			this.ImageMounted();
+			window.onresize = function(){
+				self.LayoutStructure();
+				if(!self.ImageParams.loading){
+					self.DocumentResize += 1;
+				}
+				
+			};
+			self.$nextTick(function(){
+				$('#container_scroll .el-scrollbar__wrap').scroll(function(){
+					var scrollTop = this.scrollTop;
+					if(scrollTop>0){
+						$('.header-wrapper').addClass('shadow');
+					}else{
+						$('.header-wrapper').removeClass('shadow');
+					}
+					if($(this).scrollTop()+$(this).height()>=this.scrollHeight-80){
+						if(self.ImageParams.page>=self.ImageParams.totalpage || self.ImageParams.loading || self.ImageParams.ValLoading){
+							return false;
+						}
+						self.CommonGetImageData('scroll');
+					}else{
+						self.ImageLayoutScrollShow()
+					}
+				})
+			});
+			$(document).on('click','.copy-share-btn',function(){
+				var txt = $(this).parent().siblings('.address').text()
+				CopyTxt(self,txt);
+			});
+		},
+
+	})
+</script>
+
+<!--{template pc/frame/footer_simple}-->

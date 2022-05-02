@@ -76,7 +76,7 @@ $shapedataarr = array(
 //格式分类
 $Types = array(
 
-    'commonimage' => ['jpg', 'png', 'gif', 'jpeg', 'webp'],
+    'commonimage' => ['jpg', 'png', 'gif', 'jpeg', 'webp','svg'],
     'image' => ['bmp', 'aai', 'art', 'arw', 'avs', 'bpg', 'bmp',
         'bmp2', 'bmp3', 'brf', 'cals', 'cals', 'cgm', 'cin', 'cip', 'cmyk', 'cmyka', 'cr2', 'crw', 'cube', 'cur', 'cut', 'dcm', 'dcr', 'dcx', 'dds',
         'dib', 'djvu', 'dng', 'dot', 'dpx', 'emf', 'epdf', 'epi', 'eps', 'eps2', 'eps3', 'epsf', 'epsi', 'ept', 'exr', 'fax', 'fig', 'fits', 'fpx', 'gplt',

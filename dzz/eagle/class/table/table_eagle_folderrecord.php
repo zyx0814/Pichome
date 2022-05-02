@@ -20,10 +20,10 @@ class table_eagle_folderrecord extends dzz_table
 
     public function createfidby_efidappid($efid,$appid){
         //如果没有记录值
-        if (!$fid = DB::result_first("select fid from %t where efid = %s", array($this->_table, $efid))){
+        if (!$fid = DB::result_first("select fid from %t where efid = %s and appid = %s", array($this->_table, $efid,$appid))){
             //检查是否有旧版数据记录值
             $fid = $efid.$appid;
-            if(!DB::result_first("select fid from %t where fid = %s",array('pichome_folder',$fid))){
+            if(!DB::result_first("select fid from %t where fid = %s and appid = %s",array('pichome_folder',$fid,$appid))){
                 $fid = C::t('pichome_folder')->createfidbyappid($appid);
             }
             $setarr = [
@@ -41,7 +41,16 @@ class table_eagle_folderrecord extends dzz_table
             $id = $v['id'];
             //获取或生成记录fid值
             $fid = $this->createfidby_efidappid($id,$appid);
-            $setarr=['fid'=>$fid,'fname'=>$v['name'],'dateline'=>TIMESTAMP,'pfid'=>$pfid,'appid'=>$appid,'pathkey'=> ($pathkey)?$pathkey.$fid:$fid,'disp'=>$k];
+            $setarr=[
+                'fid'=>$fid,
+                'fname'=>$v['name'],
+                'dateline'=>TIMESTAMP,
+                'pfid'=>$pfid,
+                'appid'=>$appid,
+                'password'=>$v['password'],
+                'passwordtips'=>$v['passwordTips'],
+                'pathkey'=> ($pathkey)?$pathkey.$fid:$fid,
+                'disp'=>$k];
             $fid = C::t('pichome_folder')->insert_data($setarr);
             $fids[] = $id;
             if($v['children']){

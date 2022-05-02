@@ -113,6 +113,9 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
 			$referer = (isset($_GET['referer'])) ? htmlspecialchars($_GET['referer']):dreferer();
 			showTips(array('error'=>'redirect','url'=>'user.php?mod=login&op=logging&action=sms_auth&uid='.$member['uid'].'&referer='.urlencode($referer)),$type);
 		}
+        if($_G['versionsign'] == 'personversion' && !C::t('user')->checkfounder($result['member'])){
+            showTips(array('error'=>lang('personversion_no_create_unablelogin')),$type);
+        }
         //设置登录
         setloginstatus($result['member'], $_GET['cookietime'] ? 2592000 : 0);
 

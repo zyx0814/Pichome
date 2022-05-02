@@ -25,7 +25,8 @@
 			$('.InputKeyword').addClass('focus');
 			$('.search-keyword input').focus();
 			this.HeaderSearch.width = $('.el-header').find('.input-box').width();
-			this.HeaderSearch.height = $('body').height()*0.6;
+			// this.HeaderSearch.height = $('body').height()*0.6;
+			this.HeaderSearch.height = 335;
 			var host = window.sessionStorage.getItem('HostKeyword');
 			if(host){
 				self.HeaderSearch.recenttag = host.split(',');

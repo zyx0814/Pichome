@@ -1,0 +1,41 @@
+<script type="text/javascript">
+	var JsScreenGradeMethods = {
+		ScreenGradeEmptyClick(){
+			if(this.ScreenValue.grade.value.length){
+				this.ScreenValue.grade.value = [];
+				this.ScreenValue.grade.text = [];
+				this.ScreenSubmit();
+			}
+		},
+		ScreenGradeClick(val){
+			var text = '';
+			if(parseInt(val) == 0){
+				text = '未评分';
+			}else{
+				text = val+'星';
+			}
+			var index = this.ScreenValue.grade.value.indexOf(val);
+			if(index>-1){
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.grade.value.splice(index,1);
+					var tindex = this.ScreenValue.grade.text.indexOf(text);
+					this.ScreenValue.grade.text.splice(tindex,1);
+				}else{
+					this.ScreenValue.grade.value = [];
+					this.ScreenValue.grade.text = [];
+				}
+				
+			}else{
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.grade.value.push(val);
+					this.ScreenValue.grade.text.push(text);
+				}else{
+					this.ScreenValue.grade.value = [val];
+					this.ScreenValue.grade.text = [text];
+				}
+				
+			}
+			this.ScreenSubmit();
+		},
+	};
+</script>

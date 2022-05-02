@@ -1,0 +1,32 @@
+<script type="text/javascript">
+	var JsScreenMtimeMethods = {
+		ScreenMtimeEmptyClick(){
+			if(this.ScreenValue.mtime.value || this.ScreenValue.mtime.datelinepicker.length){
+				this.ScreenValue.mtime.datelinepicker = [];
+				this.ScreenValue.mtime.value = '';
+				this.ScreenValue.mtime.custom = false;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenMtimeClick(val){
+			if(val==this.ScreenValue.mtime.value){
+				this.ScreenValue.mtime.datelinepicker = [];
+				this.ScreenValue.mtime.value = '';
+			}else{
+				this.ScreenValue.mtime.datelinepicker = [];
+				this.ScreenValue.mtime.custom = false;
+				this.ScreenValue.mtime.value = val;
+			}
+			this.ScreenSubmit();
+		},
+		ScreenMtimeCustom(){
+			this.ScreenValue.mtime.custom = !this.ScreenValue.mtime.custom;
+		},
+		ScreenMtimePicker(val){
+			if(val.length){
+				this.ScreenValue.mtime.value = val.join('_');
+				this.ScreenSubmit();
+			}
+		},
+	};
+</script>

@@ -109,8 +109,8 @@ $lang=array (
   'admininfo_nickname_invalid' => '管理员用户名为空，或者格式错误，请检查',
   'admininfo_email_invalid' => '管理员Email为空，或者格式错误，请检查',
   'admininfo_password_invalid' => '管理员密码为空，请填写',
-  'username' => '管理员用户名',
-  'nickname' => '管理员姓名',
+  'username' => '管理员姓名',
+  'nickname' => '管理员用户名',
   'email' => '管理员登录邮箱',
  
   'password' => '管理员密码',

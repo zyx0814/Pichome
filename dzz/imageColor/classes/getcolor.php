@@ -76,7 +76,7 @@ class getColor
                 $palettes = $palette->palette;
             } catch (\Exception $e) {
                 $processname1 = 'PICHOMEGETCOLOR_'.$data['rid'];
-                dzz_process::unlock($processname1);
+                \dzz_process::unlock($processname1);
                 runlog('imageColor', $e->getMessage() . ' img=' . $img);
             }
 

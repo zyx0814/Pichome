@@ -1,0 +1,188 @@
+<script type="text/javascript">
+	Vue.component('classify-component', {
+		props:[
+			'childrendata',
+			'checked',
+			'level'
+		],
+		template: `
+			<div v-if="IsShow">
+				<div class="block" :style="{'border-top': level==1?'0':'1px dashed var(--border-color-base)'}">
+					<template v-if="level==1">
+						<div class="title">分类</div>
+					</template>
+					<template v-else>
+						<div class="title">{{romenum[level]}}</div>
+					</template>
+					<div class="internet-options more" style="width: calc(100% - 65px);">
+						<el-scrollbar class="page-component__scroll">
+							<ul class="internet-options-ul" style="float: left;">
+								<li class="single" :class="{'active':!activeid.length}" @click="handleunlimited">
+									<span v-if="level==1">不限</span>
+									<span v-else>全部</span>
+								</li>
+							</ul>
+							<ul class="internet-options-ul">
+								<template v-for="item in showdata">
+									<li class="single" :class="{'active':activeid.indexOf(item.fid)>-1}" :key="item.fid" @click="handleclick(item)">
+										<span>{{item.fname}}</span>
+									</li>
+								</template>
+							</ul>
+						</el-scrollbar>
+					</div>
+				</div>
+				<classify-component 
+					v-if="level<=5"
+					:childrendata="childData" 
+					:level="(level+1)" 
+					:checked="checked" 
+					@checkedchange="checkedchange"
+					@unlimited="unlimited"></classify-component>
+			</div>
+			
+		`,
+		
+		data: function() {
+			return {
+				childData:[],
+				showdata:[],
+				activeid:[],
+				deleteid:[],
+				romenum:['','Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ'],
+				IsShow:false
+			};
+		},
+		watch:{
+			checked:{
+				handler(newval,oldval){
+					var self = this;
+					if(this.level > 1){
+						self.handleIsshow();
+					}
+					self.handleactiveid();
+					
+				},
+				deep:true
+			},
+			activeid:{
+				handler(newval,oldval){
+					var self = this;
+				},
+				deep:true,
+				
+			}
+		},
+		created() {
+			var self = this;
+			
+			if(this.level == 6){
+				return false;
+			}
+			// console.log('开始'+this.level)
+			this.childData = [];
+			this.handleactiveid();
+			for(var i in this.childrendata){
+				var item = this.childrendata[i];
+				if(this.level == 1){
+					this.showdata.push(item);
+				}
+				if(item.children && item.children.length){
+					for(var x in item.children){
+						this.childData.push(item.children[x]);
+					}
+				}
+			}
+			if(this.level == 1){
+				this.IsShow = true;
+			}else{
+				this.handleIsshow();
+			}
+		},
+		methods:{
+			handleactiveid(){
+				var arr = [];
+				if(this.childrendata.length){
+					for(var i in this.childrendata){
+						var item = this.childrendata[i];
+						if(this.checked.indexOf(item.fid)>-1){
+							arr.push(item.fid);
+						}
+					}
+				}
+				this.activeid = arr;
+			},
+			handleIsshow(){
+				var showdata = [];
+				this.IsShow = false;
+				if(this.childrendata.length){
+					for(var i in this.childrendata){
+						var item = this.childrendata[i];
+						if(this.checked.indexOf(item.pfid)>-1){
+							this.IsShow = true;
+							showdata.push(item);
+						}
+					}
+				}
+				
+				this.showdata = showdata;
+			},
+			handleunlimited(){
+				var param = {};
+				if(!this.activeid.length){
+					return false;
+				}
+				if(this.level == 1){
+					param['type'] = 'all';
+				}else{
+					this.deleteid = [];
+					for(var i in this.childrendata){
+						var item = this.childrendata[i];
+						if(this.activeid.indexOf(item.fid)>-1){
+							this.deleteid.push(item.fid);
+							if(item.children && item.children.length){
+								this.FetchForEachFid(item.children);
+							}
+							
+						}
+					}
+					param['type'] = 'single';
+					param['fids'] = this.deleteid;
+				}
+				this.unlimited(param);
+			},
+			unlimited(data){
+				var self = this;
+				self.$emit('unlimited',data);
+			},
+			FetchForEachFid(data){
+				for(var i in data){
+					var item = data[i];
+					this.deleteid.push(item.fid);
+					if(item.children && item.children.length){
+						this.FetchForEachFid(item.children);
+					}
+				}
+			},
+			handleclick(item){
+				var self = this;
+				var str = {
+					fid:item.fid,
+					data:this.childrendata,
+					item:item
+				}
+				this.checkedchange(str);
+			},
+			checkedchange(data){
+				var self = this;
+				self.$emit('checkedchange',data);
+			},
+			
+		},
+		mounted() {
+		},
+		beforeRouteLeave() {
+			
+		},
+	});
+</script>

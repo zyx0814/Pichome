@@ -260,10 +260,10 @@ function upgradeinformation($status = 0) {
 	}
     if($status==1 && $upgrade_step['step']==2) return '';
 	$update = array();
-	$siteuniqueid = C::t('setting')->fetch('siteuniqueid');
+	$mcode = C::t('setting')->fetch('machinecode');
     $update['siteurl']=$_G['siteurl'];
 	$update['sitename']=$_G['setting']['sitename'];
-	$update['uniqueid'] = $siteuniqueid;
+	$update['mcode'] = $mcode;
 	$update['curversion'] = $upgrade_step['curversion'];
 	$update['currelease'] = $upgrade_step['currelease'];
 	$update['upgradeversion'] = $upgrade_step['version'];
@@ -276,7 +276,7 @@ function upgradeinformation($status = 0) {
 	foreach($update as $key => $value) {
 		$data .= $key.'='.rawurlencode($value).'&';
 	}
-	$upgradeurl = APP_CHECK_URL."market/system/upgrade/".rawurlencode(base64_encode($data))."/".TIMESTAMP; 
+	$upgradeurl = APP_CHECK_URL."authlicense/count//upgrade/".rawurlencode(base64_encode($data))."/".TIMESTAMP;
 	dfsockopen($upgradeurl,0, '', '', FALSE, '',0.2);
 	return '';
 	//return '<img src="'.$upgradeurl.'" width="0" height="0" />';

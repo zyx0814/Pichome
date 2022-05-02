@@ -4,8 +4,15 @@ if(!defined('IN_OAOOA')) {
 	exit('Access Denied');
 }
 include_once DZZ_ROOT.'./core/core_version.php';
+
+ global $_G;
 if($_GET['action'] == 'checkupgrade') {
 	header('Content-Type: text/javascript');
+    if($_G['uid']) {
+        $dzz_upgrade = new dzz_upgrade();
+        $dzz_upgrade->check_authlic();
+        dsetcookie('checkauthlic', 1, 60*60*24);
+    }
 	if($_G['uid'] && $_G['member']['adminid'] == 1) {
 		$dzz_upgrade = new dzz_upgrade();
 		$dzz_upgrade->check_upgrade();
@@ -17,10 +24,16 @@ if($_GET['action'] == 'checkupgrade') {
 	if($_G['uid'] && $_G['member']['adminid'] == 1) { 
 		$dzz_upgrade_app = new dzz_upgrade_app(); 
 		$dzz_upgrade_app->check_upgrade();
-		dsetcookie('checkappupgrade', 1, 3600);
+		dsetcookie('checkappupgrade', 1, 60*60*24);
 	}
 	exit; 
-} elseif($_GET['action'] == 'upgradenotice') {
+}elseif($_GET['action'] == 'checkauthlic'){
+    if($_G['uid']) {
+        $dzz_upgrade = new dzz_upgrade();
+        $dzz_upgrade->check_authlic();
+        dsetcookie('checkauthlic', 1, 60*60*24);
+    }
+}elseif($_GET['action'] == 'upgradenotice') {
 	$html='';
 	$list = array();
 	

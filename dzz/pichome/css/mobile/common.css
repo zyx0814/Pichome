@@ -26,6 +26,35 @@ html,body,#dzzoffice{
 	padding: 0;
 	overflow: hidden;
 }
+.header-top{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	transition: all .3s;
+	transition: all .3s;
+	-moz-transition: all .3s;
+	-webkit-transition: all .3s;
+	-o-transition: all .3s;
+	background: var(--bg-content) !important;
+}
+.header-top.headerhide{
+	top: -46px;
+	opacity: 0;
+}
+.header-top .van-dropdown-menu__bar{
+	height: 46px;
+}
+.pic-notice{
+	position: fixed;
+	top: 46px;
+	left: 0;
+	width: 100%;
+	z-index: 100;
+}
+.pic-notice.noticehide{
+	top: 0px;
+}
 .bs-main-container{
 	height: 100%;
 	width: 100%;
@@ -43,6 +72,7 @@ html,body,#dzzoffice{
     overflow: auto;
 	position: relative;
 	padding-top: 46px;
+	padding-bottom: 20%;
 }
 .pic-container .img-container{
 	min-height: 100% ;
@@ -471,6 +501,9 @@ ul{
 	flex: 1;
 	text-align: center;
 	font-size: 14px;
+	justify-content: center;
+	align-items: center;
+	display: flex;
 }
 .pic-toolbar .tab-item .icon{
 	font-size: var(--font-32);
@@ -484,6 +517,9 @@ ul{
 
 .van-popup{
 	overflow: unset;
+}
+.van-dropdown-menu-scorll .van-popup{
+	overflow: scroll;
 }
 .van-popup .vam-popup-title{
 	height: 40px;
@@ -537,4 +573,32 @@ ul{
 }
 .van-notify--warning {
     background-color: #ff976a;
+}
+
+#systemNotice .panel-heading {
+	border-radius: 0;
+	background: var(--bg-header);
+	color: var(--header-text);
+	padding: 10px 15px;
+}
+#systemNotice .panel-heading .close{
+	float: right;
+	border: 0;
+	font-size: 21px;
+	color: var(--header-text);
+	background-color: transparent;
+}
+#systemNotice .panel-body {
+	background: var(--bg-input);
+	color: var(--header-text);
+	padding: 10px 15px !important;
+}
+#systemNotice .panel-body img{
+	max-height: 30px;
+	vertical-align: bottom;
+	margin-right: 10px;
+}
+#systemNotice .panel-body a{
+	color: var(--header-text);
+	text-decoration: none;
 }

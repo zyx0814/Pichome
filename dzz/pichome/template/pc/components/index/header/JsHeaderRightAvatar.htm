@@ -2,7 +2,6 @@
 <el-dropdown trigger="click" @command="HeaderRightAvatar"  v-cloak>
 	<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
 	<el-dropdown-menu slot="dropdown" style="width: 165px;">
-		<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
 		<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 		<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 		<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
@@ -10,7 +9,6 @@
 		<el-divider></el-divider>
 		<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 		<el-dropdown-item command="library">库设置</el-dropdown-item>
-		<!-- <el-dropdown-item command="orguser">用户管理</el-dropdown-item> -->
 		<el-dropdown-item command="system">
 			<span style="position: relative;">
 				系统工具
@@ -33,12 +31,6 @@
 		HeaderRightAvatar(type){
 			var self = this;
 			switch(type){
-				case 'collection':
-					window.location.href = DZZSCRIPT + '?mod=collection';
-				break;
-				case 'orguser':
-					window.open(SITEURL+'admin.php?mod=orguser');
-				break;
 				case 'personal':
 					window.location.href = MOD_URL + '&op=user&do=personal';
 				break;
@@ -49,7 +41,7 @@
 					window.open('https://support.qq.com/products/340252');
 				break;
 				case 'setting':
-					window.location.href = MOD_URL + '&op=admin&do=basic';
+					window.location.href = MOD_URL + '&op=admin&do=authorize';
 				break;
 				case 'library':
 					window.location.href = MOD_URL + '&op=library';

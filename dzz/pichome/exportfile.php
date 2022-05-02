@@ -12,7 +12,7 @@
     $processname = 'DZZ_EXPORTFILE_LOCK_'.$appid;
     //dzz_process::unlock($processname);
     $locked = true;
-    if (!dzz_process::islocked($processname, 60*60*24)) {
+    if (!dzz_process::islocked($processname, 60*15)) {
         $locked=false;
     }
     if ($locked) {
@@ -55,7 +55,7 @@
     dzz_process::unlock($processname);
     $data = C::t('pichome_vapp')->fetch($appid);
     if($data['state'] == 2){
-        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
+        dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid.'&force='.$force, 0, '', '', false, '', 1);
     }elseif($data['state'] == 3){
         dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
     }

@@ -1,0 +1,29 @@
+<script type="text/javascript">
+	var JsScreenExtMethods = {
+		ScreenExtEmptyClick(){
+			if(this.ScreenValue.ext.value.length){
+				this.ScreenValue.ext.value = [];
+				this.ScreenSubmit();
+			}
+			
+		},
+		ScreenExtClick(val){
+			var index = this.ScreenValue.ext.value.indexOf(val);
+			if(index>-1){
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.ext.value.splice(index,1);
+				}else{
+					this.ScreenValue.ext.value = [];
+				}
+			}else{
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.ext.value.push(val);
+				}else{
+					this.ScreenValue.ext.value = [val];
+				}
+				
+			}
+			this.ScreenSubmit();
+		}
+	};
+</script>

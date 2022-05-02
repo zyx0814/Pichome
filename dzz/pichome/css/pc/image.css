@@ -99,6 +99,9 @@
 .container2 .image-container .image-wrapper .image-item .image-inside .image-storage .img{
     border-radius: 3px;
 }
+.container3 .image-container .image-wrapper .image-item .image-inside .image-storage .img{
+    border-radius: 8px;
+}
 .image-container .image-wrapper .image-item .image-inside .image-single.imageList .image-storage .img{
 	object-fit: contain;
 }
@@ -149,15 +152,25 @@
 	border-left: 0;
 	border-top-left-radius: 18px;
 	border-bottom-left-radius: 18px;
+	height:36px;
 }
 
 .container2 .image-container .image-wrapper .image-item .image-inside .el-button-group .reference{
 	border-top-left-radius: 3px;
 	border-bottom-left-radius: 3px;
 }
+.container3 .image-container .image-wrapper .image-item .image-inside .el-button-group .reference{
+	border-top-left-radius: 8px;
+	border-bottom-left-radius: 8px;
+}
+.image-container .image-wrapper .image-item .image-inside .el-button-group.border .reference,
 .container2 .image-container .image-wrapper .image-item .image-inside .el-button-group.border .reference{
 	border-radius: 3px;
-	border-color: #f56c6c;
+	border-color: #0072ef;
+}
+.container3 .image-container .image-wrapper .image-item .image-inside .el-button-group.border .reference{
+	border-radius: 8px;
+	border-color: #0072ef;
 }
 .image-container .image-wrapper .image-item .image-inside .el-button-group .el-dropdown__caret-button{
 	height: 36px;
@@ -169,6 +182,10 @@
 .container2 .image-container .image-wrapper .image-item .image-inside .el-button-group .el-dropdown__caret-button{
 	border-top-right-radius: 3px;
 	border-bottom-right-radius: 3px;
+}
+.container3 .image-container .image-wrapper .image-item .image-inside .el-button-group .el-dropdown__caret-button{
+	border-top-right-radius: 8px;
+	border-bottom-right-radius: 8px;
 }
 .image-container .image-wrapper .image-item .image-inside .topFlex{
 	position: absolute;

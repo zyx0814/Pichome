@@ -1,5 +1,5 @@
-<div class="block" v-if="DocumentTemplate==1&&Appid">
-	<el-popover placement="bottom" popper-class="ScreenClassifyPopover" width="auto" trigger="click" ref="ScreenPopoverRef" @show="ScreenClassifyPopoverShow" @after-leave="ScreenClassifyPopoverHide">
+<div class="block" v-if="DocumentTemplate!=2&&Appid">
+	<el-popover placement="bottom" popper-class="ScreenClassifyPopover PopoverNotPadding" width="auto" trigger="click" ref="ScreenPopoverRef" @show="ScreenClassifyPopoverShow" @after-leave="ScreenClassifyPopoverHide">
 <!-- 		<template v-if="!ScreenValue.classify.loading">
 				<div class="img-loading center">
 					<span class="el-icon-loading"></span>加载中...
@@ -19,6 +19,7 @@
 							node-key="fid"
 							:expand-on-click-node="false"
 							check-on-click-node
+							:check-strictly="parseInt(ImageParams.expanded)?false:true"
 							@check="ScreenClassifyTreeCheck"
 							:filter-node-method="ScreenClassifyFilter"
 							:default-checked-keys="ScreenValue.classify.tree.DefaultFids"
@@ -32,7 +33,26 @@
 						</div>
 					</el-scrollbar>
 				</div>
+				<div class="logic">
+					<span>包含下级：</span>
+					<el-dropdown trigger="click" @command="ScreenClassifyIsChild">
+						<el-button type="primary" size="mini">
+							<template v-if="parseInt(ImageParams.expanded)">
+								是
+							</template>
+							<template v-else>
+								否
+							</template>
+							<i class="el-icon-arrow-down el-icon--right"></i>
+						</el-button>
+						<el-dropdown-menu slot="dropdown">
+							<el-dropdown-item command="1">是</el-dropdown-item>
+							<el-dropdown-item command="0">否</el-dropdown-item>
+						</el-dropdown-menu>
+					</el-dropdown>
+				</div>
 			</div>
+			
 		<!-- </template> -->
 		
 		<div class="field-single" :class="ScreenValue.classify.value.length?'active':''" slot="reference">
@@ -43,3 +63,4 @@
 		</div>
 	</el-popover>
 </div>
+

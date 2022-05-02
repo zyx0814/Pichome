@@ -15,6 +15,7 @@ $overt = getglobal('setting/overt');
 if (!$overt) {
 	Hook::listen('check_login');//检查是否登录，未登录跳转到登录界面
 }
+global $_G;
 $operation = isset($_GET['operation']) ? trim($_GET['operation']) : '';
 $opentype = isset($_GET['opentype']) ? trim($_GET['opentype']) : '';
 if($operation == 'fetch'){
@@ -23,7 +24,7 @@ if($operation == 'fetch'){
 		exit(json_encode(array('error' => false)));
 	}
 	$resourcesdata = C::t('pichome_resources')->fetch_by_rid($rid);
-	exit(json_encode(array('resourcesdata' => $resourcesdata)));
+	exit(json_encode(array('resourcesdata' => $resourcesdata,'sitename'=>$_G['setting']['sitename'])));
 
 }else{
 	$theme = GetThemeColor();

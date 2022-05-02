@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenLinkMethods = {
+		ScreenLinkClick(type){
+			if(type == 'not' && !this.ScreenValue.link.value && parseInt(this.ScreenValue.link.value)!=0){
+				return false;
+			}
+			if(parseInt(this.ScreenValue.link.value) == parseInt(type)){
+				this.ScreenValue.link.value = '';
+				this.ScreenSubmit();
+				return false;
+			}
+			if(type == 'not'){
+				this.ScreenValue.link.value = '';
+			}else{
+				this.ScreenValue.link.value = parseInt(type)
+			}
+			this.ScreenSubmit();
+		},
+		ScreenLinkInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+	};
+</script>

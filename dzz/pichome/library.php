@@ -12,7 +12,7 @@ if ($operation == 'fetch') {
         if (!$appid) exit(json_encode(array('error' => true)));
         $setarr = [
             'appname' => isset($_GET['appname']) ? trim($_GET['appname']) : '',
-            'filter' => isset($_GET['filter']) ? serialize($_GET['filter']) : '',
+            //'filter' => isset($_GET['filter']) ? serialize($_GET['filter']) : '',
             'share' => isset($_GET['share']) ? intval($_GET['share']) : 0,
             'download' => isset($_GET['download']) ? intval($_GET['download']) : 0,
 			'getinfo' => isset($_GET['getinfo']) ? intval($_GET['getinfo']) : 0,
@@ -87,12 +87,19 @@ elseif ($operation == 'getdata') {
 
 }elseif($operation == 'getinfonum'){//已获取文件信息个数
     $returndata = [];
-    foreach(DB::fetch_all("select appid,getinfonum from %t where isdelete = 0 and getinfo = 1 and `type` = 1 and getinfonum < filenum", array('pichome_vapp')) as $v){
+    foreach(DB::fetch_all("select appid,getinfonum from %t where isdelete = 0 and getinfo = 1 and `type` = 1 ", array('pichome_vapp')) as $v){
         $returndata[$v['appid']] = $v['getinfonum'];
     }
     exit(json_encode(array('data' => $returndata)));
-}
-elseif ($operation == 'addlibrary') {
+} elseif($operation == 'getexportstatus'){
+    $appids = isset($_GET['appids']) ? trim($_GET['appids']):'';
+    $appidarr = ($appids) ? explode(',',$appids):[''];
+    $returndata = [];
+    foreach(DB::fetch_all("select appid,percent,state,filenum from %t where isdelete = 0 and appid in(%n) ", array('pichome_vapp',$appidarr)) as $v){
+        $returndata[$v['appid']] = $v;
+    }
+    exit(json_encode(array('data' => $returndata)));
+}elseif ($operation == 'addlibrary') {
     //接收路径
     $path = isset($_GET['path']) ? trim($_GET['path']) : '';
     //接收编码
@@ -127,13 +134,13 @@ elseif ($operation == 'addlibrary') {
     if ($type == 1 && !$force) {
         $metajsonfile = $path . BS . 'metadata.json';
         if (is_file($metajsonfile) && is_dir($path . BS . 'images')) {
-            exit(json_encode(array('tips' => '系统检测该目录可能为eagle库，您确认要作为普通目录导入吗')));
+            exit(json_encode(array('tips' => '系统检测该目录可能为eagle库，不能作为普通目录导入')));
         }
     }
     if ($type == 1 && !$force) {
         $dbfile = $path . BS . '.bf'.BS.'billfish.db';
         if (is_file($dbfile)) {
-            exit(json_encode(array('tips' => '系统检测该目录可能为billfish库，您确认要作为普通目录导入吗')));
+            exit(json_encode(array('tips' => '系统检测该目录可能为billfish库，不能作为普通目录导入')));
         }
     }
 
@@ -148,7 +155,7 @@ elseif ($operation == 'addlibrary') {
         'charset' => $charset,
         'notallowext'=>getglobal('setting/pichomeimportnotallowext'),
         'allowext'=>getglobal('setting/pichomeimportallowext'),
-        'filter' => 'a:13:{i:0;a:3:{s:3:"key";s:8:"classify";s:4:"text";s:6:"分类";s:7:"checked";s:1:"1";}i:1;a:4:{s:3:"key";s:3:"tag";s:4:"text";s:6:"标签";s:7:"checked";s:1:"1";s:8:"showtype";s:1:"0";}i:2;a:3:{s:3:"key";s:5:"color";s:4:"text";s:6:"颜色";s:7:"checked";s:1:"1";}i:3;a:3:{s:3:"key";s:4:"link";s:4:"text";s:6:"链接";s:7:"checked";s:1:"1";}i:4;a:3:{s:3:"key";s:4:"desc";s:4:"text";s:6:"注释";s:7:"checked";s:1:"1";}i:5;a:3:{s:3:"key";s:8:"duration";s:4:"text";s:6:"时长";s:7:"checked";s:1:"1";}i:6;a:3:{s:3:"key";s:4:"size";s:4:"text";s:6:"尺寸";s:7:"checked";s:1:"1";}i:7;a:3:{s:3:"key";s:3:"ext";s:4:"text";s:6:"类型";s:7:"checked";s:1:"1";}i:8;a:3:{s:3:"key";s:5:"shape";s:4:"text";s:6:"形状";s:7:"checked";s:1:"1";}i:9;a:3:{s:3:"key";s:5:"grade";s:4:"text";s:6:"评分";s:7:"checked";s:1:"1";}i:10;a:3:{s:3:"key";s:5:"btime";s:4:"text";s:12:"添加时间";s:7:"checked";s:1:"1";}i:11;a:3:{s:3:"key";s:8:"dateline";s:4:"text";s:12:"修改日期";s:7:"checked";s:1:"1";}i:12;a:3:{s:3:"key";s:5:"mtime";s:4:"text";s:12:"创建日期";s:7:"checked";s:1:"1";}}'
+        'filter' => ''
     ];
     if ($type == 1) $appattr['allowext'] = $Defaultallowext;
     $path = str_replace(array('/', './', '\\'), BS, $path);
@@ -204,8 +211,17 @@ elseif($operation == 'changePath'){
 }
 elseif ($operation == 'dellibrary') {
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $appdata = C::t('pichome_vapp')->fetch($appid);
     //if (C::t('pichome_vapp')->update($appid, array('isdelete' => 1,'deluid'=>getglobal('uid'),'delusername'=>getglobal('username')))) {
     if (C::t('pichome_vapp')->update($appid, array('isdelete' => 1))) {
+        if($appdata['type'] == 1){
+            $readtxt = DZZ_ROOT . './data/attachment/cache/' . 'loaclexport' . md5($appdata['path']) . '.txt';
+        }elseif($appdata['type'] == 0){
+            $readtxt = DZZ_ROOT . './data/attachment/cache/' . 'eagleexport' . md5($appdata['path']) . '.txt';
+        }
+        if(is_file($readtxt)){
+            @unlink($readtxt);
+        }
         dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=delete', 0, '', '', false, '', 0.1);
         exit(json_encode(array('success' => true)));
     } else {

@@ -10,13 +10,16 @@ if (!defined('IN_OAOOA')) {
 	exit('Access Denied');
 }
 
-if(!isset($_GET['src']) && !$path=Decode($_GET['path'],'read')){
-	exit('Access Denied');
+if(!isset($_GET['src']) && !$rid = dzzdecode($_GET['path'],'',0)){
+    exit('Access Denied');
 }
 if($_GET['src']){
 	$str = file_get_contents(urldecode($_GET['src']));
 }else{
-	$str = IO::getFileContent($path);
+    $rid = dzzdecode($_GET['path'],'',0);
+    $fileurl = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid.'_3', '', 7200, 0);
+	$str = file_get_contents($fileurl);
+
 }
 
 $themecolor = C::t('user_setting')->fetch_by_skey('pichomeusertheme',$_G['uid']);

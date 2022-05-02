@@ -1,111 +1,187 @@
-<div class="block alltag-block">
-	<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="ScreenGetValueData('tag')" :width="Appid&&Appid!='all'?508:255" trigger="click" ref="ScreenPopoverRef">
-		<div class="field-select-box">
-			<div class="tags-box clearfix">
-				<div class="left" v-if="Appid && Appid!='all'">
-					<p class="title">标签分类</p>
-					<el-scrollbar class="page-component__scroll" style="height: 308px;">
+<template v-if="parseInt(item.showtype)">
+	<template v-for="(bitem,index) in item.group">
+		<div class="block" v-if="parseInt(item.checked) && ScreenValue.tag.group[bitem.cid]">
+			<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="ScreenTaggroupPopShow(bitem.cid)"  @after-enter="ScreenGetValueData('grouptag')" width="255" trigger="click" ref="ScreenPopoverRef">
+					<div class="field-select-box">
+						<div class="tags-box clearfix">
+							<div class="right">
+								<template v-if="!ScreenValue.tag.group[bitem.cid].data.length && !ScreenValue.tag.group[bitem.cid].loading">
+									<div style="height: 357px;position: relative;">
+										<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+									</div>
+									
+								</template>
+								<template v-else>
+									<template  v-if="!ScreenValue.tag.group[bitem.cid].loading">
+										<div style="padding: 0 12px;margin-bottom: 8px;">
+											<el-input size="small" placeholder="请输入内容" prefix-icon="el-icon-search" v-model.trim="ScreenValue.tag.group[bitem.cid].search" clearable @input="ScreenTaggroupSearch(bitem.cid)"></el-input>
+										</div>
+									</template>
+									<el-scrollbar class="page-component__scroll" style="height: 357px;" :ref="'scrollbarTag'+bitem.cid">
+										<template v-if="ScreenValue.tag.group[bitem.cid].loading">
+											<div class="img-loading center">
+												<span class="el-icon-loading"></span>加载中...
+											</div>
+										</template>
+										<template v-else>
+											<ul class="el-popper">
+													<li class="el-dropdown-menu__item" v-for="vitem in ScreenValue.tag.group[bitem.cid].data">
+														<el-checkbox class="txt" v-model="ScreenValue.tag.group[bitem.cid].value" :label="vitem.tid" @change="ScreenTaggroupChange(bitem.cid,vitem.tid,vitem.tagname)">{{vitem.tagname}}</el-checkbox>
+														<span class="num">{{vitem.num}}</span>
+													</li>
+											</ul>
+										</template>
+										<template v-if="ScreenValue.tag.group[bitem.cid].valloading">
+											<div class="img-loading" style="position: relative;padding-top: 0;">
+												<span class="el-icon-loading"></span>加载中...
+											</div>
+										</template>
+										<template v-if="ScreenValue.tag.group[bitem.cid].finish">
+											<div class="img-loading" style="position: relative;padding-top: 0;">已经到底了</div>
+										</template>
+									</el-scrollbar>
+								</template>
+								
+							</div>
+						</div>
+					</div>
+				<div class="field-single" :class="ScreenValue.tag.group[bitem.cid].value.length?'active':''" slot="reference">
+					<span>{{bitem.catname}} <span v-if="ScreenValue.tag.group[bitem.cid].text.length">:{{ScreenValue.tag.group[bitem.cid].text.join(',')}}</span> </span>
+					<i class="ri-arrow-down-s-fill icon"></i>
+					<span v-if="ScreenValue.tag.group[bitem.cid].text.length" class="delBtn el-icon-close" @click.stop="ScreenTaggroupDelete(bitem.cid)"></span>
+				</div>
+			</el-popover>
+		</div>
+	</template>
+</template>
+<template v-else>
+	<div class="block alltag-block">
+		<el-popover popper-class="PopoverNotPadding" placement="bottom" @show="ScreenGetValueData('tag')" :width="Appid&&Appid!='all'?508:255" trigger="click" ref="ScreenPopoverRef">
+			<div class="field-select-box">
+				<div class="tags-box clearfix">
+					<div class="left" v-if="Appid && Appid!='all'">
+						<p class="title">标签分类</p>
+						<el-scrollbar class="page-component__scroll" style="height: 308px;">
+							<template v-if="ScreenValue.tag.loading">
+								<div class="img-loading center">
+									<span class="el-icon-loading"></span>加载中...
+								</div>
+							</template>
+							<template v-else>
+								<ul class="el-popper">
+									<li 
+										class="el-dropdown-menu__item" 
+										v-for="(item,cid) in ScreenValue.tag.data" 
+										:class="ScreenValue.tag.leftid==cid?'active':''" 
+										@click="ScreenTagLeftClick(cid)" v-key="cid">
+										<div class="txt">{{item.catname}}</div>
+										<span class="num">{{item.num}}</span>
+									</li>
+								</ul>
+							</template>
+						</el-scrollbar>
+						<div class="logic">
+							<span>逻辑：</span>
+							<el-dropdown trigger="click" @command="ScreenTagLeftRelativeClick">
+								<el-button type="primary" size="mini">
+									<template v-if="parseInt(ScreenValue.tag.tagrelative)==1">
+										全部(AND)
+									</template>
+									<template v-else>
+										任意(OR)
+									</template>
+									<i class="el-icon-arrow-down el-icon--right"></i>
+								</el-button>
+								<el-dropdown-menu slot="dropdown">
+									<el-dropdown-item command="0">任意(OR)</el-dropdown-item>
+									<el-dropdown-item command="1">全部(AND)</el-dropdown-item>
+								</el-dropdown-menu>
+							</el-dropdown>
+						</div>
+					</div>
+					<div class="right">
 						<template v-if="ScreenValue.tag.loading">
-							<div class="img-loading center">
-								<span class="el-icon-loading"></span>加载中...
+							<div style="height: 397px;position: relative;">
+								<div class="img-loading center">
+									<span class="el-icon-loading"></span>加载中...
+								</div>
 							</div>
 						</template>
 						<template v-else>
-							<ul class="el-popper">
-								<li 
-									class="el-dropdown-menu__item" 
-									v-for="(item,cid) in ScreenValue.tag.data" 
-									:class="ScreenValue.tag.leftid==cid?'active':''" 
-									@click="ScreenTagLeftClick(cid)" v-key="cid">
-									<div class="txt">{{item.catname}}</div>
-									<span class="num">{{item.num}}</span>
-								</li>
-							</ul>
-						</template>
-					</el-scrollbar>
-					<div class="logic">
-						<span>逻辑：</span>
-						<el-dropdown trigger="click" @command="ScreenTagLeftRelativeClick">
-							<el-button type="primary" size="mini">
-								<template v-if="ScreenValue.tag.tagrelative=='1'">
-									任意(OR)
-								</template>
-								<template v-else>
-									全部(AND)
-								</template>
-								<i class="el-icon-arrow-down el-icon--right"></i>
-							</el-button>
-							<el-dropdown-menu slot="dropdown">
-								<el-dropdown-item command="1">任意(OR)</el-dropdown-item>
-								<el-dropdown-item command="0">全部(AND)</el-dropdown-item>
-							</el-dropdown-menu>
-						</el-dropdown>
-					</div>
-				</div>
-				<div class="right">
-					<template v-if="ScreenValue.tag.loading">
-						<div style="height: 397px;position: relative;">
-							<div class="img-loading center">
-								<span class="el-icon-loading"></span>加载中...
+							
+							<div style="padding: 0 12px;margin-bottom: 8px;">
+								<el-input 
+									size="small" 
+									placeholder="请输入内容" 
+									prefix-icon="el-icon-search"
+									v-model.trim="ScreenValue.tag.search" 
+									clearable 
+									@input="ScreenTagRightSearch"></el-input>
 							</div>
-						</div>
-					</template>
-					<template v-else>
-						
-						<div style="padding: 0 12px;margin-bottom: 8px;">
-							<el-input 
-								size="small" 
-								placeholder="请输入内容" 
-								prefix-icon="el-icon-search"
-								v-model.trim="ScreenValue.tag.search" 
-								clearable 
-								@input="ScreenTagRightSearch"></el-input>
-						</div>
-						<el-scrollbar class="page-component__scroll scrollbarTag" style="height: 357px;" ref="scrollbarTag">
-							<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].data.length">
-								<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].loading">
-									<div class="img-loading center">
-										<span class="el-icon-loading"></span>加载中...
-									</div>
-								</template>
-								<template v-else>
-									<ul class="el-popper">
-										<li 
-											class="el-dropdown-menu__item"
-											v-for="item in ScreenValue.tag.data[ScreenValue.tag.leftid].data"
-											v-key="item.tid">
-											<el-checkbox class="txt" :label="item.tid" v-model="ScreenValue.tag.value" @change="ScreenTagRightTagChange(item.tid,item.tagname)">{{item.tagname}}</el-checkbox>
-											<span class="num">{{item.num}}</span>
-										</li>
-									</ul>
-									<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].valloading">
-										<div class="img-loading" style="position: relative;padding-top: 0;">
+							<el-scrollbar class="page-component__scroll scrollbarTag" :style="{'height':Appid&&Appid!='all'?'357px':'308px'}" ref="scrollbarTag">
+								<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].data.length">
+									<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].loading">
+										<div class="img-loading center">
 											<span class="el-icon-loading"></span>加载中...
 										</div>
 									</template>
-									<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].finish">
-										<div class="img-loading" style="position: relative;padding-top: 0;">已经到底了</div>
+									<template v-else>
+										<ul class="el-popper">
+											<li 
+												class="el-dropdown-menu__item"
+												v-for="item in ScreenValue.tag.data[ScreenValue.tag.leftid].data"
+												v-key="item.tid">
+												<el-checkbox class="txt" :label="item.tid" v-model="ScreenValue.tag.value" @change="ScreenTagRightTagChange(item.tid,item.tagname)">{{item.tagname}}</el-checkbox>
+												<span class="num">{{item.num}}</span>
+											</li>
+										</ul>
+										<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].valloading">
+											<div class="img-loading" style="position: relative;padding-top: 0;">
+												<span class="el-icon-loading"></span>加载中...
+											</div>
+										</template>
+										<template v-if="ScreenValue.tag.data[ScreenValue.tag.leftid].finish">
+											<div class="img-loading" style="position: relative;padding-top: 0;">已经到底了</div>
+										</template>
 									</template>
 								</template>
-							</template>
-							<template v-if="!ScreenValue.tag.data[ScreenValue.tag.leftid].data.length && !ScreenValue.tag.data[ScreenValue.tag.leftid].loading">
-								<div style="height: 357px;position: relative;">
-									<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
-								</div>
-								
-							</template>
-						</el-scrollbar>
-					</template>
-
+								<template v-if="!ScreenValue.tag.data[ScreenValue.tag.leftid].data.length && !ScreenValue.tag.data[ScreenValue.tag.leftid].loading">
+									<div style="position: relative;" :style="{'height':Appid&&Appid!='all'?'357px':'308px'}">
+										<div class="dzz-dropdown-menu__item screen-notdata">没有找到相关选项</div>
+									</div>
+									
+								</template>
+							</el-scrollbar>
+							<div class="logic" v-if="(Appid&&Appid=='all' || !Appid)">
+								<span>逻辑：</span>
+								<el-dropdown trigger="click" @command="ScreenTagLeftRelativeClick">
+									<el-button type="primary" size="mini">
+										<template v-if="parseInt(ScreenValue.tag.tagrelative)==1">
+											全部(AND)
+										</template>
+										<template v-else>
+											任意(OR)
+										</template>
+										<i class="el-icon-arrow-down el-icon--right"></i>
+									</el-button>
+									<el-dropdown-menu slot="dropdown">
+										<el-dropdown-item command="0">任意(OR)</el-dropdown-item>
+										<el-dropdown-item command="1">全部(AND)</el-dropdown-item>
+									</el-dropdown-menu>
+								</el-dropdown>
+							</div>
+						</template>
+	
+					</div>
 				</div>
+	
 			</div>
-
-		</div>
-		<div class="field-single" :class="ScreenValue.tag.value.length?'active':''" slot="reference">
-			标签
-			<span class="screen-show-val" v-if="ScreenValue.tag.value.length">：{{ScreenValue.tag.text.join(',')}}</span>
-			<i class="ri-arrow-down-s-fill icon"></i>
-			<span v-if="ScreenValue.tag.value.length" class="delBtn el-icon-close" @click.stop="ScreenDelete('tag')"></span>
-		</div>
-	</el-popover>
-</div>
+			<div class="field-single" :class="ScreenValue.tag.value.length?'active':''" slot="reference">
+				标签
+				<span class="screen-show-val" v-if="ScreenValue.tag.value.length">：{{ScreenValue.tag.text.join(',')}}</span>
+				<i class="ri-arrow-down-s-fill icon"></i>
+				<span v-if="ScreenValue.tag.value.length" class="delBtn el-icon-close" @click.stop="ScreenDelete('tag')"></span>
+			</div>
+		</el-popover>
+	</div>
+</template>

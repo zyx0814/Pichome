@@ -1,0 +1,9 @@
+<classify-component 
+	v-if="Appid && !ScreenValue.classify.loading && ScreenValue.classify.data.length"
+	:childrendata="ScreenValue.classify.data" 
+	:level="1" 
+	:checked="ScreenValue.classify.activefid" 
+	@checkedchange="Screencheckedchange"
+	@unlimited="ScreenUnlimited"></classify-component>
+
+

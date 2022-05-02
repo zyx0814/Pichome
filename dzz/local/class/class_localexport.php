@@ -96,13 +96,21 @@ class localexport
             $fileinfo = $this->readdir($filedir, $thandle, $filenum);
             fclose($thandle);
             if ($fileinfo['error']) {
-                C::t('pichome_vapp')->update($this->appid, array('state' => 0));
+                C::t('pichome_vapp')->update($this->appid, array('state' => -1));
                 return $fileinfo;
             } else {
-                C::t('pichome_vapp')->update($this->appid, array('filenum' => $fileinfo['filenum'], 'state' => 2));
+                C::t('pichome_vapp')->update($this->appid, array('filenum' => $fileinfo['filenum'], 'state' => 2,'percent'=>0,'lastid'=>0,'donum'=>0));
             }
+        }else{
+            if($this->filenum)C::t('pichome_vapp')->update($this->appid, array('state' => 2,'percent'=>0,'lastid'=>0,'donum'=>0));
+            else{
+                C::t('pichome_vapp')->update($this->appid, array('state' => -1));
+                @unlink($readtxt);
+                return array('error'=>'导入失败，请重试');
+            }
+
         }
-        C::t('pichome_vapp')->update($this->appid, array('state' => 2));
+
         return array('success' => true);
     }
 
@@ -115,13 +123,14 @@ class localexport
         $handle = dir($path);
         if ($handle) {
             while (($filename = $handle->read()) !== false) {
-                if ($this->charset != CHARSET) $convertfilename = diconv($filename, $this->charset, CHARSET);;
+                if ($this->charset != CHARSET) $convertfilename = diconv($filename, $this->charset, CHARSET);
+                else $convertfilename = $filename;
                 $newPath = $path . BS . $filename;
-                if (is_dir($newPath) && $filename != '.' && $filename != '..') {
+                if (is_dir($newPath) && $filename != '.' && $filename != '..' && $filename != '@eaDir') {
                     if ((preg_match('/^(' . $this->notallowdir . ')$/i', $convertfilename))) {
                         continue;
                     }
-                    fwrite($thandle, $newPath . "\t" . 'folder' . "\n");
+                    //fwrite($thandle, $newPath . "\t" . 'folder' . "\n");
                     $this->readdir($newPath, $thandle, $filenum);
                 } elseif (is_file($newPath)) {
                     if (($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $convertfilename)) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $convertfilename))) {
@@ -153,8 +162,6 @@ class localexport
 
             return array('success' => true);
         }
-
-        //检测是否安装了ffmpeg
 
         if ($this->lastid) {
             $start = $this->lastid;
@@ -191,8 +198,9 @@ class localexport
                     //保存路径，用于之后获取文件使用
                     $savepath = str_replace(array('/', './', '\\'), '/', $filearr[0]);
                     $savepath = str_replace($this->path . '/', '', $savepath);
-                    if($rid = DB::result_first("select rid from %t where path = %s and appid = %s",
-                        array('pichome_resources_attr',$savepath,$this->appid))){
+                    $pathmd5 = md5($savepath.$this->appid);
+                    if($recorddata = DB::fetch_first("select * from %t where id = %s",array('local_record',$pathmd5))){
+                        $rid = $recorddata['rid'];
                         $hasrid = 1;
                     }else{
                         //生成rid
@@ -228,11 +236,11 @@ class localexport
                         $filename = $this->getbasename($filepath);
                         //不符合导入规则文件不允许导入，并减少总数
                         if (($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $filename)) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $filename))) {
+                            if($hasrid) C::t('pichome_resources')->delete_by_rid($rid);
                             $this->filenum -= 1;
                         } else {
-                            //查询是否已有数据
-                            $data = C::t('pichome_resources')->fetch($rid);
-                            if (!$data) {
+
+                            if (!$hasrid) {
                                 $setarr = [
                                     'rid' => $rid,
                                     'name' => $filename,
@@ -246,15 +254,17 @@ class localexport
                                     'height' => ($imginfo[1]) ? $imginfo[1] : 0,
                                     'mtime' => $ctime * 1000,
                                     'dateline' => $mtime * 1000,
-                                    'btime' => TIMESTAMP * 1000
+                                    'btime' => TIMESTAMP * 1000,
+                                    'editdate'=>$mtime,
+                                    'path'=>$savepath
                                 ];
-                                if (C::t('pichome_resources')->insert($setarr)) {
+                                if (C::t('#local#local_record')->insert_data($setarr)) {
                                     $attrdata = [
                                         'rid' => $rid,
                                         'appid' => $this->appid,
                                         'isget' => 0,
                                         'path' => $savepath,
-                                        'searchval'=>$filename
+                                        'searchval'=>$filename,
 
                                     ];
 
@@ -272,7 +282,9 @@ class localexport
                                 }
                             }
                             else {
-                                if ($mtime > $data['lastdate']) {
+                                //查询是否已有数据
+                               // $data = C::t('pichome_resources')->fetch($rid);
+                                if ($mtime > $recorddata['dateline'] || $force) {
                                     $setarr = [
                                         'lastdate' => $mtime,
                                         'appid' => $this->appid,
@@ -285,26 +297,28 @@ class localexport
                                         'btime' => TIMESTAMP * 1000,
                                         'width' => ($imginfo[0]) ? $imginfo[0] : 0,
                                         'height' => ($imginfo[1]) ? $imginfo[1] : 0,
+                                        'editdate'=>$mtime
                                     ];
-                                    if (C::t('pichome_resources')->update($rid, $setarr)) {
+                                    if (C::t('#local#local_record')->insert_data($setarr)) {
                                         $attrdata = [
                                             'rid' => $rid,
                                             'appid' => $this->appid,
                                             'isget' => 0,
                                             'path' => $savepath,
-                                            'searchval'=>$filename
+                                            'searchval'=>$filename,
 
                                         ];
                                         C::t('pichome_resources_attr')->insert($attrdata);
                                         //如果文件被替换强制插入获取信息数据
-                                        $setarr['isforce'] = 1;
-                                        Hook::listen('pichomegetinfo',$data);
+                                        $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext,'isforce'=>1];
+                                        Hook::listen('pichomegetinfo',$hookdata);
 
                                     }
 
                                 }else{
+                                    $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext];
                                     //如果文件已存在，尝试插入获取信息数据
-                                    Hook::listen('pichomegetinfo',$data);
+                                    Hook::listen('pichomegetinfo',$hookdata);
                                 }
                             }
                             $this->donum += 1;
@@ -404,6 +418,34 @@ class localexport
         $data = DB::fetch_all("select rid,name,ext from %t where appid = %s order by lastdate asc limit $limitsql ", array('pichome_resources', $this->appid));
         if (empty($data)) {
             C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 4, 'lastid' => 0, 'donum' => 0));
+            $folderdata = DB::fetch_all("select fid,pathkey from %t where appid = %s",array('pichome_folder',$this->appid));
+
+            foreach($folderdata as $v){
+                $pathkeyarr = explode($this->appid,$v['pathkey']);
+                $pathkeyarr = array_filter($pathkeyarr);
+
+                $idelete = false;
+                $pfolder =[];
+                foreach($pathkeyarr as $fv){
+                    $tfid = $fv.$this->appid;
+                    if($tfid){
+                        if($tfname =  DB::result_first("select fname from %t where fid = %s and appid = %s",array('pichome_folder',$tfid,$this->appid))){
+                            $pfolder[] = $tfname;
+                        }else{
+                            C::t('pichome_folder')->delete($v['fid']);
+                            $idelete = true;
+                            break;
+                        }
+                    }
+                }
+                if($idelete) continue;
+
+                $ppath = implode('/',$pfolder);
+                $folderpath  = $this->path.'/'.$ppath;
+                if(!is_dir($folderpath)){
+                    C::t('pichome_folder')->delete($v['fid']);
+                }
+            }
             //校验完成后更新目录文件数
             foreach (DB::fetch_all("select count(rf.id) as num,f.fid  from %t f left join %t rf on rf.fid=f.fid where f.appid = %s group by f.fid", array('pichome_folder', 'pichome_folderresources', $this->appid)) as $v) {
                 C::t('pichome_folder')->update($v['fid'], array('filenum' => $v['num']));
@@ -425,16 +467,14 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
             C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total,'nosubfilenum'=>$nosubfilenum,'getinfonum'=>$getinfonum));
             return true;
         }
+
         foreach ($data as $v) {
             $rid = $v['rid'];
             $filepath = DB::result_first("select `path` from %t where rid = %s and appid = %s", array('pichome_resources_attr', $rid, $this->appid));
             $filepath = str_replace(array('/', './', '\\'), BS, $this->path . BS . $filepath);
             //echo $v['name'].'<br>';
             if (!is_file($filepath) || ($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $v['name'])) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $v['name']))) {
-                //echo $rid;
-               // echo $v['name']."\n";
-//                var_dump((!preg_match('/^(' . $this->allowext . ')$/i', $v['name'])));
-                //die;
+
                 $delrids[] = $rid;
             }
 

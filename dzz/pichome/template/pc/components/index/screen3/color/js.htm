@@ -1,0 +1,37 @@
+<script type="text/javascript">
+	var JsScreenColorMethods = {
+		ScreenColorEmptyClick(){
+			if(this.ScreenValue.color.value){
+				this.ScreenValue.color.value = '';
+				this.ScreenSubmit();
+			}
+		},
+		ScreenColorClick(val){
+			if(this.ScreenValue.color.value != val){
+				this.ScreenValue.color.value = val;
+			}else{
+				this.ScreenValue.color.value = '';
+			}
+			this.ScreenValue.color.custom = false;
+			this.ScreenSubmit();
+		},
+		ScreenColorCustomClick(status){
+			this.ScreenValue.color.custom = status;
+			if(status){
+				// this.ScreenValue.color.custom = true;
+			}else{
+				if(this.ScreenValue.color.value){
+					this.ScreenValue.color.value = '';
+					this.ScreenSubmit();
+				}
+				
+			}
+		},
+		ScreenColorInput:debounce(function(){//颜色输入
+			this.ScreenSubmit();
+		},800),
+		ScreenColorPicker(){
+			this.ScreenSubmit();
+		}
+	};
+</script>

@@ -297,6 +297,7 @@
 	white-space: nowrap;
 	padding-right: 35px;
 	cursor: pointer;
+	line-height: 22px;
 }
 
 .floating-layer .information-box .message .link:hover {
@@ -306,7 +307,7 @@
 .floating-layer .information-box .message .link i {
 	position: absolute;
 	right: 0;
-	top: 0;
+	top: 5px;
 	font-size: 25px;
 	width: 25px;
 	height: 25px;

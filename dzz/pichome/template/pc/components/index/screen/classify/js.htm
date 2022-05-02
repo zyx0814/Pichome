@@ -4,6 +4,7 @@
 			var self = this;
 			var checkedNodes = node.checkedNodes;
 			var checkedKeys = node.checkedKeys;
+			var expanded = parseInt(this.ImageParams.expanded)?true:false;
 			var text = [];
 			var fid = [];
 			self.ScreenValue.classify.tree.DefaultExpandedKeysInit = [];
@@ -19,14 +20,20 @@
 			}
 			for(var i in checkedNodes){
 				var item = checkedNodes[i];
-				if(item.pfid){
-					if(checkedKeys.indexOf(item.pfid)<0){
+				if(expanded){
+					if(item.pfid){
+						if(checkedKeys.indexOf(item.pfid)<0){
+							newcheckedNodes.push(item);
+						}
+					}else{
 						newcheckedNodes.push(item);
 					}
 				}else{
 					newcheckedNodes.push(item);
 				}
+				
 			}
+			// console.log(checkedNodes,checkedKeys,newcheckedNodes)
 			for(var x in newcheckedNodes){
 				var xitem = newcheckedNodes[x];
 				text.push(xitem.fname);
@@ -36,6 +43,7 @@
 				}
 			}
 			self.ScreenValue.classify.tree.DefaultExpandedKeys = self.ScreenValue.classify.tree.DefaultExpandedKeysInit;
+			// console.log(self.ScreenValue.classify.tree.DefaultExpandedKeysInit,text,fid)
 			this.ScreenValue.classify.tree.DefaultFids = fid;
 			this.ScreenValue.classify.value = fid;
 			this.ScreenValue.classify.text = text;
@@ -102,7 +110,7 @@
 			if(this.ScreenValue.classify.tree.DefaultExpandedKeys.length){
 				var status = false;
 				for(var i in this.ScreenValue.classify.tree.DefaultExpandedKeys){
-					var node = self.$refs.ClassifyTree.getNode(this.ScreenValue.classify.tree.DefaultExpandedKeys[i]);
+					var node = self.$refs.ClassifyTree[0].getNode(this.ScreenValue.classify.tree.DefaultExpandedKeys[i]);
 					if(!node){
 						return false;
 					}
@@ -199,6 +207,45 @@
 				}
 			}
 			return arr;
+		},
+		ScreenClassifyIsChild(status){
+			var self = this;
+			var status = parseInt(status);
+			if(parseInt(this.ImageParams.expanded) == status){
+				return false;
+			}
+			this.ImageParams.expanded = status;
+			<!--{if $_G[uid]}-->
+			$.post('{MOD_URL}&op=ajax&operation=expandedsetting',{
+				settingsubmit:true,
+				formhash:'{FORMHASH}',
+				pichomeimageexpanded:status
+			},function(data){
+				if(data.success){
+				}else{
+					self.$message({
+					  message: '设置失败',
+					  type: 'error'
+					});
+				}
+			},'json');
+			<!--{else}-->
+			sessionStorage.setItem('imageexpanded',status);
+			<!--{/if}-->
+			if(self.ScreenValue.classify.value.length){
+				self.ScreenValue.classify.value = [];
+				self.ScreenValue.classify.text = [];
+				self.ScreenValue.classify.tree.filterText = '';
+				self.ScreenValue.classify.tree.DefaultExpandedKeysInit = [];
+				self.ScreenValue.classify.tree.DefaultFids = [];
+				self.ScreenValue.classify.tree.DefaultExpandedKeys = [];
+				self.ScreenValue.classify.tree.arrangement = [];
+				self.$refs.ClassifyTree[0].setCheckedKeys([]);
+				self.$nextTick(function(){
+					self.ScreenSubmit();
+				});
+			}
+			
 		}
 	};
 </script>

@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	var JsScreenDescMethods = {
+		ScreenDescClick(type){
+			if(type == 'not' && !this.ScreenValue.desc.value && parseInt(this.ScreenValue.desc.value)!=0){
+				return false;
+			}
+			if(parseInt(this.ScreenValue.desc.value) == parseInt(type)){
+				this.ScreenValue.desc.value = '';
+				this.ScreenSubmit();
+				return false;
+			}
+			if(type == 'not'){
+				this.ScreenValue.desc.value = '';
+			}else{
+				this.ScreenValue.desc.value = parseInt(type)
+			}
+			this.ScreenSubmit();
+		},
+		ScreenDescInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+	};
+</script>

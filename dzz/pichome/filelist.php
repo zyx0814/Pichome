@@ -4,11 +4,13 @@ if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
 $operation = isset($_GET['operation']) ? trim($_GET['operation']) : '';
+global $_G;
 if ($operation == 'filelist') {
     $sql = " from %t  r ";
 
     $wheresql = " r.isdelete < 1 ";
     $params = ['pichome_resources'];
+
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
@@ -407,28 +409,36 @@ if ($operation == 'filelist') {
     if (isset($_GET['tag'])) {
         $tagwherearr = [];
         $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 1;
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid";
-            $params[] = 'pichome_resources_attr';
-        }
+
+        $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
         $tag = trim($_GET['tag']);
         if ($tag == -1) {
-            $wheresql .= " and ra.tag =  '' ";
-        } else {
-            $tagval = explode(',', trim($_GET['tag']));
-            if (!empty($tagval)) {
-                foreach ($tagval as $v) {
-                    $tagwherearr[] = " find_in_set(%d,ra.tag)";
+            if (!in_array('pichome_resourcestag', $params)) {
+                $sql .= "left join %t rt on r.rid = rt.rid ";
+                $params[] = 'pichome_resourcestag';
+            }
+            $wheresql .= " and isnull(rt.tid) ";
+        }else{
+            if(!$tagrelative){
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid and rt'.($k+1).'.tid = %d';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= ' and !isnull(rt'.($k+1).'.tid)';
+                    $params[] = $v;
+                }
+            }else{
+                $tagval = explode(',', trim($_GET['tag']));
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';
+                    $params[] = 'pichome_resourcestag';
+                    $wheresql .= '  and rt'.($k+1).'.tid = %d ';
                     $para[] = $v;
                 }
-                if ($tagrelative) {
-                    $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
-                } else {
-                    $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
-                }
-            }
 
+            }
         }
+
 
     }
     //颜色条件
@@ -463,7 +473,8 @@ if ($operation == 'filelist') {
             $orderarr[] = ' r.dateline ' . $asc;
             break;
         case 4://标题
-            $orderarr[] = ' r.name ' . $asc;
+           // $orderarr[] = ' r.name ' . $asc;
+            $orderarr[] = '   cast((r.name)  as unsigned) '.$asc.', CONVERT((r.name) USING gbk) ' . $asc;
             break;
         case 5://大小
             $orderarr[] = ' r.size ' . $asc;
@@ -500,6 +511,7 @@ if ($operation == 'filelist') {
     foreach (DB::fetch_all(" select r.rid $sql where $wheresql $groupby order by $ordersql $limitsql", $params) as $value) {
         $rids[] = $value['rid'];
     }
+   // print_r($rids);die;
     //$time1 = microtime(true);
     //echo $time1 - $time;
     //die;
@@ -514,7 +526,6 @@ if ($operation == 'filelist') {
         'appid' => $appid,
         'total' => $total,
         'data' => $data ? $data : array(),
-        'counttotal'=>$counttotal,
         'param' => array(
             'order' => $order,
             'page' => $page,

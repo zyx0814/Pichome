@@ -1,9 +1,12 @@
 <div class="el-popover-search" v-cloak>
+	<div class="search-goback" @click.stop="HeaderPopoverSearchHide()">
+		<i class="el-icon-caret-top"></i>
+	</div>
 	<el-input 
 		class="search-keyword" 
 		style="border-radius: 0;" 
 		@input="HeaderKeywordInput" 
-		 @keyup.enter.native="HeaderKeywordInputKeyup"
+		@keyup.enter.native="HeaderKeywordInputKeyup"
 		v-model="HeaderKeyword" 
 		placeholder="搜索">
 		<i slot="prefix" style="left: -6px;top: -1px;" class="icon-search el-input__icon ri-search-line"></i>
@@ -23,7 +26,7 @@
 			</template>
 			<template v-else>
 				<ul class="field-select-box dzz-dropdown-menu">
-					<li class="dzz-dropdown-menu__item single" v-for="item in HeaderSearch.list" @click.stop="HdeaderSearchInputListClick(item)">{{item}}</li>
+					<li class="dzz-dropdown-menu__item single" v-for="item in HeaderSearch.list" @click.stop="HdeaderSearchInputListClick(item.text)" v-html="item.highlight"></li>
 				</ul>
 			</template>
 			
@@ -56,6 +59,7 @@
 	var JsHdeaderSearchInputMethods = {
 		HeaderKeywordInput:debounce(function(){//头部搜索
 			var value = this.HeaderKeyword;
+			this.HeaderSearch.list = [];
 			if(value){
 				if(value.length>100){
 					this.HeaderKeyword=value.slice(0,100)
@@ -164,7 +168,14 @@
 				keyword:self.HeaderKeyword
 			},function(data){
 				if(data && data.likewords){
-					self.HeaderSearch.list = data.likewords;
+					var lists = [];
+					for(var i in data.likewords){
+						lists.push({
+							text:data.likewords[i],
+							highlight:self.CommonHighlight(data.likewords[i],self.HeaderKeyword),
+						});
+					}
+					self.HeaderSearch.list = lists;
 				}else{
 					self.HeaderSearch.list = [];
 				}

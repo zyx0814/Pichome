@@ -1,0 +1,132 @@
+<script type="text/javascript">
+	var JsScreenClassifyMethods = {
+		ScreenClassifyGetloadNode(){
+			var self = this;
+			var param = {
+				appid:self.Appid,
+				isall:1
+			};
+			this.ScreenValue.classify.loading = true;
+			$.post(MOD_URL+'&op=ajax&operation=getsearchfolder',param,function(data){
+				var folderdatanum = data.folderdatanum;
+				var arr = [];
+				for(var f in folderdatanum){
+					var item = folderdatanum[f];
+					arr.push(item);
+				}
+				self.ScreenValue.classify.data = arr;
+				self.ScreenValue.classify.loading = false;
+			},'json');
+		},
+		
+		Screencheckedchange(data){
+			var index = this.ScreenValue.classify.activefid.indexOf(data.fid);
+			if(index<0){
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.classify.activefid.push(data.fid);
+				}else{
+					var arr = JSON.parse(JSON.stringify(this.ScreenValue.classify.activefid));
+					for(var i in data.data){
+						var item = data.data[i];
+						var aindex = arr.indexOf(item.fid);
+						if(aindex>-1){
+							this.ScreenValue.classify.delactivefid = [item.fid];
+							if(item.children && item.children.length){
+								this.ScreencheckedDel(item.children);
+							}
+							for(var x in this.ScreenValue.classify.delactivefid){
+								var xitem = this.ScreenValue.classify.delactivefid[x];
+								var xindex = arr.indexOf(xitem);
+								if(xindex>-1){
+									arr.splice(xindex,1);
+								}
+							}
+						}
+					}
+					arr.push(data.fid);
+					this.ScreenValue.classify.activefid = arr;
+				}
+				
+			}else{
+				this.ScreenValue.classify.delactivefid = [data.fid];
+				if(data.item.children && data.item.children.length){
+					this.ScreencheckedDel(data.item.children);
+				}
+				var arr = [];
+				for(var i in this.ScreenValue.classify.activefid){
+					var item = this.ScreenValue.classify.activefid[i];
+					if(this.ScreenValue.classify.delactivefid.indexOf(item)<0){
+						arr.push(item);
+					}
+				}
+				this.ScreenValue.classify.activefid = arr;
+			}
+			this.ScreenSetValue();
+		},
+		ScreenFetchValue(data,fid){
+			for(var i in data){
+				var item = data[i];
+				if(item.fid == fid){
+					this.ScreenValue.classify.activedata.push(item);
+					return false;
+				}
+				if(item.children && item.children.length){
+					this.ScreenFetchValue(item.children,fid);
+				}
+			}
+		},
+		ScreenSetValue(){
+			this.ScreenValue.classify.activedata = [];
+			for(var x in this.ScreenValue.classify.activefid){
+				this.ScreenFetchValue(this.ScreenValue.classify.data,this.ScreenValue.classify.activefid[x]);
+			}
+			
+			var activeids = JSON.parse(JSON.stringify(this.ScreenValue.classify.activefid));
+			for(var b in this.ScreenValue.classify.activedata){
+				var bitem = this.ScreenValue.classify.activedata[b];
+				if(this.ScreenValue.classify.activefid.indexOf(bitem.pfid)>-1){
+					var index = activeids.indexOf(bitem.pfid);
+					if(index>-1){
+						activeids.splice(index,1);
+					}
+				}
+			}
+			var text = [];
+			for(var v in this.ScreenValue.classify.activedata){
+				var vitem = this.ScreenValue.classify.activedata[v];
+				if(activeids.indexOf(vitem.fid)>-1){
+					text.push(vitem.fname);
+				}
+			}
+			this.ScreenValue.classify.value = activeids;
+			this.ScreenValue.classify.text = text;
+			this.ScreenSubmit();
+		},
+		ScreencheckedDel(data){
+			for(var i in data){
+				var item = data[i];
+				this.ScreenValue.classify.delactivefid.push(item.fid);
+				if(item.children && item.children.length){
+					this.ScreencheckedDel(item.children);
+				}
+			}
+		},
+
+		ScreenUnlimited(data){
+			if(data.type=='all' && this.ScreenValue.classify.value.length){
+				this.ScreenDelete('classify');
+			}else{
+				var arr = [];
+				for(var i in this.ScreenValue.classify.activefid){
+					var item = this.ScreenValue.classify.activefid[i];
+					if(data.fids.indexOf(item)<0){
+						arr.push(item);
+					}
+				}
+				this.ScreenValue.classify.activefid = arr;
+				this.ScreenSetValue();
+			}
+		}
+		
+	};
+</script>

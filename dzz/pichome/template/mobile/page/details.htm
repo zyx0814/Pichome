@@ -40,7 +40,7 @@
 							<div class="video-box" :style="{'height':item.data.fheight+'px'}">
 								<iframe
 									style="border: 0px;"
-									:src="'index.php?mod=xgplayer&src='+item.data.realpath" 
+									:src="'index.php?mod=xgplayer&path='+item.data.dpath" 
 									width="100%" 
 									height="100%"></iframe>
 							</div>
@@ -48,7 +48,7 @@
 						<template v-else-if="item.data.opentype=='pdf'">
 							<iframe
 								style="border: 0px;"
-								:src="'index.php?mod=pdf&src='+item.data.realpath" 
+								:src="'index.php?mod=pdf&path='+item.data.dpath" 
 								width="100%" 
 								height="100%"></iframe>
 						</template>
@@ -56,7 +56,7 @@
 							<div style="padding: 10px;height: 100%;">
 								<iframe
 									style="border: 0px;border-radius: 18px;"
-									:src="'index.php?mod=textviewer&src='+item.data.realpath" 
+									:src="'index.php?mod=textviewer&path='+item.data.dpath" 
 									width="100%" 
 									height="100%"></iframe>
 							</div>
@@ -76,7 +76,7 @@
 								<img 
 									@load="DetailImgload" 
 									:data-rid="item.data.rid"
-									:src="item.data.realpath" 
+									:src="item.data.originalimg" 
 									class="image-viewer__img opacity" />
 							</div>
 						</template>
@@ -97,14 +97,13 @@
 				<i class="ri-share-line"></i>
 			</div>
 		</div>
-		
-		
 </div>
+
 <script type="text/javascript">
 	new Vue({
 		el: '#dzzoffice',
 		data: function() {
-			return {
+			return $.extend({},{
 				rids:[],
 				rid:'',
 				ridIndex:0,
@@ -121,10 +120,26 @@
 					move:false,
 				},
 				full:false,
+				ParamImages:{
+					operation:{
+						rids:[]
+					}
+				},
 				InformationPopup:false
-			};
+			});
 		},
 		watch:{
+			rid:{
+				handler(val){
+					if(val){
+						this.ParamImages.operation.rids = [val];
+					}else{
+						this.ParamImages.operation.rids = [];
+					}
+					
+				},
+				deep:true
+			},
 			full:{
 				handler(val){
 					var self = this;
@@ -184,6 +199,7 @@
 			if(arr.length){
 				rid=arr[0].replace("#","").split('=')[1];
 				this.rid = rid;
+				this.ParamImages.operation.rids = [rid];
 			}
 			var rids = window.localStorage.getItem('imgs');
 			if(rids && rids.indexOf(this.rid)>-1){
@@ -191,7 +207,7 @@
 			}
 			this.handleRidsOrder();
 		},
-		methods:{
+		methods:$.extend({},{
 			DetailImgload(event){
 				var self = this;
 				$(event.target).removeClass('opacity').siblings('.thumbnail').remove();
@@ -421,11 +437,12 @@
 					item.foldernames = foldernames;
 					item.download = parseInt(item.download);
 					item.share = parseInt(item.share);
-					if(item.link || item.share || item.download){
-						item['footer'] =  true;
-					}else{
-						item['footer'] = false;
-					}
+					// if(item.link || item.share || item.download){
+					// 	item['footer'] =  true;
+					// }else{
+					// 	item['footer'] = false;
+					// }
+					item['footer'] =  true;
 					// if(item.opentype == 'other' || item.opentype == 'image'){
 					// 	var size = self.DetailImgSize(item);
 					// 	item['width'] = size['width'];
@@ -585,7 +602,7 @@
 				document.getElementById('copyInput').remove();
 				self.$toast.success('复制成功');
 			}
-		},
+		}),
 		mounted() {
 		}
 	});

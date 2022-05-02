@@ -39,5 +39,11 @@ class table_billfish_record extends dzz_table
         DB::delete($this->_table,array('appid'=>$appid));
     }
 
+    public function delete_by_rids($rids){
+        if (!is_array($rids)) $rids = (array)$rids;
+       DB::delete($this->_table,'rid in ('.dimplode($rids).')');
+
+    }
+
 }
 

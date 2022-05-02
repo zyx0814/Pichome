@@ -19,24 +19,19 @@ define('BS',DIRECTORY_SEPARATOR);//系统目录分割符
 define('DZZ_ROOT', dirname(dirname(__FILE__)).BS);//系统根目录
 define('CORE_NAME','core');//核心目录名
 define('CORE_PATH',DZZ_ROOT.CORE_NAME.BS.'class');//核心类目录
-define('OFFICIAL','http://help.oaooa.com/');
+define('OFFICIAL','http://oaooa.com/');
 define('APP_DIRNAME','dzz');//应用目录名
 define('UNIQUEID','');//应用目录名
 require ROOT_PATH.'./core/core_version.php';
 require ROOT_PATH.'./install/include/install_var.php';
-/*$versions=array(
-	'Tcloud'=>'腾讯云版',
-	'Enterprise'=>'企业版',
-	'Custom'=>'定制版',
-	'Education'=>'教育版',
-	'Team'=>'团队版',
-	'Home'=>'家庭版',
-	'Persion'=>'个人版',
-);*/
-
-$version=CORE_VERSION;
-
-//$version_name=$versions[CORE_VERSION_LEVEL];
+$versions=array(
+    'Home'=>'个人版',
+    'Team'=>'团队版',
+);
+$arr=explode('.',CORE_VERSION);
+array_shift($arr);
+$version=implode('.',$arr);
+$version_name=$versions[CORE_VERSION_LEVEL];
 if(function_exists('mysqli_connect')) {
 	require ROOT_PATH.'./install/include/install_mysqli.php';
 } else {
@@ -294,12 +289,7 @@ elseif($method == 'db_init') {
 		if(is_dir(ROOT_PATH.'data/backup_'.$backupdir)) {
 			$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('backupdir', '$backupdir')");
 		}
-		if(defined('UNIQUEID') && UNIQUEID != ''){
-			$siteuniqueid=UNIQUEID;
-		}else{
-			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
-			$siteuniqueid = 'OAOOA'.$chars[date('y')%60].$chars[date('n')].$chars[date('j')].$chars[date('G')].$chars[date('i')].$chars[date('s')].substr(md5($onlineip.$timestamp), 0, 4).random(4);
-		}
+
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('authkey', '$authkey')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('siteuniqueid', '$siteuniqueid')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('adminemail', '$adminemail')");
@@ -318,7 +308,7 @@ elseif($method == 'db_init') {
 			$db->query("INSERT INTO {$tablepre}organization_user (`orgid`, `uid`,`jobid`, `dateline`) VALUES(1, 1, 0, '$timestamp')");
 			
 		}
-		upgradeinformation($siteuniqueid,$company);
+		upgradeinformation($company);
 		$db->query("UPDATE {$tablepre}cron SET lastrun='0', nextrun='".($timestamp + 3600)."'");
 		for($i=0; $i<5;$i++){
 			showjsmessage(lang('set_system1'));

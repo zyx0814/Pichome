@@ -68,7 +68,7 @@
         public function getNoRepeatName($name)
         {
             static $i = 0;
-            if (DB::result_first("select COUNT(*) from %t where appname=%s ", array($this->_table, $name))) {
+            if (DB::result_first("select COUNT(appid) from %t where appname=%s ", array($this->_table, $name))) {
                 $name = preg_replace("/\(\d+\)/i", '', $name) . '(' . ($i + 1) . ')';
                 $i += 1;
                 return $this->getNoRepeatName($name);

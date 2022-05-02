@@ -13,7 +13,10 @@
 						<i class="el-icon-back"></i>
 					</div>
 					<span class="text" >
-						<span v-cloak>$_G['setting'][sitename]</span>
+						<span v-cloak>
+							<template v-if="title">{{title}}</template>
+							<template v-else>站点设置</template>
+						</span>
 					</span>
 				</div>
 				<div class="h-center">
@@ -23,7 +26,6 @@
 						<el-dropdown v-cloak trigger="click" @command="handleavatar">
 							<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
 							<el-dropdown-menu slot="dropdown" style="width: 165px;">
-								<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
 								<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 								<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 								<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
@@ -31,7 +33,6 @@
 								<el-divider></el-divider>
 								<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 								<el-dropdown-item command="library">库设置</el-dropdown-item>
-								<!-- <el-dropdown-item command="orguser">用户管理</el-dropdown-item> -->
 								<el-dropdown-item command="system">系统工具</el-dropdown-item>
 								<!--{/if}-->
 								<el-divider></el-divider>
@@ -49,6 +50,7 @@
 <script type="text/javascript">
 	Vue.component('page-header', {
 		template: '#PageHeader',
+		props:['title'],
 		data: function() {
 			return {
 			}
@@ -61,9 +63,6 @@
 		methods:{
 			handleavatar(type) {//头像点击
 				switch(type){
-					case 'collection':
-						window.location.href = DZZSCRIPT + '?mod=collection';
-					break;
 					case 'personal':
 						window.location.href = MOD_URL + '&op=user&do=personal';
 					break;
@@ -74,7 +73,7 @@
 						window.open('https://support.qq.com/products/340252');
 					break;
 					case 'setting':
-						window.location.href = MOD_URL + '&op=admin&do=basic';
+						window.location.href = MOD_URL + '&op=admin&do=authorize';
 					break;
 					case 'library':
 						window.location.href = MOD_URL + '&op=library';
@@ -122,9 +121,6 @@
 					break;
 					case 'system':
 						window.open(SITEURL+'admin.php?mod=system');
-					break;
-					case 'orguser':
-						window.open(SITEURL+'admin.php?mod=orguser');
 					break;
 				}
 				

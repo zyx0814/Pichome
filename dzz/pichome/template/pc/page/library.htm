@@ -28,9 +28,9 @@
 		margin-right: 8px;
 		cursor: pointer;
 	}
-	.el-table .operation .icon:last-child{
+	/* .el-table .operation .icon:last-child{
 		margin-right:0;
-	}
+	} */
 	.el-table .operation .icon:hover{
 		color: var(--content-textHover);
 	}
@@ -91,19 +91,18 @@
 					<div class="h-center">
 					</div>
 					<div class="h-right" style="overflow: hidden;">
-						<el-button type="primary" style="float: left;" size="small"  icon="el-icon-circle-plus-outline" @click="CreateNewLubrary">新建库</el-button>
-						<div class="r-option" style="float: left;margin-left: 8px;">
+						<el-button type="primary" size="small"  icon="el-icon-circle-plus-outline" @click="CreateNewLubrary" style="float: left;">新建库</el-button>
+						<div class="r-option" style="margin-left: 8px;display: inline-block;">
 							<el-dropdown v-cloak trigger="click" @command="handleavatar">
 								<div id="dzz_avatar_img" class="small">{eval echo avatar_block($_G[uid]);} </div>
 								<el-dropdown-menu slot="dropdown" style="width: 165px;">
-									<!-- <el-dropdown-item command="collection">收藏夹</el-dropdown-item> -->
+
 									<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 									<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 									<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
 									<el-divider></el-divider>
 									<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 									<el-dropdown-item command="library">库设置</el-dropdown-item>
-									<!-- <el-dropdown-item command="orguser">用户管理</el-dropdown-item> -->
 									<el-dropdown-item command="system">系统工具</el-dropdown-item>
 									<el-divider></el-divider>
 									<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
@@ -227,6 +226,7 @@
 									<template v-else-if="parseInt(scope.row.state)==1">准备中...</template>
 									<template v-else-if="parseInt(scope.row.state)==2">导入中...</template>
 									<template v-else-if="parseInt(scope.row.state)==3">校验中...</template>
+									<template v-else-if="parseInt(scope.row.state)==-1">更新失败</template>
 									<template v-else>完成</template>
 								</template>
 							</el-table-column>
@@ -242,26 +242,36 @@
 								</template>
 							</el-table-column>
 							<el-table-column
-							    prop="name"
 							    label="操作"
-								width="130">
+								align="center"
+								width="180">
 								<template slot-scope="scope">
 									<div class="operation">
-										<template>
-											<el-tooltip :enterable="false" effect="dark" content="更新" placement="top" v-if="parseInt(scope.row.connect) == 1">
-											    <i class="icon ri-refresh-line" style="vertical-align: sub;" @click="handleRefresh(scope.row.appid)" :class="{loading:parseInt(scope.row.state)==1||parseInt(scope.row.state)==2||parseInt(scope.row.state)==3}"></i>
+										<template v-if="parseInt(scope.row.connect) == 1">
+											<el-tooltip :enterable="false" effect="dark" content="更新" placement="top">
+												<i class="icon ri-refresh-line" style="vertical-align: sub;margin-right: 0;" :class="{loading:parseInt(scope.row.state)==1||parseInt(scope.row.state)==2||parseInt(scope.row.state)==3}" @click="handleRefreshClick(scope.row.appid)"></i>
+												
 											</el-tooltip>
-											<el-tooltip :enterable="false" effect="dark" content="设置" placement="top">
-											    <i class="icon el-icon-setting" @click="handleSetting(scope.row.appid,scope.row.appname)"></i>
-											</el-tooltip>
+											
+											<el-dropdown @command="handleRefresh"  trigger="click">
+												<i class="icon el-icon-caret-bottom"style="font-size: 16px;"></i>
+												<el-dropdown-menu slot="dropdown">
+													<el-dropdown-item :command="handleRefreshVal(0,scope.row.appid)">正常更新</el-dropdown-item>
+													<el-dropdown-item :command="handleRefreshVal(1,scope.row.appid)">校验修正更新</el-dropdown-item>
+												</el-dropdown-menu>
+											</el-dropdown>
 										</template>
-										<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary(scope.row.appid)" style="margin-right: 8px;">
+										<el-tooltip :enterable="false" effect="dark" content="设置" placement="top">
+											<i class="icon el-icon-setting" @click="handleSetting(scope.row.appid,scope.row.appname)"></i>
+										</el-tooltip>
+										
+										<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary(scope.row.appid)">
 											<el-tooltip slot="reference" :enterable="false" effect="dark" content="删除" placement="top">
 											    <i class="icon el-icon-delete"></i>
 											</el-tooltip>
 										</el-popconfirm>
 										<el-tooltip :enterable="false" effect="dark" content="拖动排序" placement="top">
-										    <i class="icon el-icon-rank icon-rank"></i>
+										    <i class="icon el-icon-rank icon-rank" style="margin-right: 0;"></i>
 										</el-tooltip>
 									</div>
 								</template>
@@ -306,6 +316,10 @@
 							<div class="block">
 								<div class="text">转缩略图：</div>
 								<div class="message">对于图片文件比较大时，为图片转换缩略图会提高列表页面的显示速度。如果库内文件大多为KB以内文件，可以不用转换，如果库内文件为5M至几十M的文件，则需要开启缩略图转换。<span style="color: var(--leftTreeColor);">开启方法是在库设置中开启</span>即可。只有普通目录会需要转缩略图，其他软件的库目录不需要转缩略图</div>
+							</div>
+							<div class="block">
+								<div class="text">更新功能：</div>
+								<div class="message">正常更新用于平时正常更新，一般更新会忽略已有数据，更新速度快。<br>校验修正更新，当之前更新数据发现有错误信息时，可以尝试校验修正更新。会强制校验已有数据，对已有数据如果是有错误的信息进行更正。更新速度会与首次更新一样，更新速度慢一些。</div>
 							</div>
 						</div>
 					</div>	
@@ -417,26 +431,6 @@
 					</el-form-item>
 				</template>
 				
-				<!-- <el-form-item label="筛选器：">
-					<div class="SortableBox LabelBox clearfix" ref="SortableScreen">
-						<div v-for="(item,index) in newscreens" :key="item.key" class="sortable-list">
-							<el-checkbox v-model="formdta.screen" :label="item.key" v-cloak>{{item.text}}</el-checkbox>
-							<template v-if="item.key=='tag'">
-								<template v-if="formdta.screen.indexOf('tag')>-1">
-									<el-radio v-model="formdta.type" :label="0">默认</el-radio>
-									<el-radio v-model="formdta.type" :label="1">展示分类</el-radio>
-									<div v-show="formdta.type==1" class="SortableBox GroupBox clearfix" ref="SortableClassif" style="padding-left: 24px;">
-										<div v-for="fitem in newClassfiy" :key="fitem.cid" class="sortable-list">
-											<el-checkbox v-model="formdta.classif" :label="fitem.cid" v-cloak>{{fitem.catname}}</el-checkbox>
-										</div>
-									</div>
-								</template>
-								
-							</template>
-						</div>
-					</div>
-					
-				</el-form-item> -->
 			</el-form>
 			<div slot="footer" class="dialog-footer">
 <!-- 				<el-popconfirm title="确定删除该库？确定后无法恢复" @Confirm="deleteLibrary">
@@ -468,17 +462,12 @@
 					share:'0',
 					getinfo:'0',
 					download:'0',
-					screen:[],
-					classif:[],
-					type:0,
 					eagle:0,
 					allowext:'',
 					notallowext:'',
 					charset:'',
 					
 				},
-				newscreens:[],
-				newClassfiy:[],
 				catalogue:{
 					appid:'',
 					dialogtype:'',
@@ -499,17 +488,19 @@
 					force:0
 				},
 				ImportDataVisible:false,
-				getinfonumtimestatus:''
+				getinfonumNum:0,
+				GetFetachNum:0,
+				GetFetachAppids:[],
 			}
 		},
 		watch:{
-			
 		},
 		created() {
 			this.GetData();
 			this.GetCatalogueSelect();
 		},
 		methods:{
+			
 			FormdtaPathClick(){
 				this.catalogue.dialogtype = 'setting';
 				this.catalogue.type = this.formdta.type;
@@ -568,34 +559,7 @@
 			},
 			handleSubmit(){
 				var self = this;
-				var filter = [];
 				self.formdta.loading = true;
-				for(var c in self.newscreens){
-					var citem = self.newscreens[c];
-					if(self.formdta.screen.indexOf(citem.key)>-1){
-						citem.checked = 1;
-					}else{
-						citem.checked = 0;
-					}
-					if(citem.key == 'tag'){
-						if(self.formdta.type==1){
-							citem.showtype = 1;
-							citem['group'] = [];
-							for(var g in self.newClassfiy){
-								var gitem = self.newClassfiy[g];
-								if(self.formdta.classif.indexOf(gitem.cid)>-1){
-									gitem['checked']=1;
-								}else{
-									gitem['checked']=0;
-								}
-								citem['group'].push(gitem);
-							}
-						}else{
-							citem.showtype = 0;
-						}
-					}
-					filter.push(citem);
-				}
 				var param = {
 					settingsubmit:true,
 					formhash:'{FORMHASH}',
@@ -606,7 +570,6 @@
 					download:self.formdta.download,
 					allowext:self.formdta.allowext,
 					notallowext:self.formdta.notallowext,
-					filter:filter
 				};
 				$.post(MOD_URL+'&op=library&operation=fetch',param,function(data){
 					self.dialog.Visible = false;
@@ -615,9 +578,9 @@
 							if(self.tableData[x].appid == self.formdta.appid){
 								self.tableData[x].getinfo = self.formdta.getinfo;
 								self.tableData[x].appname = self.formdta.appname;
-								self.tableDataForEach();
 							}
 						}
+						self.tableDataForEach();
 						self.$message({
 							type:'success',
 							message:'设置成功'
@@ -631,78 +594,20 @@
 			handleSetting(appid,title){
 				var self = this;
 				this.dialog.title = '设置'+title+'库';
-				this.newscreens = [];
-				this.newClassfiy = [];
 				$.post(MOD_URL+'&op=library&operation=fetch',{
 					appid:appid
 				},function(data){
 					if(data.success){
-						var fscreen = [];
-						var fclassif = [];
-						var fclassif1 = [];
-						var ftype = 0;
-						// if(data.data.filter){
-						// 	for(var fi in data.data.filter){
-						// 		var fiitem = data.data.filter[fi];
-						// 		var fstr = {
-						// 			key:fiitem.key,
-						// 			text:fiitem.text,
-						// 			checked:parseInt(fiitem.checked),
-						// 		};
-						// 		if(fstr.checked){
-						// 			fscreen.push(fstr.key)
-						// 		}
-						// 		if(fstr.key=='tag'){
-						// 			self.formdta.type = parseInt(fstr.showtype);
-						// 			console.log(self.formdta.type)
-						// 			if(fstr.checked&&fiitem.group){
-						// 				ftype = 1;
-						// 				for(var b in fiitem.group){
-						// 					var bitem = fiitem.group[b];
-						// 					for(var n in data.catdata){
-						// 						var nitem = data.catdata[n];
-						// 						if(bitem.cid == nitem.cid){
-						// 							if(parseInt(bitem.checked)){
-						// 								fclassif.push(nitem.cid);
-						// 							}
-						// 							self.newClassfiy.push(nitem);
-						// 							fclassif1.push(nitem.cid);
-						// 						}
-						// 					}
-						// 				}
-						// 				if(data.catdata.length>fclassif1.length){
-						// 					for(var n in data.catdata){
-						// 						var nitem = data.catdata[n];
-						// 						if(fclassif1.indexOf(nitem.cid)<0){
-						// 							self.newClassfiy.push(nitem);
-						// 						}
-						// 					}
-						// 				}
-						// 			}else{
-						// 				self.newClassfiy = data.catdata;
-						// 			}
-									
-						// 		}
-						// 		self.newscreens.push(fstr);
-						// 	}
-						// }else{
-						// 	self.newClassfiy = data.catdata;
-						// 	self.newscreens = self.screens;
-						// }
 						var showVal = data.data.convertpath.replace(/\\/g,"/");
 						self.dialog.Visible = true;
 						self.formdta = {
 							appid:appid,
 							appname:data.data.appname,
 							path:showVal,
-							type:data.data.type,
 							getinfo:data.data.getinfo,
 							share:data.data.share,
 							download:data.data.download,
-							screen:fscreen,
-							classif:fclassif,
 							charset:data.data.charset,
-							// type:ftype,
 							eagle:parseInt(data.data.type),
 							allowext:data.data.allowext,
 							notallowext:data.data.notallowext,
@@ -915,7 +820,7 @@
 				}
 				$.post(url,param,function(data){
 					if(data.tips){
-						self.ImportDataVisible = true;
+						self.$message.error(data.tips);
 						return false;
 					}
 					if(data.error){
@@ -969,8 +874,10 @@
 								index = i;
 							}
 						}
+						if(self.GetFetachAppids.indexOf(appid)>-1){
+							self.GetFetachAppids.splice(self.GetFetachAppids.indexOf(appid),1);
+						}
 						self.tableData.splice(index,1);
-						self.tableDataForEach();
 					}else{
 						self.$message.error('删除失败');
 					}
@@ -983,10 +890,16 @@
 					self.loading = false;
 					for(var i in self.tableData){
 						if(parseInt(self.tableData[i].state) == 1 || parseInt(self.tableData[i].state) == 2 || parseInt(self.tableData[i].state) == 3){
-							self.handleimplement(i,self.tableData[i].appid)
+							if(self.GetFetachAppids.indexOf(self.tableData[i].appid)<0){
+								self.GetFetachAppids.push(self.tableData[i].appid);
+							}
 						}
-						self.tableDataForEach();
+						
 					}
+					if(self.GetFetachNum == 0){
+						self.handleRefreshLoading();
+					}
+					self.tableDataForEach();
 					self.$nextTick(function(){
 						self.TableSortable();
 					});
@@ -1003,17 +916,14 @@
 						break;
 					}
 				}
-				if(isInterval){
+				if(isInterval && !self.GetFetachNum){
 					self.getinfonumtime();
-				}else{
-					if(self.getinfonumtimestatus){
-						clearInterval(self.getinfonumtimestatus);
-					}
 				}
 			},
 			getinfonumtime(){
 				var self = this;
-				self.getinfonumtimestatus = setInterval(function(){
+				self.GetFetachNum = 1;
+				setTimeout(function(){
 					$.get(MOD_URL+'&op=library&operation=getinfonum',function(data){
 						var status = true;
 						for(var i in self.tableData){
@@ -1028,102 +938,152 @@
 							}
 						}
 						for(var x in self.tableData){
+							var breal = false;
 							for(var t in data.data){
 								if(self.tableData[x].appid == t){
 									if(parseInt(self.tableData[x].filenum) != parseInt(data.data[t])){
 										status = false;
-										return false;
+										breal = true;
+										break;
 									}
 								}
 							}
+							if(breal){
+								break;
+							}
 						}
 						if(status){
-							clearInterval(self.getinfonumtimestatus);
+							self.GetFetachNum = 0;
+						}else{
+							self.getinfonumtime();
 						}
 					},'json');
 				},5000)
 				
 			},
-			handleRefresh(appid){
+			handleRefreshVal(type,appid){
+				return {
+					type:type,
+					appid:appid
+				}
+			},
+			handleRefreshClick(appid){
+				this.handleRefresh({
+					type:0,
+					appid:appid
+				});
+			},
+			handleRefresh(data){
 				var self = this;
 				var index = 0;
 				var status = 0;
 				for(var i in self.tableData){
-					if(self.tableData[i].appid == appid){
+					if(self.tableData[i].appid == data.appid){
 						index = i;
 						status = self.tableData[i].state
 					}
 				}
-				if(status == 0 || status == 4){
+				if(status == 0 || status == 4 || status == -1){
 					// if(!self.tableData[index]['time']){
-						$.post(MOD_URL+'&op=initexport&appid='+appid);
-						
+						var param = {
+							appid:data.appid,
+						};
+						if(parseInt(data.type)){
+							param['force'] = 1;
+						}
 						self.tableData[index].state = 1;
-						self.tableData[index].percent = 0;
-						
-						self.handleRefreshLoading(index,appid);
-					// }
-				}
-				
-				
-			},
-			handleImport(appid){
-				var self = this;
-				var index = 0;
-				for(var i in self.tableData){
-					if(self.tableData[i].appid == appid){
-						index = i;
-					}
-				}
-				this.handleimplement(index,appid)
-			},
-			handleimplement(index,appid){
-				var self = this;
-				if(!self.tableData[index]['time']){
-					$.post(MOD_URL+'&op=initexport&appid='+appid);
-					self.tableData[index].state = 1;
-					self.handleRefreshLoading(index,appid);
-				}
-			},
-			handleRefreshLoading(index,appid){
-				var self = this;
-				if(self.tableData[index]){
-					self.tableData[index]['time'] = setInterval(function(){
-						$.post(MOD_URL+'&op=library&operation=fetch',{
-							appid:appid
-						},function(data){
-							if(data.success){
-								if(parseInt(data.data.state)==4){
-									clearInterval(self.tableData[index]['time']);
-									setTimeout(function(){
-										self.tableData[index].filenum = data.data.filenum;
-										self.tableData[index].percent = parseInt(data.data.percent);
-										self.tableData[index].state = parseInt(data.data.state);
-										self.tableData[index].lastid = data.data.lastid;
-										self.$message({
-											type:'success',
-											message:data.data.appname+' 更新完成'
-										},500);
-									},500);
-								}else{
-									if(parseInt(data.data.state) != self.tableData[index]['state']){
-										self.tableData[index].percent = 100;
-									}
-									self.tableData[index].filenum = data.data.filenum;
-									self.tableData[index].percent = parseInt(data.data.percent);
-									self.tableData[index].state = parseInt(data.data.state);
-									/*if(self.tableData[index].state==0){
-										clearInterval(self.tableData[index]['time']);
-										self.$message.error('更新中断，请刷新重试');
-									}*/
-								}
+						$.post(MOD_URL+'&op=initexport',param,function(json){
+							if(json.error){
+								self.tableData[index].state = status;
+								self.$notify.error({
+									title: '错误',
+									message: json.error
+								});
 							}else{
-								clearInterval(self.tableData[index]['time']);
-								self.$message.error('数据获取失败');
+								
+								self.tableData[index].percent = 0;
+								if(self.GetFetachAppids.indexOf(data.appid)<0){
+									self.GetFetachAppids.push(data.appid);
+								}
+								if(self.GetFetachNum == 0){
+									self.handleRefreshLoading();
+								}
 							}
 						},'json');
-					},2000);
+						
+					// }
 				}
+			},
+			handleRefreshLoading(){
+				var self = this;
+				self.GetFetachNum++;
+				if(!self.GetFetachAppids.length){
+					self.GetFetachNum = 0;
+					return false;
+				}
+				setTimeout(function(){
+					if(!self.GetFetachAppids.length){
+						self.GetFetachNum = 0;
+						return false;
+					}
+					$.post(MOD_URL+'&op=library&operation=getexportstatus',{
+						appids:self.GetFetachAppids.join(',')
+					},function(json){
+						for(var i in json.data){
+							var item = json.data[i];
+							for(var x in self.tableData){
+								var xtem = self.tableData[x];
+								console.log(item.appid ,xtem.appid)
+								if(item.appid == xtem.appid){
+									if(parseInt(item.state)==4){
+										xtem.filenum = item.filenum;
+										xtem.percent = parseInt(item.percent);
+										xtem.state = parseInt(item.state);
+										if(self.GetFetachAppids.indexOf(xtem.appid)>-1){
+											self.GetFetachAppids.splice(self.GetFetachAppids.indexOf(xtem.appid),1);
+										}
+										let appname = xtem.appname;
+										setTimeout(function(){
+											self.$message({
+												type:'success',
+												message:appname+'更新完成'
+											},500);
+										},500);
+									}else if(parseInt(item.state)==-1){
+										xtem.state = parseInt(item.state);
+										if(self.GetFetachAppids.indexOf(xtem.appid)>-1){
+											self.GetFetachAppids.splice(self.GetFetachAppids.indexOf(xtem.appid),1);
+										}
+										let appname = xtem.appname;
+										setTimeout(function(){
+											self.$message.error(appname+'更新失败');
+										},500);
+									}else{
+										if(parseInt(item.state) != xtem.state){
+											xtem.percent = 100;
+										}
+										xtem.filenum = item.filenum;
+										xtem.percent = parseInt(item.percent);
+										xtem.state = parseInt(item.state);
+										if(parseInt(item.state)==0){
+											if(self.GetFetachAppids.indexOf(xtem.appid)>-1){
+												self.GetFetachAppids.splice(self.GetFetachAppids.indexOf(xtem.appid),1);
+											}
+											let appname = xtem.appname;
+											setTimeout(function(){
+												self.$message.error(appname+'更新中断，请刷新重试');
+											},500);
+										}
+									}
+									break;
+								}
+							}
+						}
+						self.$nextTick(function(){
+							self.handleRefreshLoading();
+						});
+					},'json');
+				},2000);
 				
 				
 			},
@@ -1157,12 +1117,6 @@
 			},
 			handleavatar(type) {//头像点击
 				switch(type){
-					case 'collection':
-						window.location.href = DZZSCRIPT + '?mod=collection';
-					break;
-					case 'orguser':
-						window.open(SITEURL+'admin.php?mod=orguser');
-					break;
 					case 'personal':
 						window.location.href = MOD_URL + '&op=user&do=personal';
 					break;
@@ -1173,7 +1127,7 @@
 						window.open('https://support.qq.com/products/340252');
 					break;
 					case 'setting':
-						window.location.href = MOD_URL + '&op=admin&do=basic';
+						window.location.href = MOD_URL + '&op=admin&do=authorize';
 					break;
 					case 'library':
 						window.location.href = MOD_URL + '&op=library';

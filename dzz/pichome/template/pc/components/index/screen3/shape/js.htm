@@ -1,0 +1,46 @@
+<script type="text/javascript">
+	var JsScreenShapeMethods = {
+		ScreenShapeEmptyClick(){
+			if(this.ScreenValue.shape.value.length || this.ScreenValue.shape.width || this.ScreenValue.shape.height){
+				this.ScreenValue.shape.value = [];
+				this.ScreenValue.shape.text = [];
+				this.ScreenValue.shape.width = '';
+				this.ScreenValue.shape.height = '';
+				this.ScreenValue.shape.custom = false;
+				this.ScreenSubmit();
+			}
+		},
+		ScreenShapeClick(val,text){
+			var index = this.ScreenValue.shape.value.indexOf(val);
+			if(index>-1){
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.shape.value.splice(index,1);
+					var tindex = this.ScreenValue.shape.text.indexOf(text);
+					this.ScreenValue.shape.text.splice(tindex,1);
+				}else{
+					this.ScreenValue.shape.value = [];
+					this.ScreenValue.shape.text = [];
+				}
+			}else{
+				if(parseInt(this.ScreenIsRadio)){
+					this.ScreenValue.shape.value.push(val);
+					this.ScreenValue.shape.text.push(text);
+				}else{
+					this.ScreenValue.shape.value = [val];
+					this.ScreenValue.shape.text = [text];
+				}
+			}
+			this.ScreenValue.shape.width = '';
+			this.ScreenValue.shape.height = '';
+			this.ScreenValue.shape.custom = false;
+			this.ScreenSubmit();
+		},
+		ScreenShapeInput:debounce(function(){//输入
+			if(this.ScreenValue.shape.width && this.ScreenValue.shape.height){
+				this.ScreenValue.shape.value = [];
+				this.ScreenValue.shape.text = [];
+				this.ScreenSubmit();
+			}
+		},800),
+	};
+</script>

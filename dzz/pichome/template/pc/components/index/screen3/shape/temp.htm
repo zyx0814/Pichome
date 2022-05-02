@@ -1,0 +1,61 @@
+<div class="block">
+	<div class="title">形状</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenShapeEmptyClick()" :class="{'active':!ScreenValue.shape.value.length&&!ScreenValue.shape.width&&!ScreenValue.shape.height}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single" @click="ScreenShapeClick(1,'4:3')" :class="{'active':ScreenValue.shape.value.indexOf(1)>-1}">
+				<span>4:3</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(2,'3:4')" :class="{'active':ScreenValue.shape.value.indexOf(2)>-1}">
+				<span>3:4</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(3,'16:9')" :class="{'active':ScreenValue.shape.value.indexOf(3)>-1}">
+				<span>16:9</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(4,'9:16')" :class="{'active':ScreenValue.shape.value.indexOf(4)>-1}">
+				<span>9:16</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(5,'细长横图')" :class="{'active':ScreenValue.shape.value.indexOf(5)>-1}">
+				<span>细长横图</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(6,'细长竖图')" :class="{'active':ScreenValue.shape.value.indexOf(6)>-1}">
+				<span>细长竖图</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(7,'方图')" :class="{'active':ScreenValue.shape.value.indexOf(7)>-1}">
+				<span>方图</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(8,'横图')" :class="{'active':ScreenValue.shape.value.indexOf(8)>-1}">
+				<span>横图</span>
+			</li>
+			<li class="single" @click="ScreenShapeClick(9,'竖图')" :class="{'active':ScreenValue.shape.value.indexOf(9)>-1}">
+				<span>竖图</span>
+			</li>
+			<li class="single" :class="{'active':ScreenValue.shape.custom}" @click="ScreenValue.shape.custom=!ScreenValue.shape.custom">
+				<span>自定义</span>
+			</li>
+			<li class="single notborder notpadding" v-if="ScreenValue.shape.custom">
+				<el-input
+					class="min-width"
+					size="small"
+					v-model.number="ScreenValue.shape.width"
+					placeholder="宽"
+					@input="ScreenShapeInput"
+					clearable>
+				</el-input>
+				&nbsp;-&nbsp;
+				<el-input
+					class="min-width"
+					size="small"
+					v-model.number="ScreenValue.shape.height"
+					placeholder="高"
+					@input="ScreenShapeInput"
+					clearable>
+				</el-input>
+			</li>
+		</ul>
+	</div>
+</div>

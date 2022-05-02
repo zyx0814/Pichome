@@ -15,13 +15,15 @@
         }
         public function insert($tagname,$nohots = 0){
             $setarr =[];
-            if($data = DB::fetch_first("select tid,hots from %t where tagname = %s",array($this->_table,$tagname))){
-              //  if(!$nohots)$setarr['hots'] = intval($data['hots']) +1;
-               //parent::update($data['tid'],$setarr);
+            if($data = DB::fetch_first("select tid,hots,initial from %t where tagname = %s",array($this->_table,$tagname))){
+                if(!$data['initial']){
+                    $setarr['initial'] = $this->getInitial($tagname);
+                    parent::update($data['tid'],$setarr);
+                }
                 return $data['tid'];
             }else{
                 $setarr['tagname'] = $tagname;
-               // if(!$nohots)$setarr['hots'] =1;
+                $setarr['initial'] = $this->getInitial($tagname);
                 return parent::insert($setarr,1);
             }
         }
@@ -39,6 +41,14 @@
             }else{
                 return parent::delete($tid);
             }
+        }
+        public function getInitial($str){
+            $py=pinyin::encode($str);
+            $initial=substr($py,0,1);
+            if(empty($initial) || !preg_match("/[A-Z]/i",$initial)){
+                $initial='#';
+            }
+            return strtoupper($initial);
         }
         //依据标签热度获取标签及对应图
         public function fetch_data_by_hot($limit=16){

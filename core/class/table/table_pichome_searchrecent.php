@@ -66,7 +66,7 @@ class table_pichome_searchrecent extends dzz_table
         return $datas;
     }
 
-    public function fetch_hotkeyword_by_appid($appid = '', $limit = 16, $noids = array(), $datas = array())
+    public function fetch_hotkeyword_by_appid($appid = '', $limit = 8, $noids = array(), $datas = array())
     {
         /* $start = strtotime(date("Y-m-d", strtotime("-7 day")));
          $end = strtotime(dgmdate(time(), 'Y-m-d')) + 86400;*/

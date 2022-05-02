@@ -24,7 +24,8 @@ $steplang = array('', lang('founder_upgrade_updatelist'), lang('founder_upgrade_
 
 if ($operation == 'patch' || $operation == 'cross') {
     if (!$_G['setting']['bbclosed']) {
-		exit(json_encode(array('bbclosed'=>true)));
+        C::t('setting')->update('bbclosed', 1);
+        updatecache('setting');
     }
 
     $msg = '';

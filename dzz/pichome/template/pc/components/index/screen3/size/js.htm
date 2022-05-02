@@ -1,0 +1,17 @@
+<script type="text/javascript">
+	var JsScreenSizeMethods = {
+		ScreenSizeClick(){
+			if(this.ScreenValue.size.wstart || this.ScreenValue.size.wend || this.ScreenValue.size.hstart || this.ScreenValue.size.hend){
+				this.ScreenValue.size.wstart = '';
+				this.ScreenValue.size.wend = '';
+				this.ScreenValue.size.hstart = '';
+				this.ScreenValue.size.hend = '';
+				this.ScreenSubmit();
+			}
+			
+		},
+		ScreenSizeInput:debounce(function(){//输入
+			this.ScreenSubmit();
+		},800),
+	};
+</script>

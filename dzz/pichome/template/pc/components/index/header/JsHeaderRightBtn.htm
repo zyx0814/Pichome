@@ -120,7 +120,7 @@
 			},'json');
 			<!--{else}-->
 				var appid = this.Appid;
-				if(!appid && this.DocumentTemplate==2){
+				if(!appid){
 					appid = 'all';
 				}
 				sessionStorage.setItem('showscreen_'+appid,val);
@@ -254,7 +254,11 @@
 			this.HeaderRightBtnSorty.DeaultAsc = desc;
 			<!--{else}-->
 			var Appid = this.Appid?this.Appid:'all';
-			var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):0;
+			if(this.DocumentTemplate ==3 ){
+				var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):1;
+			}else{
+				var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):0;
+			}
 			var fshow = sessionStorage.getItem('InformationShow');
 			if(fshow){
 				display = fshow.split(',');

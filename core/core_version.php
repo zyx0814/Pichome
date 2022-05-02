@@ -9,10 +9,9 @@
 if(!defined('IN_OAOOA')) {
 	exit('Access Denied');
 }
-
 if(!defined('CORE_VERSION')) {
-	define('CORE_VERSION', 'beta3.3');
-	define('CORE_VERSION_LEVEL', 'Pichome');
-	define('CORE_RELEASE', '20220224');
-	define('CORE_FIXBUG' , '03300000');
+    define('CORE_VERSION', '10.1.0');
+    define('CORE_VERSION_LEVEL', 'Home');
+    define('CORE_RELEASE', '20220429');
+    define('CORE_FIXBUG' , '10100000');
 }

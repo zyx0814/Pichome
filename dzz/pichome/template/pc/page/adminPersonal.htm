@@ -22,7 +22,7 @@
 <div id="dzzoffice">
 	<el-container>
 		<el-header height="auto" style="padding: 0;z-index: 10;">
-			<page-header :isscreenshow="false"></page-header>
+			<page-header title="个人设置"></page-header>
 		</el-header>
 		<el-main>
 			<div class="page-content">
@@ -70,6 +70,9 @@
 							</el-form-item>
 							<el-form-item label="微信号：" prop="weixinid">
 								<el-input class="maxWidth" v-model.trim="ruleForm.weixinid"></el-input>
+							</el-form-item>
+							<el-form-item label="原密码：" prop="password0">
+								<el-input class="maxWidth" v-model.trim="ruleForm.password0"></el-input>
 							</el-form-item>
 							<el-form-item label="新密码：" prop="password">
 								<el-input class="maxWidth" v-model.trim="ruleForm.password"></el-input>
@@ -121,6 +124,13 @@
 					callback();
 				}
 			};
+			var inputpassword0 = function(rule, value, callback){
+				if ((self.ruleForm.password2 || self.ruleForm.password) && !self.ruleForm.password0) {
+					callback(new Error('请输入原密码!'));
+				} else {
+					callback();
+				}
+			};
 			return {
 				percentage:0,
 				ispercentage:false,
@@ -133,6 +143,7 @@
 					username:'$userdata[username]',
 					phone:'$userdata[phone]',
 					weixinid:'$userdata[weixinid]',
+					password0:'',
 					password:'',
 					password2:'',
 					themecolor:'$theme'
@@ -145,6 +156,9 @@
 					nickname: [
 						{ required: true, message: '请输入用户名', trigger: 'blur' },
 						{ min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: ['blur', 'change'] }
+					],
+					password0: [
+						{ validator: inputpassword0, trigger: ['blur', 'change'] }
 					],
 					username: [
 						{ required: true, message: '请输入姓名', trigger: 'blur' },
@@ -229,6 +243,7 @@
 							'password':self.ruleForm.password,
 							'password2':self.ruleForm.password2,
 							'themecolor':self.ruleForm.themecolor,
+							'password0':self.ruleForm.password0
 						};
 						if(self.ruleForm.imgpath){
 							params['imgpath'] = self.ruleForm.imgpath;
@@ -246,7 +261,7 @@
 						},'json');
 				    
 					} else {
-						self.$message.error('验证失败');
+						// self.$message.error('验证失败');
 						return false;
 					}
 				});

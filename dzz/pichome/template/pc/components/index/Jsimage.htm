@@ -1,49 +1,19 @@
 <div id="imagelayout">
 	<div class="image-top-message">
 		<!-- <div class="left" v-cloak>找到文件&nbsp;{{ImageParams.counttotal}}&nbsp;个</div> -->
-		<div class="right" v-if="DocumentTemplate==2 && ImageDataIsExpanded"><el-checkbox v-model="ImageParams.expanded" @change="ImageExpandedChange">显示子分类内容</el-checkbox></div>
+		<div class="right" v-if="DocumentTemplate==2 && ImageDataIsExpanded">
+			<el-checkbox v-model="ImageParams.expanded" :true-label="1" :false-label="0" @change="ImageExpandedChange">显示子分类内容</el-checkbox>
+		</div>
 	</div>
-	<!-- <div class="collects-move-btn-box" v-if="ImageCollect.show" :style="{'padding-left':DocumentLeftWidth+'px'}">
-		<el-tooltip class="item" effect="dark" content="收藏" placement="top">
-		    <div class="item" @click="ImageCollect.dialogVisible=true">
-		     	<i class="ri-star-fill"></i>
-		    </div>
-		</el-tooltip>
-		<el-tooltip class="item" effect="dark" content="取消选中" placement="top">
-		    <div class="item" @click="ImageCollectCancelChecked">
-		     	<i class="ri-close-circle-fill"></i>
-		    </div>
-		</el-tooltip>
-	</div> -->
 	<div class="image-container">
 		<div class="image-wrapper">
 			<template v-for="item in ImageDataListShow">
 				<div 
 					class="image-item" 
-					:class="{checked:ImageCollect.show&&ImageCollect.rids.indexOf(item.rid)>-1}"
 					:key="item.rid" 
 					:data-rid="item.rid"
-					:style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}"  
-					@click="ImageCtrlClick(item.rid)">
-					<div class="collect-checkeds" @click="ImageCtrlClick(item.rid,'1')">
-						<div class="check">
-							<i class="el-icon-check"></i>
-						</div>
-					</div>
+					:style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}">
 					<div class="image-inside">
-						<!--{if $_G[uid]}-->
-						<!-- <div class="el-button-group" :class="{border:!ImageCollect.quick}" v-if="!ImageDocumentCtrl">
-							<button type="button" class="el-button el-button--danger reference el-button--medium" @click.stop="ImageQuickChangeCollect(item.rid)">
-								<span>收藏</span>
-							</button>
-							<el-tooltip v-if="ImageCollect.quick" class="item" effect="dark" :content="ImageCollect.name?'收藏到:'+ImageCollect.name:''" placement="top">
-								 <button type="button" class="el-button el-button--danger el-dropdown__caret-button el-button--medium" style="padding: 0;" @click.stop="ImageQuickAddCollect(item.rid)">
-									<img style="height: 20px;" src="dzz/pichome/image/flashlight.png" alt="">
-								 </button>
-							</el-tooltip>
-						</div> -->
-						<!--{/if}-->
-						
 						<div class="topFlex" v-if="!ImageDocumentCtrl">
 							<!-- <div v-if="parseInt(item.share)" class="circulars" @click.stop="ImageOperation('share',item.rid)">
 								<i class="ri-share-line"></i>
@@ -51,18 +21,22 @@
 							<!-- <div v-if="parseInt(item.download)" class="circulars" @click.stop="ImageOperation('down',item.dpath)">
 								<i class="ri-download-2-line"></i>
 							</div> -->
-							<el-dropdown trigger="click" @command="ImageOperation" placement="bottom" v-if="parseInt(item.share) || parseInt(item.download)">
+							<el-dropdown trigger="click" @command="ImageOperation" placement="bottom" v-if="parseInt(item.share) || parseInt(item.download) || parseInt(ImageDocumentAdminId)">
 							    <div class="circulars">
 							    	<i class="ri-more-2-fill"></i>
 							    </div>
 								<el-dropdown-menu slot="dropdown" style="width: 165px;">
-									<el-dropdown-item v-if="parseInt(item.share)" :command="ImageOperationVal('share',item.rid)">
+									<el-dropdown-item v-if="parseInt(item.share) || parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('share',item.rid)">
 										<i class="ri-share-line" style="vertical-align: bottom;font-size: 16px;"></i>
 										分享
 									</el-dropdown-item>
-									<el-dropdown-item v-if="parseInt(item.download)" :command="ImageOperationVal('down',item.dpath)" class="circulars">
+									<el-dropdown-item v-if="parseInt(item.download) || parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('down',item.dpath)" class="circulars">
 										<i class="ri-download-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
 										下载
+									</el-dropdown-item>
+									<el-dropdown-item v-if="parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('address',item.rid)" class="circulars">
+										<i class="ri-map-pin-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
+										固定地址
 									</el-dropdown-item>
 								</el-dropdown-menu>
 							</el-dropdown>
@@ -75,7 +49,7 @@
 							@mouseleave="ImageMouseleave" 
 							@click="item.type!='audio'&&!ImageDocumentCtrl&&ImageDetails(item.rid)">
 							<div class="image-storage">
-								<img class="img thumbnail" :src="item.icondata" alt="">
+								<!-- <img class="img thumbnail" :src="item.icondata" alt=""> -->
 								<img class="img opacity" :src="item.icondata" alt="" @load="Imageload(item.rid)"  :ref="'img_'+item.rid" />
 							</div>
 							
@@ -91,7 +65,7 @@
 									<span class="el-link--inner">链接</span>
 								</div>
 							</template>
-							<div v-if="!ImageDocumentCtrl && (item.type=='audio'||item.type=='video')" class="image-playurl" data-status="true" :data-type="item.type" :data-playurl="item.realpath" :class="{exhibit:!parseInt(item.share)&&!parseInt(item.download)}">
+							<div v-if="!ImageDocumentCtrl && (item.type=='audio'||item.type=='video')" class="image-playurl" data-status="true" :data-type="item.type" :data-playurl="item.realpath" :class="{exhibit:!parseInt(item.share)&&!parseInt(item.download)&&!parseInt(ImageDocumentAdminId)}">
 								
 							</div>
 							
@@ -155,13 +129,6 @@
 		</div>
 	</div>
 </div>
-<add-star-tree :rids="ImageCollect.rids" :dialogvisible="ImageCollect.AdddialogVisible" @closeaddcollectdialog="ImageCloseAddcollectdialog"></add-star-tree>
-<star-tree-dialog 
-	:rids="ImageCollect.rids" 
-	:dialogvisible="ImageCollect.dialogVisible"
-	@closecollectdialog="ImageClosecollectdialog" 
-	@openaddcollect="ImageOpenAddCollect"
-	@addcollectsuccess="ImageOpenAddCollectsuccess"></star-tree-dialog>
 <!--{template pc/components/image/ImageWaterfall}-->
 <!--{template pc/components/image/ImageRowGrid}-->
 <!--{template pc/components/image/ImageList}-->
@@ -200,6 +167,7 @@
 		}
 	};
 	var JsImageData = $.extend({},JsImageWaterfallData,JsImageRowGridData,JsImageListData,ImageAudioPlayData,{
+		ImageDocumentAdminId:'$_G[adminid]',
 		ImageDocumentCtrl:false,
 		ImageDataIsExpanded:false,
 		ImageDataList:[],
@@ -219,23 +187,10 @@
 			Videovoice:true,
 			Musicovoice:false
 		},
-		ImageCollect:{
-			show:false,
-			name:'',
-			dialogVisible:false,
-			AdddialogVisible:false,
-			rids:[],
-			quick:false
-		}
 	});
 	var JsImageMethods = $.extend({},JsImageWaterfallMethods,JsImageRowGridMethods,JsImageListMethods,ImageAudioPlayMethods,{
 		
 		ImageCreate(){
-			var collectkey = JSON.parse(localStorage.getItem('collectkey'));
-			if(collectkey){
-				this.ImageCollect.name = collectkey.name;
-				this.ImageCollect.quick = true;
-			}
 			var pagesetting = $pagesetting;
 			var layout = 'waterFall';
 			var imageexpanded = false;
@@ -267,80 +222,11 @@
 			}
 			
 			<!--{/if}-->
-			this.ImageParams.expanded = imageexpanded;
+			this.ImageParams.expanded = imageexpanded?1:0;
 			this.ImageType = layout;
 		},
-		ImageCloseAddcollectdialog(){
-			this.ImageCollect.AdddialogVisible = false;
-		},
-		ImageClosecollectdialog(){
-			this.ImageCollect.dialogVisible = false;
-		},
-		ImageCtrlClick(rid,type){
-			var self = this;
-			if(!self.ImageDocumentCtrl && !type){
-				return false;
-			}
-			var index = self.ImageCollect.rids.indexOf(rid);
-			if(index>-1){
-				self.ImageCollect.rids.splice(index,1);
-				
-			}else{
-				self.ImageCollect.rids.push(rid);
-			}
-			if(self.ImageCollect.rids.length){
-				self.ImageCollect.show = true;
-			}else{
-				self.ImageCollect.show = false;
-				self.ImageDocumentCtrl = false; 
-			}
-		},
-		ImageCollectCancelChecked(){
-			this.ImageCollect.show = false;
-			this.ImageCollect.rids = [];
-		},
-		ImageOpenAddCollect(val){
-			this.ImageCollect.rids = [val];
-			this.ImageCollect.dialogVisible = false;
-			this.ImageCollect.AdddialogVisible = true;
-		},
-		ImageOpenAddCollectsuccess(){
-			var collectkey = JSON.parse(localStorage.getItem('collectkey'));
-			if(collectkey){
-				this.ImageCollect.name = collectkey.name;
-				this.ImageCollect.quick = true;
-			}
-			this.ImageCollect.show = false;
-			this.ImageCollect.rids = [];
-		},
-		ImageQuickChangeCollect(rid){
-			this.ImageCollect.rids = [rid];
-			this.ImageCollect.dialogVisible = true;
-		},
-		ImageQuickAddCollect(rid){
-			var self = this;
-			var collectkey = JSON.parse(localStorage.getItem('collectkey'));
-			if(collectkey){
-				var keys = collectkey.key.split('-');
-				var param = {
-					rids:rid,
-					clid:keys[0].replace('p','')
-				}
-				if(keys.length>1){
-					param['cid'] = keys.pop()
-				}
-				$.post(SITEURL+DZZSCRIPT+'?mod=collection&op=collect&do=addfilecollect',param,function(json){
-					if(json.success){
-						self.$message({
-							type:'success',
-							message:'收藏成功'
-						});
-					}else{
-						self.$message.error(json.error);
-					}
-				},'json');
-			}
-		},
+		
+
 		ImageInit(){
 			var IsRefresh = true;
 			if(this.ImageParams.scroll){
@@ -370,7 +256,7 @@
 			}
 		},
 		ImageLink(url){
-			if(url.indexOf('https://')>-1){
+			if(url.substring(0,8)=='https://' || url.substring(0,7)=='http://'){
 				window.open(url);
 			}else{
 				window.open('https://'+url);
@@ -388,7 +274,11 @@
 			var H = $('#container_scroll .el-scrollbar__wrap')[0].clientHeight;//获取可视区域高度
 			var S = $('#container_scroll .el-scrollbar__wrap')[0].scrollTop;
 			var arr = [];
-			
+			var Hscreen = 0;
+			if(this.DocumentTemplate==3 && this.Screenshow && $('.screen-box3').length){
+				Hscreen = $('.screen-box3').outerHeight()+35;
+			}
+			S = S-Hscreen;
 			if(self.ImageType == 'imageList'){
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageList.StoreImgdatas));
 			}else if(self.ImageType == 'rowGrid'){
@@ -399,6 +289,7 @@
 			self.ImageDataListShow = {};
 			for(var o in StoreImgdatas){
 				var item = JSON.parse(JSON.stringify(StoreImgdatas[o]));
+				
 				if ((H+S) >= item.ptop && S<item.pbottom) {
 					item['index'] = parseInt(o);
 					self.ImageDataListShow[item.rid] = item;
@@ -446,6 +337,26 @@
 				window.open(SITEURL+MOD_URL+'&op=download&dpath='+val);
 			}else if(type == 'star'){
 				// this.dialogVisible = true;
+			}else if(type == 'address'){
+				var self = this;
+				$.post('{MOD_URL}&op=ajax&operation=realfianllypath',{
+					rid:val
+				},function(data){
+					if(data.realfianllypath){
+						self.$notify({
+						  title: '固定地址',
+						  duration:6000,
+						  dangerouslyUseHTMLString: true,
+						  message: '<p class="address">'+data.realfianllypath+'</p><div style="text-align: right;margin-top: 6px;"><button type="button" class="el-button el-button--primary el-button--mini copy-share-btn"><span>复制地址</span></button></div>',
+						  position: 'bottom-right'
+						});
+					}else{
+						self.$message({
+						  message: '获取固定地址失败',
+						  type: 'error'
+						});
+					}
+				},'json')
 			}
 		},
 		ImageExpandedChange(status){
@@ -470,16 +381,6 @@
 		},
 		ImageMounted(){
 			var self = this;
-			// $(document).keydown(function(e){
-			// 	if (e.which === 17 && !self.ImageDocumentCtrl){
-			// 		self.ImageDocumentCtrl = true; 
-			// 	} 
-				            
-			// }).keyup(function(e){
-			// 	if (e.which === 17 && self.ImageDocumentCtrl){
-			// 		self.ImageDocumentCtrl = false;
-			// 	}    
-			// });
 		}
 	});
 </script>

@@ -1,0 +1,96 @@
+<template v-if="parseInt(item.showtype)">
+	<template v-for="(bitem,index) in item.group">
+		<div class="block" v-if="parseInt(item.checked) && ScreenValue.tag.group[bitem.cid] && ScreenValue.tag.group[bitem.cid].data.length && !ScreenValue.tag.group[bitem.cid].loading">
+			<div class="title">{{bitem.catname}}</div>
+			<div class="internet-options" :class="{'more':ScreenValue.tag.group[bitem.cid].isopen || ScreenValue.tag.group[bitem.cid].ismore}">
+				<ul class="internet-options-ul" style="float: left;">
+					<li
+						class="single" 
+						:class="{'active':!ScreenValue.tag.group[bitem.cid].value.length}"
+						@click="ScreenTagGroupEmptyClick(bitem.cid)">
+						<span>不限</span>
+					</li>
+				</ul>
+				<el-scrollbar class="page-component__scroll tag-Scroll" :ref="'scrollbarTag'+bitem.cid">
+					
+					<ul class="internet-options-ul">
+						<template v-for="item in ScreenValue.tag.group[bitem.cid].data">
+							<li 
+								class="single" 
+								:class="{'active':ScreenValue.tag.group[bitem.cid].value.indexOf(item.tid)>-1}"
+								@click="ScreenTagGroupClick(bitem.cid,item.tid,item.tagname)">
+								<span>{{item.tagname}}</span>
+							</li>
+						</template>
+						
+					</ul>
+					<div style="position: relative;height: 40px;" v-if="ScreenValue.tag.group[bitem.cid].valloading && ScreenValue.tag.group[bitem.cid].isopen" v-cloak>
+						<div class="img-loading">
+							<span class="el-icon-loading"></span>加载中...
+						</div>
+					</div>
+					<div style="position: relative;height: 40px;" v-if="!ScreenValue.tag.group[bitem.cid].valloading && ScreenValue.tag.group[bitem.cid].finish && ScreenValue.tag.group[bitem.cid].isopen" v-cloak>
+						<div class="img-loading" style="font-size: 12px;">已经到底了</div>
+					</div>
+				</el-scrollbar>
+			</div>
+			<div class="ext-box" v-if="!ScreenValue.tag.group[bitem.cid].ismore" @click="ScreenTagGroupMoreClick(bitem.cid)">
+				<template v-if="ScreenValue.tag.group[bitem.cid].isopen">
+					收起<i class="el-icon-arrow-up el-icon--right"></i>
+				</template>
+				<template v-else>
+					更多<i class="el-icon-arrow-down el-icon--right"></i>
+				</template>
+				
+			</div>
+		</div>
+	</template>
+</template>
+<template v-else>
+	<div class="block" v-if="!ScreenValue.tag.loading && ScreenValue.tag.data.length">
+		<div class="title">标签</div>
+		<div class="internet-options" :class="{'more':ScreenValue.tag.isopen || !ScreenValue.tag.ismore}">
+			<ul class="internet-options-ul" style="float: left;">
+				<li
+					class="single" 
+					:class="{'active':!ScreenValue.tag.value.length}"
+					@click="ScreenTagEmptyClick()">
+					<span>不限</span>
+				</li>
+			</ul>
+			<el-scrollbar class="page-component__scroll tag-Scroll" ref="tagScroll">
+				
+				<ul class="internet-options-ul">
+					
+					<template v-for="item in ScreenValue.tag.data">
+						<li 
+							class="single" 
+							:class="{'active':ScreenValue.tag.value.indexOf(item.tid)>-1}"
+							:key="item.tid"
+							@click="ScreenTagClick(item.tid,item.tagname)">
+							<span>{{item.tagname}}</span>
+						</li>
+					</template>
+					
+				</ul>
+				<div style="position: relative;height: 40px;" v-if="ScreenValue.tag.valloading && ScreenValue.tag.isopen" v-cloak>
+					<div class="img-loading">
+						<span class="el-icon-loading"></span>加载中...
+					</div>
+				</div>
+				<div style="position: relative;height: 40px;" v-if="!ScreenValue.tag.valloading && ScreenValue.tag.finish && ScreenValue.tag.isopen" v-cloak>
+					<div class="img-loading" style="font-size: 12px;">已经到底了</div>
+				</div>
+			</el-scrollbar>
+		</div>
+		<div class="ext-box" v-if="ScreenValue.tag.ismore" @click="ScreenTagMoreClick()">
+			<template v-if="ScreenValue.tag.isopen">
+				收起<i class="el-icon-arrow-up el-icon--right"></i>
+			</template>
+			<template v-else>
+				更多<i class="el-icon-arrow-down el-icon--right"></i>
+			</template>
+			
+		</div>
+	</div>
+</template>

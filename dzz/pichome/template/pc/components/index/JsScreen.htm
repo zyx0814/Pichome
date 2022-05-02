@@ -1,43 +1,57 @@
-<div class="screen-box" :class="{'notpadding':DocumentTemplate>1}" v-if="ScreenData.length&&Screenshow" v-cloak>
-	<!--{template pc/components/index/screen/classify/temp}-->
-	<template v-for="item in ScreenData">
-		<template v-if="item.key == 'tag'">
-			<!--{template pc/components/index/screen/tag/temp}-->
-		</template>
-		<template v-else-if="item.key == 'color'">
-			<!--{template pc/components/index/screen/color/temp}-->
-		</template>
-		<template v-else-if="item.key == 'link'">
-			<!--{template pc/components/index/screen/link/temp}-->
-		</template>
-		<template v-else-if="item.key == 'desc'">
-			<!--{template pc/components/index/screen/desc/temp}-->
-		</template>
-		<template v-else-if="item.key == 'duration'">
-			<!--{template pc/components/index/screen/duration/temp}-->
-		</template>
-		<template v-else-if="item.key == 'size'">
-			<!--{template pc/components/index/screen/size/temp}-->
-		</template>
-		<template v-else-if="item.key == 'ext'">
-			<!--{template pc/components/index/screen/ext/temp}-->
-		</template>
-		<template v-else-if="item.key == 'shape'">
-			<!--{template pc/components/index/screen/shape/temp}-->
-		</template>
-		<template v-else-if="item.key == 'grade'">
-			<!--{template pc/components/index/screen/grade/temp}-->
-		</template>
-		<template v-else-if="item.key == 'btime'">
-			<!--{template pc/components/index/screen/btime/temp}-->
-		</template>
-		<template v-else-if="item.key == 'mtime'">
-			<!--{template pc/components/index/screen/mtime/temp}-->
-		</template>
-		<template v-else-if="item.key == 'dateline'">
-			<!--{template pc/components/index/screen/dateline/temp}-->
-		</template>
-	</template>
+<div class="screen-box" :class="{'notpadding':DocumentTemplate==2}" v-if="ScreenData.length&&Screenshow" v-cloak>
+	<div v-if="ScreenScroll" class="left-arrow arrow" @click="ScreenResizeRoll('left')">
+		<i class="ri-arrow-left-s-line"></i>
+	</div>
+	<div class="screen-scroll-box">
+		<div class="screen-scroll">
+			
+			<template v-for="item in ScreenData">
+				<template v-if="item.key == 'tag'">
+					<!--{template pc/components/index/screen/tag/temp}-->
+				</template>
+				<template v-else-if="item.key == 'classify'">
+					<!--{template pc/components/index/screen/classify/temp}-->
+				</template>
+				<template v-else-if="item.key == 'color'">
+					<!--{template pc/components/index/screen/color/temp}-->
+				</template>
+				<template v-else-if="item.key == 'link'">
+					<!--{template pc/components/index/screen/link/temp}-->
+				</template>
+				<template v-else-if="item.key == 'desc'">
+					<!--{template pc/components/index/screen/desc/temp}-->
+				</template>
+				<template v-else-if="item.key == 'duration'">
+					<!--{template pc/components/index/screen/duration/temp}-->
+				</template>
+				<template v-else-if="item.key == 'size'">
+					<!--{template pc/components/index/screen/size/temp}-->
+				</template>
+				<template v-else-if="item.key == 'ext'">
+					<!--{template pc/components/index/screen/ext/temp}-->
+				</template>
+				<template v-else-if="item.key == 'shape'">
+					<!--{template pc/components/index/screen/shape/temp}-->
+				</template>
+				<template v-else-if="item.key == 'grade'">
+					<!--{template pc/components/index/screen/grade/temp}-->
+				</template>
+				<template v-else-if="item.key == 'btime'">
+					<!--{template pc/components/index/screen/btime/temp}-->
+				</template>
+				<template v-else-if="item.key == 'mtime'">
+					<!--{template pc/components/index/screen/mtime/temp}-->
+				</template>
+				<template v-else-if="item.key == 'dateline'">
+					<!--{template pc/components/index/screen/dateline/temp}-->
+				</template>
+			</template>
+		</div>
+	</div>
+	<div v-if="ScreenScroll" class="right-arrow arrow" @click="ScreenResizeRoll('right')">
+		<i class="ri-arrow-right-s-line"></i>
+	</div>
+	
 	
 </div>
 <!--{template pc/components/index/screen/classify/js}-->
@@ -58,6 +72,7 @@
 		ScreenData:[],
 		Screenshow:true,
 		ScreenPost:'',
+		ScreenScroll:false,
 		ScreenValue:{
 			classify:{
 				data:[],
@@ -73,6 +88,7 @@
 					arrangementLast:[],
 					DefaultExpandedKeys:[],
 					DefaultExpandedKeysInit:[],
+					strictly:false,
 					Props:{
 						children:'children',
 						label:'fname',
@@ -83,12 +99,13 @@
 			tag:{
 				data:{},
 				leftid:'all',
-				tagrelative:'1',
+				tagrelative:1,
 				search:'',
 				text:[],
 				value:[],
 				loading:true,
 				appid:'',
+				group:{}
 			},
 			color:{
 				value:'',
@@ -166,7 +183,7 @@
 				}
 				switch(key){
 					case 'classify':
-						if(self.DocumentTemplate ==1 && self.ScreenValue.classify.value.length){
+						if((self.DocumentTemplate ==1||self.DocumentTemplate ==3) && self.ScreenValue.classify.value.length){
 							var fids = [];
 							var classifys = [];
 							for(var x in self.ScreenValue.classify.value){
@@ -207,9 +224,12 @@
 						}
 					break;
 					case 'tag':
+					case 'grouptag':
 						if(self.ScreenValue.tag.value.length){
 							param['tag'] = self.ScreenValue.tag.value.join(',');
-							param['tagrelative'] = self.ScreenValue.tag.tagrelative;
+							if(parseInt(self.ScreenValue.tag.tagrelative)){
+								param['tagrelative'] = self.ScreenValue.tag.tagrelative;
+							}
 						}
 					break;
 					case 'color':
@@ -302,7 +322,7 @@
 					break;
 				}
 			}
-			if(self.DocumentTemplate == 1){
+			if(self.DocumentTemplate == 3){
 				param['hassub'] = 1;
 			}else{
 				if(type != 'hash'){
@@ -318,21 +338,34 @@
 				self.ScreenValue[type].loading = true;
 			}
 			var param = self.ScreenGetParam(type);
-			console.log(param)
-			param['skey'] = type;
+			if(type == 'grouptag'){
+				param['skey'] = 'tag';
+			}else{
+				param['skey'] = type;
+			}
 			if(self.Appid && self.Appid!='all'){
 				param['appid'] = self.Appid;
 			}
-			if(type == 'tag'){
+			if(type == 'tag' || type == 'grouptag'){
 				if(self.ScreenValue.tag.leftid != 'all'){
 					param['cid'] = self.ScreenValue.tag.leftid;
 				}
 				if(self.ScreenValue.tag.search){
 					param['tagkeyword'] = self.ScreenValue.tag.search;
 				}
-				if(!getnum && self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
-					self.ScreenValue.tag.loading = false;
-					self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].loading = true;
+				if(!getnum){
+					if(type == 'grouptag'){
+						if(self.ScreenValue.tag.group[self.ScreenValue.tag.leftid]){
+							self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].loading = true;
+						}
+					}else{
+						if(self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+							self.ScreenValue.tag.loading = false;
+							self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].loading = true;
+						}
+						
+					}
+					
 				}
 			}
 			if(self.HeaderKeyword){
@@ -340,8 +373,14 @@
 			}
 			if(getnum){
 				param['hasnum'] = 1;
-				if(self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
-					param['page'] = self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].page;
+				if(type == 'grouptag'){
+					if(self.ScreenValue.tag.group[self.ScreenValue.tag.leftid]){
+						param['page'] = self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].page;
+					}
+				}else{
+					if(self.ScreenValue.tag.data[self.ScreenValue.tag.leftid]){
+						param['page'] = self.ScreenValue.tag.data[self.ScreenValue.tag.leftid].page;
+					}
 				}
 			}
 			if(!isabort && self.ScreenPost){
@@ -437,6 +476,43 @@
 							self.ScreenGetValueData('tag',true);
 						}
 					break;
+					case 'grouptag':
+						if(self.ScreenValue.tag.group[self.ScreenValue.tag.leftid]){
+							var tagdata = [];
+							if(getnum){
+								for(var t in data.alltagdata){
+									var otag = data.alltagdata[t];
+									self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].data.find(function(jval){
+										if(t == jval.tid){
+											jval['num'] = otag.num;
+										}
+									});
+								}
+							}else{
+								for(var t in data.alltagdata){
+									var otag = data.alltagdata[t];
+									tagdata.push({
+										tid:parseInt(t),
+										tagname:otag.tagname,
+									});
+								}
+								self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].data = tagdata
+							}
+							
+							self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].loading = false;
+							self.ScreenValue.tag.group[self.ScreenValue.tag.leftid].finish = data.finish;
+							self.$forceUpdate();
+							if(!getnum){
+								self.$nextTick(function(){
+									self.ScreenTaggroupPopScroll(self.ScreenValue.tag.leftid);
+								});
+							}
+							
+						}
+						if(!getnum){
+							self.ScreenGetValueData('grouptag',true);
+						}
+					break;
 					case 'ext':
 					case 'grade':
 						if(self.ScreenValue[type]){
@@ -485,7 +561,7 @@
 			},'json');
 		},
 		
-		ScreenDelete(type){
+		ScreenDelete(type,val){
 			var self = this;
 			switch(type){
 				case 'classify':
@@ -507,7 +583,10 @@
 					self.ScreenValue.tag.value = [];
 					self.ScreenValue.tag.text = [];
 					self.ScreenValue.tag.search = '';
-					self.ScreenValue.tag.tagrelative = '1';
+					// self.ScreenValue.tag.tagrelative = '1';
+				break;
+				case 'grouptag':
+					self.ScreenTaggroupDelete(val,true);
 				break;
 				case 'color':
 					self.ScreenValue.color.value = '';
@@ -579,7 +658,11 @@
 						self.ScreenValue.tag.value = [];
 						self.ScreenValue.tag.text = [];
 						self.ScreenValue.tag.search = '';
-						self.ScreenValue.tag.tagrelative = '1';
+						// self.ScreenValue.tag.tagrelative = '1';
+						for(var h in this.ScreenValue.tag.group){
+							this.ScreenValue.tag.group[h].text = [];
+							this.ScreenValue.tag.group[h].value = [];
+						}
 					break;
 					case 'color':
 						self.ScreenValue.color.value = '';
@@ -639,7 +722,7 @@
 				var farr = arr[i].split('=');
 				switch(farr[0]){
 					case 'classify':
-						if(self.DocumentTemplate == 1 ){
+						if(self.DocumentTemplate == 1 ||self.DocumentTemplate == 3){
 							var classifys = farr[1].split(',');
 							var Newclassifys = [];
 							for(var i in classifys){
@@ -661,10 +744,9 @@
 						for(var t in tags){
 							self.ScreenValue.tag.value.push(parseInt(tags[t]))
 						}
-						console.log(self.ScreenValue.tag.value)
 					break;
 					case 'tagrelative':
-						self.ScreenValue.tag.tagrelative = farr[1];
+						// self.ScreenValue.tag.tagrelative = farr[1];
 					break;
 					case 'color':
 						self.ScreenValue.color.value = farr[1];
@@ -751,7 +833,7 @@
 			}
 			
 		},
-		GetScreenData(){
+		GetScreenData(type){
 			var self = this;
 			var param = {};
 			if(self.Appid && self.Appid != 'all'){
@@ -786,31 +868,53 @@
 			}
 			$.post(MOD_URL+'&op=ajax&operation=getscreen',param,function(json){
 				var arr = [];
+				self.ScreenValue.tag.group = {};
 				if(json.success){
 					for(var i in json.data){
 						var item = json.data[i];
 						if(parseInt(item.checked)){
-							// if(item.key=='tag'){
-							// 	item.showtype = parseInt(item.showtype)
-							// 	if(item.showtype){
-							// 		var group = [];
-							// 		for(var t in item.group){
-							// 			if(parseInt(item.group[t].checked)){
-							// 				item.group[t]['loading'] = true;
-							// 				group.push(item.group[t]);
-							// 			}
-							// 		}
-							// 		commit('SetParamsTagData',group);
-							// 		arr.push(item);
-							// 	}else{
-							// 		arr.push(item);
-							// 	}
+							if(item.key=='tag'){
+								item.showtype = parseInt(item.showtype)
+								if(item.showtype){
+									// var groups = [];
+									for(var t in item.group){
+										if(parseInt(item.group[t].checked)){
+											item.group[t]['loading'] = true;
+											// groups.push(item.group[t]);
+											self.ScreenValue.tag.group[item.group[t]['cid']] = {
+												loading:true,
+												valloading:false,
+												data:[],
+												page:1,
+												search:'',
+												value:[],
+												text:[],
+												finish:false
+											};
+										}
+									}
+									// self.ScreenValue.tag.group = groups;
+									arr.push(item);
+								}else{
+									arr.push(item);
+								}
 								
-							// }else{
+							}else{
 								
 								arr.push(item);
-							// }
+							}
 						}
+					}
+					if(type == 'refresh'){
+						if(arr.length){
+							self.HeaderRightBtnScreen.show = true;
+							self.Screenshow = true;
+						}else{
+							self.Screenshow = false;
+							self.HeaderRightBtnScreen.show = false;
+						}
+						self.ScreenData = arr;
+						return false;
 					}
 					if(param['tag']){
 						var text = [];
@@ -867,16 +971,24 @@
 				}
 				if(arr.length){
 					self.HeaderRightBtnScreen.show = true;
+					self.Screenshow = true;
 				}else{
+					self.Screenshow = false;
 					self.HeaderRightBtnScreen.show = false;
 				}
+				self.$nextTick(function(){
+					self.ScreenResize();
+				});
+
 				self.ScreenData = arr;
 				self.ScreenSubmit();
+				
 			},'json');
 		},
 		ScreenSubstring(str,appid){
 			var self = this;
 			var farr = str.split(appid);
+			
 			var arr = [];
 			if(farr && farr.length == 1){
 				return false;
@@ -903,19 +1015,52 @@
 		ScreenSubmit(){
 			this.CommonGetImageData();
 		},
+		ScreenResize(){
+			var boxW = $('.screen-scroll-box').width();
+			var childW = $('.screen-scroll').width();
+			if(childW>boxW){
+				this.ScreenScroll = true;
+			}else{
+				$('.screen-scroll').css('left',0+'px');
+				this.ScreenScroll = false;
+			}
+		},
+		ScreenResizeRoll(type){
+			var boxR = $('.screen-scroll-box').outerWidth();
+			var childW = $('.screen-scroll').outerWidth();
+			var listL = $('.screen-scroll').position().left;
+			if(type == 'left'){
+				var left = listL+100;
+				if(left>0){
+					left = 0;
+				}
+			}else{
+				var left = Math.abs(listL)+100;
+				var listR1 = $('.screen-scroll-box').outerWidth()-$('.screen-scroll').outerWidth();
+				if(~left<listR1){
+					left = listR1;
+				}else{
+					left = '-'+left;
+				}
+			}
+			$('.screen-scroll').css('left',left+'px');
+		},
 		ScreenCreate(){
 			var pagesetting = $pagesetting;
 			<!--{if $_G[uid]}-->
 			var ShowScreen = $screen;
+			var tagrelative = $tagrelative;
 			<!--{else}-->
 			var Appid = this.Appid?this.Appid:'all';
 			var ShowScreen = sessionStorage.getItem('showscreen_'+Appid)? sessionStorage.getItem('showscreen_'+Appid):0;
+			var tagrelative = sessionStorage.getItem('tagrelative')? sessionStorage.getItem('tagrelative'):0;
 			<!--{/if}-->
 			if(parseInt(ShowScreen)){
 				this.Screenshow = true;
 			}else{
 				this.Screenshow = false;
 			}
+			this.ScreenValue.tag.tagrelative = tagrelative;
 			this.ScreenRefreshHash();
 			this.GetScreenData();
 		},

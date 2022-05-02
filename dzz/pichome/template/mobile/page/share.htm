@@ -29,7 +29,7 @@
 							<div class="video-box" :style="{'height':imagesData.videoH+'px'}">
 								<iframe
 									style="border: 0px;"
-									:src="'index.php?mod=xgplayer&src='+imagesData.realpath" 
+									:src="'index.php?mod=xgplayer&path='+imagesData.dpath" 
 									width="100%" 
 									height="100%"></iframe>
 							</div>
@@ -37,7 +37,7 @@
 						<template v-else-if="imagesData.opentype=='pdf'">
 							<iframe
 								style="border: 0px;"
-								:src="'index.php?mod=pdf&src='+imagesData.realpath" 
+								:src="'index.php?mod=pdf&path='+imagesData.dpath" 
 								width="100%" 
 								height="100%"></iframe>
 						</template>
@@ -45,7 +45,7 @@
 							<div style="padding: 10px;height: 100%;">
 								<iframe
 									style="border: 0px;border-radius: 18px;"
-									:src="'index.php?mod=textviewer&src='+imagesData.realpath" 
+									:src="'index.php?mod=textviewer&path='+imagesData.dpath" 
 									width="100%" 
 									height="100%"></iframe>
 							</div>
@@ -63,7 +63,7 @@
 								<img :src="imagesData.icondata" class="image-viewer__img thumbnail" />
 								<img 
 									@load="DetailImgload" 
-									:src="imagesData.realpath" 
+									:src="imagesData.originalimg" 
 									class="image-viewer__img opacity" />
 							</div>
 						</template>

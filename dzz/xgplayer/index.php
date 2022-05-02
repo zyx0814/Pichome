@@ -10,10 +10,10 @@ if($_GET['operation']=='progress'){
 	C::t('video_record')->update($id,array('status'=>0));
 	exit(json_encode($ff));
 }elseif($_GET['path']){
-	if(!$path=Decode($_GET['path'],'read')){
-		exit('Access Denied');
-	}
-	$data=IO::getMeta($path);
+    if(!$rid = dzzdecode($_GET['path'],'',0)){
+        exit('Access Denied');
+    }
+	/*$data=IO::getMeta($path);
 	
 	$pexts=array('mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
 	$zexts=array('m4v','m4a','avi','rm','rmvb','mkv','wmv','asf','f4v','vob','mts','m2ts','mpe','3gp','midi','wma','vqf','ra','aac','flac','ape','amr','aiff','au','flv');
@@ -35,9 +35,11 @@ if($_GET['operation']=='progress'){
 				break;
 		}
 		
-	}else{
-		$src=IO::getFileUri($path);
-	}
+	}else{*/
+    $rid = dzzdecode($_GET['path'],'',0);
+    $src  = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid.'_3', '', 14400, 0);
+    //$src=IO::getFileUri($fileurl);
+	//}
 }elseif($_GET['src']){
 	$ismobile = helper_browser::ismobile();
 	$src = urldecode($_GET['src']);

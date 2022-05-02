@@ -60,6 +60,7 @@ function GetDateVal(type){
 }
 
 function CopyTxt(item,text){
+	console.log(111)
 	var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
 	input.setAttribute('value', text);
 	document.getElementsByTagName('body')[0].appendChild(input);
@@ -71,3 +72,20 @@ function CopyTxt(item,text){
 	});
 	document.getElementById('copyInput').remove();
 };
+function setcookie(cookieName, cookieValue, seconds, path, domain, secure) {
+	if(cookieValue == '' || seconds < 0) {
+		cookieValue = '';
+		seconds = -2592000;
+	}
+	if(seconds) {
+		var expires = new Date();
+		expires.setTime(expires.getTime() + seconds * 1000);
+	}
+	domain = !domain ? cookiedomain : domain;
+	path = !path ? cookiepath : path;
+	document.cookie = escape(cookiepre + cookieName) + '=' + escape(cookieValue)
+		+ (expires ? '; expires=' + expires.toGMTString() : '')
+		+ (path ? '; path=' + path : '/')
+		+ (domain ? '; domain=' + domain : '')
+		+ (secure ? '; secure' : '');
+}

@@ -22,6 +22,7 @@
             } else {
                $id=parent::insert($setarr);
                 C::t('pichome_tag')->add_hots_by_tid($setarr['tid']);
+                C::t('pichome_vapp_tag')->add_hots_by_tid_appid($setarr['tid'],$setarr['appid']);
             }
             return $id;
         }
@@ -55,9 +56,10 @@
         {
             if(!is_array($rid)) $rid = (array)$rid;
             $delids = [];
-            foreach (DB::fetch_all("select id,tid from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
+            foreach (DB::fetch_all("select id,tid,appid from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
                 $delids[] = $v['id'];
                 C::t('pichome_tag')->delete_by_tid($v['tid']);
+                C::t('pichome_vapp_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
             }
             return parent::delete($delids);
         }

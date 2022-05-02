@@ -35,6 +35,13 @@
 						<i class="ri-file-copy-line" @click="DetailMessageSearch('copy',showdata[rid].data.link)"></i>
 					</div>
 				</div>
+				<div class="block" v-if="showdata[rid].data.realfianllypath">
+					<div class="title">固定地址</div>
+					<div class="block-item link">
+						<span @click="DetailMessageSearch('link',showdata[rid].data.realfianllypath)">{{showdata[rid].data.realfianllypath}}</span>
+						<i class="ri-file-copy-line" @click="DetailMessageSearch('copy',showdata[rid].data.realfianllypath)"></i>
+					</div>
+				</div>
 				<div class="block" v-if="showdata[rid].data.foldernames && showdata[rid].data.foldernames.length">
 					<div class="title">分类</div>
 					<div class="block-item tag">

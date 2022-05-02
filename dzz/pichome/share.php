@@ -6,7 +6,7 @@
 $sid = isset($_GET['sid']) ? dzzdecode($_GET['sid'],'',0):'';
 $sharedata = C::t('pichome_share')->fetch_by_id($sid);
 $resourcesdata = $sharedata['resourcesdata'];
-
+$resourcesdata['share'] = 0;
 $colors = array();
 foreach($resourcesdata['colors'] as $cval){
 	$colors[] = $cval;
@@ -28,4 +28,10 @@ foreach($resourcesdata['foldernames'] as $fval){
 $resourcesdata['foldernames'] = json_encode($foldernames);
 
 $theme = GetThemeColor();
-include template('pc/page/share');
+$ismobile = helper_browser::ismobile();
+
+if (($ismobile)) {
+	include template('mobile/page/share');
+} else {
+	include template('pc/page/share');
+}

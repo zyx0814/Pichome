@@ -420,11 +420,12 @@ function checkUserLimit(){
 	if(!defined('LICENSE_LIMIT')){
 		return false;
 	}
-	if(LICENSE_LIMIT>0){
-		$ucount=DB::result_first("select COUNT(*) from %t where 1",array('user'));
-		return ($ucount<LICENSE_LIMIT);
+    if(defined('NOLIMITUSER')){
+        return true;
+    } else{
+		return (CURRTENT_UNUM < LICENSE_LIMIT);
 	}
-	return true;
+	return false;
 }
 //key的格式以|隔开，参数支持全局函数，如地址为 index.php?mod=io&op=getStream&path=***&key=uid|setting/authkey|username
 //这种格式，加密时，需要把|分割的每个参数都带上，dzzencode($string,'1|'.getglobal('setting/authkey').'|管理员',$expiry);

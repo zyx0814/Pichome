@@ -1,5 +1,7 @@
-<!--{if $_G[uid] && $_G['adminid'] == 1}-->
-	<!--{if !isset($_G['cookie']['checkupgrade'])}-->
+<!--{eval output();}-->
+<!--{eval updatesession();}-->
+<!--{if $_G[uid]}-->
+	<!--{if !isset($_G['cookie']['checkupgrade']) && !isset($_G['cookie']['checkauthlic'])}-->
 <script type="text/javascript">jQuery.getScript('misc.php?mod=upgrade&action=checkupgrade&rand=$_G[timestamp]');</script>
 	<!--{/if}-->
 	<!--{if !isset($_G['cookie']['checkappupgrade'])}-->

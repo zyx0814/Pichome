@@ -128,7 +128,7 @@ class billfishxport
         if (!$this->filenum) {
             C::t('pichome_vapp')->update($this->appid, array('state' => 4));
         } else {
-            C::t('pichome_vapp')->update($this->appid, array('state' => 2, 'filenum' => $this->filenum));
+            C::t('pichome_vapp')->update($this->appid, array('state' => 2, 'filenum' => $this->filenum,'donum'=>0,'percent'=>0,'lastid'=>0));
         }
         return array('success' => true);
     }
@@ -397,9 +397,11 @@ class billfishxport
             $state = ($percent >= 100) ? 3 : 2;
             if ($state == 3) {
                 $lastid = 0;
+                $percent = 0;
+                $this->donum = 0;
             }
             //记录导入起始位置，以备中断后从此处,更改导入状态
-            C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state));
+            C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state,'filenum'=>$this->filenum));
 
         }
         if($state == 2){
@@ -643,10 +645,12 @@ class billfishxport
             $state = ($percent >= 100) ? 3 : 2;
             if ($state == 3) {
                 $lastid = 0;
+                $percent = 0;
+                $this->donum = 0;
             }
 
             //记录导入起始位置，以备中断后从此处,更改导入状态
-            C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state));
+            C::t('pichome_vapp')->update($this->appid, array('percent' => $percent, 'donum' => $this->donum, 'state' => $state,'filenum'=>$this->filenum));
         }
 
         $lastid = $lastid+1;
@@ -730,18 +734,21 @@ class billfishxport
         foreach ($data as $v) {
             $rid = $v['rid'];
             $iid = DB::result_first("select bid from %t where rid = %s and appid = %s",array('billfish_record',$rid,$this->appid));
-
-            if($this->version < 30){
-                $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 and s.id = $iid";
-            }else{
-                //查询billfish中是否有该数据
-                $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 and  f.id = $iid";
-            }
-
-            $numdata = $this->fetch($sql);
-            if(!isset($numdata['num']) || !$numdata['num']){
+            if(!$iid){
                 $delrids[] = $rid;
+            }else{
+                if($this->version < 30){
+                    $sql = "select count(s.id) as num from source s left join res_prop rp on s.id = rp.iid where rp.action =0 and s.id = $iid";
+                }else{
+                    //查询billfish中是否有该数据
+                    $sql = "select count(f.id) as num from bf_file f left join bf_material m on f.id = m.file_id where m.is_recycle =0 and  f.id = $iid";
+                }
+                $numdata = $this->fetch($sql);
+                if(!isset($numdata['num']) || !$numdata['num']){
+                    $delrids[] = $rid;
+                }
             }
+
         }
         if (!empty($delrids)) {
             $this->filenum = $this->filenum - count($delrids);

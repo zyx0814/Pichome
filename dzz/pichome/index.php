@@ -39,9 +39,19 @@
     $apps = json_encode($apps);
 //显示子分类内容
 	$ImageExpanded = C::t('user_setting')->fetch_by_skey('pichomeimageexpanded',$uid);
+//显示标签逻辑
+    $tagrelative = C::t('user_setting')->fetch_by_skey('pichometagrelative',$uid);
+    $tagrelative = $tagrelative?intval($tagrelative):0;
+//筛选是否多选还是单选
+	$multipleselection = C::t('user_setting')->fetch_by_skey('pichomemultipleselection',$uid);
+	$multipleselection = $multipleselection?intval($multipleselection):0;
 //筛选
     $screen = C::t('user_setting')->fetch_by_skey('pichomeuserscreen',$uid);
-    $screen = $screen?intval($screen):0;
+    if($template==3){
+        $screen = $screen?intval($screen):1;
+    }else{
+        $screen = $screen?intval($screen):0;
+    }
     
     $setting = $_G['setting'];
 	

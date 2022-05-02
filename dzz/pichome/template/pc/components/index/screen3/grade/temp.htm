@@ -1,0 +1,30 @@
+<div class="block">
+	<div class="title">评分</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenGradeEmptyClick" :class="{'active':!ScreenValue.grade.value.length}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single" @click="ScreenGradeClick(1)" :class="{'active':ScreenValue.grade.value.indexOf(1)>-1}">
+				<span>1星</span>
+			</li>
+			<li class="single" @click="ScreenGradeClick(2)" :class="{'active':ScreenValue.grade.value.indexOf(2)>-1}">
+				<span>2星</span>
+			</li>
+			<li class="single" @click="ScreenGradeClick(3)" :class="{'active':ScreenValue.grade.value.indexOf(3)>-1}">
+				<span>3星</span>
+			</li>
+			<li class="single" @click="ScreenGradeClick(4)" :class="{'active':ScreenValue.grade.value.indexOf(4)>-1}">
+				<span>4星</span>
+			</li>
+			<li class="single" @click="ScreenGradeClick(5)" :class="{'active':ScreenValue.grade.value.indexOf(5)>-1}">
+				<span>5星</span>
+			</li>
+			<li class="single" @click="ScreenGradeClick(0)" :class="{'active':ScreenValue.grade.value.indexOf(0)>-1}">
+				<span>未评分</span>
+			</li>
+		</ul>
+	</div>
+</div>

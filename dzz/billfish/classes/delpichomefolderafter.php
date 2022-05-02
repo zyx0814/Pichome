@@ -9,9 +9,9 @@ use \fmpeg as fmpeg;
 class delpichomefolderafter
 {
 
-    public function run($appid)
+    public function run($data)
     {
-        C::t("#billfish#billfish_folderrecord")->delete_by_appid($appid);
+        C::t("#billfish#billfish_folderrecord")->delete_by_appid($data['appid']);
     }
 
 

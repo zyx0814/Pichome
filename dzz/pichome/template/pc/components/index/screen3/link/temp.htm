@@ -1,0 +1,28 @@
+<div class="block">
+	<div class="title">链接</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenLinkClick('not')" :class="{'active':!ScreenValue.link.value&&parseInt(ScreenValue.link.value)!=0}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single" @click="ScreenLinkClick(1)" :class="{'active':ScreenValue.link.value==1}">
+				<span>有链接</span>
+			</li>
+			<li class="single" @click="ScreenLinkClick(0)" :class="{'active':parseInt(ScreenValue.link.value)==0}">
+				<span>没有链接</span>
+			</li>
+			<li class="single notborder notpadding" v-if="ScreenValue.link.value==1">
+				<el-input
+					class="max-width"
+					size="small"
+					@input="ScreenLinkInput"
+					placeholder="包含关键字(使用,隔开)"
+					v-model="ScreenValue.link.input"
+					clearable>
+				</el-input>
+			</li>
+		</ul>
+	</div>
+</div>

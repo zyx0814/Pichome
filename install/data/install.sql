@@ -35,23 +35,23 @@ CREATE TABLE dzz_app_market (
 `group`  tinyint(1) NOT NULL DEFAULT 1 COMMENT '应用的分组:0:全部；-1:游客可用，3:系统管理员可用;2：部门管理员可用;1:所有成员可用',
  `orgid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '可以使用的部门id，为0表示不限制',
 `position`  tinyint(1) NOT NULL DEFAULT 0 COMMENT '2：desktop,3:taskbar,1：apparea' ,
-`system`  tinyint(1) NOT NULL DEFAULT 0 ,
-`notdelete`  tinyint(1) NOT NULL DEFAULT 0 ,
-`open`  tinyint(1) NOT NULL DEFAULT 0 ,
-`nodup`  tinyint(1) NOT NULL DEFAULT 0 ,
-`identifier`  varchar(40) NOT NULL DEFAULT '' ,
-`app_path`  varchar(50) NULL DEFAULT NULL COMMENT 'APP路劲' ,
-`available`  tinyint(1) NOT NULL DEFAULT 1 ,
-`version`  varchar(20) NOT NULL DEFAULT '' ,
-`upgrade_version`  text NOT NULL COMMENT '升级版本' ,
+`system`  tinyint(1) NOT NULL DEFAULT 0,
+`notdelete`  tinyint(1) NOT NULL DEFAULT 0,
+`open`  tinyint(1) NOT NULL DEFAULT 0,
+`nodup`  tinyint(1) NOT NULL DEFAULT 0,
+`identifier`  varchar(40) NOT NULL DEFAULT '',
+`app_path`  varchar(50) NULL DEFAULT NULL COMMENT 'APP路劲',
+`available`  tinyint(1) NOT NULL DEFAULT 1,
+`version`  varchar(20) NOT NULL DEFAULT '',
+`upgrade_version`  text NOT NULL COMMENT '升级版本',
 `check_upgrade_time`  int(11) NOT NULL DEFAULT 0 COMMENT '最近次检测升级时间' ,
-`extra`  text NOT NULL ,
-`uids`  text NULL COMMENT '访问用户' ,
+`extra`  text NOT NULL,
+`uids`  text NULL COMMENT '访问用户',
 `showadmin`  tinyint(3) UNSIGNED NULL DEFAULT 0 COMMENT '0不显示在后台管理，1显示在后台管理' ,
 PRIMARY KEY (`appid`),
-UNIQUE KEY `appurl` (`appurl`) USING BTREE ,
-KEY `available` (`available`) USING BTREE ,
-KEY `identifier` (`identifier`) USING BTREE 
+UNIQUE KEY `appurl` (`appurl`) USING BTREE,
+KEY `available` (`available`) USING BTREE,
+KEY `identifier` (`identifier`) USING BTREE
 )ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS `dzz_app_open`;
@@ -851,42 +851,48 @@ CREATE TABLE `dzz_pichome_palette` (
 `weight`  float(5,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT '颜色百分比' ,
 PRIMARY KEY (`id`),
 KEY `rid` (`rid`) USING BTREE
-)ENGINE=MyISAM;;
+)ENGINE=MyISAM;
 
 -- ----------------------------
 -- Table structure for `dzz_pichome_resources`
 -- ----------------------------
 DROP TABLE IF EXISTS `dzz_pichome_resources`;
 CREATE TABLE `dzz_pichome_resources` (
-`rid`  char(32) NOT NULL DEFAULT '' COMMENT '文件主键id' ,
-`uid`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户id' ,
-`username`  char(30) NOT NULL DEFAULT '' COMMENT '用户名' ,
-`appid`  char(6) NOT NULL DEFAULT '' COMMENT '库id' ,
-`name`  varchar(255) NOT NULL DEFAULT '' COMMENT '文件名称' ,
-`type`  char(15) NOT NULL DEFAULT '' COMMENT '文件类型' ,
-`ext`  char(15) NOT NULL DEFAULT '' COMMENT '文件后缀' ,
-`height`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '高度' ,
-`width`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '宽度' ,
-`dateline`  bigint(13) UNSIGNED NOT NULL DEFAULT 0 COMMENT '修改时间' ,
-`hasthumb`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否有缩略图' ,
-`grade`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '评分' ,
-`size`  bigint(20) UNSIGNED NOT NULL DEFAULT 0 COMMENT '大小' ,
-`mtime`  bigint(13) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间' ,
-`isdelete`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否为删除状态' ,
-`btime`  bigint(13) UNSIGNED NOT NULL COMMENT '添加时间' ,
-`md5`  char(32) NOT NULL DEFAULT '' COMMENT '文件md5值' ,
-`lastdate`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '最后更改时间' ,
-`apptype`  smallint(1) UNSIGNED NULL DEFAULT 0 COMMENT '0，eagle文件；1，本地文件' ,
-PRIMARY KEY (`rid`),
-KEY `appid_2` (`appid`, `isdelete`) USING BTREE ,
-KEY `mtime` (`mtime`) USING BTREE ,
-KEY `btime` (`btime`) USING BTREE ,
-KEY `dateline` (`dateline`) USING BTREE ,
-KEY `name` (`name`) USING BTREE ,
-KEY `ext` (`ext`) USING BTREE ,
-KEY `height` (`height`, `width`) USING BTREE ,
-KEY `type` (`type`) USING BTREE
-)ENGINE=MyISAM;
+  `rid` char(32) NOT NULL DEFAULT '' COMMENT '文件主键id',
+  `uid` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户id',
+  `username` char(30) NOT NULL DEFAULT '' COMMENT '用户名',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '文件名称',
+  `type` char(15) NOT NULL DEFAULT '' COMMENT '文件类型',
+  `ext` char(15) NOT NULL DEFAULT '' COMMENT '文件后缀',
+  `height` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '高度',
+  `width` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '宽度',
+  `dateline` bigint(13) UNSIGNED NOT NULL DEFAULT '0' COMMENT '修改时间',
+  `hasthumb` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否有缩略图',
+  `grade` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '评分',
+  `size` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '大小',
+  `mtime` bigint(13) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建时间',
+  `isdelete` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否为删除状态',
+  `btime` bigint(13) UNSIGNED NOT NULL COMMENT '添加时间',
+  `md5` char(32) NOT NULL DEFAULT '' COMMENT '文件md5值',
+  `lastdate` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最后更改时间',
+  `apptype` smallint(1) UNSIGNED DEFAULT '0' COMMENT '0，eagle文件；1，本地文件',
+  PRIMARY KEY (`rid`),
+  KEY `appid_2` (`appid`,`isdelete`) USING BTREE,
+  KEY `mtime` (`mtime`) USING BTREE,
+  KEY `btime` (`btime`) USING BTREE,
+  KEY `dateline` (`dateline`) USING BTREE,
+  KEY `name` (`name`) USING BTREE,
+  KEY `ext` (`ext`) USING BTREE,
+  KEY `height` (`height`,`width`) USING BTREE,
+  KEY `type` (`type`) USING BTREE,
+  KEY `namerid` (`name`,`rid`),
+  KEY `datelinerid` (`dateline`,`rid`),
+  KEY `mtimerid` (`mtime`,`rid`),
+  KEY `btimerid` (`btime`,`rid`),
+  KEY `sizerid` (`size`,`rid`),
+  KEY `whrid` (`width`,`height`,`rid`)
+) ENGINE=MyISAM;
 
 -- ----------------------------
 -- Table structure for `dzz_pichome_resources_attr`
@@ -905,6 +911,7 @@ CREATE TABLE `dzz_pichome_resources_attr` (
 `path`  blob NOT NULL COMMENT '路径' ,
 `isget`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否已获取数据' ,
 `searchval`  text NULL COMMENT '关键词' ,
+`pathmd5`  char(32) NULL COMMENT '路径唯一标识' ,
 PRIMARY KEY (`rid`),
 KEY `appid` (`appid`) USING BTREE ,
 KEY `duration` (`duration`) USING BTREE ,
@@ -961,7 +968,7 @@ CREATE TABLE `dzz_pichome_share` (
 `stype` smallint (1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分享类型，0，pichome文件，1收藏文件，2收藏',
 `clid`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分享id' ,
 PRIMARY KEY (`id`),
-KEY `appid` (`appid`) USING BTREE ,
+KEY `appid` (`appid`) USING BTREE,
 KEY `uid` (`uid`) USING BTREE
 )ENGINE=MyISAM;
 
@@ -973,6 +980,7 @@ CREATE TABLE `dzz_pichome_tag` (
 `tid`  int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '标签id' ,
 `tagname`  varchar(120) NOT NULL DEFAULT '' COMMENT '标签名称' ,
 `hots`  smallint(6) UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用次数' ,
+`initial` char(6)  NOT NULL DEFAULT '' COMMENT '首字母',
 PRIMARY KEY (`tid`)
 )ENGINE=MyISAM;
 
@@ -1021,7 +1029,7 @@ CREATE TABLE `dzz_pichome_vapp` (
 `filenum`  int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '文件个数' ,
 `lastid`  char(13) NULL DEFAULT '' COMMENT '最后执行位置id' ,
 `percent`  tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '导入百分比' ,
-`state`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0，未导入，1准备中，2导入中，3校验中，4已完成' ,
+`state`  tinyint(1)  NOT NULL DEFAULT 0 COMMENT '0，未导入，1准备中，2导入中，3校验中，4已完成,-1导入失败' ,
 `filter`  text NULL COMMENT '筛选项' ,
 `share`  tinyint(1) NOT NULL COMMENT '分享是否开放' ,
 `download`  tinyint(1) NOT NULL COMMENT '是否开放下载' ,
@@ -1406,7 +1414,7 @@ CREATE TABLE `dzz_billfish_record` (
   KEY `rid` (`rid`),
   KEY `appid` (`appid`),
   KEY `bid` (`bid`,`appid`) USING BTREE
-) ENGINE=MyISAM ;
+) ENGINE=MyISAM;
 
 -- --------------------------------------------------------
 
@@ -1453,7 +1461,7 @@ CREATE TABLE `dzz_eagle_folderrecord`  (
   KEY `bfid` (`efid`,`appid`),
   KEY `fid` (`fid`),
   KEY `appid` (`appid`)
-) ENGINE = MyISAM;
+) ENGINE=MyISAM;
 
 -- ----------------------------
 -- Table structure for pichome_eagle_record
@@ -1469,4 +1477,27 @@ CREATE TABLE `dzz_eagle_record`  (
   KEY `rid` (`rid`),
   KEY `eid` (`eid`),
   KEY `appid` (`appid`)
+) ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS `dzz_pichome_vapp_tag`;
+CREATE TABLE `dzz_pichome_vapp_tag`  (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tid` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '标签id',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  `hots` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用次数',
+  PRIMARY KEY (`id`),
+  KEY `tappid` (`tid`, `appid`)
+) ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS `dzz_local_record`;
+CREATE TABLE `dzz_local_record`  (
+  `id` char(32) NOT NULL DEFAULT '' COMMENT '主键id',
+  `appid` char(6) NOT NULL DEFAULT '' COMMENT '库id',
+  `dateline` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '时间',
+  `rid` char(32) NOT NULL DEFAULT '' COMMENT '文件id',
+  `path` blob NULL COMMENT '路径',
+  PRIMARY KEY (`id`),
+  KEY `appid` (`appid`),
+  KEY `dateline` (`dateline`),
+  KEY `rid` (`rid`)
 ) ENGINE = MyISAM;

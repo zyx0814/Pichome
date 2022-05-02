@@ -1,0 +1,37 @@
+<div class="block">
+	<div class="title">时长</div>
+	<div class="internet-options more auto">
+		<ul class="internet-options-ul" style="float: left;">
+			<li class="single" @click="ScreenDurationClick()" :class="{'active':!ScreenValue.duration.start&&!ScreenValue.duration.end}">
+				<span>不限</span>
+			</li>
+		</ul>
+		<ul class="internet-options-ul">
+			<li class="single notborder notpadding">
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最小"
+					v-model.number="ScreenValue.duration.start"
+					@input="ScreenDurationInput"
+					clearable>
+				</el-input>
+				&nbsp;-&nbsp;
+				<el-input
+					class="min-width"
+					size="small"
+					placeholder="最大"
+					v-model.number="ScreenValue.duration.end" placeholder="最大"
+					@input="ScreenDurationInput"
+					clearable>
+				</el-input>
+			</li>
+			<li class="single notborder notpadding">
+				<el-select class="min-width" size="small" v-model="ScreenValue.duration.dunit"  @change="ScreenDurationdunit" placeholder="请选择">
+				    <el-option label="秒" value="s"></el-option>
+				    <el-option label="分" value="m"></el-option>
+				  </el-select>
+			</li>
+		</ul>
+	</div>
+</div>

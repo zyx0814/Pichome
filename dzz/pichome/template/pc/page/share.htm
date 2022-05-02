@@ -80,21 +80,34 @@
 								</div>
 							</el-tooltip>
 								
-							<el-dropdown trigger="click" @command="handleavatar">
+							<!--{if $_G[uid]}-->
+							<el-dropdown trigger="click" @command="handleavatar"  v-cloak>
 								<div id="dzz_avatar_img">{eval echo avatar_block($_G[uid]);} </div>
-								<el-dropdown-menu slot="dropdown" style="width: 165px;" v-cloak>
+								<el-dropdown-menu slot="dropdown" style="width: 165px;">
 									<el-dropdown-item command="personal">个人设置</el-dropdown-item>
 									<el-dropdown-item command="help">帮助文档</el-dropdown-item>
 									<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+									<!--{if $_G['adminid']==1}-->
 									<el-divider></el-divider>
 									<el-dropdown-item command="setting">站点设置</el-dropdown-item>
 									<el-dropdown-item command="library">库设置</el-dropdown-item>
-									<el-dropdown-item command="system">系统工具</el-dropdown-item>
+									<el-dropdown-item command="system">
+										<span style="position: relative;">
+											系统工具
+											<!--{if $_G['setting']['upgrade']}-->
+											<div class="tip" style="width: 7px;height: 7px;border-radius: 50%;background: red;position: absolute;left: -13px;top: 0;bottom: 0;margin: auto;"></div>
+											<!--{/if}-->
+										</span>
+									</el-dropdown-item>
+									<!--{/if}-->
 									<el-divider></el-divider>
 									<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
 									<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
 								</el-dropdown-menu>
 							</el-dropdown>
+							<!--{else}-->
+							<el-button type="primary" size="mini" @click="GoLogin">登录</el-button>
+							<!--{/if}-->
 						</div>
 					</div>
 				</div>
@@ -103,7 +116,7 @@
 		<el-main>
 			<div class="page-content">
 				<el-scrollbar class="page-component__scroll">
-					<div class="details-top">
+					<div class="details-top" style="padding-right: 0;">
 						<div class="details-maincontainer">
 							<div class="floating-layer clearfix" :class="HideInformation?'HideInformation':''">
 								<div class="picture-box">
@@ -111,21 +124,21 @@
 									<template v-if="imagesData.opentype=='video'">
 										<iframe 
 											style="border: 0px;"
-											:src="'index.php?mod=xgplayer&src='+imagesData.realpath" 
+											:src="'index.php?mod=xgplayer&path='+imagesData.dpath" 
 											width="100%" 
 											height="100%"></iframe>
 									</template>
 									<template v-else-if="imagesData.opentype=='pdf'">
 										<iframe
 											style="border: 0px;"
-											:src="'index.php?mod=pdf&src='+imagesData.realpath" 
+											:src="'index.php?mod=pdf&path='+imagesData.dpath" 
 											width="100%" 
 											height="100%"></iframe>
 									</template>
 									<template v-else-if="imagesData.opentype=='text'">
 										<iframe
 											style="border: 0px;border-radius: 18px;"
-											:src="'index.php?mod=textviewer&src='+imagesData.realpath" 
+											:src="'index.php?mod=textviewer&path='+imagesData.dpath" 
 											width="100%" 
 											height="100%"></iframe>
 									</template>
@@ -143,146 +156,147 @@
 											<img
 												:src="imagesData.icondata"
 												class="image-viewer__img max thumbnail" />
-											<img 
+											<img
 												@load="handleImgload"
-												:src="imagesData.originalimg"
+												:src="(parseInt(imagesData.download) || parseInt(DocumentAdminId)) && imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
 												class="image-viewer__img max opacity" />
-												
 										</el-scrollbar>
 									</template>
 								</div>
 								
 								<div class="information-box">
 									<el-scrollbar class="page-component__scroll">
-										<div class="title"><span v-cloak>{{imagesData.name}}</span><span v-cloak>.{{imagesData.ext}}</span></div>
-										<div class="operation clearfix" v-if="(imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text') || parseInt(imagesData.download) || parseInt(imagesData.share)">
-											<div v-cloak v-if="parseInt(imagesData.download)" class="circular bg" @click="handleDown">立即下载</div>
-											<el-tooltip v-if="imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text'" class="item" effect="dark" content="查看原图" placement="bottom">
-												<div class="circular" @click="handleView">
-											      	<i class="el-icon-view"></i>
-												</div>
-											</el-tooltip>
-											<el-tooltip v-if="parseInt(imagesData.share)" class="item" effect="dark" content="分享" placement="bottom">
-												<div class="circular" @click="handleShare">
-											      	<i class="el-icon-share"></i>
-												</div>
-											</el-tooltip>
-										</div>
-
-										<div class="message">
-											<div class="thesis-wrap" v-if="imagesData.colors && imagesData.colors.length">
-												<div class="tip-title">颜色</div>
-												<ul class="color clearfix">
-													<li class="color-list" v-for="citem in imagesData.colors"  v-cloak>
-														<el-dropdown trigger="click" @visible-change="ShowPopoverColor(citem)" @command="handleCommandColor" placement="bottom">
-															<el-tooltip :content="'#'+citem" effect="light" placement="top" popper-class="color-top">
-																<div class="bg" :style="{background: '#'+citem}"></div>
-															</el-tooltip>
-															<el-dropdown-menu slot="dropdown" class="el-popover-color">
-																<!-- <el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item> -->
-																<!-- <el-divider></el-divider> -->
-																<el-dropdown-item :command="ColorPopver.base">复制&nbsp;{{ColorPopver.base}}</el-dropdown-item>
-																<el-dropdown-item :command="ColorPopver.rgb">复制&nbsp;{{ColorPopver.rgb}}</el-dropdown-item>
-																<el-dropdown-item :command="ColorPopver.rgba">复制&nbsp;{{ColorPopver.rgba}}</el-dropdown-item>
-																<el-dropdown-item :command="ColorPopver.hsl">复制&nbsp;{{ColorPopver.hsl}}</el-dropdown-item>
-																<el-divider></el-divider>
-																<el-dropdown-item :command="ColorPopver.hsv">复制&nbsp;{{ColorPopver.hsv}}</el-dropdown-item>
-																<el-dropdown-item :command="ColorPopver.cmyk">复制&nbsp;{{ColorPopver.cmyk}}</el-dropdown-item>
-															</el-dropdown-menu>
-														</el-dropdown>
-													</li>
-												</ul>
+										<div style="padding-right: 20px;">
+											<div class="title"><span v-cloak>{{imagesData.name}}</span><span v-cloak>.{{imagesData.ext}}</span></div>
+											<div class="operation clearfix" v-if="parseInt(DocumentAdminId) || parseInt(imagesData.share) || (imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text' && parseInt(imagesData.download) && imagesData.originalimg)">
+												<div v-cloak v-if="parseInt(imagesData.download) || parseInt(DocumentAdminId)" class="circular bg" @click="handleDown">立即下载</div>
+												<el-tooltip v-if="imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text' && (parseInt(imagesData.download) || parseInt(DocumentAdminId)) && imagesData.originalimg" class="item" effect="dark" content="查看原图" placement="bottom">
+													<div class="circular" @click="handleView">
+														<i class="el-icon-view"></i>
+													</div>
+												</el-tooltip>
+												<el-tooltip v-if="parseInt(imagesData.share) || parseInt(DocumentAdminId)" class="item" effect="dark" content="分享" placement="bottom">
+													<div class="circular" @click="handleShare">
+												      	<i class="el-icon-share"></i>
+													</div>
+												</el-tooltip>
 											</div>
 											
-											<div class="thesis-wrap" v-if="imagesData.tag && imagesData.tag.length">
-												<div class="tip-title">标签</div>
-												<div v-if="imagesData.tag" class="label clearfix" v-cloak>
-													<el-tag v-for="item in imagesData.tag" effect="plain" style="cursor: default;">{{item}}</el-tag>
+											<div class="message">
+												<div class="thesis-wrap" v-if="imagesData.colors && imagesData.colors.length">
+													<div class="tip-title">颜色</div>
+													<ul class="color clearfix">
+														<li class="color-list" v-for="citem in imagesData.colors"  v-cloak>
+															<el-dropdown trigger="click" @visible-change="ShowPopoverColor(citem)" @command="handleCommandColor" placement="bottom">
+																<el-tooltip :content="'#'+citem" effect="light" placement="top" popper-class="color-top">
+																	<div class="bg" :style="{background: '#'+citem}"></div>
+																</el-tooltip>
+																<el-dropdown-menu slot="dropdown" class="el-popover-color">
+																	<!-- <el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item> -->
+																	<!-- <el-divider></el-divider> -->
+																	<el-dropdown-item :command="ColorPopver.base">复制&nbsp;{{ColorPopver.base}}</el-dropdown-item>
+																	<el-dropdown-item :command="ColorPopver.rgb">复制&nbsp;{{ColorPopver.rgb}}</el-dropdown-item>
+																	<el-dropdown-item :command="ColorPopver.rgba">复制&nbsp;{{ColorPopver.rgba}}</el-dropdown-item>
+																	<el-dropdown-item :command="ColorPopver.hsl">复制&nbsp;{{ColorPopver.hsl}}</el-dropdown-item>
+																	<el-divider></el-divider>
+																	<el-dropdown-item :command="ColorPopver.hsv">复制&nbsp;{{ColorPopver.hsv}}</el-dropdown-item>
+																	<el-dropdown-item :command="ColorPopver.cmyk">复制&nbsp;{{ColorPopver.cmyk}}</el-dropdown-item>
+																</el-dropdown-menu>
+															</el-dropdown>
+														</li>
+													</ul>
 												</div>
-											</div>
-											<div class="thesis-wrap" v-if="imagesData.desc">
-												<div class="tip-title">注释</div>
-												<div v-if="imagesData.desc" class="notes" v-cloak>{{imagesData.desc}}</div>
-											</div>
-
-											<div class="thesis-wrap" v-if="imagesData.link">
-												<div class="tip-title">链接</div>
-												<p class="link">
-													<span id="copyText" @click="handleClickLink(imagesData.link)" v-cloak>{{imagesData.link}}</span>
-													<i class="ri-file-copy-line" @click="copyText"></i>
-												</p>
-											</div>
-											<div class="thesis-wrap" v-if="imagesData.foldernames && imagesData.foldernames.length">
-												<div class="tip-title">分类</div>
-												<div class="label clearfix" style="padding: 0;">
-													<el-tag v-for="item in imagesData.foldernames" effect="plain" v-cloak style="cursor: default;">{{item}}</el-tag>
-												</div>
-											</div>
-
-										</div>
-										<div class="information">
-											<div class="tip">基本信息</div>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">评分</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>
-														<i v-for="item in parseInt(imagesData.grade)"
-															class="ri-star-fill star active"></i>
-														<i v-for="item in 5-parseInt(imagesData.grade)"
-															class="ri-star-fill star"></i>
+												
+												<div class="thesis-wrap" v-if="imagesData.tag && imagesData.tag.length">
+													<div class="tip-title">标签</div>
+													<div v-if="imagesData.tag" class="label clearfix" v-cloak>
+														<el-tag v-for="item in imagesData.tag" effect="plain" style="cursor: default;">{{item}}</el-tag>
 													</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">尺寸</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.width}}×{{imagesData.height}}</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">文件大小</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.fsize}}</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">类型</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.ext}}</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">创建时间</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.mtime}}</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">添加时间</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.btime}}</div>
-												</el-col>
-											</el-row>
-											<el-row type="flex" class="field">
-												<el-col :span="12">
-													<div class="name">修改时间</div>
-												</el-col>
-												<el-col :span="12">
-													<div class="record" v-cloak>{{imagesData.dateline}}</div>
-												</el-col>
-											</el-row>
+												</div>
+												<div class="thesis-wrap" v-if="imagesData.desc">
+													<div class="tip-title">注释</div>
+													<div v-if="imagesData.desc" class="notes" v-cloak>{{imagesData.desc}}</div>
+												</div>
+											
+												<div class="thesis-wrap" v-if="imagesData.link">
+													<div class="tip-title">链接</div>
+													<p class="link">
+														<span id="copyText" @click="handleClickLink(imagesData.link)" v-cloak>{{imagesData.link}}</span>
+														<i class="ri-file-copy-line" @click="copyText"></i>
+													</p>
+												</div>
+												<div class="thesis-wrap" v-if="imagesData.foldernames && imagesData.foldernames.length">
+													<div class="tip-title">分类</div>
+													<div class="label clearfix" style="padding: 0;">
+														<el-tag v-for="item in imagesData.foldernames" effect="plain" v-cloak style="cursor: default;">{{item}}</el-tag>
+													</div>
+												</div>
+											
+											</div>
+											<div class="information">
+												<div class="tip">基本信息</div>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">评分</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>
+															<i v-for="item in parseInt(imagesData.grade)"
+																class="ri-star-fill star active"></i>
+															<i v-for="item in 5-parseInt(imagesData.grade)"
+																class="ri-star-fill star"></i>
+														</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">尺寸</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.width}}×{{imagesData.height}}</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">文件大小</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.fsize}}</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">类型</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.ext}}</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">创建时间</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.mtime}}</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">添加时间</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.btime}}</div>
+													</el-col>
+												</el-row>
+												<el-row type="flex" class="field">
+													<el-col :span="12">
+														<div class="name">修改时间</div>
+													</el-col>
+													<el-col :span="12">
+														<div class="record" v-cloak>{{imagesData.dateline}}</div>
+													</el-col>
+												</el-row>
+											</div>
 										</div>
 									</el-scrollbar>
 
@@ -315,6 +329,7 @@
 					hsv: '',
 					cmyk: ''
 				},
+				DocumentAdminId:'$_G[adminid]',
 				HideInformation:false,
 				IsFullScreen:false,
 				imagesData: {
@@ -844,12 +859,12 @@
 						window.open('https://support.qq.com/products/340252');
 					break;
 					case 'setting':
-						window.location.href = MOD_URL + '&op=admin&do=basic';
+						window.location.href = MOD_URL + '&op=admin&do=authorize';
 					break;
 					case 'library':
 						window.location.href = MOD_URL + '&op=library';
 					break;
-					<!-- <span class="title">版本信息：</span><span class="mes">Beat 1 <a class="update" href="javascript:;">检查更新</a></span> -->
+					<!-- <span class="title">版本信息：</span><span class="mes">$_G[setting][version] <a class="update" href="javascript:;">检查更新</a></span> -->
 					case 'about':
 						this.$alert(
 						`<div class="aboutlogo">
@@ -860,7 +875,7 @@
 								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
 							</div>
 							<div class="aboutlist">
-								<span class="title">版本信息：</span><span class="mes">Beat 1</span>
+								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
 							</div>
 							<div class="aboutlist">
 								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2022 欧奥图文</span>
@@ -897,7 +912,9 @@
 				}
 				
 			},
-			
+			GoLogin(){
+				window.location.href = SITEURL+'user.php?mod=login';
+			},
 		},
 		mounted() {
 			

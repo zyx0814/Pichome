@@ -91,13 +91,19 @@
             }
             //密码验证部分
             if ($_GET['password']) {
+                //验证原密码
+                $password0=$_GET['password0'];
+                if( md5(md5("").$user['salt'])!=$user['password']) {
+                    if(md5(md5($password0).$user['salt'])!=$user['password']){
+            			exit(json_encode(array('error' => true, 'msg' => '原密码错误')));
+                    }
+                }
                 if ($_G['setting']['pwlength']) {
                     if (strlen($_GET['password']) < $_G['setting']['pwlength']) {
                         exit(json_encode(array('error' => true, 'msg' => lang('profile_password_tooshort'))));
                         
                     }
                 }
-                
                 if ($_GET['password'] !== $_GET['password2']) {
                     exit(json_encode(array('error' => true, 'msg' => lang('profile_passwd_notmatch'))));
                     

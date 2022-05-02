@@ -17,7 +17,7 @@ class table_pichome_resources extends dzz_table
 
     public function insert($setarr)
     {
-        if (DB::result_first("select count(*) from %t where rid = %s", array($this->_table, $setarr['rid']))) {
+        if (DB::result_first("select count(rid) from %t where rid = %s", array($this->_table, $setarr['rid']))) {
             $rid = $setarr['rid'];
             unset($setarr['rid']);
             parent::update($rid, $setarr);
@@ -150,35 +150,27 @@ class table_pichome_resources extends dzz_table
         } else {
             $resourcesdata['opentype'] = 'other';
         }
-        $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid, '', 0, 0);
+        $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($rid, '', 7200, 0);
 
         $thumbwidth = getglobal('config/pichomethumbwidth') ? getglobal('config/pichomethumbwidth') : 900;
         $thumbheight = getglobal('config/pichomethumbheight') ? getglobal('config/pichomethumbheight') : 900;
         $thumsizearr = $this->getImageThumbsize($resourcesdata['width'], $resourcesdata['height'], $thumbwidth, $thumbheight);
         $resourcesdata['iconwidth'] = $thumsizearr[0];
         $resourcesdata['iconheight'] = $thumsizearr[1];
-        //echo $resourcesdata['icondata'];die;
-        //$imginfo = @getimagesize($resourcesdata['icondata']);
-        // $resourcesdata['iconwidth'] = $imginfo[0] ? $imginfo[0] : $resourcesdata['width'];
-        //$resourcesdata['iconheight'] = $imginfo[1] ? $imginfo[1] : $resourcesdata['height'];
-        $resourcesdata['icondata'] = str_replace('+', '%20', $resourcesdata['icondata']);
-
+        //$resourcesdata['icondata'] = str_replace('+', '%20', $resourcesdata['icondata']);
+        if(getglobal('adminid') == 1) $resourcesdata['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg'.'&path=' . dzzencode($rid.'_3', '', 0, 0);
 
         $resourcesdata['share'] = $downshare[$resourcesdata['appid']]['share'];
         $resourcesdata['download'] = $downshare[$resourcesdata['appid']]['download'];
-        /* if ($downshare[$resourcesdata['appid']]['iswebsitefile']) {
-             $originalimg = str_replace(DZZ_ROOT, '', $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path']);
-             $originalimg = str_replace(BS, '/', $originalimg);
-             $resourcesdata['originalimg'] = str_replace('+', '%20', urlencode($originalimg));
-             $resourcesdata['realpath'] = str_replace('+', '%20', urlencode($originalimg));
-         } else {*/
+
         $originalimg = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
-        $resourcesdata['originalimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&fpath=' . dzzencode($originalimg, '', 0, 0);
-        if (in_array($resourcesdata['opentype'], array('text', 'video', 'pdf'))) {
-            $resourcesdata['realpath'] = str_replace('+', '', urlencode(getglobal('siteurl') . 'index.php?mod=io&op=getImg&fpath=' . dzzencode($originalimg, '', 0, 0)));
-        } else {
-            $resourcesdata['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&fpath=' . dzzencode($originalimg, '', 0, 0);
-        }
+        $resourcesdata['originalimg'] = ($resourcesdata['download']) ? getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_1','', 0, 0):'';
+        /*if ($resourcesdata['opentype'] == 'video') {
+            $resourcesdata['realpath'] = str_replace('+', '', urlencode(getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_3','', 7200, 0)));
+        }*//* else {
+            $resourcesdata['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_realpath', '', 0, 0);
+        }*/
+
 
         //}
 
@@ -213,15 +205,16 @@ class table_pichome_resources extends dzz_table
             $v['share'] = $downshare[$v['appid']]['share'];
             $v['download'] = $downshare[$v['appid']]['download'];
 
-            $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($v['rid'], '', 0, 0);
+            $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($v['rid'],'', 7200, 0);
             $thumbwidth = getglobal('config/pichomethumbwidth') ? getglobal('config/pichomethumbwidth') : 900;
             $thumbheight = getglobal('config/pichomethumbheight') ? getglobal('config/pichomethumbheight') : 900;
             $thumsizearr = $this->getImageThumbsize($v['width'], $v['height'], $thumbwidth, $thumbheight);
             $v['thumbwidth'] = $thumsizearr[0];
             $v['thumbheight'] = $thumsizearr[1];
+            if ($v['opentype'] == 'video') {
+                $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($v['rid'].'_3','', 7200, 0);
+            }
 
-            $originalimg = $downshare[$v['appid']]['path'] . BS . $v['path'];
-            $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&fpath=' . dzzencode($originalimg, '', 0, 0);
 
 
             unset($v['path']);
@@ -271,13 +264,13 @@ class table_pichome_resources extends dzz_table
 
     }
 
-    public function geticondata_by_rid($rid)
+    public function geticondata_by_rid($rid,$time=7200)
     {
         $resourcesdata = DB::fetch_first("select r.rid,r.appid,r.hasthumb,r.ext,r.type,ra.path as fpath,
             v.path,r.apptype,v.iswebsitefile,v.version from %t r 
         left join %t ra on r.rid=ra.rid left join %t v on r.appid = v.appid where r.rid = %s and r.isdelete = 0",
             array($this->_table, 'pichome_resources_attr', 'pichome_vapp', $rid));
-        $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid, '', 0, 0);
+        $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($rid, '', $time, 0);
         return $resourcesdata;
     }
 
