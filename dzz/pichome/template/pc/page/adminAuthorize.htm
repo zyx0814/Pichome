@@ -167,6 +167,7 @@
 		watch:{
 
 		},
+		mixins:[LeftMixin],
 		created() {
 			var self = this;
 			<!--{if defined('LICENSE_VERSION') && LICENSE_VERSION != CORE_VERSION_LEVEL}-->
@@ -185,9 +186,6 @@
 		methods: {
 			handleupdate(){
 				this.dialogVisible = true;
-			},
-			handleRouter(type){
-				window.location.href = MOD_URL+'&op=admin&do='+type;
 			},
 			handleUploadSuccess(response){
 				var self = this;
@@ -208,7 +206,7 @@
 							password:self.registerform.password
 						},function(json){
 							if(json.success){
-								window.location.reload();
+								// window.location.reload();
 							}else{
 								self.$message.error(json.error);
 							}

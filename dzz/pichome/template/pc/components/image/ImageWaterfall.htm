@@ -22,7 +22,7 @@
 				self.ImageWaterfall.imgArr = [];
 				self.ImageWaterfall.perpage = 0;
 				self.ImageWaterfall.StoreImgdatas = [];
-				self.ImageDataListShow = {};
+				self.ImageDataListShow = [];
 				if(documentW<768){
 					self.ImageWaterfall.isMax = false;
 					self.ImageWaterfall.columns = 2;
@@ -34,7 +34,7 @@
 				}
 				var OtherHeight = 0
 				if(self.HeaderRightBtnDisplay.value.indexOf('name')>-1 || self.HeaderRightBtnDisplay.value.indexOf('extension')>-1){
-					OtherHeight += 45;
+					OtherHeight += 50;
 				}
 				if(self.HeaderRightBtnDisplay.value.indexOf('other')>-1){
 					OtherHeight += 21;

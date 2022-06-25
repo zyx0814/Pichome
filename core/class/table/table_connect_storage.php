@@ -22,6 +22,11 @@ class table_connect_storage extends dzz_table
 		$this->_cache_ttl = 0;*/
 		parent::__construct();
 	}
+
+	public function fetch_all_space(){
+	    return DB::fetch_all("select * from %t where 1 order by disp asc ",array($this->_table));
+    }
+
 	public function fetch_by_id($id){
 		
 		$value=self::fetch($id);
@@ -58,12 +63,14 @@ class table_connect_storage extends dzz_table
 		//删除此应用的快捷方式
 		$return=array();
 		$data=parent::fetch($id);
+		$bzpath = $data['bz'].':'.$id.':';
+		//查询是否有使用的库
+        if(DB::result_first("select count(appid) from %t where path like %s",array('pichome_vapp',$bzpath.'%'))){
+            $return['msg']='有使用此存储位置的库，请先删除库后再执行此操作';
+            $return['error']=true;
+        }
 		if(parent::delete($id)){
 			$return['msg']='success';
-			//C::t('source_shortcut')->delete_by_bz($data['bz'].':'.$id.':',true);//删除快捷方式；
-			//删除图片缓存文件
-			$imgcache=getglobal('setting/attachdir').'./imgcache/'.$data['bz'].'/'.$id.'/';
-			removedirectory($imgcache);
 		}
 		return $return;
 	}
@@ -79,6 +86,22 @@ class table_connect_storage extends dzz_table
 			self::delete_by_id($value['id']);
 		}
 	}
+
+    public function name_filter($cloudname)
+    {
+        return str_replace(array('/', '\\', ':', '*', '?', '<', '>', '|', '"', "\n"), '', $cloudname);
+    }
+	public function getcloudname($cloudname = ''){
+        static $i = 0;
+        if(!$cloudname) $cloudname = '存储名称';
+        $cloudname = self::name_filter($cloudname);
+        if (DB::result_first("select COUNT(*) from %t where cloudname=%s ", array($this->_table, $cloudname))) {
+            $cloudname = preg_replace("/\(\d+\)/i", '', $cloudname) . '(' . ($i + 1) . ')';
+            $i += 1;
+            return self::getFolderName($cloudname);
+        } else {
+            return $cloudname;
+        }
+    }
 }
 
-?>

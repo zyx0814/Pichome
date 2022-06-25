@@ -26,6 +26,7 @@
 					</div>
 				</div>
 				<div class="page-content" style="min-height: 100%;">
+					<div :style="{'padding-top':ImageType != 'table'?'16px':0}"> </div>
 					<!--{template pc/components/index/Jsimage}-->
 					<el-backtop target="#container_scroll>.el-scrollbar__wrap"></el-backtop>
 				</div>
@@ -33,7 +34,7 @@
 		</el-container>
 	</el-scrollbar>
 	<div id="Details_Iframe" v-if="DetailsIframe">
-		<iframe id="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
+		<iframe id="iframesrc" ref="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
 	</div>
 </div>
 <!--{template pc/components/index/JsCommon}-->
@@ -104,11 +105,9 @@
 			this.ScreenCreate();
 			this.ImageCreate();
 			var pagesetting = $pagesetting;
-			<!--{if $_G[uid]}-->
 			if(pagesetting && pagesetting.opentype){
 				this.OpenDetailType = pagesetting.opentype;
 			}
-			<!--{/if}-->
 		},
 		methods: $.extend({},JsCommonMethods,JsHeaderMethods,JsImageMethods,{
 			LayoutStructure(){
@@ -149,7 +148,8 @@
 					}else{
 						self.ImageLayoutScrollShow()
 					}
-				})			});
+				})
+			});
 			$(document).on('click','.copy-share-btn',function(){
 				var txt = $(this).parent().siblings('.address').text()
 				CopyTxt(self,txt);

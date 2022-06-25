@@ -20,14 +20,15 @@ if($_GET['src']){
 
     $resourcesdata = C::t('pichome_resources')->fetch($rid);
     $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    if($appdata['download']){
+    $downloadperm = C::t('pichome_vapp')->getpermbypermdata($appdata['download'],'download');
+    if($downloadperm){
         $perm_download=1;
         $perm_print=1;
     }else{
         $perm_download=0;
         $perm_print=0;
     }
-    $file = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid.'_3', '', 0, 0);
+    $file = getglobal('siteurl') . 'index.php?mod=io&op=getStream&path=' . dzzencode($rid.'_3', '', 0, 0);
    // $file=IO::getFileUri($path);
 }
 

@@ -1,0 +1,50 @@
+<ul style="padding: 0 4px">
+	<template v-for="item in ImageDataListShow">
+		<li 
+			class="imagtablelayout imagtable-img" 
+			:key="item.rid" 
+			:class="{isodd:item.isodd}"
+			:style="{top:item.ptop+'px'}">
+			<div class="li-item">
+				<div
+					@click="ImageDetails(item.rid)"
+					class="image-storage image-single"
+					:style="{background:'#'+item.color}">
+						<img class="img opacity" :src="item.icondata" alt="" @load="Imageload(item.rid)"  :ref="'img_'+item.rid" fit="contain" />
+				</div>
+				<div class="filename">
+					<span @click="ImageDetails(item.rid)">
+						{{item.name}}
+						<template v-if="HeaderRightBtnDisplay.value.indexOf('extension')>-1">.{{item.ext}}</template>
+					</span>
+				</div>
+				<div class="operation" v-if="parseInt(item.share) || parseInt(item.download) || parseInt(ImageDocumentAdminId)">
+					<el-dropdown trigger="click" @command="ImageOperation" placement="bottom">
+						<div class="circulars">
+							<i class="ri-more-2-fill"></i>
+						</div>
+						<el-dropdown-menu slot="dropdown" style="width: 165px;">
+							<el-dropdown-item v-if="parseInt(item.share)" :command="ImageOperationVal('share',item.dpath)">
+								<i class="ri-share-line" style="vertical-align: bottom;font-size: 16px;"></i>
+								分享
+							</el-dropdown-item>
+							<el-dropdown-item v-if="parseInt(item.download)" :command="ImageOperationVal('down',item.dpath)" class="circulars">
+								<i class="ri-download-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
+								下载
+							</el-dropdown-item>
+							<el-dropdown-item v-if="parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('address',item.dpath)">
+								<i class="ri-map-pin-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
+								固定地址
+							</el-dropdown-item>
+						</el-dropdown-menu>
+					</el-dropdown>
+				</div>
+			</div>
+			<div class="li-item size">{{item.width}} × {{item.height}}</div>
+			<div class="li-item ext">{{item.ext}}</div>
+			<div class="li-item size">{{item.fsize}}</div>
+			<div class="li-item time">{{item.btime}}</div>
+		</li>
+	</template>
+	
+</ul>

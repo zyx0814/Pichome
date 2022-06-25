@@ -222,133 +222,7 @@ CREATE TABLE `dzz_collect` (
 PRIMARY KEY (`cid`)
 )ENGINE=MyISAM;
 
--- ----------------------------
--- Table structure for `dzz_connect`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect`;
-CREATE TABLE `dzz_connect` (
-`name`  varchar(255) NOT NULL ,
-`key`  varchar(255) NOT NULL DEFAULT '' ,
-`secret`  varchar(255) NOT NULL DEFAULT '' ,
-`type`  varchar(255) NOT NULL COMMENT 'pan,mail,storage,web' ,
-`bz`  varchar(255) NOT NULL COMMENT 'Dropbox,Box,Google,Aliyun,Grandcloud' ,
-`root`  varchar(255) NOT NULL DEFAULT '' ,
-`available`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否可用' ,
-`dname`  varchar(255) NOT NULL COMMENT '数据库名称' ,
-`curl`  varchar(255) NOT NULL COMMENT '授权地址' ,
-`disp`  smallint(6) NOT NULL DEFAULT 0 ,
-UNIQUE KEY `bz` (`bz`) USING BTREE ,
-KEY `disp` (`disp`) USING BTREE
-)ENGINE=MyISAM;
 
--- ----------------------------
--- Table structure for `dzz_connect_disk`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect_disk`;
-CREATE TABLE `dzz_connect_disk` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`cloudname`  varchar(255) NOT NULL DEFAULT '' ,
-`attachdir`  varchar(255) NOT NULL DEFAULT '' COMMENT '绝对位置' ,
-`attachurl`  varchar(255) NOT NULL DEFAULT '' COMMENT '访问地址（选填）' ,
-`uid`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`perm`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`bz`  varchar(10) NOT NULL DEFAULT 'DISK' ,
-`dateline`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`charset`  varchar(30) NOT NULL DEFAULT 'GBK' ,
-PRIMARY KEY (`id`)
-)ENGINE=MyISAM;
-
--- ----------------------------
--- Table structure for `dzz_connect_ftp`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect_ftp`;
-CREATE TABLE `dzz_connect_ftp` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`host`  varchar(255) NOT NULL DEFAULT '' ,
-`cloudname`  varchar(255) NOT NULL DEFAULT '' ,
-`username`  varchar(255) NOT NULL DEFAULT '' ,
-`password`  varchar(255) NOT NULL DEFAULT '' ,
-`port`  smallint(6) NOT NULL DEFAULT 0 ,
-`timeout`  smallint(6) NOT NULL DEFAULT 90 ,
-`ssl`  tinyint(1) NOT NULL DEFAULT 0 ,
-`pasv`  tinyint(1) NOT NULL DEFAULT 0 ,
-`uid`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`perm`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`bz`  varchar(10) NOT NULL DEFAULT 'FTP' ,
-`dateline`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`on`  tinyint(1) NOT NULL DEFAULT 1 ,
-`charset`  varchar(30) NOT NULL DEFAULT 'GBK' ,
-PRIMARY KEY (`id`)
-)ENGINE=MyISAM;
-
--- ----------------------------
--- Table structure for `dzz_connect_onedrive`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect_onedrive`;
-CREATE TABLE `dzz_connect_onedrive` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`bz`  varchar(30) NOT NULL ,
-`cloudname`  varchar(255) NOT NULL DEFAULT '' ,
-`cuid`  char(60) NOT NULL DEFAULT '' ,
-`cusername`  varchar(255) NOT NULL ,
-`uid`  int(10) UNSIGNED NOT NULL ,
-`expires_in`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`dateline`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`refreshtime`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`perm`  smallint(6) UNSIGNED NOT NULL DEFAULT 29751 ,
-`refresh_token`  text NOT NULL ,
-`access_token`  text NOT NULL ,
-`scope`  varchar(255) NOT NULL ,
-PRIMARY KEY (`id`),
-UNIQUE KEY `cuid` (`cuid`, `uid`) USING BTREE
-)ENGINE=MyISAM;
-
--- ----------------------------
--- Table structure for `dzz_connect_pan`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect_pan`;
-CREATE TABLE `dzz_connect_pan` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`bz`  varchar(255) NOT NULL ,
-`cloudname`  varchar(255) NOT NULL DEFAULT '' ,
-`cuid`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`cusername`  varchar(255) NOT NULL ,
-`portrait`  varchar(255) NOT NULL DEFAULT '' ,
-`uid`  int(10) UNSIGNED NOT NULL ,
-`expires_in`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`dateline`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`refreshtime`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`perm`  int(10) UNSIGNED NOT NULL DEFAULT 29751 ,
-`refresh_token`  varchar(255) NOT NULL ,
-`access_token`  varchar(255) NOT NULL ,
-`scope`  varchar(255) NOT NULL ,
-`session_key`  varchar(255) NOT NULL ,
-`session_secret`  varchar(255) NOT NULL ,
-PRIMARY KEY (`id`),
-UNIQUE KEY `cuid` (`cuid`, `uid`, `bz`) USING BTREE
-)ENGINE=MyISAM;
-
--- ----------------------------
--- Table structure for `dzz_connect_storage`
--- ----------------------------
-DROP TABLE IF EXISTS `dzz_connect_storage`;
-CREATE TABLE `dzz_connect_storage` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`uid`  int(10) UNSIGNED NOT NULL ,
-`cloudname`  varchar(255) NOT NULL DEFAULT '' ,
-`dateline`  int(10) UNSIGNED NOT NULL DEFAULT 0 ,
-`perm`  int(10) UNSIGNED NOT NULL DEFAULT 29751 ,
-`access_id`  varchar(255) NOT NULL ,
-`access_key`  varchar(255) NOT NULL ,
-`bucket`  char(30) NOT NULL DEFAULT '' ,
-`bz`  varchar(30) NOT NULL DEFAULT '' ,
-`hostname`  varchar(255) NOT NULL DEFAULT '' ,
-`internalhostname`  varchar(255) NOT NULL DEFAULT '' ,
-`host`  varchar(255) NOT NULL DEFAULT '' ,
-`internalhost`  varchar(255) NOT NULL DEFAULT '' ,
-`extra`  varchar(150) NOT NULL DEFAULT '' ,
-PRIMARY KEY (`id`)
-)ENGINE=MyISAM;
 -- ----------------------------
 -- Table structure for `dzz_cron`
 -- ----------------------------
@@ -868,7 +742,7 @@ CREATE TABLE `dzz_pichome_resources` (
   `height` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '高度',
   `width` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '宽度',
   `dateline` bigint(13) UNSIGNED NOT NULL DEFAULT '0' COMMENT '修改时间',
-  `hasthumb` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否有缩略图',
+  `hasthumb` tinyint(1)  NOT NULL DEFAULT '0' COMMENT '是否有缩略图',
   `grade` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '评分',
   `size` bigint(20) UNSIGNED NOT NULL DEFAULT '0' COMMENT '大小',
   `mtime` bigint(13) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建时间',
@@ -877,6 +751,8 @@ CREATE TABLE `dzz_pichome_resources` (
   `md5` char(32) NOT NULL DEFAULT '' COMMENT '文件md5值',
   `lastdate` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '最后更改时间',
   `apptype` smallint(1) UNSIGNED DEFAULT '0' COMMENT '0，eagle文件；1，本地文件',
+  `thumbdonum` int(11) UNSIGNED DEFAULT '0' COMMENT '缩略图执行次数',
+  `thumbdotime` int(11) UNSIGNED DEFAULT '0' COMMENT '缩略图执行时间',
   PRIMARY KEY (`rid`),
   KEY `appid_2` (`appid`,`isdelete`) USING BTREE,
   KEY `mtime` (`mtime`) USING BTREE,
@@ -909,9 +785,11 @@ CREATE TABLE `dzz_pichome_resources_attr` (
 `link`  varchar(255) NOT NULL DEFAULT '' COMMENT '链接' ,
 `tag`  text NOT NULL COMMENT '标签id' ,
 `path`  blob NOT NULL COMMENT '路径' ,
-`isget`  tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否已获取数据' ,
+`isget`  tinyint(1)  NOT NULL DEFAULT 0 COMMENT '是否已获取数据' ,
 `searchval`  text NULL COMMENT '关键词' ,
 `pathmd5`  char(32) NULL COMMENT '路径唯一标识' ,
+`getdonum` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '获取信息次数',
+`getinfotime` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '获取信息时间',
 PRIMARY KEY (`rid`),
 KEY `appid` (`appid`) USING BTREE ,
 KEY `duration` (`duration`) USING BTREE ,
@@ -1501,3 +1379,92 @@ CREATE TABLE `dzz_local_record`  (
   KEY `dateline` (`dateline`),
   KEY `rid` (`rid`)
 ) ENGINE = MyISAM;
+DROP TABLE IF EXISTS `dzz_connect`;
+CREATE TABLE `dzz_connect` (
+  `name` varchar(255) NOT NULL,
+  `key` varchar(255) NOT NULL DEFAULT '',
+  `secret` varchar(255) NOT NULL DEFAULT '',
+  `type` varchar(255) NOT NULL COMMENT 'pan,mail,storage,web',
+  `bz` varchar(255) NOT NULL COMMENT 'Dropbox,Box,Google,Aliyun,Grandcloud',
+  `root` varchar(255) NOT NULL DEFAULT '',
+  `available` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否可用',
+  `dname` varchar(255) NOT NULL COMMENT '数据库名称',
+  `curl` varchar(255) NOT NULL COMMENT '授权地址',
+  `disp` smallint(6) NOT NULL DEFAULT '0',
+  UNIQUE KEY `bz` (`bz`) USING BTREE,
+  KEY `disp` (`disp`) USING BTREE
+) ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS `dzz_connect_storage`;
+CREATE TABLE `dzz_connect_storage` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uid` int(10) UNSIGNED NOT NULL,
+  `cloudname` varchar(255) NOT NULL DEFAULT '',
+  `dateline` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `perm` int(10) UNSIGNED NOT NULL DEFAULT '29751',
+  `access_id` varchar(255) NOT NULL,
+  `access_key` varchar(255) NOT NULL,
+  `bucket` char(30) NOT NULL DEFAULT '',
+  `bz` varchar(30) NOT NULL DEFAULT '',
+  `hostname` varchar(255) NOT NULL DEFAULT '',
+  `internalhostname` varchar(255) NOT NULL DEFAULT '',
+  `host` varchar(255) NOT NULL DEFAULT '',
+  `internalhost` varchar(255) NOT NULL DEFAULT '',
+  `extra` varchar(150) NOT NULL DEFAULT '',
+  `mediastatus` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否开启媒体处理',
+  `docstatus` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否开启文档处理',
+  `imagestatus` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否开启图片处理',
+  `disp` int(11)  NOT NULL DEFAULT '0' COMMENT '排序',
+  `videoquality` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '视频转换质量',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM;
+
+
+DROP TABLE IF EXISTS `dzz_thumb_record`;
+CREATE TABLE `dzz_thumb_record` (
+  `id` char(32) NOT NULL COMMENT '主键id',
+  `rid` char(32) NOT NULL DEFAULT '0' COMMENT '文件id',
+  `filesize` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '文件大小',
+  `width` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '缩略图宽度',
+  `height` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '缩略图高度',
+  `original` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '0不是原图，1是原图',
+  `thumbtype` tinyint(1) UNSIGNED NOT NULL DEFAULT '1',
+  `waterpath` varchar(255) NOT NULL DEFAULT '' COMMENT '缩略图水印图位置',
+  `waterstatus` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '0无水印，其他值水印位置',
+  `dateline` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '时间',
+  `thumbstatus` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0未生成，1已生成，-1生成失败',
+  `path` char(150) NOT NULL DEFAULT '' COMMENT '路径',
+  `times` int(11) UNSIGNED NOT NULL DEFAULT '0',
+  `thumbdonum` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '生成次数',
+  `thumbsign` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '缩略图标致0.small,1large',
+  `ext` varchar(30) NOT NULL DEFAULT '' COMMENT '文件后缀',
+  PRIMARY KEY (`id`),
+  KEY `times` (`times`,`rid`,`height`) USING BTREE,
+  KEY `rid` (`rid`)
+) ENGINE=MyISAM ;
+
+
+
+DROP TABLE IF EXISTS `dzz_video_record`;
+CREATE TABLE `dzz_video_record` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `rid` char(32) NOT NULL DEFAULT '' COMMENT '文件rid',
+  `path` char(200) NOT NULL DEFAULT '' COMMENT '文件路径',
+  `ctype` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '转换方式，0本地，1阿里云，2腾讯云',
+  `status` smallint(1) NOT NULL DEFAULT '0' COMMENT '视频状态，0未转换，1转换中，2转换成功，-1转换失败',
+  `endtime` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '转换成功时间',
+  `dateline` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '时间',
+  `jobid` char(34) NOT NULL DEFAULT '' COMMENT '任务id,腾讯云长度33位，阿里云长度32位',
+  `waterstatus` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '水印状态',
+  `waterid` char(34) NOT NULL DEFAULT '' COMMENT '水印id,腾讯云34位，阿里云32位',
+  `templateid` char(34) NOT NULL DEFAULT '' COMMENT '模板id腾讯云长度34,阿里云长度32',
+  `width` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '视频宽度',
+  `height` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '视频高度',
+  `format` char(30) NOT NULL DEFAULT '' COMMENT '格式',
+  `percent` smallint(6) NOT NULL DEFAULT '0' COMMENT '百分比',
+  `jobnum` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '尝试转换次数',
+  `error` char(60) NOT NULL DEFAULT '' COMMENT '错误信息',
+  `videoquality` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '视频质量',
+  PRIMARY KEY (`id`),
+  KEY `awaf` (`rid`,`width`,`waterstatus`,`format`) USING BTREE
+) ENGINE=MyISAM;

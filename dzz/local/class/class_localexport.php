@@ -37,12 +37,30 @@ class localexport
     private $notallowext = '';
     private $notallowdir = '';
     private $getinfo = 0;
+    private $defaultperm = 0;
 
     public function __construct($data = array())
     {
         global $Defaultallowext;
         //获取导入记录表基本数据
-        $this->path = str_replace(BS, '/', $data['path']);
+        if(strpos($data['path'],':') === false){
+            $bz = 'dzz';
+            $did = 1;
+        }else{
+            $patharr = explode(':', $data['path']);
+            $bz = $patharr[0];
+            $did = $patharr[1];
+
+        }
+        if($bz == 'dzz') $did = 1;
+        //获取导入记录表基本数据
+        if(!is_numeric($did) || $did < 2){
+            $this->path = str_replace('/', BS, $data['path']);
+            $this->path = str_replace('dzz::', '', $data['path']);
+        }else{
+            $this->iscloud = true;
+            $this->path = $data['path'];
+        }
         $this->appid = $data['appid'];
         $this->uid = $data['uid'];
         $this->username = $data['username'];
@@ -53,6 +71,7 @@ class localexport
         $this->getinfonum = $data['getinfonum'];
         $this->getinfo = $data['getinfo'];
         $data['allowext'] = ($data['allowext']) ? $data['allowext']:getglobal('setting/pichomeimportallowext');
+        if($data['perm']) $this->defaultperm = $data['perm'];
         //允许导入后缀
         if ($data['allowext']) {
             $allowext = str_replace(array('.', ',','+','$',"'",'^','(',')','[',']','{','}'), array('\.', '|','\+','\$',"'",'\^','\(',')','\[','\]','\{','\}'),$data['allowext']);
@@ -89,17 +108,22 @@ class localexport
         $filedir = $this->path;
         $readtxt = $this->readtxt . 'loaclexport' . md5($this->path) . '.txt';
 
-        $filenum = 0;
-        if (!is_file($readtxt)) {
+        if (!is_file($readtxt) || !filesize($readtxt)) {
+
+            $this->filenum = 0;
             C::t('pichome_vapp')->update($this->appid, array( 'state' => 1));
             $thandle = fopen($readtxt, 'w+');
-            $fileinfo = $this->readdir($filedir, $thandle, $filenum);
+            if($this->iscloud){
+                $fileinfo = $this->readClouddata($thandle,$filedir);
+            }else{
+                $fileinfo = $this->readdir($filedir, $thandle, $filenum);
+            }
             fclose($thandle);
             if ($fileinfo['error']) {
                 C::t('pichome_vapp')->update($this->appid, array('state' => -1));
                 return $fileinfo;
             } else {
-                C::t('pichome_vapp')->update($this->appid, array('filenum' => $fileinfo['filenum'], 'state' => 2,'percent'=>0,'lastid'=>0,'donum'=>0));
+                C::t('pichome_vapp')->update($this->appid, array('filenum' => $this->filenum, 'state' => 2,'percent'=>0,'lastid'=>0,'donum'=>0));
             }
         }else{
             if($this->filenum)C::t('pichome_vapp')->update($this->appid, array('state' => 2,'percent'=>0,'lastid'=>0,'donum'=>0));
@@ -110,16 +134,58 @@ class localexport
             }
 
         }
-
+        $a = C::t('pichome_vapp')->fetch($this->appid);
         return array('success' => true);
     }
+    //读取云存储数据
+    public function readClouddata($thandle,$path,  $nextmarker = '',$by = 'time',$order = 'DESC', $limit = 1000, $force = 0){
+        $prepatharr = explode('/',$path);
+        unset($prepatharr[0]);
+        $prepath = implode('/',$prepatharr);
 
+        $returndata = IO::listfiles($path,$nextmarker,$by,$order,$limit,$force);
+
+        if($returndata['error']){
+            return array('error'=>$returndata['error']);
+        }else{
+
+            foreach($returndata['file'] as $v){
+                $v = str_replace($prepath,'',$v);
+                $v = trim($v,'/');
+                if (($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $v)) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $v))) {
+                    continue;
+                }
+                $this->filenum++;
+                $newpath = $path.'/'.$v;
+                fwrite($thandle, $newpath . "\n");
+            }
+            foreach($returndata['folder'] as $v){
+                $v = str_replace($prepath,'',$v);
+                $v = trim($v,'/');
+                if (!$v||(preg_match('/^(' . $this->notallowdir . ')$/i', $v))) {
+                    continue;
+                }
+                $newpath = $path.'/'.$v;
+                $this->readClouddata($thandle,$newpath);
+            }
+
+        }
+
+        if($returndata['IsTruncated']){
+            $this->readClouddata($thandle,$path,$returndata['NextMarker'],$by,$order,$limit,$force);
+        }else{
+            return array('success'=>true);
+        }
+
+    }
     public function readdir($path, $thandle, &$filenum)
     {
-       
-        if (!is_dir($path)) {
+
+        if (!IO::checkfileexists($path,1)) {
+
             return [];
         }
+
         $handle = dir($path);
         if ($handle) {
             while (($filename = $handle->read()) !== false) {
@@ -130,13 +196,12 @@ class localexport
                     if ((preg_match('/^(' . $this->notallowdir . ')$/i', $convertfilename))) {
                         continue;
                     }
-                    //fwrite($thandle, $newPath . "\t" . 'folder' . "\n");
                     $this->readdir($newPath, $thandle, $filenum);
                 } elseif (is_file($newPath)) {
                     if (($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $convertfilename)) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $convertfilename))) {
                         continue;
                     }
-                    $filenum++;
+                    $this->filenum++;
                     fwrite($thandle, $newPath . "\n");
                 }
             }
@@ -146,14 +211,14 @@ class localexport
         }
 
         $handle->close();
-        return array('filenum' => $filenum);
+        return array('success' =>true);
 
     }
 
     public function execExport($force = false)
     {
         $filedir = $this->path;
-        $filedir = str_replace(array('/', './', '\\'), BS, $filedir);
+        $filedir = $this->iscloud ? $filedir:str_replace(array('/', './', '\\'), BS, $filedir);
         $readtxt = $this->readtxt . 'loaclexport' . md5($this->path) . '.txt';
         //如果txt为空直接进入下一步
         if(filesize($readtxt) == 0){
@@ -168,35 +233,41 @@ class localexport
         } else $start = 0;
 
         $spl_object = new SplFileObject($readtxt, 'rb');
+
         $spl_object->seek($start);
         if ($this->lastid < $this->filenum && $this->exportstatus == 2) {
             $i = 0;
             while (is_file($readtxt) && !$spl_object->eof()) {
                 $i++;
                 if ($i > $this->onceexportnum) {
+
                     break;
 
                 }
                 $file = $spl_object->current();
 
                 $file = trim($file);
-                $file = str_replace(array('/', './', '\\'), BS, $file);
+
+                $file = $this->iscloud ? $file:str_replace(array('/', './', '\\'), BS, $file);
                 $filearr = explode("\t", $file);
                 $filerelativepath = $filearr[0];
-                $filepath = str_replace($filedir . BS, '', $filerelativepath);
+                $filepath = $this->iscloud ? str_replace($filedir .'/', '', $filerelativepath):str_replace($filedir . BS, '', $filerelativepath);
                 $p = new Encode_Core();
                 $this->charset = $p->get_encoding($filepath);
                 //如果是目录直接执行目录导入
                 if (isset($filearr[1]) && $filearr[1] == 'folder') {
                     if ($this->charset != CHARSET) $filepath = diconv($filepath, $this->charset, CHARSET);
                     $fid = $this->createfolerbypath($filepath);
-
                     $spl_object->next();
                     continue;
-                } else {
+                }
+                else {
+
                     $hasrid = 0;
+
                     //保存路径，用于之后获取文件使用
                     $savepath = str_replace(array('/', './', '\\'), '/', $filearr[0]);
+                    if(!$this->iscloud) $this->path = str_replace(BS,'/',$this->path);
                     $savepath = str_replace($this->path . '/', '', $savepath);
                     $pathmd5 = md5($savepath.$this->appid);
                     if($recorddata = DB::fetch_first("select * from %t where id = %s",array('local_record',$pathmd5))){
@@ -208,28 +279,29 @@ class localexport
                     }
                     $realfilepath = $filedir.BS.$filepath;
                     //如果文件不存在则删除记录
-                    if (!is_file($realfilepath)) {
+                    if (!IO::checkfileexists($realfilepath)) {
                         if($hasrid)C::t('pichome_resources')->delete_by_rid($rid);
                         $this->filenum -= 1;
                     } else {
+                        $filedata = IO::getMeta($realfilepath,1);
+
                         //修改时间
-                        $mtime = filemtime($realfilepath);
+                        $mtime = $filedata['dateline'];
                         //创建时间
-                        $ctime = filectime($realfilepath);
+                        $ctime =  $filedata['dateline'];
                         //获取文件后缀
-                        $ext = substr(strrchr($realfilepath, '.'), 1);
-                        $ext = strtolower($ext);
+
+                        $ext =  $filedata['ext'];
                         //获取文件类型
                         $type = getTypeByExt($ext);
                         //获取文件大小
-                        $size = filesize($realfilepath);
-                        //获取图片信息，以取得宽高
-                        $imginfo = @getimagesize($realfilepath);
+                        $size = $filedata['size'];
+
 
 
 
                         //去掉库路径，以便获取文件相对目录
-                        $filepath = str_replace($filedir . BS, '', $filepath);
+                        $filepath = $this->iscloud ? str_replace($filedir . '/', '', $filepath):str_replace($filedir . BS, '', $filepath);
 
                         if ($this->charset != CHARSET) $filepath = diconv($filepath, $this->charset, CHARSET);
                         //获取文件名
@@ -250,14 +322,15 @@ class localexport
                                     'size' => $size,
                                     'type' => $type,
                                     'ext' => $ext,
-                                    'width' => ($imginfo[0]) ? $imginfo[0] : 0,
-                                    'height' => ($imginfo[1]) ? $imginfo[1] : 0,
+                                    'width' => ($filedata['width']) ? $filedata['width'] : 0,
+                                    'height' => ($filedata['height']) ? $filedata['height']: 0,
                                     'mtime' => $ctime * 1000,
                                     'dateline' => $mtime * 1000,
                                     'btime' => TIMESTAMP * 1000,
                                     'editdate'=>$mtime,
                                     'path'=>$savepath
                                 ];
+
                                 if (C::t('#local#local_record')->insert_data($setarr)) {
                                     $attrdata = [
                                         'rid' => $rid,
@@ -269,6 +342,7 @@ class localexport
                                     ];
 
                                     C::t('pichome_resources_attr')->insert($attrdata);
+
                                     $dirstr = dirname($filepath);
                                     if ($dirstr != '.' && $dirstr != '..') {
                                         $fid = $this->createfolerbypath($dirstr);
@@ -277,15 +351,16 @@ class localexport
                                             C::t('pichome_folderresources')->insert($frsetarr);
                                         }
                                     }
-                                    //插入获取信息数据
-                                    Hook::listen('pichomegetinfo',$setarr);
+                                    $setarr['realpath']  = $this->path.'/'.$savepath;
+                                    //视频转换数据
+                                    Hook::listen('pichomeconvert',$setarr,null,false,true);
                                 }
                             }
                             else {
                                 //查询是否已有数据
-                               // $data = C::t('pichome_resources')->fetch($rid);
                                 if ($mtime > $recorddata['dateline'] || $force) {
                                     $setarr = [
+                                        'rid'=>$rid,
                                         'lastdate' => $mtime,
                                         'appid' => $this->appid,
                                         'apptype' => 1,
@@ -295,8 +370,8 @@ class localexport
                                         'mtime' => $ctime * 1000,
                                         'dateline' => $mtime * 1000,
                                         'btime' => TIMESTAMP * 1000,
-                                        'width' => ($imginfo[0]) ? $imginfo[0] : 0,
-                                        'height' => ($imginfo[1]) ? $imginfo[1] : 0,
+                                        'width' => isset($imginfo[0]) ? $imginfo[0] : 0,
+                                        'height' => isset($imginfo[1]) ? $imginfo[1] : 0,
                                         'editdate'=>$mtime
                                     ];
                                     if (C::t('#local#local_record')->insert_data($setarr)) {
@@ -309,16 +384,24 @@ class localexport
 
                                         ];
                                         C::t('pichome_resources_attr')->insert($attrdata);
+                                        $dirstr = dirname($filepath);
+                                        if ($dirstr != '.' && $dirstr != '..') {
+                                            $fid = $this->createfolerbypath($dirstr);
+                                            if ($fid) {
+                                                $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fid];
+                                                C::t('pichome_folderresources')->insert($frsetarr);
+                                            }
+                                        }
                                         //如果文件被替换强制插入获取信息数据
-                                        $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext,'isforce'=>1];
-                                        Hook::listen('pichomegetinfo',$hookdata);
+                                        $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext,'isforce'=>1,'realpath'=>$this->path.'/'.$savepath];
+                                        Hook::listen('pichomeconvert',$hookdata,null,false,true);
 
                                     }
 
                                 }else{
-                                    $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext];
+                                    $hookdata = ['appid'=>$this->appid,'rid'=>$rid,'ext'=>$ext,'realpath'=>$this->path.'/'.$savepath];
                                     //如果文件已存在，尝试插入获取信息数据
-                                    Hook::listen('pichomegetinfo',$hookdata);
+                                    Hook::listen('pichomeconvert',$hookdata,null,false,true);
                                 }
                             }
                             $this->donum += 1;
@@ -338,6 +421,7 @@ class localexport
                     C::t('pichome_vapp')->update($this->appid, array('lastid' => $lastid, 'percent' => $percent, 'donum' => $this->donum, 'state' => $state, 'filenum' => $this->filenum));
                 }
                 $spl_object->next();
+
             }
 
         }
@@ -414,10 +498,15 @@ class localexport
     {
         if ($this->lastid < 1) $this->lastid = 1;
         $limitsql = ($this->lastid - 1) * $this->checklimit . ',' . $this->checklimit;
+
         $delrids = [];
         $data = DB::fetch_all("select rid,name,ext from %t where appid = %s order by lastdate asc limit $limitsql ", array('pichome_resources', $this->appid));
+
         if (empty($data)) {
+
+
             C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 4, 'lastid' => 0, 'donum' => 0));
+            //处理目录数据
             $folderdata = DB::fetch_all("select fid,pathkey from %t where appid = %s",array('pichome_folder',$this->appid));
 
             foreach($folderdata as $v){
@@ -442,7 +531,7 @@ class localexport
 
                 $ppath = implode('/',$pfolder);
                 $folderpath  = $this->path.'/'.$ppath;
-                if(!is_dir($folderpath)){
+                if(!IO::checkfileexists($folderpath,1)){
                     C::t('pichome_folder')->delete($v['fid']);
                 }
             }
@@ -451,20 +540,17 @@ class localexport
                 C::t('pichome_folder')->update($v['fid'], array('filenum' => $v['num']));
 
             }
-            if($this->getinfo){
-
-                //开启器获取信息后执行获取文件信息
-                dfsockopen(getglobal('localurl') . 'index.php?mod=imageColor&op=index', 0, '', '', false, '', 1);
-                dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=getinfo', 0, '', '', false, '', 1);
-                dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=thumb', 0, '', '', false, '', 1);
-            }
             $total = DB::result_first("select count(rid) from %t where appid = %s ", array('pichome_resources', $this->appid));
             $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$this->appid));
             $nosubfilenum = $total - $hascatnum;
-            $getinfonum = DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid
-where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or (ra.isget=1))",
-                array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord',$this->appid));
-            C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total,'nosubfilenum'=>$nosubfilenum,'getinfonum'=>$getinfonum));
+            /*$getinfonum = DB::result_first("SELECT count(ra.rid) FROM %t ra left join %t fc on ra.rid = fc.rid left join %t  ic on ra.rid= ic.rid
+left join %t o on o.rid = ra.rid where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid) and ISNULL(o.rid)) or (ra.isget=1))",
+                array('pichome_resources_attr','pichome_ffmpeg_record','pichome_imagickrecord','pichome_onlyofficethumb',$this->appid));*/
+            C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total,'nosubfilenum'=>$nosubfilenum,'getinfonum'=>0,'dateline'=>time()));
+
+            dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=getinfo', 0, '', '', false, '', 1);
+            dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=getthumb', 0, '', '', false, '', 1);
+            dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=convert', 0, '', '', false, '', 1);
             return true;
         }
 
@@ -472,11 +558,12 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
             $rid = $v['rid'];
             $filepath = DB::result_first("select `path` from %t where rid = %s and appid = %s", array('pichome_resources_attr', $rid, $this->appid));
             $filepath = str_replace(array('/', './', '\\'), BS, $this->path . BS . $filepath);
-            //echo $v['name'].'<br>';
-            if (!is_file($filepath) || ($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $v['name'])) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $v['name']))) {
+            if (!IO::checkfileexists($filepath) || ($this->allowext && !preg_match('/^(' . $this->allowext . ')$/i', $v['name'])) || ($this->notallowext && preg_match('/^(' . $this->notallowext . ')$/i', $v['name']))) {
 
                 $delrids[] = $rid;
             }
+
+
 
         }
         if (!empty($delrids)) {
@@ -500,5 +587,5 @@ where ra.appid = %s and ((ra.isget = 0 and ISNULL(fc.rid) and ISNULL(ic.rid)) or
             C::t('pichome_vapp')->update($this->appid, array('lastid' => $this->lastid + 1, 'percent' => $percent, 'state' => 3));
         }
     }
-    
+
 }

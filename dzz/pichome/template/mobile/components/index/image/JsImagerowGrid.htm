@@ -1,0 +1,196 @@
+<script type="text/javascript">
+	var JsImagerowGridData = {
+		imagerowGrid:{
+			maxNewtop:0,
+			maxNewLeft:0,
+			rowElems:[],
+			perpage : 0,
+			Margin:4,
+			rowWidth:0,
+			OtherHeight:0,
+			SurplusImgdatas:[],
+			StoreImgdatas:[],
+		},
+	};
+	var JsImagerowGridMethods = {
+		ImagesRowGridtlayoutCompute(){
+			var self = this;
+			var imagerowGrid = self.ParamImages.imagerowGrid;
+			if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
+				imagerowGrid.maxNewtop = 0;
+				imagerowGrid.rowWidth = 0;
+				imagerowGrid.rowElems = [];
+				imagerowGrid.maxNewLeft =  0;
+				imagerowGrid.perpage = 0;
+				imagerowGrid.SurplusImgdatas = [];
+				imagerowGrid.StoreImgdatas = [];
+				this.ParamImages.Newdatas = {};
+			}
+			if(!self.ParamImages.data.length){
+				$('#imgContainer').height(0);
+				return false;
+			}
+			var OtherHeight = 0;
+			if(!self.ParamImages.checked){
+				OtherHeight = 30;
+			}
+			if(self.ParamSort.showinformation.value.indexOf('name')>-1 || self.ParamSort.showinformation.value.indexOf('extension')>-1){
+				OtherHeight = 45;
+			}
+			if(self.ParamSort.showinformation.value.indexOf('other')>-1){
+				OtherHeight += 20;
+			}
+			imagerowGrid.OtherHeight = OtherHeight;
+			var arr = {};
+			if(imagerowGrid.rowElems.length){
+				for(var s in imagerowGrid.rowElems){
+					arr[imagerowGrid.rowElems[s].rid] = JSON.parse(JSON.stringify(imagerowGrid.rowElems[s]));
+				}
+				imagerowGrid.rowWidth = 0;
+				imagerowGrid.rowElems = [];
+				imagerowGrid.maxNewLeft =  0;
+			}
+			
+			for(var findex = imagerowGrid.perpage; findex < self.ParamImages.data.length;++findex){
+				var str = JSON.parse(JSON.stringify(self.ParamImages.data[findex]));
+				var rid = str.rid;
+				arr[rid] = str;
+				var w = parseInt(arr[rid]['width']);
+				var h = parseInt(arr[rid]['height']);
+				var r = w / h;
+				var r1 = h / w;
+				if (h > 260) {
+					h = 260;
+					w = r * h;
+				} else if (w < 260) {
+					w = 260;
+					h = 260;
+				}
+				arr[rid]['pwidth'] = w;
+				arr[rid]['pheight'] = h;
+			}
+			var documentW = document.body.clientWidth;
+			var boxWidth = documentW-8;
+			$('#imgContainer').width(boxWidth);
+			for(var index in arr){
+				var item = arr[index];
+				imagerowGrid.rowWidth += item['pwidth'];
+				imagerowGrid.rowElems.push(item);
+				var fdiiff = imagerowGrid.rowWidth + imagerowGrid.Margin * (imagerowGrid.rowElems.length - 1);
+				var diff = fdiiff - boxWidth;//多出来的宽度
+				if (fdiiff > boxWidth){
+					var widthDiff = 0,maxNewHeight = 0;
+					for(var rowElemIndex in imagerowGrid.rowElems){
+						var rid = imagerowGrid.rowElems[rowElemIndex].rid;
+						var rowElemWidth = arr[rid]['pwidth'];//获取一行每个都宽度
+						var rowElemHeight = arr[rid]['pheight'];//获取一行每个都宽度
+		
+						var newWidth = rowElemWidth - (rowElemWidth / imagerowGrid.rowWidth) * diff;//新宽度
+						var newHeight = Math.round(rowElemHeight * (newWidth / rowElemWidth));//新高度
+						if (widthDiff + 1 - newWidth % 1 >= 0.5) {
+							widthDiff -= newWidth % 1;
+							newWidth = Math.floor(newWidth);
+						} else {
+							widthDiff += 1 - newWidth % 1;
+							newWidth = Math.ceil(newWidth);
+						}
+						if (newHeight > maxNewHeight){
+							maxNewHeight = newHeight;
+						}
+						arr[rid]['pwidth'] = newWidth;
+						arr[rid]['pheight'] = maxNewHeight;
+						arr[rid]['ptop'] = imagerowGrid.maxNewtop;
+						arr[rid]['pbottom'] = imagerowGrid.maxNewtop+maxNewHeight+imagerowGrid.OtherHeight;
+						if(rowElemIndex > 0){
+							arr[rid]['pleft'] = imagerowGrid.maxNewLeft;
+						}else{
+							arr[rid]['pleft'] = 0;
+						}
+						imagerowGrid.maxNewLeft += newWidth + imagerowGrid.Margin;
+						
+					}
+					
+					for(var frowElemIndex in imagerowGrid.rowElems){//规整每行的高
+						var rowElem = imagerowGrid.rowElems[frowElemIndex].rid;
+						
+						var height = arr[rowElem]['pheight'];//获取一行每个都宽度
+						if(height<maxNewHeight){
+							arr[rowElem]['pbottom'] += maxNewHeight-height;
+							arr[rowElem]['pheight'] = maxNewHeight;
+						}
+					}
+					imagerowGrid.maxNewtop += maxNewHeight + imagerowGrid.Margin +imagerowGrid.OtherHeight
+					imagerowGrid.rowElems = [];
+					imagerowGrid.rowWidth = 0;
+					imagerowGrid.maxNewLeft = 0;
+				}
+			}
+		
+			var surplusheight = 0;
+		
+			if (imagerowGrid.rowElems.length) {
+				var maxNewHeight = 0;
+				
+				for(var f in imagerowGrid.rowElems){
+					var rowElem = imagerowGrid.rowElems[f].rid;
+					var rowElemWidth = arr[rowElem].pwidth;//获取一行每个都宽度
+					var rowElemHeight = arr[rowElem].pheight;//获取一行每个都宽度
+					arr[rowElem]['pwidth'] = rowElemWidth;
+					arr[rowElem]['pheight'] = rowElemHeight;
+					arr[rowElem]['ptop'] = imagerowGrid.maxNewtop;
+					arr[rowElem]['pbottom'] = imagerowGrid.maxNewtop+rowElemHeight+imagerowGrid.OtherHeight;
+					if (rowElemHeight > maxNewHeight){
+						maxNewHeight = rowElemHeight;
+					}
+					if(f > 0){
+						arr[rowElem]['pleft'] = imagerowGrid.maxNewLeft;
+					}else{
+						arr[rowElem]['pleft'] = 0;
+					}
+					
+					imagerowGrid.maxNewLeft += rowElemWidth + imagerowGrid.Margin;
+				}
+				for(var ff in imagerowGrid.rowElems){
+					var rowElem = imagerowGrid.rowElems[ff].rid;
+					imagerowGrid.SurplusImgdatas.push(rowElem);
+					var height = arr[rowElem]['pheight'];
+					if(height<maxNewHeight){
+						arr[rowElem]['pbottom'] += maxNewHeight-height;
+						arr[rowElem]['pheight'] = maxNewHeight;
+					}
+				}
+				surplusheight = maxNewHeight+imagerowGrid.OtherHeight+imagerowGrid.Margin;
+				// imagerowGrid.maxNewLeft = 0;
+			}
+			$('#imgContainer').height(imagerowGrid.maxNewtop+surplusheight+60);
+		
+			imagerowGrid.perpage = self.ParamImages.data.length;
+			var newarr = [];
+			for(var n in arr){
+				newarr.push(arr[n]);
+			}
+			if(self.ParamImages.type == 'append'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(imagerowGrid.StoreImgdatas));
+				if(imagerowGrid.SurplusImgdatas.length){
+					var splic = [];
+					for(var b in StoreImgdatas){
+						if(imagerowGrid.SurplusImgdatas.indexOf(StoreImgdatas[b].rid)>-1){
+							splic.push(b)
+						}
+					}
+					for(var h in splic){
+						imagerowGrid.StoreImgdatas.splice(parseInt(splic[h]),1);
+					}
+				}
+				
+				// for(var y in newarr){
+				// 	imagerowGrid.StoreImgdatas.push(newarr[y])
+				// }
+				imagerowGrid.StoreImgdatas.push.apply(imagerowGrid.StoreImgdatas,newarr);
+			}else{
+				imagerowGrid.StoreImgdatas = newarr;
+			}
+			self.ImagesLayoutScrollShow()
+		}
+	};
+</script>

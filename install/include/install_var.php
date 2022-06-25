@@ -63,7 +63,7 @@ define('MISSING_PARAMETER', 33);
 define('LOCK_FILE_NOT_TOUCH', 34);
 
 if(function_exists('mysqli_connect')) $func_items = array('mysqli_connect',  'xml_parser_create', 'curl_init');
-else $func_items = array('mysql_connect',  'xml_parser_create', 'curl_init');
+else $func_items = array('mysql_connect',  'xml_parser_create', 'curl_init','proc_open');
 
 $filesock_items = array('fsockopen', 'pfsockopen', 'stream_socket_client');
 

@@ -19,6 +19,7 @@ class table_eagle_record extends dzz_table
     }
 
     public function insert_data($eid,$setarr){
+
             if(C::t('pichome_resources')->insert($setarr)){
                 $setarr1['rid'] = $setarr['rid'];
                 $setarr1['appid'] = $setarr['appid'];

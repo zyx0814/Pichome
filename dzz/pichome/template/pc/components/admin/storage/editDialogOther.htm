@@ -1,0 +1,226 @@
+<el-dialog
+	v-loading="EditDialogOther.loading"
+	:title="'编辑'+EditDialogOther.cloudname"
+	width="40%"
+	:visible.sync="EditDialogOther.dialogVisible">
+	<el-form ref="EditDialogOtherref" :model="EditDialogOther" label-width="110px" label-position="top">
+		<!-- <el-form-item class="title" label="图片处理设置"></el-form-item> -->
+		<el-form-item class="title">
+			<template slot="label">
+				图片处理设置
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">开启后能够支持，{$_G['config']['qcosmedia']}，生成缩略图</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				
+			</template>
+			<el-radio-group v-model="EditDialogOther.imagestatus" @change="EditDialogOtherImageChange">
+				<el-radio border :label="0">关闭</el-radio>
+				<el-radio border :label="1">开启</el-radio>
+				
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item class="title" label="媒体处理设置">
+			<template slot="label">
+				媒体处理设置
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">开启后能够支持，视频格式：{$_G['config']['qcosmedia']}，生成缩略图，实现在线预览</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				
+			</template>
+			<el-radio-group v-model="EditDialogOther.mediastatus" :disabled="EditDialogOther.mediastate?false:true" @change="EditDialogOtherMediaChange">
+				<el-radio border :label="0">关闭</el-radio>
+				<el-radio border :label="1">开启</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item v-if="parseInt(EditDialogOther.mediastatus)">
+			<template slot="label">
+				生成预览视频尺寸：
+				<!--{loop $_G['config']['videoquality'] $key $val}-->
+				<!--{if $key==$_G['config']['defaultvideoquality']}-->
+				$val[name] $val[width]*$val[height] 比特率：$val[bitrate]
+				<!--{/if}-->
+				<!--{/loop}-->
+			</template>
+		</el-form-item>
+		<el-form-item class="title">
+			<template slot="label">
+				文档处理设置
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">开启后能够支持，视频格式：{$_G['config']['qcosoffice']}，生成缩略图，实现在线预览</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				
+			</template>
+			<el-radio-group v-model="EditDialogOther.docstatus" :disabled="EditDialogOther.docstate?false:true" @change="EditDialogOtherDocChange">
+				<el-radio border :label="0">关闭</el-radio>
+				<el-radio border :label="1">开启</el-radio>
+			</el-radio-group>
+		</el-form-item>
+	</el-form>
+</el-dialog>
+<script type="text/javascript">
+	var EditDialogOtherMixin = {
+		data(){
+			return {
+				EditDialogOther:{
+					loading:false,
+					dialogVisible:false,
+					id:0,
+					cloudname:'',
+					imagestatus:0,
+					
+					mediastatus:0,
+					mediastate:0,
+					
+					docstatus:0,
+					docstate:0,
+					videoquality:parseInt($_G['config']['videoquality']) || 1
+				},
+			}
+		},
+		created() {
+			
+		},
+		methods:{
+			EditDialogOtherDocChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				$.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+					id:self.EditDialogOther.id,
+					docstatus:val,
+				},function(json){
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+						});
+						tab.docstatus = val;
+					}else{
+						self.EditDialogOther.docstatus = self.EditDialogOther.docstatus?0:1;
+						self.$message.error(json.msg);
+					}	
+				},'json');
+			},
+			EditDialogOtherMediaChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				$.post(MOD_URL+'&op=storagesetting&do=videosetting',{
+					id:self.EditDialogOther.id,
+					mediastatus:val,
+					videoquality:self.EditDialogOther.videoqualite,
+				},function(json){
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+						});
+						tab.mediastatus = val;
+					}else{
+						self.EditDialogOther.mediastatus = self.EditDialogOther.mediastatus?0:1;
+						self.$message.error(json.msg);
+					}	
+				},'json');
+			},
+			EditDialogOtherImageChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				$.post(MOD_URL+'&op=storagesetting&do=imagesetting',{
+					id:self.EditDialogOther.id,
+					imagestatus:val,
+				},function(json){
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+						});
+						tab.imagestatus = val;
+					}else{
+						self.$message.error(json.msg);
+					}	
+				},'json');
+			},
+			EditDialogOtherGetData(){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				self.EditDialogOther.loading = true;
+				self.EditDialogOther.dialogVisible = true;
+				$.post(MOD_URL+'&op=storagesetting&do=getsettingdata',{
+					id:self.EditDialogOther.id,
+				},function(json){
+					self.EditDialogOther.cloudname = json.cloudname;
+					
+					self.EditDialogOther.imagestatus = parseInt(json.imagestatus);
+					
+					self.EditDialogOther.mediastatus = parseInt(json.mediastatus);
+					self.EditDialogOther.mediastate = json.mediastate?1:0;
+					
+					self.EditDialogOther.docstatus = parseInt(json.docstatus);
+					self.EditDialogOther.docstate = json.docstate?1:0;
+					self.EditDialogOther.loading = false;
+				},'json');
+			}
+		}
+	};
+	// access_id: "AKIDbypQl3vUv5z5vtGz7zau85lAIisl5qvl"
+	// access_key: "ZmI0NFRsaHpINDRjbWlkVmJjc0t2ODVhaGctbFBZc1RMRUNKME93THdLMXZaS3lEdzdvZVNkSHhYMHBGTTRyUDF5WFBhLTI4ZE1XMkhBWC1uQQ"
+	// bucket: "pichometest002-1300250401"
+	// bz: "QCOS"
+	// cloudname: "腾讯云QCOS"
+	// dateline: "1655284431"
+	// disp: "0"
+	// docstate: false
+	// docstatus: "0"
+	// extra: "1300250401"
+	// host: "http://pichometest002-1300250401.cos.ap-chongqing.myqcloud.com"
+	// hostname: "http:ap-chongqing"
+	// id: "2"
+	// imagestatus: "0"
+	// internalhost: ""
+	// internalhostname: ""
+	// mediastate: false
+	// mediastatus: "0"
+	// perm: "29751"
+	// uid: "1"
+	// videoquality: "0"
+</script>

@@ -1,0 +1,51 @@
+<script type="text/javascript">
+	var JsImageTableData = {
+		ImageTable:{
+			maxNewtop:0,
+			perpage : 0,
+			boxHeight:0,//总体高度
+			fixedH:55,
+			StoreImgdatas:[],
+		}
+	};
+	var JsImageTableMethods = {
+		ImagesTableInit(IsRefresh){
+			var self = this;
+			$('.image-wrapper').width('100%');
+			if(IsRefresh || !self.ImageDataList.length){
+				self.ImageTable.perpage = 0;
+				self.ImageTable.maxNewtop = 0;
+				self.ImageTable.boxHeight = 0;
+				self.ImageTable.StoreImgdatas = [];
+			}
+			if(!self.ImageDataList.length){
+				$('.image-wrapper').height(0);
+				return false;
+			}
+			var arr = [];
+			var i = 0;
+			for(var index = self.ImageTable.perpage; index < self.ImageDataList.length;++index){
+				var item = JSON.parse(JSON.stringify(self.ImageDataList[index]));
+				item['ptop'] = self.ImageTable.maxNewtop;
+				self.ImageTable.maxNewtop += self.ImageTable.fixedH;
+				item['pbottom'] = self.ImageTable.maxNewtop;
+				item['isodd'] = index%2?true:false;
+				arr[i] = item;
+				i++;
+			}
+			self.ImageTable.perpage = self.ImageDataList.length;
+			if(!IsRefresh){
+				self.ImageTable.StoreImgdatas.push.apply(self.ImageTable.StoreImgdatas,arr);
+			}else{
+				self.ImageTable.StoreImgdatas = arr;
+			}
+			var boxHeight = $('#container_scroll').height();
+			if(boxHeight>self.ImageTable.maxNewtop){
+				$('.image-wrapper').height(boxHeight);
+			}else{
+				$('.image-wrapper').height(self.ImageTable.maxNewtop);
+			}
+			self.ImageLayoutScrollShow();
+		}
+	};
+</script>

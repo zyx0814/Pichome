@@ -1,112 +1,19 @@
 <div id="imagelayout">
-	<div class="image-top-message">
+	<div class="image-top-message" v-show="DocumentTemplate==2 && ImageDataIsExpanded">
 		<!-- <div class="left" v-cloak>找到文件&nbsp;{{ImageParams.counttotal}}&nbsp;个</div> -->
-		<div class="right" v-if="DocumentTemplate==2 && ImageDataIsExpanded">
+		<div class="right">
 			<el-checkbox v-model="ImageParams.expanded" :true-label="1" :false-label="0" @change="ImageExpandedChange">显示子分类内容</el-checkbox>
 		</div>
 	</div>
-	<div class="image-container">
+	<div class="image-container" :style="{'padding':ImageType=='table'?'0 12px':''}">
 		<div class="image-wrapper">
-			<template v-for="item in ImageDataListShow">
-				<div 
-					class="image-item" 
-					:key="item.rid" 
-					:data-rid="item.rid"
-					:style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}">
-					<div class="image-inside">
-						<div class="topFlex" v-if="!ImageDocumentCtrl">
-							<!-- <div v-if="parseInt(item.share)" class="circulars" @click.stop="ImageOperation('share',item.rid)">
-								<i class="ri-share-line"></i>
-							</div> -->
-							<!-- <div v-if="parseInt(item.download)" class="circulars" @click.stop="ImageOperation('down',item.dpath)">
-								<i class="ri-download-2-line"></i>
-							</div> -->
-							<el-dropdown trigger="click" @command="ImageOperation" placement="bottom" v-if="parseInt(item.share) || parseInt(item.download) || parseInt(ImageDocumentAdminId)">
-							    <div class="circulars">
-							    	<i class="ri-more-2-fill"></i>
-							    </div>
-								<el-dropdown-menu slot="dropdown" style="width: 165px;">
-									<el-dropdown-item v-if="parseInt(item.share) || parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('share',item.rid)">
-										<i class="ri-share-line" style="vertical-align: bottom;font-size: 16px;"></i>
-										分享
-									</el-dropdown-item>
-									<el-dropdown-item v-if="parseInt(item.download) || parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('down',item.dpath)" class="circulars">
-										<i class="ri-download-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
-										下载
-									</el-dropdown-item>
-									<el-dropdown-item v-if="parseInt(ImageDocumentAdminId)" :command="ImageOperationVal('address',item.rid)" class="circulars">
-										<i class="ri-map-pin-2-line" style="vertical-align: bottom;font-size: 16px;"></i>
-										固定地址
-									</el-dropdown-item>
-								</el-dropdown-menu>
-							</el-dropdown>
-						</div>
-						<div 
-							class="image-single radius" 
-							:class="[{'border':item.opentype=='video'||item.opentype=='audio'},ImageType]"
-							:style="{height: item.pheight+'px',width: (item.pwidth-8)+'px',background:'#'+item.color}"
-							@mouseenter="ImageMouseenter" 
-							@mouseleave="ImageMouseleave" 
-							@click="item.type!='audio'&&!ImageDocumentCtrl&&ImageDetails(item.rid)">
-							<div class="image-storage">
-								<!-- <img class="img thumbnail" :src="item.icondata" alt=""> -->
-								<img class="img opacity" :src="item.icondata" alt="" @load="Imageload(item.rid)"  :ref="'img_'+item.rid" />
-							</div>
-							
-							<template v-if="item.type=='audio'">
-								<div v-if="!ImageDocumentCtrl" @click.stop="ImageDetails(item.rid)" class="circulars link">
-									<i class="ri-search-line"></i>
-									<span class="el-link--inner">详情</span>
-								</div>
-							</template>
-							<template v-else>
-								<div v-if="item.link&&!ImageDocumentCtrl" @click.stop="ImageLink(item.link)" class="circulars link">
-									<i class="ri-link"></i>
-									<span class="el-link--inner">链接</span>
-								</div>
-							</template>
-							<div v-if="!ImageDocumentCtrl && (item.type=='audio'||item.type=='video')" class="image-playurl" data-status="true" :data-type="item.type" :data-playurl="item.realpath" :class="{exhibit:!parseInt(item.share)&&!parseInt(item.download)&&!parseInt(ImageDocumentAdminId)}">
-								
-							</div>
-							
-						</div>
-						<div class="message">
-							<div class="name" v-if="HeaderRightBtnDisplay.value.indexOf('name')>-1 || HeaderRightBtnDisplay.value.indexOf('extension')>-1">
-							<template v-if="HeaderRightBtnDisplay.value.indexOf('name')>-1">{{item.name}}</template><template v-if="HeaderRightBtnDisplay.value.indexOf('extension')>-1">.{{item.ext}}</template>
-							</div>
-							<template v-if="HeaderRightBtnDisplay.value.indexOf('other')>-1">
-								<div class="other" v-if="HeaderRightBtnDisplay.other=='size'">
-									<template  v-if="parseInt(item.width)>0">
-										<span>{{item.width}} × {{item.height}}</span>
-									</template>
-									<template v-else>•</template>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='filesize'">
-									<span>{{item.fsize}}</span>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='tag'">
-									<span v-if="!item.tags" class="label">-</span>
-									<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='grade'">
-									<span v-for="item in parseInt(item.grade)" class="score active el-icon-star-on"></span><span v-for="item in 5-parseInt(item.grade)" class="score el-icon-star-on"></span>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='btime'">
-									<span>{{item.btime}}</span>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='dateline'">
-									<span>{{item.dateline}}</span>
-								</div>
-								<div class="other" v-else-if="HeaderRightBtnDisplay.other=='mtime'">
-									<span>{{item.mtime}}</span>
-								</div>
-							</template>
-						</div>
-					</div>
-				</div>
+			<template v-if="ImageType == 'table'">
+				<!--{template pc/components/image/template_table}-->
+			</template>
+			<template v-else>
+				<!--{template pc/components/image/template_other}-->
 			</template>
 		</div>
-		
 	</div>
 	
 	<div style="position: relative;height: 40px;" v-if="ImageParams.ValLoading" v-cloak>
@@ -132,6 +39,7 @@
 <!--{template pc/components/image/ImageWaterfall}-->
 <!--{template pc/components/image/ImageRowGrid}-->
 <!--{template pc/components/image/ImageList}-->
+<!--{template pc/components/image/ImageTable}-->
 <!--{template pc/components/image/ImageAudioPlay}-->
 <script type="text/javascript">
 	var JsImageWatch = {
@@ -142,6 +50,7 @@
 					return false;
 				}
 				self.$nextTick(function(){
+					self.LayoutStructure();
 					self.ImageParams.scroll = false;
 					self.ImageInit();
 				});
@@ -166,12 +75,12 @@
 			deep:true
 		}
 	};
-	var JsImageData = $.extend({},JsImageWaterfallData,JsImageRowGridData,JsImageListData,ImageAudioPlayData,{
+	var JsImageData = $.extend({},JsImageWaterfallData,JsImageRowGridData,JsImageListData,ImageAudioPlayData,JsImageTableData,{
 		ImageDocumentAdminId:'$_G[adminid]',
 		ImageDocumentCtrl:false,
 		ImageDataIsExpanded:false,
 		ImageDataList:[],
-		ImageDataListShow:{},
+		ImageDataListShow:[],
 		ImageType:'waterFall',//rowGrid,imageList
 		ImageParams:{
 			counttotal:0,
@@ -188,7 +97,7 @@
 			Musicovoice:false
 		},
 	});
-	var JsImageMethods = $.extend({},JsImageWaterfallMethods,JsImageRowGridMethods,JsImageListMethods,ImageAudioPlayMethods,{
+	var JsImageMethods = $.extend({},JsImageWaterfallMethods,JsImageRowGridMethods,JsImageListMethods,ImageAudioPlayMethods,JsImageTableMethods,{
 		
 		ImageCreate(){
 			var pagesetting = $pagesetting;
@@ -228,28 +137,43 @@
 		
 
 		ImageInit(){
+			var self = this;
 			var IsRefresh = true;
 			if(this.ImageParams.scroll){
 				IsRefresh = false;
 			}
 			if(this.ImageType == 'imageList'){
 				this.ImagesListInit(IsRefresh);
+				var StoreImgdatas = self.ImageList.StoreImgdatas;
 			}else if(this.ImageType == 'rowGrid'){
 				this.ImagesRowGridInit(IsRefresh);
+				var StoreImgdatas = self.ImageRowGrid.StoreImgdatas;
+			}else if(this.ImageType == 'table'){
+				this.ImagesTableInit(IsRefresh);
+				var StoreImgdatas = self.ImageTable.StoreImgdatas;
 			}else{
 				this.ImagesWaterfallInit(IsRefresh);
+				var StoreImgdatas = self.ImageWaterfall.StoreImgdatas;
 			}
-			
+			if(this.DetailsIframe){
+				self.$refs.iframesrc.contentWindow.postMessage({
+					data:StoreImgdatas
+				})
+			}
 			this.ImageParams.loading = false;
 			this.ImageParams.ValLoading = false;
 		},
 		ImageDetails(rid){
-			var arr = [];
-			for(var i in this.ImageDataList){
-				arr.push(this.ImageDataList[i].rid)
-			}
-			window.localStorage.setItem('imgs',arr.join(','));
+			
 			if(this.OpenDetailType == 'new'){
+				var arr = [];
+				for(var i in this.ImageDataList){
+					arr.push(this.ImageDataList[i].rid)
+				}
+				sessionStorage.setItem('imgs',arr.join(','));
+				var params = this.CommonSetParam();
+				params['ispage'] = this.ImageParams.page>=this.ImageParams.totalpage?false:true;
+				sessionStorage.setItem('imgparam',JSON.stringify(params));
 				window.open(SITEURL+MOD_URL+'&op=details#rid='+rid);
 			}else{
 				this.DetailsIframe = SITEURL+MOD_URL+'&op=details&opentype=current#rid='+rid;
@@ -283,16 +207,18 @@
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageList.StoreImgdatas));
 			}else if(self.ImageType == 'rowGrid'){
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageRowGrid.StoreImgdatas));
+			}else if(self.ImageType == 'table'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageTable.StoreImgdatas));
 			}else{
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ImageWaterfall.StoreImgdatas));
 			}
-			self.ImageDataListShow = {};
+			self.ImageDataListShow = [];
 			for(var o in StoreImgdatas){
 				var item = JSON.parse(JSON.stringify(StoreImgdatas[o]));
 				
 				if ((H+S) >= item.ptop && S<item.pbottom) {
 					item['index'] = parseInt(o);
-					self.ImageDataListShow[item.rid] = item;
+					self.ImageDataListShow.push(item);
 				}
 			}
 			

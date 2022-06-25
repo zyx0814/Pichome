@@ -162,15 +162,6 @@
 	border-right: 1px solid var(--border-color-base);
 }
 
-.field-select-box.scroll {
-	max-height: 305px;
-	min-height: 59px;
-}
-
-.field-select-box.scroll .el-scrollbar .el-scrollbar__wrap {
-	overflow-x: hidden;
-}
-
 .field-select-box .field-color-box .colors-single {
 	width: 40px;
 	height: 25px;

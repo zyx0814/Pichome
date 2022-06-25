@@ -54,6 +54,7 @@
 				},
 			}
 		},
+		mixins:[LeftMixin],
 		created() {
 			var pichomeimportallowext = '$setting[pichomeimportallowext]';
 			if(!pichomeimportallowext){
@@ -79,9 +80,6 @@
 			
 		},
 		methods: {
-			handleRouter(type){
-				window.location.href = MOD_URL+'&op=admin&do='+type;
-			},
 			handleSubmit() {
 				var self = this;
 				self.btnloading = true;

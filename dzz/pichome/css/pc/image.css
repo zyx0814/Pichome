@@ -411,3 +411,181 @@
     background: var(--header-textHover);
     color: var(--header-iconHover);
 }
+.imagtablelayout{
+	display: -webkit-flex;
+	display: -moz-box;
+	display: -moz-flex;
+	display: -ms-flexbox;
+	display: flex;
+	overflow: hidden;
+}
+.imagtablelayout.imagtable-top{
+	border-top: 1px solid var(--border-color-base);
+	border-bottom: 1px solid var(--border-color-base);
+	line-height: 30px;
+}
+.imagtablelayout.imagtable-img{
+	border-bottom: 1px solid var(--border-color-base);
+	line-height: 39px;
+	position: relative;
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 55px;
+}
+.imagtablelayout.imagtable-img.isodd {
+    background: var(--td-striped);
+}
+.imagtablelayout.imagtable-img.checked{
+	background: var(--color-primary);
+}
+.imagtablelayout.imagtable-img.checked .li-item{
+	color: #FFFFFF;
+}
+.imagtablelayout .li-item{
+	text-align: center;
+	padding: 0 4px;
+	font-size: 14px;
+	color: var(--header-text);
+}
+.imagtablelayout.imagtable-img .li-item{
+	padding: 8px 4px;
+	height: 55px;
+}
+.imagtablelayout .li-item.size{
+	width: 125px;
+	min-width: 125px;
+}
+.imagtablelayout .li-item.ext{
+	width: 105px;
+	min-width: 105px;
+}
+.imagtablelayout .li-item.time{
+	width: 145px;
+	min-width: 145px;
+}
+
+.imagtablelayout .li-item.time{
+	width: 145px;
+	min-width: 145px;
+}
+.imagtablelayout .li-item .image-storage{
+	width: 55px; 
+	height: 39px;
+	min-width: 55px;
+	min-height: 39px;
+	vertical-align: middle;
+	margin-right: 8px;
+	text-align: center;
+	line-height: 39px;
+	cursor: pointer;
+}
+.imagtablelayout .li-item .image-storage img{
+	max-width: 100%;
+	max-height: 100%;
+	vertical-align: inherit;
+}
+.imagtablelayout .li-item:first-child{
+	flex-grow: 1;
+	text-align: left;
+	min-width: 270px;
+	display: flex;
+}
+.imagtablelayout .li-item .filename{
+	width: 100%;
+	line-height: 19.5px;
+	display: flex;
+	align-items: center;
+	height: 39px;
+	overflow: hidden;
+	margin-right: 8px;
+}
+.imagtablelayout .li-item .filename span{
+	display:-webkit-box;
+	-webkit-line-clamp:2;
+	-webkit-box-orient:vertical;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	cursor: pointer;
+}
+.imagtablelayout.imagtable-img .operation{
+	display: flex;
+	align-items: center;
+	visibility: hidden;
+}
+.imagtablelayout.imagtable-img.checked .li-item .operation{
+	display: none;
+}
+.imagtablelayout.imagtable-img:hover .operation{
+	visibility: visible;
+}
+.imagtablelayout.imagtable-img .collect-checkeds{
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 0;
+	height: 100%;
+	display: none;
+}
+.imagtablelayout.imagtable-img.checked .collect-checkeds{
+	display: block;
+}
+.imagtablelayout .li-item .operation .circulars{
+	background-color: var(--content-imgbg-btn);
+    color: var(--content-imgbg-txt);
+    border-radius: 50%;
+    font-size: 16px;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    cursor: pointer;
+}
+.imagtablelayout .li-item .operation .circulars:hover{
+	color: var(--content-imgbg-txtHover);
+    background-color: var(--content-imgbg-btnHover);
+}
+.imagtablelayout .li-item .el-button-group .reference{
+	margin-right: -1px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	float: left;
+	border-left: 0;
+	border-top-left-radius: 18px;
+	border-bottom-left-radius: 18px;
+	height:28px;
+}
+
+.container2 .imagtablelayout .li-item .el-button-group .reference{
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+.container3 .imagtablelayout .li-item .el-button-group .reference{
+	border-top-left-radius: 8px;
+	border-bottom-left-radius: 8px;
+}
+.imagtablelayout .li-item .el-button-group.border .reference,
+.container2 .imagtablelayout .li-item .el-button-group.border .reference{
+	border-radius: 3px;
+	border-color: #0072ef;
+}
+.container3 .imagtablelayout .li-item .el-button-group.border .reference{
+	border-radius: 8px;
+	border-color: #0072ef;
+}
+.imagtablelayout .li-item .el-button-group .el-dropdown__caret-button{
+	height: 36px;
+	padding: 0px 3px;
+	border-top-right-radius: 18px;
+	border-bottom-right-radius: 18px;
+	width: 30px;
+}
+.container2 .imagtablelayout .li-item .el-button-group .el-dropdown__caret-button{
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+.container3 .imagtablelayout .li-item .el-button-group .el-dropdown__caret-button{
+	border-top-right-radius: 8px;
+	border-bottom-right-radius: 8px;
+}

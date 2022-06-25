@@ -108,7 +108,7 @@ $Opentype = array(
     'video' => ['mp3', 'mp4', 'webm', 'ogv', 'ogg', 'wav', 'm3u8', 'hls', 'mpg', 'mpeg', 'flv', 'm4v'],
     'text' => ['txt', 'php', 'js', 'jsp', 'htm', 'html', 'jsp', 'asp', 'aspx'],
     'pdf' => ['pdf'],
-    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp','svg']
 );
 //默认允许导入格式
 $Defaultallowext = '*.jpg,*.jpeg,*.gif,*.png,*.webp,*.pdf,*.txt,*.mp3,*.mp4,*.webm,*.ogv,*.ogg,*.wav,*.m3u8,*.hls,*.mpg,*.mpeg,*.flv,*.m4v';

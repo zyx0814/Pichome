@@ -38,14 +38,14 @@
 				self.ImageList.fcolumns = 1;
 				self.ImageList.boxHeight = 0;
 				self.ImageList.StoreImgdatas = [];
-				self.ImageDataListShow = {};
+				self.ImageDataListShow = [];
 				self.ImageList.columns = columns;
 				self.ImageList.newWidth = (boxWidth-(columns*self.ImageList.Margin-self.ImageList.Margin)) / columns;
 				self.ImageList.newHeight = 2 / 3 * self.ImageList.newWidth;
 				
 				var OtherHeight = 0
 				if(self.HeaderRightBtnDisplay.value.indexOf('name')>-1 || self.HeaderRightBtnDisplay.value.indexOf('extension')>-1){
-					OtherHeight += 45;
+					OtherHeight += 50;
 				}
 				if(self.HeaderRightBtnDisplay.value.indexOf('other')>-1){
 					OtherHeight += 21;

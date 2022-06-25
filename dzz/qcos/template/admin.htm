@@ -1,0 +1,136 @@
+<!--{template common/header_simple_start}-->
+<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/css/checkbox.css?{VERHASH}" rel="stylesheet" media="all">
+<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/jquery.textareaexplander.js?{VERHASH}"></script>
+<style>
+    #cpform {
+        margin-top: 15px;
+    }
+	i.dzz {
+	cursor: pointer;
+	font-size: 20px;
+	line-height: 30px;
+}
+
+.vitem{
+	margin-bottom:10px;
+	max-width:600px;
+}
+.vitem .col-sm-5{
+	padding:0 2px;
+}
+.vitem .form-control{
+	max-width:100%;
+	border-width:1px;
+}
+.vitem-label{
+	line-height: 34px;
+	text-align: right
+}
+	
+.ui-sortable-helper{
+	background-color: #FFF;
+	border:1px solid #e1e1e1;
+}
+.ui-state-highlight{
+	width:100%;
+	max-width:600px;
+	height: 34px;
+	background-color: blanchedalmond
+}
+</style>
+<!--{template common/header_simple_end}-->
+<!--{template common/commer_header}-->
+<div class="bs-container clearfix">
+    <div class="bs-left-container  clearfix">
+        <!--{template admin_left}-->
+    </div>
+    <div class="left-drager">
+        <div class="left-drager-op">
+            <div class="left-drager-sub"></div>
+        </div>
+    </div>
+    <div class="bs-main-container  clearfix">
+       
+        <div class="main-content">
+            <form id="cpform" action="{MOD_URL}" class="form-horizontal-left" method="post" name="cpform">
+                <input type="hidden" value="{FORMHASH}" name="formhash">
+                <input type="hidden" value="true" name="settingsubmit">
+                <dl>
+                    <dt>{lang status}</dt>
+                    <dd class="clearfix">
+                        <label class="radio radio-inline"><input type="radio" name="settingnew[videostatus]" value="0" <!--{if $setting[videostatus]<1}-->checked<!--{/if}-->  onclick="$('#auto_syn_up').hide();">{lang close} </label>
+                        <label class="radio radio-inline"><input type="radio" name="settingnew[videostatus]" value="1" <!--{if $setting[videostatus]>0}-->checked<!--{/if}--> onclick="$('#auto_syn_up').show();">{lang open_start}</label>
+                    </dd>
+                </dl>
+                 <dl>
+                    <dt>{lang exts}:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="exts"  class="form-control"
+								  name="settingnew[exts]" value="$setting[exts]" />
+                    </dd>
+                </dl>
+				<dl>
+                    <dt>{lang exts_thumb}:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="exts_thumb"   class="form-control"
+								  name="settingnew[exts_thumb]" value="$setting[exts_thumb]" />
+                    </dd>
+                </dl>
+				<dl>
+                    <dt>{lang exts_info}:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="exts_info"  class="form-control"
+								  name="settingnew[exts_info]" value="$setting[exts_info]" />
+                    </dd>
+                </dl>
+				<dl>
+                    <dt>{lang info_in_form}:</dt>
+                    <dd class="clearfix">
+                         <dd class="clearfix ui-sortable"> 
+							 <!--{loop $infos $key $val}-->
+							 <div class="vitem clearfix">
+							   <div class="col-sm-2 vitem-label">
+								   $val
+								 </div>
+							   <div class="col-sm-5">
+								   <select class="form-control" name="settingnew[forms][{$key}]" >
+									 <option value="" selected>{lang info_in_form_select}</option>
+									 <!--{loop $formlist $k $v}-->
+										<option value="$v[flag]" <!--{if $setting[forms][$key]==$v[flag]}-->selected<!--{/if}-->>$v[flag] ($v[labelname])</option>
+									 <!--{/loop}-->
+								   </select>
+								</div>
+							   
+							 </div>
+							 <!--{/loop}-->
+						  </dd>
+						
+                        <span class="help-block">{lang info_in_form_tip}</span>
+                    </dd>
+                </dl>
+                <dl>
+                    <dd>
+                        <button class="btn btn-success btn-width" type="submit"
+                                onclick="document.getElementById('cpform').submit();">{lang save}
+                        </button>
+                    </dd>
+                </dl>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    jQuery('.left-drager').leftDrager_layout();
+	function values_add(obj){
+		var html='';
+		html+='<div class="vitem clearfix">'
+			+'   <div class="col-sm-5"><input type="text" class="form-control" name="values[key][]" value="" placeholder="key"></div>'
+			+'    <div class="col-sm-5"><input type="text" class="form-control" name="values[value][]" value="" placeholder="value"></div>'
+			+' <div class="col-sm-2"><a href="javascript:;" onclick="jQuery(this).closest(\'.vitem\').remove()"><i class="dzz dzz-close"></i></a></div>'
+			+'</div>';
+		jQuery(html).insertBefore(obj);
+	}
+</script>
+<!--{template common/footer_simple}-->

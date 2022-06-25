@@ -17,9 +17,8 @@ if($_GET['src']){
 	$str = file_get_contents(urldecode($_GET['src']));
 }else{
     $rid = dzzdecode($_GET['path'],'',0);
-    $fileurl = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($rid.'_3', '', 7200, 0);
+    $fileurl = getglobal('siteurl') . 'index.php?mod=io&op=getStream&path=' . dzzencode($rid.'_3', '', 7200, 0);
 	$str = file_get_contents($fileurl);
-
 }
 
 $themecolor = C::t('user_setting')->fetch_by_skey('pichomeusertheme',$_G['uid']);

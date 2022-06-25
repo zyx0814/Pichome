@@ -35,14 +35,23 @@
 <!--{template common/header_simple_end}-->
 
 	<table id="player_table" width="100%" height="100%">
+
 	<tr>
 		<td align="center">
+            <!--{if $ff[status]}-->
 			<div class="title">{lang your_file_extracted}</div>
 			<div class="progress" style="width:300px;display: inline-block;margin-top:30px;">
 				<div class="progress-bar" role="progressbar" aria-valuenow="$ff[percent]" aria-valuemin="0" aria-valuemax="100" style="width: {eval echo $ff[percent]?$ff[percent].'%':'auto'};"> {$ff[percent]}%
 					<span class="sr-only">{$ff[percent]}% Complete</span>
 			  </div>
 			</div>
+            <!--{else}-->
+            <div class="title">$msg</div>
+            <div class="progress" style="width:300px;display: inline-block;margin-top:30px;">
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: {eval echo $ff[percent]?$ff[percent].'%':'auto'};"> {$ff[percent]}%
+                    <span class="sr-only">0% Complete</span>
+                </div>
+            <!--{/if}-->
 		</td>
 	</tr>
 	</table>
@@ -60,7 +69,9 @@
 	})
 	function getProgress(){
 		jQuery.getJSON('{MOD_URL}&operation=progress&id=$ff[id]', function(json) {
-			if(json.status>1 || parseInt(json.percent) >=100 ) {
+		    if(json.error){
+
+            } else if(json.status>1 || parseInt(json.percent) >=100 ) {
 				window.location.href='{MOD_URL}&ext=$_GET[ext]&path=$_GET[path]';
 			}else if(json.status<0){
 				var html = json.error;

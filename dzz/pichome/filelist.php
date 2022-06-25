@@ -44,7 +44,7 @@ if ($operation == 'filelist') {
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
     $vappids = [];
     foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        if(is_dir($v['path'])){
+        if(IO::checkfileexists($v['path'],1)){
             $vappids[] = $v['appid'];
         }
 
@@ -421,13 +421,19 @@ if ($operation == 'filelist') {
         }else{
             if(!$tagrelative){
                 $tagval = explode(',', trim($_GET['tag']));
+                $tagwheresql = [];
                 foreach($tagval as $k=>$v){
                     $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid and rt'.($k+1).'.tid = %d';
                     $params[] = 'pichome_resourcestag';
-                    $wheresql .= ' and !isnull(rt'.($k+1).'.tid)';
+                    $tagwheresql[] = '  !isnull(rt'.($k+1).'.tid) ';
                     $params[] = $v;
                 }
-            }else{
+
+                if(count($tagwheresql) > 1) $wheresql .= " and " .implode(' or ',$tagwheresql);
+                elseif(count($tagwheresql)) $wheresql .= " and $tagwheresql[0] ";
+
+
+        }else{
                 $tagval = explode(',', trim($_GET['tag']));
                 foreach($tagval as $k=>$v){
                     $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';

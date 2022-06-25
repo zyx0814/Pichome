@@ -62,13 +62,11 @@
 				},
 			}
 		},
+		mixins:[LeftMixin],
 		created() {
 			
 		},
 		methods: {
-			handleRouter(type){
-				window.location.href = MOD_URL+'&op=admin&do='+type;
-			},
 			handleSubmit() {
 				var self = this;
 				self.btnloading = true;

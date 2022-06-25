@@ -37,9 +37,26 @@ class billfishxport
 
     public function __construct($data = array())
     {
-        global $Defaultallowext;
+        if(strpos($data['path'],':') === false){
+            $bz = 'dzz';
+            $did = 1;
+        }else{
+            $patharr = explode(':', $data['path']);
+            $bz = $patharr[0];
+            $did = $patharr[1];
+
+        }
+        if($bz == 'dzz') $did = 1;
         //获取导入记录表基本数据
-        $this->path = $data['path'];
+        if(!is_numeric($did) || $did < 2){
+            $this->path = str_replace('/', BS, $data['path']);
+            $this->path = str_replace('dzz::', '', $data['path']);
+        }else{
+            $this->iscloud = true;
+            $this->path = $data['path'];
+        }
+        //获取导入记录表基本数据
+        //$this->path = $data['path'];
         $this->appid = $data['appid'];
         $this->uid = $data['uid'];
         $this->username = $data['username'];
@@ -57,10 +74,45 @@ class billfishxport
             $this->db = $connect;
         }
     }
+    public function getDbfilepath(){
 
+        if($this->iscloud){
+            $dbpath = $this->path.'/.bf/billfish.db';
+            $dbfileparh = IO::getStream($dbpath);
+            $cachedb = $this->readtxt . 'billfishexport' . md5($this->path) . '.db';
+            if(!is_file($cachedb)){
+                if(!file_put_contents($cachedb,file_get_contents($dbfileparh))){
+                    return array('error'=>'connect db failer');
+                }else{
+                    return  $cachedb;
+                }
+            }else{
+                $cachedbinfo = IO::getMeta($cachedb);
+                $dbfileinfo = IO::getMeta($dbfileparh);
+                if($cachedbinfo['dateline'] < $dbfileinfo['dateline']){
+                    if(!file_put_contents($cachedb,file_get_contents($dbfileparh))){
+                        return array('error'=>'connect db failer');
+                    }else{
+                        return  $cachedb;
+                    }
+                }else{
+                    return  $cachedb;
+                }
+            }
+        }else{
+            return $this->path . BS . '.bf' . BS . 'billfish.db';
+        }
+
+    }
     public function connect_db()
     {
-        $dsn = 'sqlite:' . $this->path . BS . '.bf' . BS . 'billfish.db';
+
+
+        $dbfile = $this->getDbfilepath();
+        if(isset($dbfile['error'])){
+            return array('error' => $dbfile['error']);
+        }
+        $dsn =  'sqlite:' .$dbfile;
         try {
             return new PDO($dsn);
         } catch (PDOException $e) {
@@ -211,11 +263,49 @@ class billfishxport
                     'grade' => $v['score'],
                     'apptype' => 2,
                     'hasthumb' => $v['thumb_tid'] ? 1 : 0,
-                    'thumb' => $v['thumb']
+                    'thumb' => $v['thumb'],
+                    'lastdate'=>strtotime('now')
                 ];
 
                 //数据插入主表
                 if (C::t('#billfish#billfish_record')->inser_data($v['id'], $setarr)) {
+                    if($setarr['hasthumb']){
+                        $thumbdir = dechex($v['id']);
+                        if(strlen($thumbdir) < 2){
+                            $thumbdir =str_pad($thumbdir,2,0,STR_PAD_LEFT);
+                        }elseif(strlen($thumbdir) > 2){
+                            $thumbdir = substr($thumbdir,-2);
+                        }
+                        $thumbdir = (string) $thumbdir;
+                        $pathdir = ($this->iscloud) ? $this->path.'/.bf/.preview/'.$thumbdir.'/': $this->path.BS.'.bf'.BS.'.preview'.BS.$thumbdir.BS;
+                        $savepatdir = str_replace(array(DZZ_ROOT,BS),array('','/'),$pathdir);
+                        $smallfile = $pathdir.$v['id'].'.small.webp';
+                        if(IO::checkfileexists($smallfile)){
+                            $thumbrecorddata = [
+                                'rid'=>$rid,
+                                'path'=>$savepatdir.$v['id'].'.small.webp',
+                                'thumbsign'=>0,
+                                'thumbstatus'=>1,
+                                'ext'=>$setarr['ext']
+                            ];
+                            C::t('thumb_record')->insert($thumbrecorddata);
+                        }
+                        if(in_array($setarr['ext'],explode(',',getglobal('config/pichomespecialimgext')))){
+                            $hdfile = $pathdir.$v['id'].'.hd.webp';
+                            if(IO::checkfileexists($hdfile)){
+                                $thumbrecorddata = [
+                                    'rid'=>$rid,
+                                    'path'=>$savepatdir.$v['id'].'.hd.webp',
+                                    'thumbsign'=>1,
+                                    'thumbstatus'=>1,
+                                    'ext'=>$setarr['ext']
+                                ];
+                                C::t('thumb_record')->insert($thumbrecorddata);
+                            }
+                        }
+
+
+                    }
                     //定义属性表变量
                     $attrdata = [];
                     $attrdata['desc'] = $v['note'];
@@ -238,7 +328,7 @@ class billfishxport
                         $attrdata['path'] = $setarr['name'];
                     }
                     //目录数据处理完成
-                    $attrdata['path']  = $this->getFileRealFileName($this->path,$attrdata['path']);
+                    $attrdata['path']  = ($this->iscloud) ? $attrdata['path']:$this->getFileRealFileName($this->path,$attrdata['path']);
                     //转码路径 记入属性表
                     //$p = new Encode_Core();
                     //$this->charset = $p->get_encoding($attrdata['path']);
@@ -328,7 +418,7 @@ class billfishxport
                     foreach ($bcolordata as $val) {
                         $colorarr = ['rid' => $rid,
                             'color' => $val['color'],
-                            'weight' => $val['precent'],
+                            'weight' => round($val['percent'],2),
                             'r' => $val['r'],
                             'g' => $val['g'],
                             'b' => $val['b']
@@ -389,8 +479,6 @@ class billfishxport
                     $this->filenum -= 1;
                 }
             }
-
-
             //导入百分比
             $percent = floor(($this->donum / $this->filenum) * 100);
             $percent = ($percent > 100) ? 100 : $percent;
@@ -488,7 +576,7 @@ class billfishxport
                         $attrdata['path'] = $setarr['name'];
                     }
                     //目录数据处理完成
-                    $attrdata['path']  = $this->getFileRealFileName($this->path,$attrdata['path']);
+                    $attrdata['path']  = ($this->iscloud) ? $attrdata['path']:$this->getFileRealFileName($this->path,$attrdata['path']);
                     //转码路径 记入属性表
                     //$p = new Encode_Core();
                     //$this->charset = $p->get_encoding($attrdata['path']);
@@ -576,7 +664,7 @@ class billfishxport
                     foreach ($bcolordata as $val) {
                         $colorarr = ['rid' => $rid,
                             'color' => $val['bf_clr'],
-                            'weight' => $val['precent'],
+                            'weight' => round($val['percent'],2),
                             'r' => $val['r'],
                             'g' => $val['g'],
                             'b' => $val['b']
@@ -728,7 +816,10 @@ class billfishxport
 
             $hascatnum = DB::result_first("SELECT count(DISTINCT rid) FROM %t where appid = %s",array('pichome_folderresources',$this->appid));
             $nosubfilenum = $total - $hascatnum;
-            C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 4, 'lastid' => 0, 'donum' => 0,'filenum'=>$total,'nosubfilenum'=>$nosubfilenum));
+            C::t('pichome_vapp')->update($this->appid, array('percent' => 0, 'state' => 4, 'lastid' => 0, 'donum' => 0,'filenum'=>$total,'dateline'=>strtotime('now'),'nosubfilenum'=>$nosubfilenum));
+            if($this->iscloud){
+                @unlink($this->readtxt . 'billfishexport' . md5($this->path) . '.db');
+            }
             return true;
         }
         foreach ($data as $v) {

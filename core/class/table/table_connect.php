@@ -22,26 +22,11 @@ class table_connect extends dzz_table
 		$this->_cache_ttl = 60*60;
 		parent::__construct();
 	}
-	public function fetch_all_by_available($onlyuser=false){
+	public function fetch_all_by_available(){
 		$data=array();
-		if($onlyuser) $available=1;
-		else  $available=0;
-		$query=DB::query("SELECT * FROM ".DB::table($this->_table)." WHERE available > '{$available}' and type!='local' ORDER BY disp");
-		while($value=DB::fetch($query)){
-			//检测可用性
-			if($value['type']=='pan' && (empty($value['key']) || empty($value['secret']))){
-				$value['available']=0;
-				$value['warning']=lang('please_open_after_setting');
-				continue;
-			}
-			if(!is_file(DZZ_ROOT.'./core/class/io/io_'.($value['bz']).'.php')){
-				$value['available']=0;
-				$value['warning']='api'.lang('typename_attach').'：io_'.($value['bz']).'.php'.lang('inexistence').'！';
-				continue;
-			}
-			
-			$data[$value['bz']]=$value;
-		}
+		foreach(DB::fetch_all("select name,bz from %t where available > %d and bz != %s",array($this->_table,0,'dzz')) as $val){
+            $data[]=$val;
+        }
 		return $data;
 	}
 	
@@ -73,5 +58,3 @@ class table_connect extends dzz_table
 		return self::delete($bz);
 	}
 }
-
-?>

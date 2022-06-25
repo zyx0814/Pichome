@@ -1,0 +1,263 @@
+<el-dialog
+	v-loading="EditDialogDzz.loading"
+	:title="'编辑'+EditDialogDzz.cloudname"
+	width="40%"
+	:visible.sync="EditDialogDzz.dialogVisible">
+	<el-form ref="EditDialogDzzref" :model="EditDialogDzz" label-width="110px" label-position="top">
+		<el-form-item class="title">
+			<template slot="label">
+				图片处理设置
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">
+								1、开启GD库能够支持，{$_G['config']['gdgetcolorextlimit']}，生成缩略图
+								<br>
+								2、开启imagemagick能够支持，{$_G['config']['imageickallowextlimit']}，文件生成缩略图
+							</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.imageval" @change="EditDialogDzzImageChange">
+				<el-radio border label="0">关闭</el-radio>
+				<el-radio border label="gd" :disabled="EditDialogDzz.gdstatus?false:true">GD库</el-radio>
+				<el-radio border label="imagick" :disabled="EditDialogDzz.imagickstatus?false:true">imagemagick</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item class="title">
+			<template slot="label">
+				媒体处理设置
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">开启后能够支持，视频格式：{$_G['config']['pichomeconvertext']}，生成缩略图，实现在线预览</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.mediastatus" @change="EditDialogDzzMediaChange">
+				<el-radio border :label="0">关闭</el-radio>
+				<el-radio border :disabled="EditDialogDzz.mediastate?false:true" :label="1">ffmpeg</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item label="生成预览视频尺寸" v-if="parseInt(EditDialogDzz.mediastatus)">
+			<template slot="label">
+				生成预览视频尺寸：
+				<!--{loop $_G['config']['videoquality'] $key $val}-->
+				<!--{if $key==$_G['config']['defaultvideoquality']}-->
+				$val[name] $val[width]*$val[height] 比特率：$val[bitrate]
+				<!--{/if}-->
+				<!--{/loop}-->
+			</template>
+		</el-form-item>
+		<el-form-item class="title">
+			<template slot="label">
+				office文档处理设置
+				<el-tooltip
+					effect="light"
+					placement="right-start">
+					<div slot="content">
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">开启后能够支持，文档格式：{$_G['config']['onlyofficeviewextlimit']}，生成缩略图，实现在线预览</p>
+						</div>
+					</div>
+					<i class="el-icon-warning" style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"></i>
+				</el-tooltip>
+				<el-button v-if="EditDialogDzz.docstatus" style="margin-left: 16px;vertical-align: middle;" type="primary" size="mini" @click="EditDialogDzzDocChange('submit')">保存</el-button>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.docstatus" @change="EditDialogDzzDocChange">
+				<el-radio border :label="0">关闭</el-radio>
+				<el-radio border :label="1">OnlyOffice</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item 
+			prop="onlyofficeurl"
+			label="OnlyOffice Document Server API地址" 
+			v-if="EditDialogDzz.docstatus" required
+			:rules="{required: true, message: 'OnlyOffice Document Server API地址不能为空', trigger: 'blur'}">
+			<el-input v-model="EditDialogDzz.onlyofficeurl" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;">填写您的onlyoffice Document Server API地址，如:http://192.168.0.2:90/ 根据你的文档服务器填写</p>
+		</el-form-item>
+		<el-form-item 
+			prop="onlyofficedocurl"
+			label="文件服务器地址" 
+			v-if="EditDialogDzz.docstatus">
+			<el-input v-model="EditDialogDzz.onlyofficedocurl" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;">填写您的文件服务器地址，如:http://oaooa.com/,根据你的pichome服务器地址填写,留空使用当前地址。tips:设置内网地址可以提高文件传输速度</p>
+		</el-form-item>
+	</el-form>
+</el-dialog>
+<script type="text/javascript">
+	var EditDialogDzzMixin = {
+		data(){
+			return {
+				EditDialogDzz:{
+					loading:false,
+					dialogVisible:false,
+					cloudname:'',
+					id:0,
+					
+					imagestatus:0,
+					imageval:'$setting[imagelib]',
+					gdstatus:0,
+					imagickstatus:0,
+					
+					mediastatus:0,
+					mediastate:0,
+					
+					docstatus:0,
+					onlyofficeurl:'$setting[onlyofficesetting][onlyofficeurl]',
+					onlyofficedocurl:'$setting[onlyofficesetting][onlyofficedocurl]',
+					
+					videoquality:parseInt($_G['config']['videoquality']) || 1
+					
+				}
+			}
+		},
+		created() {
+		},
+		methods:{
+			EditDialogDzzDocChange(val){
+				var self = this;
+				if(val == 0){
+					$.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+						id:self.EditDialogDzz.id,
+						docstatus:0,
+					},function(json){
+						if(json.success){
+							self.$message({
+								type:'success',
+								message:'设置成功'
+							});
+							var tab = self.tableData.find(function(item){
+								return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+							});
+							tab.docstatus = 0;
+						}else{
+							self.$message.error('设置失败');
+						}	
+					},'json');
+				}
+				if(val == 'submit'){
+					self.$refs.EditDialogDzzref.validate(function(valid){
+						if(valid){
+							$.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+								id:self.EditDialogDzz.id,
+								docstatus:1,
+								onlyofficeurl:self.EditDialogDzz.onlyofficeurl,
+								onlyofficedocurl:self.EditDialogDzz.onlyofficedocurl,
+							},function(json){
+								if(json.success){
+									self.$message({
+										type:'success',
+										message:'设置成功'
+									});
+									var tab = self.tableData.find(function(item){
+										return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+									});
+									tab.docstatus = 1;
+								}else{
+									self.$message.error(json.msg);
+								}	
+							},'json');
+						}
+					});
+				}
+			},
+			EditDialogDzzImageChange(val){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				$.post(MOD_URL+'&op=storagesetting&do=imagesetting',{
+					id:self.EditDialogDzz.id,
+					imagestatus:parseInt(val)==0?0:1,
+					imagelib:val,
+				},function(json){
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+						});
+						tab.imagestatus = parseInt(val)==0?0:1;
+					}else{
+						self.$message.error('设置失败');
+					}	
+				},'json');
+			},
+			EditDialogDzzMediaChange(val){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				$.post(MOD_URL+'&op=storagesetting&do=videosetting',{
+					id:self.EditDialogDzz.id,
+					mediastatus:val,
+					videoquality:self.EditDialogDzz.videoqualite,
+				},function(json){
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'设置成功'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+						});
+						tab.mediastatus = val;
+					}else{
+						self.$message.error('设置失败');
+					}	
+				},'json');
+			},
+			EditDialogDzzGetData(){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('参数错误，请刷新后重试');
+					return false;
+				}
+				this.EditDialogDzz.loading = true;
+				this.EditDialogDzz.dialogVisible = true;
+				$.post(MOD_URL+'&op=storagesetting&do=getsettingdata',{
+					id:self.EditDialogDzz.id,
+				},function(json){
+					self.EditDialogDzz.cloudname = json.cloudname;
+					self.EditDialogDzz.imagestatus = parseInt(json.imagestatus);
+					self.EditDialogDzz.gdstatus = parseInt(json.gdstatus);
+					self.EditDialogDzz.imagickstatus = parseInt(json.imagickstatus);
+					
+					if(!self.EditDialogDzz.imagestatus){
+						self.EditDialogDzz.imageval = '0';
+					}
+					
+					self.EditDialogDzz.mediastatus = parseInt(json.mediastatus);
+					self.EditDialogDzz.mediastate = parseInt(json.mediastate);
+					if(!self.EditDialogDzz.mediastate){
+						self.EditDialogDzz.mediastatus = 0;
+					}
+					
+					
+					self.EditDialogDzz.docstatus = parseInt(json.docstatus);
+					self.EditDialogDzz.loading = false;
+				},'json');
+			}
+		}
+	};
+</script>

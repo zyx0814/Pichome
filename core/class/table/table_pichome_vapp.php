@@ -92,26 +92,37 @@
             C::t('pichome_tagrelation')->delete_by_appid($appid);
             //删除最近搜索表数据
             C::t('pichome_searchrecent')->delete_by_appid($appid);
-            //resources表数据未完成删除前不允许删除vapp表
-            if(DB::result_first("select count(rid) from %t where appid = %s",array('pichome_resources',$appid))){
-                return ;
+            $arr = explode(':', $appdata['path']);
+            if ($arr[1] && is_numeric($arr[1])) {
+                $tmppath = $arr[0] . ':' . $arr[1] . ':' . '/tmppichomethumb/' . $appid.'/';
             }else{
-                if(is_dir(getglobal('setting/attachdir').'pichomethumb/'.$appid)){
-                    removedirectory(getglobal('setting/attachdir').'pichomethumb/'.$appid);
-                }
-                if($appdata['type'] !== 1){
-                    $hookdata = ['appid'=>$appid,'apptype'=>$appdata['type']];
-                    Hook::listen('pichomevappdelete',$hookdata);
-                }
-                return parent::delete($appid);
+                $tmppath = getglobal('setting/attachdir') . 'pichomethumb/' . $appid;
+            }
+            //resources表数据未完成删除前不允许删除vapp表
+            if (DB::result_first("select count(rid) from %t where appid = %s", array('pichome_resources', $appid))) {
+                return;
+            } else {
+                //删除缓存文件目录
+                IO::Delete($tmppath,1);
+            }
+
+            $hookdata = ['appid' => $appid, 'apptype' => $appdata['type']];
+            Hook::listen('pichomevappdelete', $hookdata);
+            if(!IO::checkfileexists($tmppath,1)){
+                parent::delete($appid);
             }
 
         }
-        
-        public function fetch_all_sharedownlod(){
+
+        public function fetch_all_sharedownlod($appid='')
+        {
             $downshare = array();
-            foreach(DB::fetch_all("select * from %t where 1",array($this->_table)) as $v){
-                $downshare[$v['appid']]=$v;
+            if($appid){
+                $downshare = DB::fetch_first("select * from %t where isdelete < 1 and appid = %s", array($this->_table,$appid));
+            }else{
+                foreach (DB::fetch_all("select * from %t where isdelete < 1", array($this->_table)) as $v) {
+                    $downshare[$v['appid']] = $v;
+                }
             }
             return $downshare;
         }

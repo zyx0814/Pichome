@@ -1,0 +1,179 @@
+<div class="content" style="padding: 16px 25px;">
+	<el-table
+		v-loading="HtmlLoading"
+		:data="tableData"
+		style="width: 100%">
+		<el-table-column
+			label="存储位置"
+			show-overflow-tooltip>
+			<template slot-scope="scope">
+				<!-- tableData: [{
+						img: 'dzz/images/default/system/ALIOSS.png',
+						name: '阿里云',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/baiduPCS.png',
+						name: '百度云',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/bucket.png',
+						name: '本地',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/OneDrive.png',
+						name: 'OneDrive',
+						value:1
+					}], -->
+				<template v-if="scope.row.bz == 'dzz'">
+					<el-image
+						style="height: 30px;vertical-align: middle;"
+						src="dzz/images/default/system/bucket.png"
+						fit="contain"></el-image>
+				</template>
+				<template v-else-if="scope.row.bz == 'QCOS'">
+					<el-image
+						style="height: 30px;vertical-align: middle;"
+						src="dzz/images/default/system/QCOS.png"
+						fit="contain"></el-image>
+				</template>
+				<span style="margin-left: 8px;">{{scope.row.cloudname}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="图片处理"
+			align="center">
+			<template slot-scope="scope">
+				<template v-if="parseInt(scope.row.imagestatus)">
+					<el-tag size="small">开启</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">关闭</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			prop="address"
+			label="媒体处理"
+			align="center">
+			<template slot-scope="scope">
+				<template v-if="parseInt(scope.row.mediastatus)">
+					<el-tag size="small">开启</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">关闭</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="文档处理"
+			align="center">
+			<template slot-scope="scope">
+				<template v-if="parseInt(scope.row.docstatus)">
+					<el-tag size="small">开启</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">关闭</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="操作"
+			width="160">
+			<template slot-scope="scope">
+				<el-button type="info" size="small" @click="TableEdit(scope.row.id,scope.row.bz)">编辑</el-button>
+				<template v-if="scope.row.bz != 'dzz'">
+					<el-popconfirm
+						@confirm="TableDelete(scope.row)"
+						title="此操作无法恢复，确定删除？">
+						<el-button type="danger" slot="reference" size="small">删除</el-button>
+					</el-popconfirm>
+				</template>
+				
+			</template>
+		</el-table-column>
+	</el-table>
+	<div style="margin-top: 16px;" v-show="!HtmlLoading">
+		<el-dropdown trigger="click" @command="BtnAddCommand">
+			<el-button icon="el-icon-plus" size="large">添加存储位置</el-button>
+			<el-dropdown-menu slot="dropdown">
+				<!--{loop $storagelist $val}-->
+				<el-dropdown-item command="$val[bz]">$val[name]</el-dropdown-item>
+				<!--{/loop}-->
+			</el-dropdown-menu>
+		</el-dropdown>
+		
+	</div>
+	<div style="margin-top: 24px;font-size: 18px;color: var(--content-textHover);">注释：<el-link style="vertical-align: text-top;font-weight: 700;" type="primary" :underline="false" href="https://www.yuque.com/pichome/np87ue/ge3lgm" target="_blank">操作说明详见说明文档</el-link></div>
+	<div class="tipTxt" style="line-height: 25px;font-size: 14px;">
+		<p class="">1、默认存储位置的图片处理、媒体处理和文档处理为关闭状态</p>
+		<p class="">2、图片处理关闭时，不执行普通目录的图片信息获取和缩略图生成</p>
+		<p class="">3、媒体处理关闭时，不执行媒体文件的信息获取、缩略图生成和音视频转码</p>
+		<p class="">4、文档处理关闭时，不执行文档缩略图获取，不支持在线预览</p>
+		<p class="">5、如需开启，可开启对应位置的设置项，当设置开启时每次更新库后将尝试执行未完成的相关操作</p>
+		<p class="">6、目前能够支持的存储位置管理有本地存储、腾讯云COS。后续还会继续增加更多的存储位置支持</p>
+	</div>
+</div>
+<script type="text/javascript">
+	var TableMixin = {
+		data(){
+			return {
+				tableData: [],
+			}
+		},
+		created() {
+			this.tableData = [];
+			this.TableGetData();
+		},
+		methods:{
+			TableGetData(){
+				var that = this;
+				this.HtmlLoading = true;
+				$.get(MOD_URL+'&op=storagesetting&do=getstoragelist',function(json){
+					json.forEach(function(item){
+						that.tableData.push(item)
+					});
+					that.HtmlLoading = false;
+				},'json');
+			},
+			TableDelete(item){
+				var self = this;
+				self.loading = true;
+				$.post(MOD_URL+'&op=storagesetting&do=deletespace',{
+					id:item.id
+				},function(json){
+					if(json.success){
+						var index = 0;
+						self.getData.find(function(val,inx){
+							if(item.id == val.id){
+								index = inx;
+								return false;
+							}
+						});
+						self.getData.splice(index,1);
+						self.$message({
+							message:'删除成功',
+							type:'success'
+						});
+					}else{
+						self.$message.error(json.msg);
+					}
+					self.loading = false;
+				},'json');
+			},
+			
+			TableEdit(id,bz){
+				if(bz == 'dzz'){
+					this.EditDialogDzz.id = id;
+					this.EditDialogDzzGetData();
+				}else{
+					this.EditDialogOther.id = id;
+					this.EditDialogOtherGetData();
+				}
+			},
+			BtnAddCommand(val) {
+				this.AddDialog.bz = val;
+				this.AddDialog.dialogVisible = true;
+			},
+		}
+	};
+</script>

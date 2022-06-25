@@ -140,7 +140,7 @@ $_config['output']['staticurl'] 		= 'static/';	// 站点静态文件路径，“
 $_config['output']['ajaxvalidate']		= 0;		// 是否严格验证 Ajax 页面的真实性 0=关闭，1=打开
 $_config['output']['iecompatible']		= 0;		// 页面 IE 兼容模式
 
-// COOKIE 设置
+
 $_config['cookie']['cookiepre'] 		= 'oaooa_'; 	// COOKIE前缀
 $_config['cookie']['cookiedomain'] 		= ''; 		// COOKIE作用域
 $_config['cookie']['cookiepath'] 		= '/'; 		// COOKIE作用路径
@@ -158,29 +158,91 @@ $_config['security']['querysafe']['dlikehex']	= 1;
 $_config['security']['querysafe']['afullnote']	= 0;
 
 $_config['admincp']['founder']			= '1';		// 站点创始人：拥有站点管理后台的最高权限，每个站点可以设置 1名或多名创始人
-													// 可以使用uid，也可以使用用户名；多个创始人之间请使用逗号“,”分开;
+// 可以使用uid，也可以使用用户名；多个创始人之间请使用逗号“,”分开;
 $_config['admincp']['checkip']			= 1;		// 后台管理操作是否验证管理员的 IP, 1=是[安全], 0=否。仅在管理员无法登录后台时设置 0。
 $_config['admincp']['runquery']			= 0;		// 是否允许后台运行 SQL 语句 1=是 0=否[安全]
 $_config['admincp']['dbimport']			= 0;		// 是否允许后台恢复网站数据  1=是 0=否[安全]
 $_config['userlogin']['checkip']		= 1; 		//用户登录错误验证ip，对于同一ip同时使用时建议设置为0,否则当有一位用户登录错误次数超过5次，该ip被锁定15分钟，导致其他的同IP用户无法登录;
 
-//$_config['system_os']	= 'linux';		//windows,linux,mac,系统会自动判断
-//$_config['system_charset']='utf-8';	//操作系统编码，不设置系统将根据操作系统类型来判断linux:utf-8;windows:gbk;
 
-//pichome宽高
-$_config['pichomethumbwidth']= 900;
-$_config['pichomethumbheight']= 900;
-//pichome缩略图颜色允许后缀
-$_config['getcolorextlimit'] = ['jpg','png','jpeg','gif','webp','pdf'];
-//ffmpeg位置
+
+// --------------------------  CONFIG PICHOME  -------------------------- //
+
+$_config['pichomecloseshare'] = 0;    //关闭分享
+
+$_config['pichomeclosecollect'] = 0;  //关闭收藏
+
+$_config['pichomeclosedownload'] = 0;  //关闭下载
+
+//缩略图默认设置
+$_config['pichomethumsmallwidth']= 360;
+$_config['pichomethumsmallheight']= 360;
+$_config['pichomethumlargwidth'] = 1920;
+$_config['pichomethumlargheight'] = 1080;
+$_config['gdgetcolorextlimit'] = 'jpg,png,jpeg,gif'; //gd颜色后缀
+$_config['imageickallowextlimit'] = 'aai,art,arw,avs,bpg,bmp,bmp2,bmp3,brf,cals,cals,cgm,cin,cip,cmyk,cmyka,cr2,crw,cube,cur,cut,dcm,dcr,dcx,dds,dib,djvu,dng,dot,dpx,emf,epdf,epi,eps,eps2,eps3,epsf,epsi,ept,exr,fax,fig,fits,fpx,gplt,gray,graya,hdr,heic,hpgl,hrz,ico,info,isobrl,isobrl6,jbig,jng,jp2,jpt,j2c,j2k,jxr,json,man,mat,miff,mono,mng,m2v,mpc,mpr,mrwmmsl,mtv,mvg,nef,orf,otb,p7,palm,pam,clipboard,pbm,pcd,pcds,pcl,pcx,pdb,pef,pes,pfa,pfb,pfm,pgm,picon,pict,pix,png8,png00,png24,png32,png48,png64,pnm,ppm,ps,ps2,ps3,psb,psd,ptif,pwp,rad,raf,rgb,rgb565,rgba,rgf,rla,rle,sfw,sgi,shtml,sid,mrsid,sum,svg,text,tga,tif,tiff,tim,ttf,ubrl,ubrl6,uil,uyvy,vicar,viff,wbmp,wpg,webp,wmf,wpg,x,xbm,xcf,xpm,xwd,x3f,YCbCr,YCbCrA,yuv,sr2,srf,srw,rw2,nrw,mrw,kdc,erf,canvas,caption,clip,clipboard,fractal,gradient,hald,histogram,inline,map,mask,matte,null,pango,plasma,preview,print,scan,radial_gradient,scanx,screenshot,stegano,tile,unique,vid,win,xc,granite,logo,netscpe,rose,wizard,bricks,checkerboard,circles,crosshatch,crosshatch30,crosshatch45,fishscales,gray0,gray5,gray10,gray15,gray20,gray25,gray30,gray35,gray40,gray45,gray50,gray55,gray60,gray65,gray70,gray75,gray80,gray85,gray90,gray95,gray100,hexagons,horizontal,horizontal2,horizontal3,horizontalsaw,hs_bdiagonal,hs_cross,hs_diagcross,hs_fdiagonal,hs_vertical,left30,left45,leftshingle,octagons,right30,right45,rightshingle,smallfishcales,vertical,vertical2,vertical3,verticalfishingle,vericalrightshingle,verticalleftshingle,verticalsaw,fff,3fr,ai,iiq,cdr'; //gd颜色后缀
+
+$_config['pichomespecialimgext'] = 'aai,art,arw,avs,bpg,bmp,bmp2,bmp3,brf,cals,cals,cgm,cin,cip,cmyk,cmyka,cr2,crw,cube,cur,cut,dcm,dcr,dcx,dds,dib,djvu,dng,dot,dpx,emf,epdf,epi,eps,eps2,eps3,epsf,epsi,ept,exr,fax,fig,fits,fpx,gplt,gray,graya,hdr,heic,hpgl,hrz,ico,info,isobrl,isobrl6,jbig,jng,jp2,jpt,j2c,j2k,jxr,json,man,mat,miff,mono,mng,m2v,mpc,mpr,mrwmmsl,mtv,mvg,nef,orf,otb,p7,palm,pam,clipboard,pbm,pcd,pcds,pcl,pcx,pdb,pef,pes,pfa,pfb,pfm,pgm,picon,pict,pix,png8,png00,png24,png32,png48,png64,pnm,ppm,ps,ps2,ps3,psb,psd,ptif,pwp,rad,raf,rgb,rgb565,rgba,rgf,rla,rle,sfw,sgi,shtml,sid,mrsid,sum,text,tga,tif,tiff,tim,ttf,ubrl,ubrl6,uil,uyvy,vicar,viff,wbmp,wpg,wmf,wpg,x,xbm,xcf,xpm,xwd,x3f,YCbCr,YCbCrA,yuv,sr2,srf,srw,rw2,nrw,mrw,kdc,erf,canvas,caption,clip,clipboard,fractal,gradient,hald,histogram,inline,map,mask,matte,null,pango,plasma,preview,print,scan,radial_gradient,scanx,screenshot,stegano,tile,unique,vid,win,xc,granite,logo,netscpe,rose,wizard,bricks,checkerboard,circles,crosshatch,crosshatch30,crosshatch45,fishscales,gray0,gray5,gray10,gray15,gray20,gray25,gray30,gray35,gray40,gray45,gray50,gray55,gray60,gray65,gray70,gray75,gray80,gray85,gray90,gray95,gray100,hexagons,horizontal,horizontal2,horizontal3,horizontalsaw,hs_bdiagonal,hs_cross,hs_diagcross,hs_fdiagonal,hs_vertical,left30,left45,leftshingle,octagons,right30,right45,rightshingle,smallfishcales,vertical,vertical2,vertical3,verticalfishingle,vericalrightshingle,verticalleftshingle,verticalsaw,fff,3fr,ai,iiq,cdr'; //gd颜色后缀
+$_config['pichomecommimageext'] = 'jpg,png,jpeg,gif,svg,webp';//pichome直接预览图片后缀
+//本地文档支持格式
+$_config['onlyofficeviewextlimit'] = 'pdf,doc,docx,rtf,odt,htm,html,mht,txt,ppt,pptx,pps,ppsx,odp,xls,xlsx,ods,csv';
+
+//腾讯云格式支持
+$_config['qcosmedia']='3gp,avi,flv,mp4,m3u8,mpg,asf,wmv,mkv,mov,ts,webm,mxf';
+$_config['qcosoffice']='pptx,ppt,pot,potx,pps,ppsx,dps,dpt,pptm,potm,ppsm,doc,dot,wps,wpt,docx,dotx,docm,dotm,xls,xlt,et,ett,xlsx,xltx,csv,xlsb,xlsm,xltm,ets,pdf,lrc,c,cpp,h,asm,s,java,asp,bat,bas,prg,cmd,rtf,txt,log,xml,htm,html';
+$_config['qcosimage']='jpg,bmp,gif,png,webp';
+
+//ffmpeg默认设置
 $_config['pichomeffmpegposition'] = '';
 $_config['pichomeffprobposition'] = '';
+$_config['pichomeffmpeggetvieoinfoext']= 'avi,rm,rmvb,mkv,mov,wmv,asf,mpg,mpe,mpeg,mp4,m4v,mpeg,f4v,vob,ogv,mts,m2ts,3gp,webm,flv,wav,mp3,ogg,midi,wma,vqf,ra,aac,flac,ape,amr,aiff,au,m4a';  //ffmpeg支持获取音视频信息的后缀
+$_config['pichomeffmpeggetthumbext']= 'avi,rm,rmvb,mkv,mov,wmv,asf,mpg,mpe,mpeg,mp4,m4v,mpeg,f4v,vob,ogv,mts,m2ts,3gp,webm,flv,wav,mp3,ogg,midi,wma,vqf,ra,aac,flac,ape,amr,aiff,au,m4a'; //ffmpeg支持获取音视频缩略图后缀
+$_config['pichomeffmpegconvertext']= 'avi,rm,rmvb,mkv,mov,wmv,asf,mpg,mpe,mpeg,mp4,m4v,mpeg,f4v,vob,ogv,mts,m2ts,3gp,webm,flv,wav,mp3,ogg,midi,wma,vqf,ra,aac,flac,ape,amr,aiff,au,m4a'; //ffmpeg支持转码后缀
 
-//支持获取音视频信息的后缀
-$_config['pichomeffmpeggetvieoinoext']= [ 'avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts',
-    '3gp', 'webm', 'flv', 'wav', 'mp3', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au', 'm4a'];
-//支持获取音视频缩略图后缀
-$_config['pichomeffmpeggetthumbext']= [ 'avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts',
-    '3gp', 'webm', 'flv', 'wav', 'mp3', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au', 'm4a'];
+//支持转码后缀
+$_config['pichomeplayermediaext'] = 'mp3,mp4,webm,ogv,ogg,wav,m3u8,hls,mpg,mpeg';
+$_config['pichomeconvertext'] = 'webm,ogv,ogg,wav,m3u8,hls,mpg,3gp,avi,flv,mp4,asf,wmv,mkv,mov,ts,mxf';
+
+$_config['pichomexgplayer'] = 'mp3,mp4,flv,webm,ogv,ogg,wav,m3u8,hls,mpg,avi,rm,rmvb,mkv,mov,wmv,asf,mpg,mpeg,f4v,vob,ogv,mts,m2ts,mpe,ogg,3gp,flv,midi,wma,vqf,ra,aac,flac,ape,amr,aiff,au,m4a,m4v';
+
+//转码质量参数
+$_config['videoquality'][0]['name'] = '流畅';
+$_config['videoquality'][0]['width'] = 640;
+$_config['videoquality'][0]['height'] = 360;
+$_config['videoquality'][0]['bitrate'] = 400;
+
+$_config['videoquality'][1]['name'] = '标清';
+$_config['videoquality'][1]['width'] = 960;
+$_config['videoquality'][1]['height'] = 510;
+$_config['videoquality'][1]['bitrate'] = 900;
+
+$_config['videoquality'][2]['name'] = '高清';
+$_config['videoquality'][2]['width'] = 1280;
+$_config['videoquality'][2]['height'] = 720;
+$_config['videoquality'][2]['bitrate'] = 1500;
+
+$_config['videoquality'][3]['name'] = '超清';
+$_config['videoquality'][3]['width'] = 1920;
+$_config['videoquality'][3]['height'] = 1080;
+$_config['videoquality'][3]['bitrate'] = 3000;
+
+$_config['videoquality'][4]['name'] = '2k';
+$_config['videoquality'][4]['width'] = 3500;
+$_config['videoquality'][4]['height'] = 2560;
+$_config['videoquality'][4]['bitrate'] = 1440;
+
+$_config['videoquality'][5]['name'] = '4k';
+$_config['videoquality'][5]['width'] = 3840;
+$_config['videoquality'][5]['height'] = 2160;
+$_config['videoquality'][5]['bitrate'] = 6000;
+
+$_config['defaultvideoquality'] = 1;
+
+//转换缩略图进程数
+$_config['thumbprocessnum'] = 1;
+//获取信息进程数
+$_config['infoprocessnum'] = 1;
+//转换缩略图进程数
+$_config['convertprocessnum'] = 1;
 
 return $_config;

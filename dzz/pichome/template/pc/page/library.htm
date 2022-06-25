@@ -235,7 +235,7 @@
 								align="center"
 							    label="缩略图">
 								<template slot-scope="scope">
-									<template v-if="parseInt(scope.row.state) == 4 && parseInt(scope.row.type) == 1 && parseInt(scope.row.getinfo) == 1">
+									<template v-if="parseInt(scope.row.getinfonum)">
 										{{scope.row.getinfonum}}
 									</template>
 									<template v-else>——</template>
@@ -315,7 +315,9 @@
 							</div>
 							<div class="block">
 								<div class="text">转缩略图：</div>
-								<div class="message">对于图片文件比较大时，为图片转换缩略图会提高列表页面的显示速度。如果库内文件大多为KB以内文件，可以不用转换，如果库内文件为5M至几十M的文件，则需要开启缩略图转换。<span style="color: var(--leftTreeColor);">开启方法是在库设置中开启</span>即可。只有普通目录会需要转缩略图，其他软件的库目录不需要转缩略图</div>
+								<div class="message">
+									对于图片文件比较大时，为图片转换缩略图会提高列表页面的显示速度。<el-link style="vertical-align: bottom;" type="primary" :underline="false" href="{MOD_URL}&op=storagesetting">开启方法是在站点设置中开启</el-link>图片处理，媒体处理，文档处理。只有普通目录会需要转缩略图，其他软件的库目录不需要转缩略图
+								</div>
 							</div>
 							<div class="block">
 								<div class="text">更新功能：</div>
@@ -343,7 +345,7 @@
 				<el-input placeholder="输入快捷路径" clearable v-model="catalogue.search" @input="cataloguesearch" class="input-with-select">
 				    <el-select v-model="catalogue.select" slot="append" placeholder="快捷路径" clearable style="width: 120px;" @change="catalogueselect">
 						<template v-for="(item,index) in catalogue.selectData">
-							<template v-if="item.type">
+							<template v-if="item.type == 1">
 								<el-option label="站点Library目录" :value="index" :key="index"></el-option>
 							</template>
 							<template v-else>
@@ -355,7 +357,7 @@
 				</el-input>
 			</div>
 			<div style="color: var(--header-text);">路径选择：</div>
-			<el-scrollbar class="page-component__scroll" style="height: 300px;">
+			<el-scrollbar class="h350">
 				<div style="padding-left: 16px;">
 					<el-tree
 						class="border"
@@ -367,7 +369,7 @@
 						indent="0"
 						accordion
 						@current-change="TreeCurrentChange">
-						<span class="custom-tree-node" slot-scope="{ node, data }">
+						<span class="custom-tree-node" slot-scope="{ node, data }" style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
 							<span>
 								<i class="ri-folder-2-line"></i><span style="margin-left: 6px;">{{ node.label }}</span>
 							</span>              
@@ -425,10 +427,10 @@
 						<el-input type="textarea" v-model="formdta.notallowext"></el-input>
 						<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
 					</el-form-item>
-					<el-form-item label="开启缩略图转换：">
+					<!-- <el-form-item label="开启缩略图转换：">
 						<el-switch v-model="formdta.getinfo" active-value="1" inactive-value="0"></el-switch>
 						<p class="tipTxt">缩略图转换需要较长时间，转换时会增加会增加服务器CPU与内存占用，转换缩略图对于大尺寸图片的列表显示速度有大幅度提升</p>
-					</el-form-item>
+					</el-form-item> -->
 				</template>
 				
 			</el-form>
@@ -485,7 +487,8 @@
 					defaultVal:[],
 					showVal:'',
 					charset:'utf8',
-					force:0
+					force:0,
+					gettype:null
 				},
 				ImportDataVisible:false,
 				getinfonumNum:0,
@@ -641,6 +644,7 @@
 				this.catalogue.showVal = '';
 				this.catalogue.charset = 'utf8';
 				this.catalogue.force = 0;
+				this.catalogue.gettype = 1;
 				if(this.catalogue.parentnode){
 					this.catalogue.parentnode.childNodes = []
 					this.LoadNodeTree(this.catalogue.parentnode,this.catalogue.parentresolve);
@@ -660,15 +664,18 @@
 			catalogueselect(val){
 				var self = this;
 				var path = '';
+				self.catalogue.gettype = null;
 				if(self.catalogue.selectData[val]){
 					self.catalogue.searchStatus = true;
 					var item = self.catalogue.selectData[val];
 					path = item.path;
 					self.catalogue.charset = item.charset;
+					self.catalogue.gettype = item.type;
 				}else{
 					for(var i in self.catalogue.selectData){
-						if(parseInt(self.catalogue.selectData[i].type)){
+						if(self.catalogue.selectData[i].type==1){
 							self.catalogue.charset = self.catalogue.selectData[i].charset;
+							self.catalogue.gettype = self.catalogue.selectData[i].type;
 						}
 					}
 					self.catalogue.searchStatus = false;
@@ -685,7 +692,7 @@
 					self.catalogue.searchStatus = true;
 				}else{ 
 					for(var i in self.catalogue.selectData){
-						if(parseInt(self.catalogue.selectData[i].type)){
+						if(self.catalogue.selectData[i].type == 1){
 							self.catalogue.charset = self.catalogue.selectData[i].charset;
 						}
 					}
@@ -715,6 +722,9 @@
 					}else{
 						param['path'] = self.catalogue.search;
 					}
+					if(self.catalogue.gettype){
+						param['gettype'] = self.catalogue.gettype;
+					}
 				}else{
 					if(node.level > 0){
 						if(node.level > 1){
@@ -727,7 +737,9 @@
 							
 						}else{
 							param['path'] = self.catalogue.defaultVal.join('/')+'/'+node.data.label;
-							
+						}
+						if(self.catalogue.gettype){
+							param['gettype'] = self.catalogue.gettype;
 						}
 					}else{
 						// param['path'] = self.catalogue.defaultVal.join('/');
@@ -737,6 +749,8 @@
 				if(node.level == 0){
 					self.catalogue.parentresolve = resolve;
 					self.catalogue.parentnode = node;
+				}else{
+					param['charset'] = node.data && node.data.charset?node.data.charset:'';
 				}
 				$.post(MOD_URL+'&op=library&operation=getpath',param,function(data){
 					var fdata = [];
@@ -805,17 +819,19 @@
 						appid:self.catalogue.appid,
 						path:self.catalogue.showVal,
 						type:self.catalogue.type,
+						gettype:self.catalogue.gettype,
 						charset:self.catalogue.charset
 					}
 				}else{
 					var param = {
 						path:self.catalogue.showVal,
 						type:self.catalogue.type,
+						gettype:self.catalogue.gettype,
 						charset:self.catalogue.charset
 					}
 				}
 				
-				if(parseInt(self.catalogue.type) == 1 && self.catalogue.force){
+				if(self.catalogue.type == 1 && self.catalogue.force){
 					param['force'] = 1;
 				}
 				$.post(url,param,function(data){
@@ -907,22 +923,22 @@
 			},
 			tableDataForEach(){
 				var self = this;
-				var isInterval = false;
+				// var isInterval = false;
 				
-				for(var i in self.tableData){
-					var item = self.tableData[i];
-					if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
-						isInterval = true;
-						break;
-					}
-				}
-				if(isInterval && !self.GetFetachNum){
+				// for(var i in self.tableData){
+				// 	var item = self.tableData[i];
+				// 	if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
+				// 		isInterval = true;
+				// 		break;
+				// 	}
+				// }
+				if(!self.getinfonumNum){
 					self.getinfonumtime();
 				}
 			},
 			getinfonumtime(){
 				var self = this;
-				self.GetFetachNum = 1;
+				self.getinfonumNum = 1;
 				setTimeout(function(){
 					$.get(MOD_URL+'&op=library&operation=getinfonum',function(data){
 						var status = true;
@@ -953,7 +969,7 @@
 							}
 						}
 						if(status){
-							self.GetFetachNum = 0;
+							self.getinfonumNum = 0;
 						}else{
 							self.getinfonumtime();
 						}
@@ -1033,7 +1049,7 @@
 							var item = json.data[i];
 							for(var x in self.tableData){
 								var xtem = self.tableData[x];
-								console.log(item.appid ,xtem.appid)
+								// console.log(item.appid ,xtem.appid)
 								if(item.appid == xtem.appid){
 									if(parseInt(item.state)==4){
 										xtem.filenum = item.filenum;
@@ -1095,19 +1111,20 @@
 					var fdata = data.data;
 					self.catalogue.selectData = [];
 					for(var i in fdata){
-						if(parseInt(fdata[i].type)){
+						if(fdata[i].type==1){
 							var path = fdata[i].path.split('\\');
 							self.catalogue.defaultVal = path;
+							self.catalogue.gettype = fdata[i].type;
 							var str = {
 								path:path.join('/'),
 								charset:fdata[i].charset,
-								type:1
+								type:fdata[i].type,
 							}
 						}else{
 							var str = {
 								path:fdata[i].path,
 								charset:fdata[i].charset,
-								type:0
+								type:fdata[i].type,
 							}
 						}
 						self.catalogue.selectData.push(str);

@@ -19,7 +19,7 @@ define('BS',DIRECTORY_SEPARATOR);//系统目录分割符
 define('DZZ_ROOT', dirname(dirname(__FILE__)).BS);//系统根目录
 define('CORE_NAME','core');//核心目录名
 define('CORE_PATH',DZZ_ROOT.CORE_NAME.BS.'class');//核心类目录
-define('OFFICIAL','http://oaooa.com/');
+define('OFFICIAL','https://oaooa.com/');
 define('APP_DIRNAME','dzz');//应用目录名
 define('UNIQUEID','');//应用目录名
 require ROOT_PATH.'./core/core_version.php';

@@ -48,8 +48,8 @@
 					<!--{/if}-->
 					
 					<div class="h-center">
-						<span v-cloak>{{ImgParam.index}}&nbsp;&nbsp;/&nbsp;&nbsp;{{ImgParam.total}}</span>
-						<div class="carousel__arrow-box clearfix">
+						<!-- <span v-cloak>{{ImgParam.index}}&nbsp;&nbsp;/&nbsp;&nbsp;{{ImgParam.total}}</span> -->
+						<div class="carousel__arrow-box clearfix" v-if="rids.length>1">
 							<el-tooltip effect="dark" content="上一张" placement="bottom">
 								<div @click="handleCarouselArrow('left')" class="carousel__arrow carousel__arrow--left"><i class="el-icon-arrow-left icon"></i></div>
 							</el-tooltip>
@@ -156,35 +156,12 @@
 							<div class="floating-layer clearfix" :class="HideInformation?'HideInformation':''"  v-cloak>
 								<div class="picture-box">
 									
-									<template v-if="imagesData.opentype=='video'">
+									<template v-if="imagesData.iniframe">
 										<iframe 
 											style="border: 0px;"
-											:src="'index.php?mod=xgplayer&path='+imagesData.dpath" 
+											:src="imagesData.iniframe" 
 											width="100%" 
 											height="100%"></iframe>
-									</template>
-									<template v-else-if="imagesData.opentype=='pdf'">
-										<iframe
-											style="border: 0px;"
-											:src="'index.php?mod=pdf&path='+imagesData.dpath" 
-											width="100%" 
-											height="100%"></iframe>
-									</template>
-									<template v-else-if="imagesData.opentype=='text'">
-										<iframe
-											style="border: 0px;border-radius: 18px;"
-											:src="'index.php?mod=textviewer&path='+imagesData.dpath" 
-											width="100%" 
-											height="100%"></iframe>
-									</template>
-									<template v-else-if="imagesData.opentype=='other'">
-										<el-scrollbar v-if="imagesData.icondata" class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="handleImgDrag">
-											<img 
-												@load="handleImgload"
-												:src="imagesData.icondata"
-												class="image-viewer__img max" />
-												
-										</el-scrollbar>
 									</template>
 									<template v-else>
 										<el-scrollbar class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="handleImgDrag">
@@ -193,7 +170,7 @@
 												class="image-viewer__img max thumbnail" />
 											<img
 												@load="handleImgload"
-												:src="(parseInt(imagesData.download) || parseInt(DocumentAdminId)) && imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
+												:src="imagesData.originalimg"
 												class="image-viewer__img max opacity" />
 												
 										</el-scrollbar>
@@ -204,14 +181,14 @@
 									<el-scrollbar class="page-component__scroll">
 										<div style="padding-right: 20px;">
 											<div class="title"><span v-cloak>{{imagesData.name}}</span>.<span v-cloak>{{imagesData.ext}}</span></div>
-											<div class="operation clearfix" v-if="parseInt(DocumentAdminId) || parseInt(imagesData.share) || (imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text' && parseInt(imagesData.download) && imagesData.originalimg)">
-												<div v-cloak v-if="parseInt(imagesData.download) || parseInt(DocumentAdminId)" class="circular bg" @click="handleDown">立即下载</div>
-												<el-tooltip v-if="imagesData.opentype!='video'&&imagesData.opentype!='pdf'&&imagesData.opentype!='text' && (parseInt(imagesData.download) || parseInt(DocumentAdminId)) && imagesData.originalimg" class="item" effect="dark" content="查看原图" placement="bottom">
+											<div class="operation clearfix" v-if="parseInt(imagesData.share) && parseInt(imagesData.download)">
+												<div v-cloak v-if="parseInt(imagesData.download)" class="circular bg" @click="handleDown">立即下载</div>
+												<el-tooltip v-if="!imagesData.iniframe && parseInt(imagesData.download)" class="item" effect="dark" content="查看原图" placement="bottom">
 													<div class="circular" @click="handleView">
 														<i class="el-icon-view"></i>
 													</div>
 												</el-tooltip>
-												<el-tooltip v-if="parseInt(imagesData.share) || parseInt(DocumentAdminId)" class="item" effect="dark" content="分享" placement="bottom">
+												<el-tooltip v-if="parseInt(imagesData.share)" class="item" effect="dark" content="分享" placement="bottom">
 													<div class="circular" @click="handleShare">
 												      	<i class="el-icon-share"></i>
 													</div>
@@ -389,6 +366,8 @@
 					rotate:0,
 					total:0,
 				},
+				GetParam:null,
+				currentData:[],
 			}
 		},
 		watch: {
@@ -431,7 +410,7 @@
 				handler(dasta){
 					var self = this;
 					self.$nextTick(function(){
-						if(dasta.opentype=='image' || dasta.opentype=='other'){
+						if(!dasta.iniframe){
 							// console.log(33333333)
 							self.handleImgSet();
 						}
@@ -453,10 +432,34 @@
 					this.rid = storpath;
 				}
 			}
-			var rids = window.localStorage.getItem('imgs');
-			if(rids && rids.indexOf(this.rid)>-1){
+	
+			
+			
+			<!--{if $opentype=='current'}-->
+			if(window.parent.pvue.ImageType == 'imageList'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(window.parent.pvue.ImageList.StoreImgdatas));
+			}else if(window.parent.pvue.ImageType == 'rowGrid'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(window.parent.pvue.ImageRowGrid.StoreImgdatas));
+			}else if(window.parent.pvue.ImageType == 'table'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(window.parent.pvue.ImageTable.StoreImgdatas));
+			}else{
+				var StoreImgdatas = JSON.parse(JSON.stringify(window.parent.pvue.ImageWaterfall.StoreImgdatas));
+			}
+			for(var i in StoreImgdatas){
+				var data = StoreImgdatas[i];
+				this.rids.push(data.rid);
+				this.currentData.push(data);
+			}
+			<!--{else}-->
+			
+			var rids = sessionStorage.getItem('imgs');
+			var imgparam = JSON.parse(sessionStorage.getItem('imgparam'));
+			this.GetParam = imgparam;
+			if(rids){
 				this.rids = rids.split(',');
 			}
+			
+			<!--{/if}-->	
 			if(this.rid){
 				this.GetData();
 			}else{
@@ -515,6 +518,9 @@
 				var oheight = fheight-img.height();
 				var pwidth = $('#ImgScroll').width()-($('#ImgScroll').width()/5);
 				var pheight = $('#ImgScroll').height()-($('#ImgScroll').height()/5);
+				// self.$nextTick(function(){
+				// 	self.handleImgSize(val);
+				// });
 				
 				canva.css({
 					'line-height': $('#ImgScroll').height()+'px'
@@ -722,7 +728,31 @@
 					item.foldernames = foldernames;
 					self.imagesData = item
 					self.HtmlLoading = false;
+					<!--{if $opentype!='current'}-->
+					if(self.GetParam && self.GetParam.ispage && (parseInt(self.ImgParam.total)-parseInt(self.ImgParam.index))<=3){
+						self.GetDatafilelist();
+					}
+					<!--{/if}-->
 				},'json');
+			},
+			GetDatafilelist(){
+				var self = this;
+				var url = MOD_URL+'&op=filelist&operation=filelist';
+				if(parseInt(self.GetParam.page)){
+					self.GetParam.page += 1;
+				}
+				var params = JSON.parse(JSON.stringify(self.GetParam));
+				delete params.ispage;
+				$.post(url,params,function(data){
+					var json = data.data;
+					for(var i in json.data){
+						self.rids.push(json.data[i].rid);
+					}
+					self.GetParam.ispage = self.GetParam.page>=Math.ceil(json.param.total / json.param.perpage)?false:true;
+					sessionStorage.setItem('imgparam',JSON.stringify(self.GetParam));
+					sessionStorage.setItem('imgs',self.rids.join(','));
+				},'json');
+				
 			},
 			handleCarouselArrow(type){//图片箭头
 				var self = this;
@@ -735,13 +765,34 @@
 					this.rid = this.rids[num- 1];
 					this.ImgParam.index = num;
 				}else{
+					<!--{if $opentype=='current'}-->
+					if(window.parent.pvue.ImageParams.page>=window.parent.pvue.ImageParams.totalpage){
+						if(this.ImgParam.index == this.ImgParam.total){
+							self.$message .error('已经是最后一张了！');
+							return false;
+						}
+					}else{
+						if(this.ImgParam.index == this.ImgParam.total){
+							self.ImgParam.iswait = true;
+							self.HtmlLoading = true;
+							return false;
+						}
+					}
+					<!--{else}-->
 					if(this.ImgParam.index == this.ImgParam.total){
 						self.$message .error('已经是最后一张了！');
 						return false;
 					}
+					<!--{/if}-->
 					this.rid = this.rids[this.ImgParam.index];
 					this.ImgParam.index = this.ImgParam.index + 1;
 				}
+				<!--{if $opentype=='current'}-->
+				var currentData = this.currentData.find(function(item){
+					return item.rid == self.rid;
+				});
+				$("#container_scroll>.el-scrollbar__wrap",window.parent.document).scrollTop(currentData.ptop);
+				<!--{/if}-->
 				this.GetData();
 			},
 			handleImgScale(type){//比例选择
@@ -1132,7 +1183,21 @@
 					'line-height': $('#ImgScroll').height()+'px'
 				});
 			});
-		
+			<!--{if $opentype=='current'}-->
+			window.addEventListener('message',function(event){
+				var data = event.data.data;
+				var rids = [];
+				var currentData = [];
+				for(var i in data){
+					rids.push(data[i].rid);
+					currentData.push(data[i]);
+				}
+				self.rids = rids;
+				self.currentData = currentData;
+				self.ImgParam.iswait = false;
+				self.HtmlLoading = false;
+			});
+			<!--{/if}-->
 		
 		},
 

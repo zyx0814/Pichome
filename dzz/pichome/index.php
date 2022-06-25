@@ -23,7 +23,7 @@
 //库
     $apps = [];
     foreach(DB::fetch_all("select * from %t where isdelete = 0 order by disp ",array('pichome_vapp')) as $v){
-        if(is_dir($v['path'])){
+        if(IO::checkfileexists($v['path'],1)){
             $v['path'] = urlencode($v['path']);
             $v['leaf'] = DB::result_first("select count(*) from %t where appid = %s",array('pichome_folder',$v['appid'])) ? false:true;
             if(!$v['nosubfilenum']){

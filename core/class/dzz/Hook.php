@@ -71,7 +71,7 @@ class Hook
      * @param bool   $once   只获取一个有效返回值
      * @return mixed
      */
-    public static function listen($tag, &$params = null, $extra = null,$once = false)
+    public static function listen($tag, &$params = null, $extra = null,$once = false,$onceresult=false)
     {
         $results = array();
 
@@ -91,6 +91,8 @@ class Hook
                     } elseif($once) {
 
                         break;
+                    }elseif($onceresult && $results[$key]){
+                        break;
                     }
                 }
 
@@ -107,12 +109,14 @@ class Hook
 
                     break;
 
+                }elseif($onceresult && $results[$key]){
+                    break;
                 }
 
             }
 
         }
-        return $once ? ($results?end($results):$results) : $results;
+        return ($onceresult||$once) ? ($results?end($results):$results) : $results;
     }
 
     /**

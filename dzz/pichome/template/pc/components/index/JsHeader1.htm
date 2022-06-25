@@ -15,6 +15,15 @@
 	</div>
 </div>
 <!--{template pc/components/index/JsScreen}-->
+<template v-if="ImageType == 'table'">
+	<ul class="imagtablelayout imagtable-top" style="margin-top: 8px;">
+		<li class="li-item">名称</li>
+		<li class="li-item size">尺寸</li>
+		<li class="li-item ext">扩展名</li>
+		<li class="li-item size">文件大小</li>
+		<li class="li-item time">添加日期</li>
+	</ul>
+</template>
 <script type="text/javascript">
 	var JsHeaderData = $.extend({},JsHdeaderSearchData,JsHeaderRightData,JsScreenData,{
 		

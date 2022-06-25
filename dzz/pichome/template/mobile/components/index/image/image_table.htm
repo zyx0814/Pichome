@@ -1,0 +1,58 @@
+<ul class="imgitemtable">
+	<template v-for="item in ParamImages.Newdatas">
+		<li
+			class="list-cell"
+			:class="{isodd:item.isodd}"
+			:key="item.rid"
+			:rid="item.rid"
+			:style="{top:item.ptop+'px'}"
+			@click="ImagesDetailClick(item.rid,item.dpath,item.index)">
+			<div class="left imgbox-border" :style="{background:'#'+item.color}">
+				<img
+					class="img opacity" 
+					:ref="'ref_'+item.rid"
+					@load="ImagesImgload(item.rid)"
+					:src="item.icondata"
+					alt=""
+					fit="contain"/>
+			</div>
+			<div class="center">
+				<p class="title" :class="{'auto':ParamSort.showinformation.value.indexOf('other')<0}">
+					{{item.name}}
+					<template v-if="ParamSort.showinformation.value.indexOf('extension')>-1" v-cloak>.{{item.ext}}</template>
+				</p>
+				
+				<template v-if="ParamSort.showinformation.value.indexOf('other')>-1">
+					<p class="other">
+						<template v-if="ParamSort.otherinformation.value=='size'">
+							<span>{{item.width}} × {{item.height}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='filesize'">
+							<span>{{item.fsize}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='tag'">
+							<span v-if="!item.tags" class="label">-</span>
+							<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='grade'">
+							<van-icon v-for="item in parseInt(item.grade)" class="score active" name="star"></van-icon><van-icon v-for="item in 5-parseInt(item.grade)" class="score" name="star"></van-icon>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='btime'">
+							<span>{{item.btime}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='dateline'">
+							<span>{{item.dateline}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='mtime'">
+							<span>{{item.mtime}}</span>
+						</template>
+					</p>
+					
+				</template>
+			</div>
+			<div class="right" v-if="parseInt(item.share) || parseInt(item.download) || parseInt(DocumentAdminId)"  @click.stop="ImagesMoreClick(item)">
+				<i class="ri-more-2-fill"></i>
+			</div>
+		</li>
+	</template>
+</ul>

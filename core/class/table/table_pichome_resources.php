@@ -17,6 +17,7 @@ class table_pichome_resources extends dzz_table
 
     public function insert($setarr)
     {
+
         if (DB::result_first("select count(rid) from %t where rid = %s", array($this->_table, $setarr['rid']))) {
             $rid = $setarr['rid'];
             unset($setarr['rid']);
@@ -56,6 +57,8 @@ class table_pichome_resources extends dzz_table
         C::t('pichome_share')->delete_by_rid($rids);
         C::t('pichome_ffmpeg_record')->delete($rids);
         C::t('pichome_imagickrecord')->delete($rids);
+        C::t('thumb_record')->delete_by_rid($rids);
+        C::t('video_record')->delete_by_rid($rids);
         $deldata = ['rids' => $rids, 'deluid' => $uid, 'delusername' => $username];
         Hook::listen('pichomedatadeleteafter', $deldata);
 
@@ -76,16 +79,9 @@ class table_pichome_resources extends dzz_table
             $v['name'] = str_replace(strrchr($v['name'], "."), "", $v['name']);
             $v['btime'] = dgmdate(round($v['btime'] / 1000), 'Y/m/d H:i');
             $v['dpath'] = dzzencode($v['rid'], '', 0, 0);
-            if (in_array($v['ext'], $Opentype['video'])) {
-                $v['opentype'] = 'video';
-            } elseif (in_array($v['ext'], $Opentype['text'])) {
-                $v['opentype'] = 'text';
-            } elseif (in_array($v['ext'], $Opentype['pdf'])) {
-                $v['opentype'] = 'pdf';
-            } elseif (in_array($v['ext'], $Opentype['image'])) {
-                $v['opentype'] = 'image';
-            } else {
-                $v['opentype'] = 'other';
+            $v['opentype'] = getTypeByExt($v['ext']);
+            if($v['opentype'] == 'audio' || $v['opentype'] == 'video'){
+                $v['mediaplayerpath'] = getglobal('siteurl').'index.php?mod=io&op=getStream&hash='.VERHASH.'&path=' . dzzencode($v['rid'].'_3', '', 14400, 0);
             }
             $tmpdatas[$v['rid']] = $v;
         }
@@ -127,52 +123,92 @@ class table_pichome_resources extends dzz_table
         return $resourcesdata;
     }
 
+    public function getOpensrc($ext,$apppath){
+        $openexts = C::t('app_open')->fetch_all_ext();
+
+        if(strpos($apppath,':') === false){
+            $bz = 'dzz';
+        }else{
+            $patharr = explode(':', $apppath);
+            $bz = $patharr[0];
+            $did = $patharr[1];
+
+        }
+        if(!is_numeric($did) || $did < 2){
+            $bz = 'dzz';
+        }
+        $openlist = [];
+        $bzext = $bz.'::'.$ext;
+        foreach($openexts as $v){
+            if($ext == $v['ext'] || $bzext == $v['ext']){
+                if($v['isdefault']){
+
+                    $src = getglobal('siteurl').$v['url'];
+                    break;
+                } else{
+                    $openlist[] = $v;
+                }
+            }
+        }
+
+        if(!$src){
+            if(isset($openlist[0])){
+                $src =  getglobal('siteurl').$openlist[0]['url'];
+            }
+        }
+        return $src;
+    }
+
     public function fetch_by_rid($rid)
     {
         global $Opentype;
         if (!$resourcesdata = parent::fetch($rid)) return array();
         if ($resourcesdata['isdelete'] > 0) return array();
         //获取所有库分享和下载权限
-        $downshare = C::t('pichome_vapp')->fetch_all_sharedownlod();
+        $appdata = C::t('pichome_vapp')->fetch_all_sharedownlod($resourcesdata['appid']);
         $attrdata = C::t('pichome_resources_attr')->fetch($rid);
         if ($attrdata['desc']) $attrdata['desc'] = strip_tags($attrdata['desc']);
         $resourcesdata = array_merge($resourcesdata, $attrdata);
         $resourcesdata['colors'] = C::t('pichome_palette')->fetch_colordata_by_rid($rid);
         $resourcesdata['ext'] = strtolower($resourcesdata['ext']);
-        if (in_array($resourcesdata['ext'], $Opentype['video'])) {
-            $resourcesdata['opentype'] = 'video';
-        } elseif (in_array($resourcesdata['ext'], $Opentype['text'])) {
-            $resourcesdata['opentype'] = 'text';
-        } elseif (in_array($resourcesdata['ext'], $Opentype['pdf'])) {
-            $resourcesdata['opentype'] = 'pdf';
-        } elseif (in_array($resourcesdata['ext'], $Opentype['image'])) {
-            $resourcesdata['opentype'] = 'image';
-        } else {
-            $resourcesdata['opentype'] = 'other';
-        }
-        $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($rid, '', 7200, 0);
+        $resourcesdata['share'] = getglobal('adminid') ? 1:$appdata['share'];
+        $resourcesdata['download'] = getglobal('adminid') ? 1:$appdata['download'];
+        //缩略图参数
+        $origithumbparams = $iconthumbparams =  ['rid'=>$rid,'hash'=>VERHASH,
+            'hasthumb'=>$resourcesdata['hasthumb'],'lastdate'=>$resourcesdata['lastdate']];
+        if($resourcesdata['hasthumb'] > 0){
+            $iconthumbparams['thumbsign'] = ($appdata['type'] == 0) ? 1:0;
+            $origithumbparams['thumbsign'] = 1;
+            //判断是否有大图，如果没有，则判断下载权限，有下载权限的获取原图即赋值缩略图hasthumb为0，否则使用小图作为原图
+            if(!DB::result_first("select path from %t where rid = %s and thumbsign = %d",array('thumb_record',$rid,1))){
+                if($resourcesdata['download']){
+                    $origithumbparams['hasthumb'] = 0;
+                }else{
+                    $origithumbparams['thumbsign'] = 0;
+                }
 
-        $thumbwidth = getglobal('config/pichomethumbwidth') ? getglobal('config/pichomethumbwidth') : 900;
-        $thumbheight = getglobal('config/pichomethumbheight') ? getglobal('config/pichomethumbheight') : 900;
+            }
+        }
+        //缩略图地址
+        if($resourcesdata['hasthumb'] < 1 && !in_array($resourcesdata['ext'],explode(',',getglobal('config/pichomecommimageext')))){
+            $resourcesdata['icondata'] = geticonfromext($resourcesdata['ext']);
+        }else{
+            $resourcesdata['icondata'] =  getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($iconthumbparams, 0, '');
+        }
+
+        $resourcesdata['originalimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($origithumbparams, 0, '');
+
+        if($resourcesdata['width'] == 0) $resourcesdata['width'] = 900;
+        if($resourcesdata['height'] == 0) $resourcesdata['height'] = 900;
+        $thumbwidth = getglobal('config/pichomethumlargwidth') ? getglobal('config/pichomethumlargwidth') : 1920;
+        $thumbheight = getglobal('config/pichomethumlargheight') ? getglobal('config/pichomethumlargheight') : 1080;
         $thumsizearr = $this->getImageThumbsize($resourcesdata['width'], $resourcesdata['height'], $thumbwidth, $thumbheight);
         $resourcesdata['iconwidth'] = $thumsizearr[0];
         $resourcesdata['iconheight'] = $thumsizearr[1];
-        //$resourcesdata['icondata'] = str_replace('+', '%20', $resourcesdata['icondata']);
-        if(getglobal('adminid') == 1) $resourcesdata['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg'.'&path=' . dzzencode($rid.'_3', '', 0, 0);
 
-        $resourcesdata['share'] = $downshare[$resourcesdata['appid']]['share'];
-        $resourcesdata['download'] = $downshare[$resourcesdata['appid']]['download'];
-
-        $originalimg = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
-        $resourcesdata['originalimg'] = ($resourcesdata['download']) ? getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_1','', 0, 0):'';
-        /*if ($resourcesdata['opentype'] == 'video') {
-            $resourcesdata['realpath'] = str_replace('+', '', urlencode(getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_3','', 7200, 0)));
-        }*//* else {
-            $resourcesdata['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($resourcesdata['rid'].'_realpath', '', 0, 0);
-        }*/
+        if(getglobal('adminid') == 1) $resourcesdata['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream'.'&path=' . dzzencode($rid.'_3', '', 0, 0);
 
 
-        //}
 
         $resourcesdata['name'] = str_replace(strrchr($resourcesdata['name'], "."), "", $resourcesdata['name']);
         $resourcesdata['fsize'] = formatsize($resourcesdata['size']);
@@ -183,7 +219,8 @@ class table_pichome_resources extends dzz_table
         $resourcesdata['foldernames'] = C::t('pichome_folderresources')->get_foldername_by_rid($rid);
         $resourcesdata['tag'] = C::t('pichome_resourcestag')->fetch_tag_by_rid($rid);
         $resourcesdata['dpath'] = dzzencode($rid, '', 0, 0);
-
+        $src = $this->getOpensrc($resourcesdata['ext'],$appdata['path']);
+        $resourcesdata['iniframe'] = ($src) ? $src.'&hash='.VERHASH.'&path='.$resourcesdata['dpath']:'';
 
         return $resourcesdata;
     }
@@ -200,23 +237,32 @@ class table_pichome_resources extends dzz_table
         //文件标注数
         $annonationnumdata = C::t('pichome_comments')->fetch_annonationnum_by_rids($rids);
         foreach ($resourcesdata as $v) {
-            //echo $v['hasthumb'];die;
-            $v['annonationnum'] = $annonationnumdata[$v['rid']]['num'];
-            $v['share'] = $downshare[$v['appid']]['share'];
-            $v['download'] = $downshare[$v['appid']]['download'];
 
-            $v['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($v['rid'],'', 7200, 0);
-            $thumbwidth = getglobal('config/pichomethumbwidth') ? getglobal('config/pichomethumbwidth') : 900;
-            $thumbheight = getglobal('config/pichomethumbheight') ? getglobal('config/pichomethumbheight') : 900;
+            $v['annonationnum'] = $annonationnumdata[$v['rid']]['num'];
+            $v['share'] = (getglobal('adminid') == 1) ? 1:$downshare[$v['appid']]['share'];
+            $v['download'] =  (getglobal('adminid') == 1) ? 1:$downshare[$v['appid']]['download'];
+
+            //缩略图参数
+            $thumbparams =  ['rid'=>$v['rid'],'hash'=>VERHASH,'download'=>$v['download'],
+                'hasthumb'=>$v['hasthumb'],'lastdate'=>$v['lastdate']];
+            if($v['hasthumb'] > 0){
+                $thumbparams['thumbsign'] = ($downshare[$v['appid']]['type'] == 0) ? 1:0;
+            }
+
+            if($v['hasthumb'] < 1 && !in_array($v['ext'],explode(',',getglobal('config/pichomecommimageext')))){
+                $v['icondata'] = geticonfromext($v['ext']);
+            }else{
+                //缩略图地址
+                $v['icondata'] =  getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($thumbparams, 0, '');
+            }
+            $v['annonationnum'] = $annonationnumdata[$v['rid']]['num'];
+            $thumbwidth = getglobal('config/pichomethumsmallwidth') ? getglobal('config/pichomethumsmallwidth') : 360;
+            $thumbheight = getglobal('config/pichomethumsmallwidth') ? getglobal('config/pichomethumsmallwidth') : 360;
+            if($v['width'] == 0) $v['width'] = 900;
+            if($v['height'] == 0) $v['height'] = 900;
             $thumsizearr = $this->getImageThumbsize($v['width'], $v['height'], $thumbwidth, $thumbheight);
             $v['thumbwidth'] = $thumsizearr[0];
             $v['thumbheight'] = $thumsizearr[1];
-            if ($v['opentype'] == 'video') {
-                $v['realpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . dzzencode($v['rid'].'_3','', 7200, 0);
-            }
-
-
-
             unset($v['path']);
             $returndata[] = $v;
         }
@@ -264,7 +310,7 @@ class table_pichome_resources extends dzz_table
 
     }
 
-    public function geticondata_by_rid($rid,$time=7200)
+    /*public function geticondata_by_rid($rid,$time=7200)
     {
         $resourcesdata = DB::fetch_first("select r.rid,r.appid,r.hasthumb,r.ext,r.type,ra.path as fpath,
             v.path,r.apptype,v.iswebsitefile,v.version from %t r 
@@ -272,6 +318,32 @@ class table_pichome_resources extends dzz_table
             array($this->_table, 'pichome_resources_attr', 'pichome_vapp', $rid));
         $resourcesdata['icondata'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&hash='.VERHASH.'&path=' . dzzencode($rid, '', $time, 0);
         return $resourcesdata;
+    }*/
+
+    public function geticondata_by_rid($rid,$onlyicon=0)
+    {
+        $resourcesdata = DB::fetch_first("select r.rid,r.appid,r.hasthumb,r.ext,r.type,ra.path as fpath,
+            v.path,r.apptype,v.iswebsitefile,v.version from %t r 
+        left join %t ra on r.rid=ra.rid left join %t v on r.appid = v.appid where r.rid = %s and r.isdelete = 0",
+            array($this->_table, 'pichome_resources_attr', 'pichome_vapp', $rid));
+        //缩略图参数
+        $thumbparams =  ['rid'=>$rid,'hash'=>VERHASH,
+            'hasthumb'=>$resourcesdata['hasthumb'],'lastdate'=>$resourcesdata['lastdate']];
+        if($resourcesdata['hasthumb'] > 0){
+            $thumbparams['thumbsign'] = ($resourcesdata['apptype'] == 0) ? 1:0;
+        }
+        //缩略图地址
+        if($resourcesdata['hasthumb'] < 1 && !in_array($resourcesdata['ext'],explode(',',getglobal('config/pichomecommimageext')))){
+            $resourcesdata['icondata'] = geticonfromext($resourcesdata['ext']);
+        }else{
+            $resourcesdata['icondata'] =  getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($thumbparams, 0, '');
+        }
+        if($onlyicon){
+            return  $resourcesdata['icondata'];
+        }else{
+            return $resourcesdata;
+        }
+
     }
 
     public function fetch_like_words($keyword, $limit = 10)

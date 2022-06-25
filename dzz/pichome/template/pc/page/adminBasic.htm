@@ -123,6 +123,7 @@
 				imageUrl: 'data/attachment/sitelogo/sitelogo.png?{VERHASH}',
 			}
 		},
+		mixins:[LeftMixin],
 		created() {
 			this.GetData();
 		},
@@ -169,9 +170,6 @@
 					this.ispercentage = false;
 					this.percentage = 0
 				}
-			},
-			handleRouter(type){
-				window.location.href = MOD_URL+'&op=admin&do='+type;
 			},
 			handleSubmit() {
 				var self = this;

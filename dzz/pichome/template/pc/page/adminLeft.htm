@@ -5,7 +5,6 @@
 	<el-menu-item <!--{if $_GET['do'] =='basic'}-->class="is-active"<!--{else}-->@click="handleRouter('basic')"<!--{/if}-->>
 		<span slot="title">基本信息</span>
 	</el-menu-item>
-	
 	<el-menu-item <!--{if $_GET['do'] =='loginpage'}-->class="is-active"<!--{else}-->@click="handleRouter('loginpage')"<!--{/if}-->>
 		<span slot="title">登录页设置</span>
 	</el-menu-item>
@@ -18,4 +17,21 @@
 	<el-menu-item <!--{if $_GET['do'] =='importsetting'}-->class="is-active"<!--{else}-->@click="handleRouter('importsetting')"<!--{/if}-->>
 		<span slot="title">导入设置</span>
 	</el-menu-item>
+	<el-menu-item <!--{if $_GET['op'] =='storagesetting'}-->class="is-active"<!--{else}-->@click="handleRouter('storage')"<!--{/if}-->>
+		<span slot="title">存储位置设置</span>
+	</el-menu-item>
 </el-menu>
+<script type="text/javascript">
+	var LeftMixin = {
+		methods:{
+			handleRouter(type){
+				if(type == 'storage'){
+					window.location.href = MOD_URL+'&op=storagesetting';
+				}else{
+					window.location.href = MOD_URL+'&op=admin&do='+type;
+				}
+				
+			},
+		}
+	};
+</script>

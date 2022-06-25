@@ -358,6 +358,23 @@ body{
 .el-select-dropdown__wrap.el-scrollbar__wrap {
     overflow-x: scroll;
 }
+
+.el-scrollbar.h300>.el-scrollbar__wrap{
+    max-height: 300px;
+	min-height: 100px;
+   overflow: scroll;
+}
+.el-scrollbar.h350>.el-scrollbar__wrap{
+    max-height: 350px;
+	min-height: 100px;
+   overflow: scroll;
+}
+.el-scrollbar.h400>.el-scrollbar__wrap{
+    max-height: 400px;
+	min-height: 100px;
+   overflow: scroll;
+}
+
 #copyInput{
 	opacity: 0;
 	position: fixed;

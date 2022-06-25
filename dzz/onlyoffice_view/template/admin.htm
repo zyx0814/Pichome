@@ -1,0 +1,77 @@
+<!--{template common/header_simple_start}-->
+<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/css/app_manage.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/icheck/skins/minimal/blue.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/select2/select2.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/select2/select2-bootstrap.css?{VERHASH}" rel="stylesheet" media="all">
+
+<link rel="stylesheet" href="static/css/checkbox.css">
+<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
+<script src="admin/scripts/admin.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/header.js"></script>	
+<style>
+ #cpform{
+	margin-top: 15px;
+}
+</style>
+<!--{template common/header_simple_end}-->
+<!--{template common/commer_header}-->
+<div class="bs-container clearfix">
+  <div class="bs-left-container  clearfix">  
+	 <!--{template left}--> 
+  </div>
+  <div class="left-drager">
+    <div class="left-drager-op">
+      <div class="left-drager-sub"></div>
+    </div>
+  </div>
+  <div class="bs-main-container  clearfix">  
+ 	<div class="main-title clearfix">
+		<h4 class="main-header-title navbar-left">{lang app_name}</h4> 
+	</div>
+	
+    <div class="main-content">  
+    <form id="cpform" action="{BASESCRIPT}?mod={MOD_NAME}&op=admin" class="form-horizontal-left" method="post" name="cpform">
+		<input type="hidden" value="{FORMHASH}" name="formhash">
+		<input type="hidden" name="confirmsubmit" value="true" />
+		<dl>
+			<dt>{lang input_onlyoffice_view_url}:</dt>
+			<dd class="clearfix">
+				<input type="text" class="form-control" id="app_key" name="app_key" autocomplete="off" value="{$app[extra][DocumentUrl]}" >
+				<span class="help-block">{lang input_onlyoffice_view_url_notice}</span>
+			</dd>
+		</dl> 
+		<dl>
+		   
+		<dd>
+			<input class="btn btn-primary" id="submit_editsubmit" name="settingsubmit" value="{lang submit}" type="submit">
+		</dd>
+		</dl>
+		
+    </form> 
+  </div>
+</div>
+</div>
+<script type="text/javascript">
+	jQuery('.left-drager').leftDrager_layout();
+	jQuery(document).ready(function(e) {
+		jQuery('input').iCheck({
+			checkboxClass: 'icheckbox_minimal-blue',
+			radioClass: 'iradio_minimal-blue',
+		});
+		jQuery('input').on('ifChecked', function(e) {
+			jQuery(this).trigger('click');
+		});
+		 
+		jQuery('input[required]').on('blur', function() {
+			if(this.value == '') { jQuery(this).addClass('input-error') } else { jQuery(this).removeClass('input-error'); }
+		});
+	}); 
+</script> 
+<script src="static/bootstrap/js/bootstrap.min.js?{VERHASH}"></script> 
+<script type="text/javascript" src="static/icheck/icheck.min.js?{VERHASH}"></script> 
+<script type="text/javascript" src="static/select2/select2.min.js?{VERHASH}"></script> 
+<!--{if ($src=getResourceByLang('select2'))}-->
+<script type="text/javascript" src="$src?{VERHASH}"></script>
+<!--{/if}-->
+<!--{template common/footer_simple}-->

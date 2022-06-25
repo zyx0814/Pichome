@@ -42,9 +42,18 @@
 			<el-main>
 				<el-container>
 					<el-header style="height: auto;background: var(--bg-content);border: 0px;">
-						<div style="padding: 0px 8px;" v-if="ScreenData.length&&Screenshow">
+						<div style="padding: 0px 12px;border-bottom: 1px solid var(--border-color-base);" v-if="ScreenData.length&&Screenshow">
 							<!--{template pc/components/index/JsScreen}-->
 						</div>
+						<template v-if="ImageType=='table'">
+							<ul class="imagtablelayout imagtable-top" style="border-top: 0;padding: 0 12px;">
+								<li class="li-item" style="padding-left: 12px;">名称</li>
+								<li class="li-item size">尺寸</li>
+								<li class="li-item ext">扩展名</li>
+								<li class="li-item size">文件大小</li>
+								<li class="li-item time">添加日期</li>
+							</ul>
+						</template>
 					</el-header>
 					<el-main style="padding: 8px 0;overflow: hidden;">
 						<el-scrollbar id="container_scroll" v-loading="ImageParams.loading">
@@ -60,7 +69,7 @@
 		</el-container>
 	</el-container>
 	<div id="Details_Iframe" v-if="DetailsIframe">
-		<iframe id="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
+		<iframe id="iframesrc" ref="iframesrc" :src="DetailsIframe" width="100%" height="100%" style="border: 0;"></iframe>
 	</div>
 </div>
 <!--{template pc/components/index/JsCommon}-->
@@ -132,11 +141,9 @@
 			this.ScreenCreate();
 			this.ImageCreate();
 			var pagesetting = $pagesetting;
-			<!--{if $_G[uid]}-->
 			if(pagesetting && pagesetting.opentype){
 				this.OpenDetailType = pagesetting.opentype;
 			}
-			<!--{/if}-->
 		},
 		methods: Object.assign({},JsImageMethods,JsCommonMethods,JsLeftMethods,JsHeaderMethods,JsScreenMethods,{
 			DocumentLeftShowClick(){

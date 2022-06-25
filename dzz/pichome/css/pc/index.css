@@ -5,7 +5,7 @@
 	width: 100%;
 }
 .el-header .header-wrapper{
-	padding: 0 13px;
+	padding: 0 12px;
 	background: var(--bg-content);
 }
 .el-header .header-wrapper.shadow{

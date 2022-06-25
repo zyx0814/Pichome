@@ -10,80 +10,27 @@ if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
 global $_G;
-$path = isset($_GET['path']) ? trim($_GET['path']):'';
-if(!$path = dzzdecode($path,'',0)){
+$path = isset($_GET['path']) ? trim($_GET['path']) : '';
+if (!$patharr = Pdecode($path, 0, '')) {
     @header('HTTP/1.1 404 Not Found');
     @header('Status: 404 Not Found');
 }
-$patharr = explode('_',$path);
-$perm = isset($patharr[1]) ? intval($patharr[1]):0;
-if($perm&1){//是否获取真实文件地址
-    $rid = $patharr[0];
-    $hasperm = true;
-    $resourcesdata = C::t('pichome_resources')->fetch($rid);
-    if(!$resourcesdata){
-        exit('file is not exists');
-    }
-    $resourattrdata = C::t('pichome_resources_attr')->fetch($rid);
-    $resourcesdata = array_merge($resourcesdata, $resourattrdata);
-    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    if($perm&2){//判断是否忽略权限
-        $hasperm = true;
-    }else{
-        if($_G['adminid']== 1){
-            $hasperm = true;
-        }else{
-            $hasperm = ($appdata['download']) ? true:false;
-        }
 
-    }
-    if(!$hasperm){
-        @header('HTTP/1.1 403 No Perm');
-        @header('Status: 404 No Perm');
-    }
-    $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
-}else{//获取缩略图
-    $rid = $path;
-    $resourcesdata = C::t('pichome_resources')->fetch($rid);
-    if(!$resourcesdata){
-        exit('file is not exists');
-    }
-    $resourattrdata = C::t('pichome_resources_attr')->fetch($rid);
-    $resourcesdata = array_merge($resourcesdata, $resourattrdata);
-    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    if ($resourcesdata['hasthumb']) {
-        //如果是本地文件
-        if ($appdata['type'] == 1) {
-            $filename = 'pichomethumb' . BS . $resourcesdata['appid'] . BS . md5($resourcesdata['path']) . '.jpg';
-            $thumbpath = getglobal('setting/attachurl') . $filename;
-        } elseif ($resourcesdata['apptype'] == 0) {
-            $resourcesdata['path'] = str_replace('\\', '/', $resourcesdata['path']);
-            $filepath = dirname($resourcesdata['path']);
-            $filename = substr($resourcesdata['path'], strrpos($resourcesdata['path'], '/') + 1);
-            $filename = str_replace(strrchr($filename, "."), "", $filename);
-            $filepath = str_replace('/', BS, $filepath);
-            $tmppath = $appdata['path'];
-            $thumbpath = $tmppath . BS . $filepath . BS . $filename . '_thumbnail.png';
-        } else {
-            $hookdata = ['rid' => $resourcesdata['rid'], 'apppath' => $appdata['path'], 'appid' => $resourcesdata['appid'], 'version' => $appdata['version']];
-            $return = Hook::listen('getpichomethumb', $hookdata);
-            $thumbpath = str_replace(DZZ_ROOT, '', $return[0]['icon']);
-        }
+if ($patharr['hasthumb']) {
+    $thumbpath = DB::result_first("select path from %t where rid = %s and thumbsign = %d", array('thumb_record', $patharr['rid'], $patharr['thumbsign']));
+} else {
+    $thumbdata = DB::fetch_first("select ra.path,v.path as vpath  from %t ra left join %t v on ra.appid=v.appid where ra.rid = %s", array('pichome_resources_attr', 'pichome_vapp', $patharr['rid']));
+    $arr = explode(':', $appdata['path']);
+    $thumbpath = $thumbdata['vpath'] . BS . $thumbdata['path'];
 
-    } else {
-        if ($resourcesdata['type'] == 'commonimage') {
-            $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
-        } else {
-            $thumbpath = geticonfromext($resourcesdata['ext'], $resourcesdata['type']);
-        }
-    }
+
 }
-
-$url = $thumbpath;
-$filename = rtrim($_GET['n'], '.dzz');
+$filename = $thumbpath;
 $ext = strtolower(substr(strrchr($filename, '.'), 1, 10));
 if (!$ext) $ext = strtolower(substr(strrchr(preg_replace("/\.dzz$/i", '', preg_replace("/\?.*/i", '', $url)), '.'), 1, 10));
 $mime = dzz_mime::get_type($ext);
+$url = IO::getStream($thumbpath);
+
 if (is_file($url)) {
     $filename = $url;
     $start = 0;
@@ -148,3 +95,5 @@ if (is_file($url)) {
     @ob_flush();
     exit();
 }
+
+

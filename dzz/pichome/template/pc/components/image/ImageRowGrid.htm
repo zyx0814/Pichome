@@ -24,7 +24,7 @@
 				imagerowGrid.perpage = 0;
 				imagerowGrid.SurplusImgdatas = [];
 				imagerowGrid.StoreImgdatas = [];
-				self.ImageDataListShow = {};
+				self.ImageDataListShow = [];
 			}
 			if(!self.ImageDataList.length){
 				$('.image-wrapper').height(0);
@@ -32,7 +32,7 @@
 			}
 			var OtherHeight = 0
 			if(self.HeaderRightBtnDisplay.value.indexOf('name')>-1 || self.HeaderRightBtnDisplay.value.indexOf('extension')>-1){
-				OtherHeight += 45;
+				OtherHeight += 50;
 			}
 			if(self.HeaderRightBtnDisplay.value.indexOf('other')>-1){
 				OtherHeight += 21;
@@ -158,8 +158,6 @@
 				}
 				surplusheight = maxNewHeight+imagerowGrid.OtherHeight+imagerowGrid.Margin;
 				// imagerowGrid.maxNewLeft = 0;
-			}else{
-				imagerowGrid.SurplusImgdatas = [];
 			}
 			// $('.image-wrapper').css({
 			// 	height:imagerowGrid.maxNewtop+surplusheight+'px',

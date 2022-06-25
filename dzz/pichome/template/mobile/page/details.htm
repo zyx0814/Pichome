@@ -11,7 +11,7 @@
 		@touchmove="DetailPageTouchMove" 
 		@touchend="DetailPageTouchEnd">
 		<!--{template mobile/components/index/JsDetailMessage}-->
-		<van-nav-bar class="header-top" :title="rids.indexOf(rid)+1+'/'+rids.length">
+		<van-nav-bar class="header-top">
 			<template #left>
 				<div style="width: 25px;text-align: center;height: 25px;line-height: 25px;" @click.stop="DetailNavbarLeftClick">
 					<van-icon name="arrow-left" size="18" />
@@ -36,38 +36,13 @@
 				</template>
 				<template v-else>
 					<div class="detail-popup-img">
-						<template v-if="item.data.opentype=='video'">
-							<div class="video-box" :style="{'height':item.data.fheight+'px'}">
+						<template v-if="item.data.iniframe">
+							<div class="video-box" :style="{'height':item.data.fheight?item.data.fheight+'px':'100%'}">
 								<iframe
 									style="border: 0px;"
-									:src="'index.php?mod=xgplayer&path='+item.data.dpath" 
+									:src="item.data.iniframe" 
 									width="100%" 
 									height="100%"></iframe>
-							</div>
-						</template>
-						<template v-else-if="item.data.opentype=='pdf'">
-							<iframe
-								style="border: 0px;"
-								:src="'index.php?mod=pdf&path='+item.data.dpath" 
-								width="100%" 
-								height="100%"></iframe>
-						</template>
-						<template v-else-if="item.data.opentype=='text'">
-							<div style="padding: 10px;height: 100%;">
-								<iframe
-									style="border: 0px;border-radius: 18px;"
-									:src="'index.php?mod=textviewer&path='+item.data.dpath" 
-									width="100%" 
-									height="100%"></iframe>
-							</div>
-						</template>
-						<template v-else-if="item.data.opentype=='other'">
-							<div class="img-box" :ref="'BoxImg_'+item.data.rid">
-								<img 
-									@load="DetailImgload" 
-									:src="item.data.icondata" 
-									:data-rid="item.data.rid"
-									class="image-viewer__img" />
 							</div>
 						</template>
 						<template v-else>
@@ -125,18 +100,23 @@
 						rids:[]
 					}
 				},
-				InformationPopup:false
+				InformationPopup:false,
+				GetParam:null
 			});
 		},
 		watch:{
 			rid:{
 				handler(val){
+					var self = this;
 					if(val){
 						this.ParamImages.operation.rids = [val];
 					}else{
 						this.ParamImages.operation.rids = [];
 					}
-					
+					var index = this.rids.indexOf(val);
+					if(this.GetParam && this.GetParam.ispage && (this.rids.length-index)<5){
+						self.CommonGetFilelist();
+					}
 				},
 				deep:true
 			},
@@ -201,10 +181,11 @@
 				this.rid = rid;
 				this.ParamImages.operation.rids = [rid];
 			}
-			var rids = window.localStorage.getItem('imgs');
+			var rids = sessionStorage.getItem('imgs');
 			if(rids && rids.indexOf(this.rid)>-1){
 				this.rids = rids.split(',');
 			}
+			this.GetParam = JSON.parse(sessionStorage.getItem('imgparam'));
 			this.handleRidsOrder();
 		},
 		methods:$.extend({},{
@@ -248,7 +229,13 @@
 				var sectouch = event.touches[0];
 				self.TouchPage.distance = sectouch.pageX - self.TouchPage.clickX;
 				var Index = self.showdataIndex.indexOf(self.rid);
+				
 				if(self.TouchPage.distance>0){
+					if(self.rids.length<2){
+						self.$toast('已经是第一张');
+						self.TouchPage.move = false;
+						return false;
+					}
 					if(self.ridIndex == 0){
 						self.$toast('已经是第一张');
 						self.TouchPage.move = false;
@@ -261,6 +248,11 @@
 					}
 				}
 				if(self.TouchPage.distance<0){
+					if(self.rids.length<2){
+						self.$toast('已经是最后一张');
+						self.TouchPage.move = false;
+						return false;
+					}
 					if(self.ridIndex == self.rids.length-1){
 						self.$toast('已经是最后一张');
 						self.TouchPage.move = false;
@@ -321,7 +313,7 @@
 				var index = self.rids.indexOf(self.rid);
 				// var Oldshowdata = JSON.parse(JSON.stringify(self.showdata));
 				var NewShowData = {};
-				var showdataIndex = [];
+				
 				self.ridIndex = index;
 				showdataIndex = [self.rid];
 				// self.showdata = {};
@@ -437,12 +429,12 @@
 					item.foldernames = foldernames;
 					item.download = parseInt(item.download);
 					item.share = parseInt(item.share);
-					// if(item.link || item.share || item.download){
-					// 	item['footer'] =  true;
-					// }else{
-					// 	item['footer'] = false;
-					// }
-					item['footer'] =  true;
+					if(item.link || item.share || item.download){
+						item['footer'] =  true;
+					}else{
+						item['footer'] = false;
+					}
+					// item['footer'] =  true;
 					// if(item.opentype == 'other' || item.opentype == 'image'){
 					// 	var size = self.DetailImgSize(item);
 					// 	item['width'] = size['width'];
@@ -460,6 +452,27 @@
 					self.showdata[rid].data = item;
 					self.dataList[item.rid] = item;
 					self.$forceUpdate();
+					
+				},'json');
+			},
+			CommonGetFilelist(){
+				var that = this;
+				that.GetParam.page += 1;
+				var param = JSON.parse(JSON.stringify(that.GetParam));
+				var url = MOD_URL+'&op=filelist&operation=filelist';
+				delete param.ispage;
+				delete param.historygo;
+				$.post(url,param,function(data){
+					if(data.data){
+						var information = data.data;
+						for(var i in information.data){
+							that.rids.push(information.data[i].rid);
+						}
+						that.GetParam.ispage = that.GetParam.page>=Math.ceil(information.param.total / information.param.perpage)?false:true;
+						sessionStorage.setItem('imgparam',JSON.stringify(that.GetParam));
+						sessionStorage.setItem('imgs',that.rids.join(','));
+						that.handleRidsOrder();
+					}
 					
 				},'json');
 			},
@@ -590,7 +603,12 @@
 				
 			},
 			DetailNavbarLeftClick(){
-				window.history.go(-1);
+				if(this.GetParam.historygo){
+					window.location.href=this.GetParam.historygo;
+				}else{
+					window.location.href=MOD_URL;
+				}
+				
 			},
 			CommonCopyTxt(text){
 				var self = this;

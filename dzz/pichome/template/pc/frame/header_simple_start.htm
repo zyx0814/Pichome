@@ -17,7 +17,11 @@
 		
 		
 		<script src="{MOD_PATH}/js/vue/vue.js?{VERHASH}"></script>
+		<!--{if $theme=='white' || $theme=='pale'}-->
+		<link rel="stylesheet" href="{MOD_PATH}/css/theme/white/index.css?{VERHASH}">
+		<!--{else}-->
 		<link rel="stylesheet" href="{MOD_PATH}/css/theme/$theme/index.css?{VERHASH}">
+		<!--{/if}-->
 		<link rel="stylesheet" href="{MOD_PATH}/css/theme/$theme/root.css?{VERHASH}">
 		<script type="text/javascript" src="{MOD_PATH}/js/pc/plug/element-ui.js?{VERHASH}"></script>
 		<script type="text/javascript" src="static/jquery/jquery.min.js?{VERHASH}"></script>

@@ -4,14 +4,14 @@
 	--header-active:#111111;/* 头部文字选中色 */
 	--header-icon:#404040;/* 头部icon */
 	--header-iconHover:#272727;/* 头部icon选中 */
-	--header-textHover:#DCDCDC;/* 头部块hover的背景色 */
+	--header-textHover:#EFEFEF;/* 头部块hover的背景色 */
 	--header-screenDel:#F46B85;/* 头部清除筛选的 × 背景色 */
 	
-	--bg-content:#F8F8F8;/* 内容背景色 */
+	--bg-content:#FFFFFF;/* 内容背景色 */
 	--bg-contentopacity:rgb(248,248,248,0.6);/* 内容背景色透明 */
 	--content-text:#272727;/* 内容文字颜色 */
 	--content-textHover:#111111;/* 内容文字hover颜色 */
-	--content-imgbg:#FFFFFF;/* 图片背景色 */
+	--content-imgbg:#EFEFEF;/* 图片背景色 */
 	--content-imgbg-btn:rgb(0,0,0,.3);/* 图片上的操作按钮背景颜色 */
 	--content-imgbg-txt:#F5F5F5;/* 图片上的操作按钮文字颜色 */
 	--content-imgbg-btnHover:rgb(0,0,0,.5);/* 图片上的操作按钮背景颜色 */
@@ -21,13 +21,13 @@
 	
 	
 	
-	--td-striped:#FFFFFF;/* td斑纹颜色 */
+	--td-striped:#F8F8F8;/* td斑纹颜色 */
 	
 	--bg-input:#FFFFFF;/* 输入框背景色 */
 	--bg-inputfocus:#FFFFFF;/* 输入框focus背景色 */
 	
 	--bg-poper:#FFFFFF;/* 浮层背景色 */
-	--bg-poperHover:#DCDCDC;/* hover背景色 */
+	--bg-poperHover:#EFEFEF;/* hover背景色 */
 	
 	--color-primary:#0072EF;/* 选中颜色 */
 	--border-color-base:#D7D7D7;/* 组要边框颜色 */

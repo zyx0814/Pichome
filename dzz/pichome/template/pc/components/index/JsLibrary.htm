@@ -2,10 +2,10 @@
 	<span class="el-dropdown-link block" @click="LibraryRefresh">
 		<span>{{LibrarysName}}</span>
 	</span>
-	<el-dropdown trigger="click" placement="bottom" @command="LibraryClick" hide-on-click @visible-change="LibraryDropdownOpen">
+	<el-dropdown trigger="click" placement="bottom" @command="LibraryClick" hide-on-click>
 		<i class="el-icon-caret-bottom el-icon--right" style="cursor: pointer;"></i>
 		<el-dropdown-menu slot="dropdown" class="database-box">
-			<el-scrollbar class="page-component__scroll" :style="{height: LibrarysHeight+'px'}">
+			<el-scrollbar class="h300">
 				<el-dropdown-item command="" class="Library-Dropdown">
 					<i class="ri-database-2-line icon"></i>全部库
 				</el-dropdown-item>
@@ -23,7 +23,6 @@
 		Appid:'',
 		Librarys:$apps,
 		LibrarysName:'全部库',
-		LibrarysHeight:0
 	};
 	var JsLibraryMethods = {
 		LibraryCreate(){
@@ -62,19 +61,5 @@
 		LibraryRefresh(){
 			this.CommonDeleteAll();
 		},
-		LibraryDropdownOpen(status){
-			var self = this;
-			if(status){
-				var index = 1;
-				for(var i in self.Librarys){
-					index++;
-				}
-				var h = index*37.22;
-				if(h>300){
-					h = 300
-				}
-				self.LibrarysHeight = h;
-			}
-		}
 	};
 </script>

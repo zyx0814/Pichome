@@ -70,7 +70,7 @@ elseif ($operation == 'searchmenu_num') {
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $vappids = [];
     foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        if(is_dir($v['path'])){
+        if(IO::checkfileexists($v['path'],1)){
             $vappids[] = $v['appid'];
         }
 
@@ -446,29 +446,7 @@ elseif ($operation == 'searchmenu_num') {
     if (isset($_GET['tag'])) {
         $tagwherearr = [];
         $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
-        /*     if (!in_array('pichome_resources_attr', $params)) {
-                 $sql .= "left join %t ra on r.rid = ra.rid";
-                 $params[] = 'pichome_resources_attr';
-             }
-             $tag = trim($_GET['tag']);
-             if ($tag == -1) {
-                 $wheresql .= " and ra.tag =  '' ";
-             }
-             else {
-                 $tagval = explode(',', trim($_GET['tag']));
-                 if (!empty($tagval)) {
-                     foreach ($tagval as $v) {
-                         $tagwherearr[] = " find_in_set(%d,ra.tag)";
-                         $para[] = $v;
-                     }
-                     if ($tagrelative) {
-                         $wheresql .= " and (" . implode(" or ", $tagwherearr) . ")";
-                     } else {
-                         $wheresql .= " and (" . implode(" and ", $tagwherearr) . ")";
-                     }
-                 }
 
-             }*/
         $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
         $tag = trim($_GET['tag']);
         if ($tag == -1) {
@@ -478,15 +456,19 @@ elseif ($operation == 'searchmenu_num') {
             }
             $wheresql .= " and isnull(rt.tid) ";
         } else {
-            if ($tagrelative) {
+            if(!$tagrelative){
                 $tagval = explode(',', trim($_GET['tag']));
-                foreach ($tagval as $k => $v) {
-                    $sql .= ' left join %t rt' . ($k + 1) . ' on rt' . ($k + 1) . '.rid = r.rid and rt' . ($k + 1) . '.tid = %d';
+                $tagwheresql = [];
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid and rt'.($k+1).'.tid = %d';
                     $params[] = 'pichome_resourcestag';
-                    $wheresql .= ' and !isnull(rt' . ($k + 1) . '.tid)';
+                    $tagwheresql[] = '  !isnull(rt'.($k+1).'.tid) ';
                     $params[] = $v;
                 }
-            } else {
+
+                if(count($tagwheresql) > 1) $wheresql .= " and " .implode(' or ',$tagwheresql);
+                elseif(count($tagwheresql)) $wheresql .= " and $tagwheresql[0] ";
+        } else {
                 $tagval = explode(',', trim($_GET['tag']));
                 foreach($tagval as $k=>$v){
                     $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';
@@ -494,13 +476,6 @@ elseif ($operation == 'searchmenu_num') {
                     $wheresql .= '  and rt'.($k+1).'.tid = %d';
                     $para[] = $v;
                 }
-                /*if (!in_array('pichome_resourcestag', $params)) {
-                    $sql .= "left join %t rt on r.rid = rt.rid";
-                    $params[] = 'pichome_resourcestag';
-                }
-                $wheresql .= ' and rt.tid in(%n) ';
-                $tagval = explode(',', trim($_GET['tag']));
-                $para[] = $tagval;*/
             }
         }
 
@@ -886,7 +861,7 @@ elseif ($operation == 'search_menu') {
     $vappids = [];
     $vappids = [];
     foreach(DB::fetch_all("select appid,path from %t where isdelete = 0",array('pichome_vapp')) as $v){
-        if(is_dir($v['path'])){
+        if(IO::checkfileexists($v['path'],1)){
             $vappids[] = $v['appid'];
         }
 
@@ -1009,15 +984,21 @@ elseif ($operation == 'search_menu') {
             }
             $wheresql .= " and isnull(rt.tid) ";
         } else {
-            if ($tagrelative) {
+            if(!$tagrelative){
                 $tagval = explode(',', trim($_GET['tag']));
-                foreach ($tagval as $k => $v) {
-                    $sql .= ' left join %t rt' . ($k + 1) . ' on rt' . ($k + 1) . '.rid = r.rid and rt' . ($k + 1) . '.tid = %d';
+                $tagwheresql = [];
+                foreach($tagval as $k=>$v){
+                    $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid and rt'.($k+1).'.tid = %d';
                     $params[] = 'pichome_resourcestag';
-                    $wheresql .= ' and !isnull(rt' . ($k + 1) . '.tid) ';
+                    $tagwheresql[] = '  !isnull(rt'.($k+1).'.tid) ';
                     $params[] = $v;
                 }
-            } else {
+
+                if(count($tagwheresql) > 1) $wheresql .= " and " .implode(' or ',$tagwheresql);
+                elseif(count($tagwheresql)) $wheresql .= " and $tagwheresql[0] ";
+
+
+        } else {
                 $tagval = explode(',', trim($_GET['tag']));
                 foreach($tagval as $k=>$v){
                     $sql .= ' left join %t rt'.($k+1).' on rt'.($k+1).'.rid = r.rid ';
@@ -1730,7 +1711,7 @@ elseif($operation == 'realfianllypath') {
     $rid = isset($_GET['rid']) ? trim($_GET['rid']) : '';
     $data = [];
     if ($_G['adminid'] == 1) {
-        $data['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg' . '&path=' . dzzencode($rid.'_3', '', 0, 0);
+        $data['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream' . '&path=' . dzzencode($rid.'_3', '', 0, 0);
     }
     exit(json_encode($data));
 }

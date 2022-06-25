@@ -1,78 +1,13 @@
 <div class="pic-container-scroll">
 	<div class="img-container">
 		<div id="imgContainer" :class="ParamSort.layout.value=='imageList'?'imagelist':''">
-			<van-checkbox-group v-model="ParamImages.operation.rids">
-				<div 
-					class="imgitem" 
-					v-for="item in ParamImages.Newdatas" 
-					:style="{top:item.ptop+'px',left:item.pleft+'px',width:item.pwidth+'px'}" 
-					:key="item.rid" 
-					:rid="item.rid"
-					@click="ImagesDetailClick(item.rid,item.index)">
-					<van-checkbox v-if="ParamImages.checked" class="imgchecked" icon-size="20px" :name="item.rid" disabled></van-checkbox>
-					<div class="imgbox">
-						<div 
-							class="imgbox-border radius" 
-							:style="{height: item.pheight+'px',width: (item.pwidth-8)+'px',background:'#'+item.color}"
-							v-bind:class="item.opentype=='video'||item.opentype=='audio'?'border':''">
-							<div class="div-black" :data-rid="item.rid">
-								<div class="bck"></div>
-								<img
-									class="img el-image__inner opacity" 
-									:ref="'ref_'+item.rid"
-									@load="ImagesImgload(item.rid)"
-									:src="item.icondata"
-									alt="" />
-								<div class="circular-box">
-									<div class="circular-item-box">
-										<div class="circular-item first"><i class="ri-file-search-line icon"></i></div>
-										<div class="circular-item two"><i class="ri-share-line icon"></i></div>
-										<div class="circular-item three"><i class="ri-download-2-line icon"></i></div>
-									</div>
-									<div class="round"></div>
-									<div></div>
-								</div>
-							</div>
-							
-							<div v-if="ParamSort.showinformation.value.indexOf('tagging')>-1&&parseInt(item.annonationnum)>0" class="annotation">{{item.annonationnum}}</div>
-						</div>
-						<div class="bottom-img-message">
-							<div class="name">
-								<div class="text" v-if="ParamSort.showinformation.value.indexOf('name')>-1||ParamSort.showinformation.value.indexOf('extension')>-1">
-									<template v-if="ParamSort.showinformation.value.indexOf('name')>-1" v-cloak>{{item.name}}</template><template v-if="ParamSort.showinformation.value.indexOf('extension')>-1" v-cloak>.{{item.ext}}</template>
-								</div>
-								<div v-if="!ParamImages.checked" class="circulars" @click.stop="ImagesMoreClick(item)">
-									<i class="ri-more-fill"></i>
-								</div>
-							</div>
-							<template v-if="ParamSort.showinformation.value.indexOf('other')>-1">
-								<div class="other" v-if="ParamSort.otherinformation.value=='size'">
-									<span>{{item.width}} × {{item.height}}</span>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='filesize'">
-									<span>{{item.fsize}}</span>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='tag'">
-									<span v-if="!item.tags" class="label">-</span>
-									<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='grade'">
-									<van-icon v-for="item in parseInt(item.grade)" class="score active" name="star"></van-icon><van-icon v-for="item in 5-parseInt(item.grade)" class="score" name="star"></van-icon>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='btime'">
-									<span>{{item.btime}}</span>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='dateline'">
-									<span>{{item.dateline}}</span>
-								</div>
-								<div class="other" v-else-if="ParamSort.otherinformation.value=='mtime'">
-									<span>{{item.mtime}}</span>
-								</div>
-							</template>
-						</div>
-					</div>
-				</div>
-			</van-checkbox-group>
+			<template v-if="ParamSort.layout.value == 'table'">
+				<!--{template mobile/components/index/image/image_table}-->
+			</template>
+			<template v-else>
+				<!--{template mobile/components/index/image/image_other}-->
+			</template>
+
 			<template  v-if="ParamImages.data.length&&ParamBasic.page>=ParamBasic.totalpage&&!ParamImages.loading&&!ParamImages.valloading">
 				<div style="position: absolute;bottom: 0;left: 0;width: 100%;line-height: 40px;text-align: center;color: var(--content-text);font-size: 14px;">没有更多了</div>
 			</template>
@@ -96,11 +31,14 @@
 	
 </div>
 <van-overlay :show="ParamImages.loading" :z-index="5000" />
-
+<!--{template mobile/components/index/image/JsImageList}-->
+<!--{template mobile/components/index/image/JsImgageWaterfall}-->
+<!--{template mobile/components/index/image/JsImagerowGrid}-->
+<!--{template mobile/components/index/image/JsImageTable}-->
 <script type="text/javascript">
 	var ImagesData = $.extend({},{
 		DocumentAdminId:'$_G[adminid]',
-		ParamImages:{
+		ParamImages:$.extend({},JsImageListData,JsImgageWaterfallData,JsImagerowGridData,JsImgageTableData,{
 			resize:0,
 			data:[],
 			Newdatas:{},
@@ -110,46 +48,9 @@
 				type:'',
 				rids:[]
 			},
-			imageList:{
-				maxNewtop:0,
-				maxNewLeft:0,
-				perpage : 0,
-				Margin:4,
-				columns:0,
-				fcolumns:1,
-				newWidth:0,//图片宽度
-				newHeight:0,//图片高度
-				boxHeight:0,//总体高度
-				OtherHeight:0,//底部信息
-				StoreImgdatas:[],
-			},
-			imgageWaterfall:{
-				imgWidth : 252,
-				imgArr : [],
-				ImgAll : [],
-				total : 0,
-				columns:0,
-				boxHeight:0,
-				OtherHeight:0,
-				perpage:0,
-				Margin:8,
-				isMax:false,
-				StoreImgdatas:[],
-			},
-			imagerowGrid:{
-				maxNewtop:0,
-				maxNewLeft:0,
-				rowElems:[],
-				perpage : 0,
-				Margin:4,
-				rowWidth:0,
-				OtherHeight:0,
-				SurplusImgdatas:[],
-				StoreImgdatas:[],
-			},
 			loading:true,
 			valloading:false
-		}
+		}),
 	});
 	var ImagesWatchJs = {
 		'ParamImages.resize':debounce(function(val){
@@ -213,19 +114,19 @@
 			immediate:true
 		}
 	};
-	var ImagesJs = $.extend({},{
+	var ImagesJs = $.extend({},JsImagerowGridMethods,JsImgageWaterfallMethods,JsImageListMethods,JsImgageTableMethods,{
 		ImagesMoreClick(item){
 			this.ParamImages.operation.rids = [item.rid];
 			this.ImagesMore.data = [];
-			if(parseInt(item.share) || parseInt(this.DocumentAdminId)){
+			if(parseInt(item.share)){
 				this.ImagesMore.data.push({ name: '分享',type:'share' });
 			}
-			if(parseInt(item.download) || parseInt(this.DocumentAdminId)){
+			if(parseInt(item.download)){
 				this.ImagesMore.data.push({ name: '下载',type:'down' });
 			}
-			if(parseInt(this.DocumentAdminId)){
+			<!--{if $_G[adminid]}-->
 				this.ImagesMore.data.push({ name:'固定地址',type:'address' });
-			}
+			<!--{/if}-->
 			this.ImagesMore.dpath = item.dpath;
 			this.ImagesMore.visible = true;
 		},
@@ -244,7 +145,11 @@
 					arr.push(self.ParamImages.data[i].rid);
 				}
 				arr = arr.join(',');
-				window.localStorage.setItem('imgs',arr);
+				sessionStorage.setItem('imgs',arr);
+				var params = JSON.parse(JSON.stringify(self.ParamData));
+				params['historygo'] = window.location.href;
+				params['ispage'] = this.ParamBasic.page>=this.ParamBasic.totalpage?false:true;
+				sessionStorage.setItem('imgparam',JSON.stringify(params));
 				window.location.href = SITEURL+MOD_URL+'&op=details#rid='+rid;
 			}
 			
@@ -273,8 +178,8 @@
 					self.CommonhandleHash('scroll');
 				}
 			});
-			$('.div-black').click(function(){
-			})
+			// $('.div-black').click(function(){
+			// })
 			window.addEventListener('resize',function(){
 				self.ParamImages.resize += 1;
 			});
@@ -291,367 +196,11 @@
 				self.ImagesWaterfalllayoutCompute();
 			}else if(self.ParamSort.layout.value == 'rowGrid'){
 				self.ImagesRowGridtlayoutCompute();
+			}else if(self.ParamSort.layout.value == 'table'){
+				self.ImagesTablelayoutCompute();
 			}else{
 				self.ImagesListlayoutCompute();
 			}
-		},
-		ImagesRowGridtlayoutCompute(){
-			var self = this;
-			var imagerowGrid = self.ParamImages.imagerowGrid;
-			if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
-				imagerowGrid.maxNewtop = 0;
-				imagerowGrid.rowWidth = 0;
-				imagerowGrid.rowElems = [];
-				imagerowGrid.maxNewLeft =  0;
-				imagerowGrid.perpage = 0;
-				imagerowGrid.SurplusImgdatas = [];
-				imagerowGrid.StoreImgdatas = [];
-				this.ParamImages.Newdatas = {};
-			}
-			if(!self.ParamImages.data.length){
-				$('#imgContainer').height(0);
-				return false;
-			}
-			var OtherHeight = 0;
-			if(!self.ParamImages.checked){
-				OtherHeight = 30;
-			}
-			if(self.ParamSort.showinformation.value.indexOf('name')>-1 || self.ParamSort.showinformation.value.indexOf('extension')>-1){
-				OtherHeight = 45;
-			}
-			if(self.ParamSort.showinformation.value.indexOf('other')>-1){
-				OtherHeight += 20;
-			}
-			imagerowGrid.OtherHeight = OtherHeight;
-			var arr = {};
-			if(imagerowGrid.rowElems.length){
-				for(var s in imagerowGrid.rowElems){
-					arr[imagerowGrid.rowElems[s].rid] = JSON.parse(JSON.stringify(imagerowGrid.rowElems[s]));
-				}
-				imagerowGrid.rowWidth = 0;
-				imagerowGrid.rowElems = [];
-				imagerowGrid.maxNewLeft =  0;
-			}
-			
-			for(var findex = imagerowGrid.perpage; findex < self.ParamImages.data.length;++findex){
-				var str = JSON.parse(JSON.stringify(self.ParamImages.data[findex]));
-				var rid = str.rid;
-				arr[rid] = str;
-				var w = parseInt(arr[rid]['width']);
-				var h = parseInt(arr[rid]['height']);
-				var r = w / h;
-				var r1 = h / w;
-				if (h > 260) {
-					h = 260;
-					w = r * h;
-				} else if (w < 260) {
-					w = 260;
-					h = 260;
-				}
-				arr[rid]['pwidth'] = w;
-				arr[rid]['pheight'] = h;
-			}
-			var documentW = document.body.clientWidth;
-			var boxWidth = documentW-8;
-			$('#imgContainer').width(boxWidth);
-			for(var index in arr){
-				var item = arr[index];
-				imagerowGrid.rowWidth += item['pwidth'];
-				imagerowGrid.rowElems.push(item);
-				var fdiiff = imagerowGrid.rowWidth + imagerowGrid.Margin * (imagerowGrid.rowElems.length - 1);
-				var diff = fdiiff - boxWidth;//多出来的宽度
-				if (fdiiff > boxWidth){
-					var widthDiff = 0,maxNewHeight = 0;
-					for(var rowElemIndex in imagerowGrid.rowElems){
-						var rid = imagerowGrid.rowElems[rowElemIndex].rid;
-						var rowElemWidth = arr[rid]['pwidth'];//获取一行每个都宽度
-						var rowElemHeight = arr[rid]['pheight'];//获取一行每个都宽度
-
-						var newWidth = rowElemWidth - (rowElemWidth / imagerowGrid.rowWidth) * diff;//新宽度
-						var newHeight = Math.round(rowElemHeight * (newWidth / rowElemWidth));//新高度
-						if (widthDiff + 1 - newWidth % 1 >= 0.5) {
-							widthDiff -= newWidth % 1;
-							newWidth = Math.floor(newWidth);
-						} else {
-							widthDiff += 1 - newWidth % 1;
-							newWidth = Math.ceil(newWidth);
-						}
-						if (newHeight > maxNewHeight){
-							maxNewHeight = newHeight;
-						}
-						arr[rid]['pwidth'] = newWidth;
-						arr[rid]['pheight'] = maxNewHeight;
-						arr[rid]['ptop'] = imagerowGrid.maxNewtop;
-						arr[rid]['pbottom'] = imagerowGrid.maxNewtop+maxNewHeight+imagerowGrid.OtherHeight;
-						if(rowElemIndex > 0){
-							arr[rid]['pleft'] = imagerowGrid.maxNewLeft;
-						}else{
-							arr[rid]['pleft'] = 0;
-						}
-						imagerowGrid.maxNewLeft += newWidth + imagerowGrid.Margin;
-						
-					}
-					
-					for(var frowElemIndex in imagerowGrid.rowElems){//规整每行的高
-						var rowElem = imagerowGrid.rowElems[frowElemIndex].rid;
-						
-						var height = arr[rowElem]['pheight'];//获取一行每个都宽度
-						if(height<maxNewHeight){
-							arr[rowElem]['pbottom'] += maxNewHeight-height;
-							arr[rowElem]['pheight'] = maxNewHeight;
-						}
-					}
-					imagerowGrid.maxNewtop += maxNewHeight + imagerowGrid.Margin +imagerowGrid.OtherHeight
-					imagerowGrid.rowElems = [];
-					imagerowGrid.rowWidth = 0;
-					imagerowGrid.maxNewLeft = 0;
-				}
-			}
-		
-			var surplusheight = 0;
-		
-			if (imagerowGrid.rowElems.length) {
-				var maxNewHeight = 0;
-				
-				for(var f in imagerowGrid.rowElems){
-					var rowElem = imagerowGrid.rowElems[f].rid;
-					var rowElemWidth = arr[rowElem].pwidth;//获取一行每个都宽度
-					var rowElemHeight = arr[rowElem].pheight;//获取一行每个都宽度
-					arr[rowElem]['pwidth'] = rowElemWidth;
-					arr[rowElem]['pheight'] = rowElemHeight;
-					arr[rowElem]['ptop'] = imagerowGrid.maxNewtop;
-					arr[rowElem]['pbottom'] = imagerowGrid.maxNewtop+rowElemHeight+imagerowGrid.OtherHeight;
-					if (rowElemHeight > maxNewHeight){
-						maxNewHeight = rowElemHeight;
-					}
-					if(f > 0){
-						arr[rowElem]['pleft'] = imagerowGrid.maxNewLeft;
-					}else{
-						arr[rowElem]['pleft'] = 0;
-					}
-					
-					imagerowGrid.maxNewLeft += rowElemWidth + imagerowGrid.Margin;
-				}
-				for(var ff in imagerowGrid.rowElems){
-					var rowElem = imagerowGrid.rowElems[ff].rid;
-					imagerowGrid.SurplusImgdatas.push(rowElem);
-					var height = arr[rowElem]['pheight'];
-					if(height<maxNewHeight){
-						arr[rowElem]['pbottom'] += maxNewHeight-height;
-						arr[rowElem]['pheight'] = maxNewHeight;
-					}
-				}
-				surplusheight = maxNewHeight+imagerowGrid.OtherHeight+imagerowGrid.Margin;
-				// imagerowGrid.maxNewLeft = 0;
-			}else{
-				imagerowGrid.SurplusImgdatas = [];
-			}
-			$('#imgContainer').height(imagerowGrid.maxNewtop+surplusheight+60);
-
-			imagerowGrid.perpage = self.ParamImages.data.length;
-			var newarr = [];
-			for(var n in arr){
-				newarr.push(arr[n]);
-			}
-			if(self.ParamImages.type == 'append'){
-				var StoreImgdatas = JSON.parse(JSON.stringify(imagerowGrid.StoreImgdatas));
-				if(imagerowGrid.SurplusImgdatas.length){
-					var splic = [];
-					for(var b in StoreImgdatas){
-						if(imagerowGrid.SurplusImgdatas.indexOf(StoreImgdatas[b].rid)>-1){
-							splic.push(b)
-						}
-					}
-					for(var h in splic){
-						imagerowGrid.StoreImgdatas.splice(parseInt(splic[h]),1);
-					}
-				}
-				
-				// for(var y in newarr){
-				// 	imagerowGrid.StoreImgdatas.push(newarr[y])
-				// }
-				imagerowGrid.StoreImgdatas.push.apply(imagerowGrid.StoreImgdatas,newarr);
-			}else{
-				imagerowGrid.StoreImgdatas = newarr;
-			}
-			self.ImagesLayoutScrollShow()
-		},
-		ImagesListlayoutCompute(){
-			var self = this;
-			if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
-				self.ParamImages.imageList.perpage = 0;
-				var documentW = document.body.clientWidth;
-				var boxWidth = documentW-8;
-				$('#imgContainer').width(boxWidth);
-				var columns = 0;
-				if(documentW>=1024){
-					columns = 5;
-				}else if(documentW>=992){
-					columns = 4;
-				}else if(documentW>=768){
-					columns = 3;
-				}else{
-					columns = 2;
-				}
-			
-				self.ParamImages.imageList.maxNewLeft = 0;
-				self.ParamImages.imageList.maxNewtop = 0;
-				self.ParamImages.imageList.fcolumns = 1;
-				self.ParamImages.imageList.boxHeight = 0;
-				self.ParamImages.imageList.StoreImgdatas = [];
-				self.ParamImages.Newdatas = {};
-				self.ParamImages.imageList.columns = columns;
-				self.ParamImages.imageList.newWidth = (boxWidth-(columns*self.ParamImages.imageList.Margin-self.ParamImages.imageList.Margin)) / columns;
-				self.ParamImages.imageList.newHeight = 2 / 3 * self.ParamImages.imageList.newWidth;
-				
-				var OtherHeight = 0;
-				if(!self.ParamImages.checked){
-					OtherHeight = 30;
-				}
-				if(self.ParamSort.showinformation.value.indexOf('name')>-1 || self.ParamSort.showinformation.value.indexOf('extension')>-1){
-					OtherHeight = 45;
-				}
-				if(self.ParamSort.showinformation.value.indexOf('other')>-1){
-					OtherHeight += 20;
-				}
-				self.ParamImages.imageList.OtherHeight = OtherHeight;
-				
-				
-			}
-			
-
-			if(!self.ParamImages.data.length){
-				$('#imgContainer').height(0);
-				return false;
-			}
-			
-			
-			var arr = [];
-			var i = 0;
-			for(var index = self.ParamImages.imageList.perpage; index < self.ParamImages.data.length;++index){
-				var item = JSON.parse(JSON.stringify(self.ParamImages.data[index]));
-				arr[i] = item;
-				arr[i]['pwidth'] = self.ParamImages.imageList.newWidth;
-				arr[i]['pheight'] = self.ParamImages.imageList.newHeight;
-				arr[i]['ptop'] = self.ParamImages.imageList.maxNewtop;
-				arr[i]['pleft'] = self.ParamImages.imageList.maxNewLeft;
-				arr[i]['pbottom'] = self.ParamImages.imageList.maxNewtop + self.ParamImages.imageList.newHeight+self.ParamImages.imageList.OtherHeight;
-				self.ParamImages.imageList.maxNewLeft += self.ParamImages.imageList.newWidth+self.ParamImages.imageList.Margin;
-				self.ParamImages.imageList.fcolumns++;
-				if(self.ParamImages.imageList.fcolumns > self.ParamImages.imageList.columns){
-					self.ParamImages.imageList.maxNewLeft = 0;
-					self.ParamImages.imageList.maxNewtop += self.ParamImages.imageList.newHeight+self.ParamImages.imageList.Margin+self.ParamImages.imageList.OtherHeight;
-					self.ParamImages.imageList.fcolumns = 1;
-					self.ParamImages.imageList.boxHeight = self.ParamImages.imageList.maxNewtop;
-				}
-				i++;
-			}
-			self.ParamImages.imageList.perpage = self.ParamImages.data.length;
-			if(self.ParamImages.type == 'append'){
-				self.ParamImages.imageList.StoreImgdatas.push.apply(self.ParamImages.imageList.StoreImgdatas,arr);
-			}else{
-				self.ParamImages.imageList.StoreImgdatas = arr;
-			}
-			if(self.ParamImages.imageList.fcolumns>1&&self.ParamImages.imageList.fcolumns<self.ParamImages.imageList.columns+1){
-				self.ParamImages.imageList.boxHeight += self.ParamImages.imageList.newHeight+self.ParamImages.imageList.OtherHeight;
-			}
-			$('#imgContainer').height(self.ParamImages.imageList.boxHeight+60);
-			self.ImagesLayoutScrollShow()
-		},
-		ImagesWaterfalllayoutCompute(){
-			var self = this;
-			var boxWidth = $('.img-container').width()-8;
-			if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
-				self.ParamImages.imgageWaterfall.imgArr = [];
-				self.ParamImages.imgageWaterfall.perpage = 0;
-				self.ParamImages.imgageWaterfall.StoreImgdatas = [];
-				self.ParamImages.Newdatas = {};
-				var documentW = document.body.clientWidth;
-				if(documentW<768){
-					self.ParamImages.imgageWaterfall.isMax = false;
-					self.ParamImages.imgageWaterfall.columns = 2;
-					self.ParamImages.imgageWaterfall.imgWidth = boxWidth/2;
-				}else{
-					self.ParamImages.imgageWaterfall.isMax = true;
-					self.ParamImages.imgageWaterfall.imgWidth = 252;
-					self.ParamImages.imgageWaterfall.columns = parseInt(boxWidth/self.ParamImages.imgageWaterfall.imgWidth);
-				}
-				var OtherHeight = 0;
-				if(!self.ParamImages.checked){
-					OtherHeight = 30;
-				}
-				if(self.ParamSort.showinformation.value.indexOf('name')>-1 || self.ParamSort.showinformation.value.indexOf('extension')>-1){
-					OtherHeight = 45;
-				}
-				if(self.ParamSort.showinformation.value.indexOf('other')>-1){
-					OtherHeight += 20;
-				}
-				self.ParamImages.imgageWaterfall.OtherHeight = OtherHeight;
-			}
-			if(!self.ParamImages.data.length){
-				$('#imgContainer').height(0);
-				return false;
-			}
-			
-			var pwidth = self.ParamImages.imgageWaterfall.imgWidth;
-			var arr = [];
-			var i = 0;
-			for (var index = self.ParamImages.imgageWaterfall.perpage; index < self.ParamImages.data.length; index++){
-				arr[i] = JSON.parse(JSON.stringify(self.ParamImages.data[index]));
-				var ppwidth = pwidth-8;
-				if(self.ParamImages.imgageWaterfall.isMax){
-					arr[i]['pwidth'] = 252;
-				}else{
-					arr[i]['pwidth'] = pwidth;
-				}
-				var h = ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height)>120?ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height):120;
-				arr[i]['pheight'] = h;
-				if (index < self.ParamImages.imgageWaterfall.columns) {
-					arr[i]['ptop'] = 0;
-					arr[i]['pleft'] = pwidth*index;
-					arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ParamImages.imgageWaterfall.Margin+self.ParamImages.imgageWaterfall.OtherHeight;
-					var imgArr = JSON.parse(JSON.stringify(arr[i]));
-					self.ParamImages.imgageWaterfall.imgArr.push(imgArr);
-					
-				}else{
-					var minHeight = self.ParamImages.imgageWaterfall.imgArr[0]['pbottom'];
-					var findex = 0;
-					for (var j = 0; j < self.ParamImages.imgageWaterfall.imgArr.length; j++) {
-						if (minHeight > self.ParamImages.imgageWaterfall.imgArr[j]['pbottom']) {
-							minHeight = self.ParamImages.imgageWaterfall.imgArr[j]['pbottom'];
-							findex = j;
-						}
-					}
-					arr[i]['ptop'] = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.imgArr[findex]['pbottom']));
-					arr[i]['pleft'] = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.imgArr[findex]['pleft']));
-					arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ParamImages.imgageWaterfall.Margin+self.ParamImages.imgageWaterfall.OtherHeight;
-			
-					var imgArr = JSON.parse(JSON.stringify(arr[i]));
-					self.ParamImages.imgageWaterfall.imgArr[findex] = imgArr;
-					
-				}
-				i++;
-			}
-			self.ParamImages.imgageWaterfall.perpage = self.ParamImages.data.length;
-			if(self.ParamImages.type == 'append'){
-				self.ParamImages.imgageWaterfall.StoreImgdatas.push.apply(self.ParamImages.imgageWaterfall.StoreImgdatas,arr);
-			}else{
-				self.ParamImages.imgageWaterfall.StoreImgdatas = arr;
-			}
-			
-			var fminHeight = self.ParamImages.imgageWaterfall.imgArr[0]['pbottom'];
-			for (var j = 0; j < self.ParamImages.imgageWaterfall.imgArr.length; j++) {
-				if (fminHeight < self.ParamImages.imgageWaterfall.imgArr[j]['pbottom']) {
-					fminHeight = self.ParamImages.imgageWaterfall.imgArr[j]['pbottom'];
-				}
-			}
-			self.ParamImages.imgageWaterfall.boxHeight = fminHeight;
-			$('#imgContainer').css({
-				height:self.ParamImages.imgageWaterfall.boxHeight+60+'px',
-				width:self.ParamImages.imgageWaterfall.columns*pwidth+'px'
-			});
-			self.ImagesLayoutScrollShow();
-			
 		},
 		ImagesLayoutScrollShow(){
 			var self = this;
@@ -663,6 +212,8 @@
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.StoreImgdatas));
 			}else if(self.ParamSort.layout.value == 'rowGrid'){
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imagerowGrid.StoreImgdatas));
+			}else if(self.ParamSort.layout.value == 'table'){
+				var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imgageTable.StoreImgdatas));
 			}else{
 				var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imageList.StoreImgdatas));
 			}

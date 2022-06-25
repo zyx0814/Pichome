@@ -120,6 +120,7 @@
 				deep:true
 			}
 		},
+		mixins:[LeftMixin],
 		created() {
 			this.handleGetData('all');
 		},
@@ -219,9 +220,6 @@
 			},
 			handleLibraryChange(val){
 				this.handleGetData(val);
-			},
-			handleRouter(type){
-				window.location.href = MOD_URL+'&op=admin&do='+type;
 			},
 			handleChange(){
 				this.handleSubmit();

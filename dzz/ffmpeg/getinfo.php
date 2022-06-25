@@ -7,8 +7,8 @@ if (!defined('IN_OAOOA')) {
 ini_set('memory_limit', -1);
 @ini_set('max_execution_time', 0);
 $appids = [''];
-foreach(DB::fetch_all("select appid from %t where `type` = %d and getinfo = %d and isdelete < 1",array('pichome_vapp',1,1)) as $v){
-    $appids[] = $v['appid'];
+foreach(DB::fetch_all("select appid,path from %t where `type` = %d and getinfo = %d and isdelete < 1",array('pichome_vapp',1,1)) as $v){
+    if(is_dir($v['path']))$appids[] = $v['appid'];
 }
 if(empty($appids)){
     exit('success');
@@ -23,7 +23,7 @@ $locked = true;
 }*/
 $i = 0;
 $processname = 'DZZ_LOCK_PICHOMEGETINFO'.$i;
-$limit = 10;
+$limit = 100;
 $start=$i*$limit;
 if (!dzz_process::islocked($processname, 60*30)) {
     $locked=false;
@@ -75,8 +75,11 @@ if($datas){
     }
     dzz_process::unlock($processname);
     if(DB::result_first("select * from %t where infostatus = 0  and appid in(%n)",array('pichome_ffmpeg_record',$appids))){
-        dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=getinfo', 0, '', '', false, '', 5*60);
+        sleep(2);
+        dfsockopen(getglobal('localurl') . 'index.php?mod=ffmpeg&op=getinfo', 0, '', '', false, '', 1);
     }
+}else{
+    dzz_process::unlock($processname);
 }
-dzz_process::unlock($processname);
+
 exit('success');
