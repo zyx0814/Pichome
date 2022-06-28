@@ -10,6 +10,7 @@ $attach = DB::fetch_first("select path,appid from %t where rid = %s",array('pich
 $librarydata = DB::fetch_first("select path,iswebsitefile from %t where appid = %s",array('pichome_vapp',$attach['appid']));
 
 $attachurl = $librarydata['path'].BS.$attach['path'];
+$attachurl = IO::getStream($attachurl);
 $d = new FileDownload();
 $d->download($attachurl, $resourcesdata['name'], $resourcesdata['size'], 0, true);
 exit();

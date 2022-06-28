@@ -179,14 +179,17 @@ class table_pichome_resources extends dzz_table
         if($resourcesdata['hasthumb'] > 0){
             $iconthumbparams['thumbsign'] = ($appdata['type'] == 0) ? 1:0;
             $origithumbparams['thumbsign'] = 1;
-            //判断是否有大图，如果没有，则判断下载权限，有下载权限的获取原图即赋值缩略图hasthumb为0，否则使用小图作为原图
-            if(!DB::result_first("select path from %t where rid = %s and thumbsign = %d",array('thumb_record',$rid,1))){
-                if($resourcesdata['download']){
-                    $origithumbparams['hasthumb'] = 0;
-                }else{
-                    $origithumbparams['thumbsign'] = 0;
+            if($appdata['type'] == 0){
+                $origithumbparams['hasthumb'] = ($resourcesdata['download'] && in_array($resourcesdata['ext'],explode(',',getglobal('config/pichomecommimageext')))) ? 0:1;
+            }else{
+                //判断是否有大图，如果没有，则判断下载权限，有下载权限的获取原图即赋值缩略图hasthumb为0，否则使用小图作为原图
+                if(!DB::result_first("select path from %t where rid = %s and thumbsign = %d",array('thumb_record',$rid,1))){
+                    if($resourcesdata['download'] && in_array($resourcesdata['ext'],explode(',',getglobal('config/pichomecommimageext')))){
+                        $origithumbparams['hasthumb'] = 0;
+                    }else{
+                        $origithumbparams['thumbsign'] = 0;
+                    }
                 }
-
             }
         }
         //缩略图地址

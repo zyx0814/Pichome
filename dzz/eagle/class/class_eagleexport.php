@@ -81,7 +81,7 @@ class eagleexport
 
         //目录数据
         $folderdata = $appdatas['folders'];
-        $efids = C::t('#eagle#eagle_folderrecord')->insert_folderdata_by_appid($this->appid, $folderdata,$this->defaultperm);
+        $efids = C::t('#eagle#eagle_folderrecord')->insert_folderdata_by_appid($this->appid, $folderdata);
         $delids = [];
         foreach(DB::fetch_all("select id from %t where efid not in(%n) and appid = %s",array('eagle_folderrecord',$efids,$this->appid)) as $delid){
             $delids[] = $delid['id'];

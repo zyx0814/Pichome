@@ -34,7 +34,7 @@ if ($locked) {
     exit(json_encode( array('error'=>'进程已被锁定请稍后再试')));
 }
 //查询符合执行条件的数据
-$datas = DB::fetch_all("select r.rid,r.thumbdonum,v.path from %t r left join %t v on r.appid = v.appid where r.hasthumb < 1 and r.appid in(%n) and r.thumbdotime < v.dateline
+$datas = DB::fetch_all("select r.rid,r.ext,r.thumbdonum,v.path from %t r left join %t v on r.appid = v.appid where r.hasthumb < 1 and r.appid in(%n) and r.thumbdotime < v.dateline
 order by r.thumbdonum asc limit $start,$limit",array('pichome_resources','pichome_vapp',$appids));
 /*//查询符合执行条件的数据
 $datas = DB::fetch_all("select r.rid,r.thumbdonum from %t r left join %t v on r.appid = v.appid where r.hasthumb < 1 and r.appid in(%n) 
@@ -52,11 +52,27 @@ if($datas){
 
         }
         if($bz == 'dzz') $did = 1;
+        $imagestatus = 0;
+
         //获取导入记录表基本数据
         if(!is_numeric($did) || $did < 2){
-            $imagestatus =  DB::result_first("select imagestatus from %t where bz = %s",array('connect_storage','dzz'));
+            $status =  DB::fetch_first("select * from %t where bz = %s",array('connect_storage','dzz'));
+            if(in_array($v['ext'],explode(',',getglobal('config/pichomeffmpeggetthumbext')))){
+                $imagestatus = $status['mediastatus'];
+            }elseif(in_array($v['ext'],explode(',',getglobal('config/onlyofficeviewextlimit')))){
+                $imagestatus = $status['docstatus'];
+            }else{
+                $imagestatus = $status['imagestatus'];
+            }
         }else{
-            $imagestatus =  DB::result_first("select imagestatus from %t where id = %d",array('connect_storage',$did));
+            $status =  DB::fetch_first("select * from %t where id = %d",array('connect_storage',$did));
+            if(in_array($v['ext'],explode(',', getglobal('config/qcosmedia')))){
+                $imagestatus = $status['mediastatus'];
+            }elseif(in_array($v['ext'],explode(',',getglobal('config/qcosoffice')))){
+                $imagestatus = $status['docstatus'];
+            }else{
+                $imagestatus = $status['imagestatus'];
+            }
         }
         if(!$imagestatus){
             C::t('pichome_resources')->update($v['rid'],array('thumbdonum'=>intval($v['thumbdonum'])+1,'thumbdotime'=>TIMESTAMP));
