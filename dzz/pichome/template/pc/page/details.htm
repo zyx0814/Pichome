@@ -340,6 +340,7 @@
 		el: '#dzzoffice',
 		data() {
 			return {
+				DocumentBack:true,
 				DocumentAdminId:'$_G[adminid]',
 				rid:'',
 				HtmlLoading:true,
@@ -756,6 +757,7 @@
 			},
 			handleCarouselArrow(type){//图片箭头
 				var self = this;
+				this.DocumentBack = false;
 				if(type == 'left'){
 					if(this.ImgParam.index == 1){
 						self.$message.error('已经是第一张了！');
@@ -1197,6 +1199,21 @@
 				self.ImgParam.iswait = false;
 				self.HtmlLoading = false;
 			});
+			<!--{else}-->
+			window.onhashchange = function(){
+				if(self.DocumentBack){
+					var arr = (location.hash || "").replace(/^\?/,'').split("&");
+					
+					if(arr.length){
+						path=arr[0].replace("#","").split('=')[1];
+						var index = self.rids.indexOf(path);
+						sessionStorage.setItem('detailrid',index);
+					}
+					document.location.reload();
+					return false;
+				}
+				self.DocumentBack = true;
+			}
 			<!--{/if}-->
 		
 		},
