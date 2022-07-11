@@ -107,12 +107,7 @@ class table_pichome_folder extends dzz_table
 
     public function fetch_all_folder_by_appid($appid,$pfid='',$i=1){
         if($i>5) return [];
-        if(!$pfid) {
-            $pfidwhere = "and (pfid = %s or pfid = 0) ";
-        }else{
-            $pfidwhere = "and pfid = %s ";
-        }
-        foreach(DB::fetch_all("select fid,fname,pathkey,pfid from %t where appid = %s and password = '' $pfidwhere",array($this->_table,$appid,$pfid)) as $v){
+        foreach(DB::fetch_all("select fid,fname,pathkey,pfid from %t where appid = %s and password = '' and pfid = %s",array($this->_table,$appid,$pfid)) as $v){
             $v['level'] = $i;
             $j = $i+1;
             $v['children'] = $this->fetch_all_folder_by_appid($appid,$v['fid'],$j);
@@ -134,8 +129,7 @@ class table_pichome_folder extends dzz_table
 
             }
         }else{
-
-            foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid = '' order by disp asc",array($this->_table,$appid)) as $v){
+            foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum from %t where appid = %s and pfid = ''  order by disp asc",array($this->_table,$appid)) as $v){
                 $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
                     left join %t f on fr.fid = f.fid
                     where fr.appid = %s and f.pathkey  like %s",array('pichome_folderresources','pichome_folder',$appid,$v['pathkey'].'%'));
