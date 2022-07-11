@@ -42,11 +42,11 @@ order by r.thumbdonum asc limit $start,$limit",array('pichome_resources','pichom
 
 if($datas){
     foreach($datas as $v){
-        if(strpos($data['path'],':') === false){
+        if(strpos($v['path'],':') === false){
             $bz = 'dzz';
             $did = 1;
         }else{
-            $patharr = explode(':', $data['path']);
+            $patharr = explode(':', $v['path']);
             $bz = $patharr[0];
             $did = $patharr[1];
 
