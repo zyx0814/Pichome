@@ -1433,7 +1433,7 @@ CREATE TABLE `dzz_thumb_record` (
   `waterstatus` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '0无水印，其他值水印位置',
   `dateline` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '时间',
   `thumbstatus` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0未生成，1已生成，-1生成失败',
-  `path` char(150) NOT NULL DEFAULT '' COMMENT '路径',
+  `path` varchar(255) NOT NULL DEFAULT '' COMMENT '路径',
   `times` int(11) UNSIGNED NOT NULL DEFAULT '0',
   `thumbdonum` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '生成次数',
   `thumbsign` smallint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '缩略图标致0.small,1large',
