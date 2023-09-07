@@ -53,7 +53,7 @@ class imageColor{
             return '';
         }
         try{
-            $palette=new ImagePalette( $img,1,10,$setting['lib'],$this->palette);
+            $palette=new ImagePalette( $img,1,10,$lib,$this->palette);
             $palettes=$palette->palette;
         }
         catch(\Exception $e){
