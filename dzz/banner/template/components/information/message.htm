@@ -1,0 +1,400 @@
+<div class="information-box"> 
+    <div class="w1440" style="position: relative;margin-top: 0;">
+        <div class="message-header">
+            <div class="img-box">
+                <el-image :class="'image_'+bannerData.icotype" :src="bannerData.icon" fit="cover" >
+                    <template #error><div class="el-image__placeholder" style="background: #FFFFFF;"></div></template>
+                    <template #placeholder><div class="el-image__placeholder" style="background: #FFFFFF;"></div></template>
+                </el-image>
+            </div>
+            <div class="descriptions" style="--el-fill-color-blank: #F7F7F7;">
+                <!-- <el-descriptions 
+                    :title="bannerData.title"
+                    size="large"
+                    :column="2">
+                    <el-descriptions-item v-for="item in bannerData.fileds" :label="item.name+':'" style="background: transparent;">
+                        {{ item.value }}
+                    </el-descriptions-item>
+                </el-descriptions> -->
+                <div class="header-title">{{ bannerData.title }}</div>
+                <ul>
+                    <li v-for="item in bannerData.fileds">
+                        <div class="title">
+                            <el-text tag="b" style="color: inherit;">{{ item.name }}:</el-text>
+                        </div>
+                        <div class="content">
+                            <template v-if="item.type == 'timerange' || item.type == 'multiselect'">
+                                <span class="el-text" style="margin-right: 10px;" v-for="txt in item.value">{{ txt }}</span>
+                            </template>
+                            <template v-else>
+                                <span class="el-text">{{ item.value }}</span>
+                            </template>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+        </div>
+        <div class="menu-box">
+            <el-menu
+                :default-active="bannerData.banneractive"
+                mode="horizontal"
+                @select="handleBannerSelect">
+                <el-menu-item 
+                    v-for="(item,key) in bannerData.banner" 
+                    :index="key">
+                    {{ item.name }}（{{ item.num }}）
+                </el-menu-item>
+            </el-menu>
+            <el-input
+                v-model="tabkeyword"
+                @keyup.enter.native="TabinputKeyWord">
+                <template #suffix>
+					<el-icon v-if="tabkeyword" @click="TabinputKeyWordClear" class="el-input__icon el-input__clear"><Close-Bold /></el-icon>
+					<el-icon v-else @click="TabinputKeyWord" class="el-input__icon"><Search /></el-icon>
+				</template>
+            </el-input>
+        </div>
+    </div>
+    <div class="w1440"  style="position: relative;" v-if="bannerData.banneractive == 'all' || bannerData.banneractive == 'search'">
+        <div class="tag-box">
+            <template v-for="tag in bannerData.tags">
+                <el-check-tag :checked="tagactive == tag.tid" style="margin-left: 12px;font-weight: 500;" disable-transitions @change="tagserach(tag)">
+                    {{ tag.tagname }}（{{tag.num}}）
+                </el-check-tag>
+            </template>
+            
+        </div>
+    </div>
+    <template v-if="bannerData.banneractive == 'all'">
+        <div class="w1440" style="position: relative;">
+            <template v-for="item in bannerData.AllData">
+                <div v-if="item.data.length" class="layout-box">
+                    <div class="top-header">
+                        <el-text tag="b" size="large">{{ item.name }}：</el-text>
+                        <el-button plain @click="handleBannerSelect(item.flag)">
+                            更多<el-icon><Arrow-Right /></el-icon>
+                        </el-button>
+                    </div>
+                    <Image-Layoutlimit
+                        v-if="!item.loading"
+                        :windowresize="false"
+                        :data="item.data"
+                        :layout="item.layout"
+                        :rows="1"
+                        :isshow="{name:true}">
+                    </Image-Layoutlimit>
+                </div>
+            </template>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'image'">
+        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+            <el-dropdown @command="handleLayoutType">
+                <el-button text style="outline: none;">
+                    <template v-if="bannerData.banner.image.layout=='waterFall'">瀑布流</template>
+                    <template v-else-if="bannerData.banner.image.layout=='rowGrid'">自适应</template>
+                    <template v-else-if="bannerData.banner.image.layout=='imageList'">网格</template>
+                    <template v-else>列表</template>
+                    <el-icon class="el-icon--right">
+                        <arrow-down />
+                    </el-icon>    
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item 
+                            command="waterFall"
+                            :style="{color:bannerData.banner.image.layout=='waterFall'?'var(--el-color-primary)':''}">
+                            <el-icon><Check v-if="bannerData.banner.image.layout=='waterFall'" /></el-icon>
+                            瀑布流
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.image.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                            command="rowGrid">
+                            <el-icon><Check v-if="bannerData.banner.image.layout=='rowGrid'" /></el-icon>
+                            自适应
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.image.layout=='imageList'?'var(--el-color-primary)':''}"
+                            command="imageList">
+                            <el-icon><Check v-if="bannerData.banner.image.layout=='imageList'" /></el-icon>
+                            网格
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.image.layout=='tabodd'?'var(--el-color-primary)':''}"
+                            command="tabodd">
+                            <el-icon><Check v-if="bannerData.banner.image.layout=='tabodd'" /></el-icon>
+                            列表
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </div>
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutimage"
+                :props="{click:true}"
+                @returnparam="Imagereturnparam"
+                :layout="bannerData.banner.image.layout"
+                :windowresize="false"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'video'">
+        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+            <el-dropdown @command="handleLayoutType">
+                <el-button text style="outline: none;">
+                    <template v-if="bannerData.banner.video.layout=='waterFall'">瀑布流</template>
+                    <template v-else-if="bannerData.banner.video.layout=='rowGrid'">自适应</template>
+                    <template v-else-if="bannerData.banner.video.layout=='imageList'">网格</template>
+                    <template v-else>列表</template>
+                    <el-icon class="el-icon--right">
+                        <arrow-down />
+                    </el-icon>    
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item 
+                            command="waterFall"
+                            :style="{color:bannerData.banner.video.layout=='waterFall'?'var(--el-color-primary)':''}">
+                            <el-icon><Check v-if="bannerData.banner.video.layout=='waterFall'" /></el-icon>
+                            瀑布流
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.video.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                            command="rowGrid">
+                            <el-icon><Check v-if="bannerData.banner.video.layout=='rowGrid'" /></el-icon>
+                            自适应
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.video.layout=='imageList'?'var(--el-color-primary)':''}"
+                            command="imageList">
+                            <el-icon><Check v-if="bannerData.banner.video.layout=='imageList'" /></el-icon>
+                            网格
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.video.layout=='tabodd'?'var(--el-color-primary)':''}"
+                            command="tabodd">
+                            <el-icon><Check v-if="bannerData.banner.video.layout=='tabodd'" /></el-icon>
+                            列表
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+
+        </div>
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutvideo"
+                :props="{click:true}"
+                @returnparam="Imagereturnparam"
+                :layout="bannerData.banner.video.layout"
+                :windowresize="false"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'audio'">
+        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+            <el-dropdown @command="handleLayoutType">
+                <el-button text style="outline: none;">
+                    <template v-if="bannerData.banner.audio.layout=='waterFall'">瀑布流</template>
+                    <template v-else-if="bannerData.banner.audio.layout=='rowGrid'">自适应</template>
+                    <template v-else-if="bannerData.banner.audio.layout=='imageList'">网格</template>
+                    <template v-else>列表</template>
+                    <el-icon class="el-icon--right">
+                        <arrow-down />
+                    </el-icon>    
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item 
+                            command="waterFall"
+                            :style="{color:bannerData.banner.audio.layout=='waterFall'?'var(--el-color-primary)':''}">
+                            <el-icon><Check v-if="bannerData.banner.audio.layout=='waterFall'" /></el-icon>
+                            瀑布流
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.audio.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                            command="rowGrid">
+                            <el-icon><Check v-if="bannerData.banner.audio.layout=='rowGrid'" /></el-icon>
+                            自适应
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.audio.layout=='imageList'?'var(--el-color-primary)':''}"
+                            command="imageList">
+                            <el-icon><Check v-if="bannerData.banner.audio.layout=='imageList'" /></el-icon>
+                            网格
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.audio.layout=='tabodd'?'var(--el-color-primary)':''}"
+                            command="tabodd">
+                            <el-icon><Check v-if="bannerData.banner.audio.layout=='tabodd'" /></el-icon>
+                            列表
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </div>
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutaudio"
+                :props="{click:true}"
+                @returnparam="Imagereturnparam"
+                :layout="bannerData.banner.audio.layout"
+                :windowresize="false"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'document'">
+        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+            <el-dropdown @command="handleLayoutType">
+                <el-button text style="outline: none;">
+                    <template v-if="bannerData.banner.document.layout=='waterFall'">瀑布流</template>
+                    <template v-else-if="bannerData.banner.document.layout=='rowGrid'">自适应</template>
+                    <template v-else-if="bannerData.banner.document.layout=='imageList'">网格</template>
+                    <template v-else>列表</template>
+                    <el-icon class="el-icon--right">
+                        <arrow-down />
+                    </el-icon>    
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item 
+                            command="waterFall"
+                            :style="{color:bannerData.banner.document.layout=='waterFall'?'var(--el-color-primary)':''}">
+                            <el-icon><Check v-if="bannerData.banner.document.layout=='waterFall'" /></el-icon>
+                            瀑布流
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.document.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                            command="rowGrid">
+                            <el-icon><Check v-if="bannerData.banner.document.layout=='rowGrid'" /></el-icon>
+                            自适应
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.document.layout=='imageList'?'var(--el-color-primary)':''}"
+                            command="imageList">
+                            <el-icon><Check v-if="bannerData.banner.document.layout=='imageList'" /></el-icon>
+                            网格
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.document.layout=='tabodd'?'var(--el-color-primary)':''}"
+                            command="tabodd">
+                            <el-icon><Check v-if="bannerData.banner.document.layout=='tabodd'" /></el-icon>
+                            列表
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+
+        </div>
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutdocument"
+                :props="{click:true}"
+                :layout="bannerData.banner.document.layout"
+                :windowresize="false"
+                @returnparam="Imagereturnparam"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'other'">
+        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+            <el-dropdown @command="handleLayoutType">
+                <el-button text style="outline: none;">
+                    <template v-if="bannerData.banner.other.layout=='waterFall'">瀑布流</template>
+                    <template v-else-if="bannerData.banner.other.layout=='rowGrid'">自适应</template>
+                    <template v-else-if="bannerData.banner.other.layout=='imageList'">网格</template>
+                    <template v-else>列表</template>
+                    <el-icon class="el-icon--right">
+                        <arrow-down />
+                    </el-icon>    
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item 
+                            command="waterFall"
+                            :style="{color:bannerData.banner.other.layout=='waterFall'?'var(--el-color-primary)':''}">
+                            <el-icon><Check v-if="bannerData.banner.other.layout=='waterFall'" /></el-icon>
+                            瀑布流
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.other.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                            command="rowGrid">
+                            <el-icon><Check v-if="bannerData.banner.other.layout=='rowGrid'" /></el-icon>
+                            自适应
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.other.layout=='imageList'?'var(--el-color-primary)':''}"
+                            command="imageList">
+                            <el-icon><Check v-if="bannerData.banner.other.layout=='imageList'" /></el-icon>
+                            网格
+                        </el-dropdown-item>
+                        <el-dropdown-item 
+                            :style="{color:bannerData.banner.other.layout=='tabodd'?'var(--el-color-primary)':''}"
+                            command="tabodd">
+                            <el-icon><Check v-if="bannerData.banner.other.layout=='tabodd'" /></el-icon>
+                            列表
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </div>
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutother"
+                :props="{click:true}"
+                @returnparam="Imagereturnparam"
+                :layout="bannerData.banner.other.layout"
+                :windowresize="false"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+    <template v-else-if="bannerData.banneractive == 'search'">
+        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+            <Image-Layout
+                ref="RefImageLayoutsearch"
+                :props="{click:true}"
+                layout="imageList"
+                :windowresize="false"
+                @returnparam="Imagereturnparam"
+                :urlparam="bannerData.ImageLayout.urlparam"
+                @click="ImageDetails"
+                :showmessage="bannerData.ImageLayout.showmessage"
+                :url="bannerData.ImageLayout.url"
+                :scrollref="scrollref"
+                :parentbox="bannerData.ImageLayout.parentbox">
+            </Image-Layout>
+        </div>
+    </template>
+</div>

@@ -17,7 +17,7 @@ class eagleexport
     private $filenum = 0;//总文件数
     private $checkpage = 1;
     private $checklimit = 1000;
-    private $onceexportnum = 1000;
+    private $onceexportnum = 100;
     private $checknum = 0;
     private $eagledir = DZZ_ROOT . 'library';
     private $readtxt = DZZ_ROOT . './data/attachment/cache/';
@@ -26,29 +26,42 @@ class eagleexport
     private $lastid = '';
     private $defaultperm = 0;
     private $iscloud = false;
-
+    private $processname = '';
+    public $palette = [
+        0xfff8e1,0xf57c00,0xffd740,0xb3e5fc,0x607d8b,0xd7ccc8,
+        0xff80ab,0x4e342e,0x9e9e9e,0x66bb6a,0xaed581,0x18ffff,
+        0xffe0b2,0xc2185b,0x00bfa5,0x00e676,0x0277bd,0x26c6da,
+        0x7c4dff,0xea80fc,0x512da8,0x7986cb,0x00e5ff,0x0288d1,
+        0x69f0ae,0x3949ab,0x8e24aa,0x40c4ff,0xdd2c00,0x283593,
+        0xaeea00,0xffa726,0xd84315,0x82b1ff,0xab47bc,0xd4e157,
+        0xb71c1c,0x880e4f,0x00897b,0x689f38,0x212121,0xffff00,
+        0x827717,0x8bc34a,0xe0f7fa,0x304ffe,0xd500f9,0xec407a,
+        0x6200ea,0xffab00,0xafb42b,0x6a1b9a,0x616161,0x8d6e63,
+        0x80cbc4,0x8c9eff,0xffeb3b,0xffe57f,0xfff59d,0xff7043,
+        0x1976d2,0x5c6bc0,0x64dd17,0xffd600
+    ];
     public function __construct($data = array())
     {
-        //获取导入记录表基本数据
-        if(strpos($data['path'],':') === false){
+        if (strpos($data['path'], ':') === false) {
             $bz = 'dzz';
             $did = 1;
-        }else{
+        } else {
             $patharr = explode(':', $data['path']);
             $bz = $patharr[0];
             $did = $patharr[1];
 
         }
-        if($bz == 'dzz') $did = 1;
-        //获取导入记录表基本数据
-        if(!is_numeric($did) || $did < 2){
+        if ($bz == 'dzz') $did = 1;
+        if (!is_numeric($did) || $did < 2) {
             $this->path = str_replace('/', BS, $data['path']);
             $this->path = str_replace('dzz::', '', $data['path']);
-        }else{
+        } else {
             $this->iscloud = true;
             $this->path = $data['path'];
         }
         $this->appid = $data['appid'];
+        $this->processname = 'PICHOMEVAPPISDEL_'.$data['appid'];
+
         $this->uid = $data['uid'];
         $this->username = $data['username'];
         $this->exportstatus = $data['state'];
@@ -74,6 +87,7 @@ class eagleexport
 
     public function initFoldertag()
     {
+        if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
         $jsonfile = ($this->iscloud) ? $this->path.'/metadata.json':$this->path . BS . 'metadata.json';
         $appdatas = file_get_contents(IO::getStream($jsonfile));
         //解析出json数据
@@ -81,7 +95,7 @@ class eagleexport
 
         //目录数据
         $folderdata = $appdatas['folders'];
-        $efids = C::t('#eagle#eagle_folderrecord')->insert_folderdata_by_appid($this->appid, $folderdata);
+        $efids = C::t('#eagle#eagle_folderrecord')->insert_folderdata_by_appid($this->appid, $folderdata,$this->defaultperm);
         $delids = [];
         foreach(DB::fetch_all("select id from %t where efid not in(%n) and appid = %s",array('eagle_folderrecord',$efids,$this->appid)) as $delid){
             $delids[] = $delid['id'];
@@ -133,14 +147,15 @@ class eagleexport
     }
     //读取云存储数据
     public function readcloudDirdata($thandle,$path,  $nextmarker = '',$by = 'time',$order = 'DESC', $limit = 1000, $force = 0){
-        $prepatharr = explode('/',$path);
-        unset($prepatharr[0]);
-        $prepath = implode('/',$prepatharr);
+        $prepatharr = explode(':',$path);
+
+        $prepath = $prepatharr[2];
         $returndata = IO::getFolderlist($path,$nextmarker,$by,$order,$limit,$force);
         if($returndata['error']){
             return array('error'=>$returndata['error']);
         }else{
             foreach($returndata['folder'] as $v){
+                if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
                 $v = str_replace($prepath,'',$v);
                 $v = trim($v,'/');
                 if(IO::checkfileexists($this->path.'/images/'.$v.'/metadata.json')){
@@ -160,6 +175,7 @@ class eagleexport
     public function readLocalDirdata($thandle,$path){
         if ($dch = opendir($path)) {
             while (($file = readdir($dch)) != false) {
+                if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
                 if ($file != '.' && $file != '..') {
                     $filePath = $path . '/' . $file;
                     if (is_dir($filePath) && IO::checkfileexists($filePath . '/metadata.json')) {
@@ -202,13 +218,13 @@ class eagleexport
         $readtxt = $this->readtxt . 'eagleexport' . md5($this->path) . '.txt';
         //如果导入时没有记录文件
         if(!is_file($readtxt)){
-            $readdata =  $this->createReadTxt($readtxt);
+           $readdata =  $this->createReadTxt($readtxt);
         }else{
             //如果有记录文件，则对比记录文件生成时间和metadata.json时间,如果记录时间小于metadata.json时间重新生成记录文件
             $metapath =  ($this->iscloud) ? $this->path . '/metadata.json':$this->path . BS . 'metadata.json';
             $metadatainfo = IO::getMeta($metapath);
             if(filemtime($readtxt) < $metadatainfo['dateline']){
-                $readdata =  $this->createReadTxt($readtxt);
+               $readdata =  $this->createReadTxt($readtxt);
             }else{
                 $this->initFoldertag();
                 C::t('pichome_vapp')->update($this->appid, array('state' => 2));
@@ -272,6 +288,7 @@ class eagleexport
         if ($this->lastid < $this->filenum && $this->exportstatus == 2) {
             $i = 0;
             while (is_file($readtxt) && !$spl_object->eof()) {
+                if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
                 $i++;
                 if ($i > $this->onceexportnum) {
                     break;
@@ -309,6 +326,7 @@ class eagleexport
                     $flastdate = $metadatajsonfileinfo['dateline'];
                     $metadata = file_get_contents(IO::getStream($metadatajsonfile));
                     $filemetadata = json_decode($metadata, true);
+
                     //如果是删除状态，并且已有数据则执行删除
                     if ($filemetadata['isDeleted']) {
                         if($rid)C::t('pichome_resources')->delete_by_rid($rid);
@@ -328,10 +346,13 @@ class eagleexport
                                 $file = ($this->iscloud) ? $tmppath .'/'. $filename:$tmppath . BS . $filename;
                                 //缩略图路径
                                 $thumbfile = ($this->iscloud) ? $tmppath .'/'. $thumbname:$tmppath . BS . $thumbname;
-                                $realfids = [];
+                                $realfolderdata = [];
                                 if(!empty($filemetadata['folders'])){
-                                    $realfids = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
+                                    $realfolderdata = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
                                 }
+                                $currentperm  = (!empty($realfolderdata)) ? max($realfolderdata):$this->defaultperm;
+                                $realfids = array_keys($realfolderdata);
+
                                 $haspassword = false;
                                 if(!empty($realfids)){
                                     //如果目录含有密码则不导入数据直接跳过
@@ -354,12 +375,13 @@ class eagleexport
                                         $filemetadata['dateline'] = $filemetadata['lastModified'];
                                         $filemetadata['lastdate'] = $flastdate;
                                         $filemetadata['folders'] = $realfids;
+                                        $filemetadata['level'] = $currentperm;
                                         $this->exportfile($id,$filemetadata);
                                         unset($filemetadata);
                                     }
                                     else {
                                         //信息表数据记录
-                                        $setarr = [];
+                                        $setarr = ['appid'=>$this->appid];
                                         $setarr['searchval'] = $filemetadata['name'];
                                         //查询原数据中的属性信息
                                         $attrdata = C::t('pichome_resources_attr')->fetch($rid);
@@ -374,6 +396,8 @@ class eagleexport
                                             'width' => $filemetadata['width'] ? $filemetadata['width'] : 0,
                                             'height' => $filemetadata['height'] ? $filemetadata['height'] : 0,
                                             'appid'=>$this->appid,
+                                            'level'=>$currentperm,
+                                            'fids'=>implode(',',$realfids)
                                         ];
 
 
@@ -386,16 +410,21 @@ class eagleexport
                                         $resourcesarr['hasthumb'] = $thumb;
                                         $resourcesarr['rid'] = $rid;
                                         if (C::t('#eagle#eagle_record')->insert_data($id, $resourcesarr)) {
-                                            if($resourcesarr['hasthumb']){
-                                                $thumbrecorddata = [
-                                                    'rid'=>$rid,
-                                                    'path'=>$thumbfile,
-                                                    'thumbsign'=>1,
-                                                    'thumbstatus'=>1,
-                                                    'ext'=>$filemetadata['ext']
-                                                ];
-                                                C::t('thumb_record')->insert($thumbrecorddata);
+                                            //缩略图数据
+                                          /*  $thumbrecorddata = [
+                                                'rid'=>$rid,
+                                                'ext'=>$filemetadata['ext']
+                                            ];
+                                            if($thumb){
+                                                $imgdata = @getimagesize($filemetadata['thumbfile']);
+                                                $swidth = isset($imgdata[0]) ? $imgdata[0] : 0;
+                                                $sheight = isset($imgdata[1]) ? $imgdata[1] : 0;
+                                                $thumbrecorddata['spath'] = $filemetadata['thumbfile'];
+                                                $thumbrecorddata['sstatus'] = 1;
+                                                $thumbrecorddata['swidth'] = $swidth;
+                                                $thumbrecorddata['sheight'] = $sheight;
                                             }
+                                            C::t('thumb_record')->insert_data($thumbrecorddata);*/
                                             //检查标签变化
                                             //标签数据
                                             $tags = $filemetadata['tags'];
@@ -494,11 +523,14 @@ class eagleexport
 
                         }
                         else {
-                            $realfids = [];
+                            $realfolderdata = [];
                             if(!empty($filemetadata['folders'])){
-                                $realfids = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
+                                $realfolderdata = C::t('#eagle#eagle_folderrecord')->fetch_fid_by_efid($filemetadata['folders'],$this->appid);
+
                             }
 
+                            $currentperm  = (!empty($realfolderdata)) ? max($realfolderdata):$this->defaultperm;
+                            $realfids = array_keys($realfolderdata);
                             if(!empty($realfids)){
                                 //如果目录含有密码则不导入数据直接跳过
                                 $haspassword = C::t('pichome_folder')->check_haspasswrod($realfids, $this->appid);
@@ -519,6 +551,7 @@ class eagleexport
                                 unset($file);
                                 $filemetadata['thumbfile'] = $thumbfile;
                                 $filemetadata['folders'] = $realfids;
+                                $filemetadata['level'] = $currentperm;
                                 unset($thumbfile);
                                 $filemetadata['rid'] = $this->createrid();
                                 $filemetadata['mtime'] = $filemetadata['mtime'] ? $filemetadata['mtime'] : $filemetadata['modificationTime'];
@@ -599,7 +632,7 @@ class eagleexport
             return true;
         }
         foreach ($data as $v) {
-
+            if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
             if ($v['isdelete']) {
                 $delrids[] = $v['rid'];
             } else {
@@ -644,7 +677,7 @@ class eagleexport
         if (!IO::checkfileexists($filemetadata['file'])) {
             return;
         }
-
+        if(dzz_process::getlocked($this->processname)) exit('vapp isdeleted');
         //$filemetadata['file'] = ($this->iscloud) ?  str_replace(BS, '/', $filemetadata['file']):str_replace('/', BS, $filemetadata['file']);
         $attachment = ($this->iscloud) ? str_replace(BS, '/', $filemetadata['file']):str_replace('/', BS, $filemetadata['file']);
         $path = ($this->iscloud) ? str_replace($this->path .'/', '', $attachment):str_replace($this->path . BS, '', $attachment);
@@ -670,20 +703,26 @@ class eagleexport
             'grade' => $filemetadata['star'] ? intval($filemetadata['star']) : 0,
             'type' => $type,
             'lastdate' => $filemetadata['lastdate'],
+            'fids'=>implode(',',$filemetadata['folders']),
+            'level'=>$filemetadata['level']
         ];
         unset($type);
         //插入文件表数据
         if (C::t('#eagle#eagle_record')->insert_data($id,$resourcesarr)) {
+          /*  $thumbrecorddata = [
+                'rid'=>$rid,
+                'ext'=>$filemetadata['ext']
+            ];
             if($resourcesarr['hasthumb']){
-                $thumbrecorddata = [
-                    'rid'=>$rid,
-                    'path'=>$filemetadata['thumbfile'],
-                    'thumbsign'=>1,
-                    'thumbstatus'=>1,
-                    'ext'=>$filemetadata['ext']
-                ];
-                C::t('thumb_record')->insert($thumbrecorddata);
+                $imgdata = @getimagesize($filemetadata['thumbfile']);
+                $swidth = isset($imgdata[0]) ? $imgdata[0] : 0;
+                $sheight = isset($imgdata[1]) ? $imgdata[1] : 0;
+                $thumbrecorddata['spath'] = $filemetadata['thumbfile'];
+                $thumbrecorddata['sstatus'] = 1;
+                $thumbrecorddata['swidth'] = $swidth;
+                $thumbrecorddata['sheight'] = $sheight;
             }
+            C::t('thumb_record')->insert_data($thumbrecorddata);*/
             DB::delete('pichome_folderresources', array('rid' => $rid));
             //获取属性表数据
             $setarr = [];
@@ -787,30 +826,60 @@ class eagleexport
     public function getColor($colors, $width, $height, $rid)
     {
         //echo '颜色处理前:'.memory_get_usage()/1024 . '<br>';
-        $intcolorsarr = $returndata = [];
+        $intcolorsarr = $palettesnum = $returndata = [];
         $i = 1;
         foreach ($colors as $c) {
             $color = new \Color($c['color']);
             //获取颜色整型值
             $intcolor = $color->toInt();
-            $palattedataarr = ['rid' => $rid, 'color' => $intcolor, 'weight' => $c['ratio'], 'r' => $c['color'][0], 'g' => $c['color'][1], 'b' => $c['color'][2]];
             $intcolorsarr[] = $intcolor;
-            //echo "颜色处理中前 $i :".memory_get_usage()/1024 . '<br>';
+            $palettesnum[] = $p  = $this->getPaletteNumber($intcolor);
+            $palattedataarr = ['rid' => $rid, 'color' => $intcolor, 'weight' => $c['ratio'],
+                'r' => $c['color'][0], 'g' => $c['color'][1], 'b' => $c['color'][2],'p'=>$p];
             C::t('pichome_palette')->insert($palattedataarr);
-            //echo "颜色处理中后 $i :".memory_get_usage()/1024 . '<br>';
+
             $i++;
         }
         unset($colors);
         //颜色整型值数据
-        // $intcolorsarr= array_keys($palattedataarr);
-        $returndata['colors'] = implode(',', $intcolorsarr);
+        $returndata['colors'] = implode(',', $palettesnum);
         $returndata['gray'] = $this->isgray($intcolorsarr);
         $returndata['shape'] = round(($width / $height) * 100);
         unset($intcolorsarr);
-        //echo '颜色处理后缓存：'.memory_get_usage()/1024 . '<br>';
+
         return $returndata;
     }
+    public function getPaletteNumber($colors, $palette = array())
+    {
 
+        if (empty($palette)) $palette = $this->palette;
+        $arr = array();
+
+        if (is_array($colors)) {
+            $isarray = 1;
+        } else {
+            $colors = (array)$colors;
+            $isarray = 0;
+        }
+
+        foreach ($colors as $color) {
+            $bestColor = 0x000000;
+            $bestDiff = PHP_INT_MAX;
+            $color = new Color($color);
+            foreach ($palette as $key => $wlColor) {
+                // calculate difference (don't sqrt)
+                $diff = $color->getDiff($wlColor);
+                // see if we got a new best
+                if ($diff < $bestDiff) {
+                    $bestDiff = $diff;
+                    $bestColor = $wlColor;
+                }
+            }
+            unset($color);
+            $arr[] = array_search($bestColor, $palette);
+        }
+        return $isarray ? $arr : $arr[0];
+    }
     //添加标签
     public function addtag($tags)
     {

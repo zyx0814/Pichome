@@ -10,38 +10,51 @@ class info
 
     public function run($data)
     {
-        if(strpos($data['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $data['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $extra = unserialize($app['extra']);
 
-        }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-        if(!$data['ext'] || $bz != 'dzz' || !in_array($data['ext'],explode(',',getglobal('config/pichomeffmpeggetvieoinfoext')))){
+
+        if (!$extra['status']) {
             return '';
         }
-        $videostatus = DB::result_first('select mediastatus from %t where bz = %s',array('connect_storage',$bz));
-        if(!$videostatus) return '';
-        require_once DZZ_ROOT . './dzz/ffmpeg/class/class_fmpeg.php';
-        try {
-            if ($info = fmpeg::getInfo($data)) {
 
-                if (isset($info['duration'])) C::t('pichome_resources_attr')->update($data['rid'], array('duration' => $info['duration']));
-                if (isset($info['width'])) C::t('pichome_resources')->update($data['rid'], array('width' => $info['width'], 'height' => $info['height']));
-                C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
-                return false;
-            }else{
+        $exts = $extra['exts_info'] ? explode(',', $extra['exts_info']) : array();
+
+        //如果类型不符合则停止执行
+        if (!in_array($data['ext'], $exts)) return '';
+
+        //如果路径为数字视为pichome库
+        $cachepath = ($data['aid']) ? intval($data['aid']):($data['rid'] ? $data['rid'] :md5($data['path']));
+        if($infodata = C::t('ffmpegimage_cache')->fetch_by_path($cachepath)){
+            $info = unserialize($infodata);
+            if (isset($info['duration'])) C::t('pichome_resources_attr')->update($data['rid'], array('duration' => $info['duration']));
+            if (isset($info['width'])) C::t('pichome_resources')->update($data['rid'], array('width' => $info['width'], 'height' => $info['height']));
+            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
+            return false;
+        }else{
+            require_once DZZ_ROOT . './dzz/ffmpeg/class/class_fmpeg.php';
+            try {
+                if ($info = fmpeg::getInfo($data)) {
+                    $cachearr = [
+                        'info'=>serialize($info),
+                        'path'=>$cachepath,
+                        'dateline'=>TIMESTAMP
+                    ];
+                    C::t('ffmpegimage_cache')->insert($cachearr);
+                    if (isset($info['duration'])) C::t('pichome_resources_attr')->update($data['rid'], array('duration' => $info['duration']));
+                    if (isset($info['width'])) C::t('pichome_resources')->update($data['rid'], array('width' => $info['width'], 'height' => $info['height']));
+                    C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
+                    return false;
+                }else{
+                    C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
+                }
+
+            } catch (\Exception $e) {
+                runlog('ffmpeg', $e->getMessage() . 'rid:' . $data['rid']);
                 C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
             }
-
-        } catch (\Exception $e) {
-            runlog('ffmpeg', $e->getMessage() . 'rid:' . $data['rid']);
-            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
         }
+
 
     }
 }

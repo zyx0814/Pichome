@@ -90,6 +90,7 @@ class dzz_session {
 				$this->delete();
 				$this->table->insert($this->var, false, false, true);
 			} else {
+
 				$this->table->update($this->var['sid'], $this->var);
 				$this->table->delete_by_session($this->newguest, getglobal('setting/onlinehold'), 60);
 			}
@@ -147,8 +148,10 @@ class dzz_session {
 	}
 
 	public static function updatesession() {
-		C::app()->session->update();
-		return true;
+        C::app()->session->update();
+        //刷新用户登录超时时间
+        C::t('admincp_session')->update($_G['member']['uid'], $_G['member']['groupid'], array('dateline' => TIMESTAMP, 'ip' => $_G['clientip'], 'errorcount' => -1));
+        return true;
 		static $updated = false;
 		if(!$updated) {
 			global $_G;
@@ -159,6 +162,7 @@ class dzz_session {
 					$ulastactivity = getuserprofile('lastactivity');
 					dsetcookie('ulastactivity', authcode($ulastactivity, 'ENCODE'), 31536000);
 				}
+
 			}
 			$oltimespan = $_G['setting']['oltimespan'];
 			$lastolupdate = C::app()->session->var['lastolupdate'];

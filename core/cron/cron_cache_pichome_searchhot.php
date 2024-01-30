@@ -7,10 +7,10 @@
     $percachename = 'pichome_searchhot';
     $alldata = C::t('pichome_searchrecent')->fetch_hotkeyword_by_appid();
     $setarr = ['cachekey'=>$percachename,'cachevalue'=>serialize($alldata),'dateline'=>time()];
-    C::t('cache')->insert($setarr);
-    foreach(DB::fetch_all("select  appid  from %t  where 1 ",array('pichome_vapp')) as $v){
+    C::t('cache')->insert_cachedata_by_cachename($setarr);
+    foreach(DB::fetch_all("select  appid  from %t  where isdelete < 1 ",array('pichome_vapp')) as $v){
         $tmpkey = $percachename.$v['appid'];
         $tmpdata = C::t('pichome_searchrecent')->fetch_hotkeyword_by_appid($v['appid']);
         $setarr = ['cachekey'=>$tmpkey,'cachevalue'=>serialize($tmpdata),'dateline'=>time()];
-        C::t('cache')->insert($setarr);
+        C::t('cache')->insert_cachedata_by_cachename($setarr);
     }

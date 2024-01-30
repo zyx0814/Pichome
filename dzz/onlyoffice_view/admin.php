@@ -20,10 +20,14 @@ if (!submitcheck('confirmsubmit')) {
 	if ( $_GET['app_key'] ) { 
 		$extra =$app['extra'];
 		$extra["DocumentUrl"]=$_GET['app_key'];
+		$extra["FileUrl"]=$_GET['fileurl']?trim($_GET['fileurl']):'';
+		$extra["exts"]=$_GET['exts']?trim($_GET['exts']):'';
+		$extra["secret"]=$_GET['secret']?trim($_GET['secret']):'';
+
 		C::t("app_market")->update($app['appid'],array("extra"=> serialize($extra))); 
 		showmessage('save_success', $_GET['refer']?$_GET['refer']:dreferer(), array(), array('alert' => 'right'));
 	} else {
-		showmessage('onlyoffice_view_url_setfailed');
+		showmessage('onlyoffice_url_setfailed');
 	}
 	exit();
 }

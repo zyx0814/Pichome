@@ -1,0 +1,625 @@
+<Image-Layout 
+	ref="RefImageLayout"
+	:layout="ImageProps.layout"
+	:props="ImageProps.operation"
+	:showmessage="ImageProps.ShowMessage"
+	url="{MOD_URL}&op=library&do=filelist&operation=filelist"
+	:urlparam="ImageProps.urlparam"
+	:hassub="hassub"
+	:filedata="filedata"
+	@dblclick="ImageDetails"
+	@click="ImageClick"
+	@dragselect="Imagedragselect"
+	@contextmenu="ImageContextmenu"
+	@returnparam="Imagereturnparam"
+	:scrollref="scrollref"
+	:screenshow="Screenshow">
+	<template v-slot:operation="{ data, active }">
+		<template  v-if="data.share || data.down">
+			<template v-if="ImageProps.layout=='rowGrid' || ImageProps.layout=='imageList' || ImageProps.layout=='waterFall'">
+				<div class="operation-box" @click.stop>
+					<el-dropdown @command="ImageOperationf" :teleported="false">
+						<span class="operation-btn">
+							<el-icon><More-Filled /></el-icon>
+						</span>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<el-dropdown-item 
+									v-if="data.share" 
+									:command="ImageOperationVal('share',data.dpath)">
+									<el-icon><Share /></el-icon>
+									分享
+								</el-dropdown-item>
+								<el-dropdown-item v-if="data.download" 
+									:command="ImageOperationVal('down',data.dpath)" 
+									class="circulars">
+									<el-icon><Download /></el-icon>
+									下载
+								</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
+				</div>
+			</template>
+			<template v-else>
+				<el-dropdown @command="ImageOperationf">
+					<el-button type="primary" :plain="active" style="margin-left: 12px;" icon="MoreFilled"></el-button>
+					<template #dropdown>
+						<el-dropdown-menu>
+							<el-dropdown-item 
+								v-if="data.share" 
+								:command="ImageOperationVal('share',data.dpath)">
+								<el-icon><Share /></el-icon>
+								分享
+							</el-dropdown-item>
+							<el-dropdown-item v-if="data.download" 
+								:command="ImageOperationVal('down',data.dpath)" 
+								class="circulars">
+								<el-icon><Download /></el-icon>
+								下载
+							</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+				</el-dropdown>
+				
+			</template>
+		</template>
+		
+        
+    </template>
+
+
+</Image-Layout>
+
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	trigger="click"
+	ref="ImageRightMenu"
+	:popper-style="{top: ImageMenu.top, left: ImageMenu.left}"
+    v-model:visible="ImageMenu.show"
+	width="auto"
+	:show-arrow="false">
+    <ul class="el-dropdown-menu">
+		<template v-if="DocumentVapp.type == 3 || DocumentVapp.type == 1">
+			<li 
+				class="el-dropdown-menu__item" 
+				v-show="ImageMenu.operation.cove"
+				@click.stop.native="ImageOperation('cover')">
+				<i class="el-icon">
+					<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" data-v-029747aa=""><path fill="currentColor" d="M160 160v704h704V160H160zm-32-64h768a32 32 0 0 1 32 32v768a32 32 0 0 1-32 32H128a32 32 0 0 1-32-32V128a32 32 0 0 1 32-32z"></path><path fill="currentColor" d="M384 288q64 0 64 64t-64 64q-64 0-64-64t64-64zM185.408 876.992l-50.816-38.912L350.72 556.032a96 96 0 0 1 134.592-17.856l1.856 1.472 122.88 99.136a32 32 0 0 0 44.992-4.864l216-269.888 49.92 39.936-215.808 269.824-.256.32a96 96 0 0 1-135.04 14.464l-122.88-99.072-.64-.512a32 32 0 0 0-44.8 5.952L185.408 876.992z"></path></svg>
+				</i>
+				设为文件夹封面
+			</li>
+			<li v-if="ImageMenu.operation.cove" class="el-dropdown-menu__item--divided"></li>
+		</template>
+		
+		<li
+			class="el-dropdown-menu__item" 
+			v-if="ImageMenu.operation.share && ImageMenu.data.share" 
+			@click.stop="ImageOperation('share')">
+			<el-icon><Share /></el-icon>
+			分享
+		</li>
+		<li
+			class="el-dropdown-menu__item" 
+			v-if="ImageMenu.operation.down && ImageMenu.data.download"
+			@click.stop="ImageOperation('down')">
+			<el-icon><Download /></el-icon>
+			下载
+		</li>
+		<li 
+			class="el-dropdown-menu__item" 
+			v-if="ImageMenu.operation.link"
+			@click.stop="ImageOperation('link')">
+			<el-icon>
+				<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" data-v-029747aa=""><path fill="currentColor" d="M715.648 625.152 670.4 579.904l90.496-90.56c75.008-74.944 85.12-186.368 22.656-248.896-62.528-62.464-173.952-52.352-248.96 22.656L444.16 353.6l-45.248-45.248 90.496-90.496c100.032-99.968 251.968-110.08 339.456-22.656 87.488 87.488 77.312 239.424-22.656 339.456l-90.496 90.496zm-90.496 90.496-90.496 90.496C434.624 906.112 282.688 916.224 195.2 828.8c-87.488-87.488-77.312-239.424 22.656-339.456l90.496-90.496 45.248 45.248-90.496 90.56c-75.008 74.944-85.12 186.368-22.656 248.896 62.528 62.464 173.952 52.352 248.96-22.656l90.496-90.496 45.248 45.248zm0-362.048 45.248 45.248L398.848 670.4 353.6 625.152 625.152 353.6z"></path></svg>
+			</el-icon>
+			链接
+		</li>
+		<li 
+			class="el-dropdown-menu__item" 
+			v-if="ImageMenu.operation.location"
+			@click.stop="ImageOperation('address')">
+			<el-icon><Location /></el-icon>
+			固定地址
+		</li>
+		<template v-if="DocumentVapp.type == 3">
+			<li class="el-dropdown-menu__item--divided" v-if="ImageMenu.operation.share || ImageMenu.operation.down || ImageMenu.operation.link || ImageMenu.operation.location" style="margin: 4px 0;"></li>
+			<li 
+				class="el-dropdown-menu__item" 
+				v-if="ImageMenu.operation.delfolder"
+				@click.stop="ImageOperation('folderdel')">
+				<el-icon><Remove /></el-icon>
+				从文件夹中移除
+			</li>
+			<li 
+				class="el-dropdown-menu__item" 
+				v-if="ImageMenu.operation.delete"
+				@click.stop="ImageOperation('delete')">
+				<el-icon><Milk-Tea /></el-icon>
+				丢到回收站
+			</li>
+			<li
+				class="el-dropdown-menu__item" 
+				v-if="ImageMenu.operation.reduction"
+				@click.stop="ImageOperation('reduction')">
+				<el-icon><Refresh-Right /></el-icon>
+				还原
+			</li>
+			<li
+				class="el-dropdown-menu__item" 
+				v-if="ImageMenu.operation.permanentDelete"
+				@click.stop="ImageOperation('permanentDelete')">
+				<el-icon><Delete /></el-icon>
+				永久删除
+			</li>
+		</template>
+		
+	</ul>
+	
+</el-popover>
+<script type="text/javascript">
+	var MixinImage = {
+		data(){
+			return {
+				recycleEmptying:false,
+				ImageProps:{
+					layout:'rowGrid',//rowGrid,imageList,waterFall
+					ShowMessage:{
+						display:[],
+                    	other:null
+					},
+					urlparam:{},
+					operation:{
+						click:true,//节点是否可被选择
+	                    dblclick:true,//节点是否可被双击选择
+	                    ctrl:true,//是否开启ctrl选中
+	                    shift:true,//是否开启shift选中
+	                    contextmenu:true,//是否开启右键
+	                    drap:true,//是否开启拖动选中
+						checked:true
+					}
+				},
+				ImageParam:{
+					checkedKdys:[]
+				},
+				ImageDataParam:{
+					data:[]
+				},
+				ImageDataIframe:null,
+				ImageMenu:{
+					show:false,
+					data:null,
+					left:0,
+					top:0,
+					operation:{
+						share:false,
+						cove:false,
+						link:false,
+						down:false,
+						location:false,
+						delfolder:false,
+						delete:false,
+						reduction:false,
+						permanentDelete:false
+					}
+				},
+				ImageIcon:{
+					time:'',
+					data:[]
+				},
+			}
+		},
+		methods:{
+			async ImageOperationf(data){
+				let self = this;
+				if(data.type == 'down'){
+					window.open(SITEURL+MOD_URL+'&op=download&dpath='+data.val);
+				}else if(data.type == 'share'){
+					let {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=createshare',{
+						path:data.val,
+					});
+					
+					if(res.success){
+						CopyTxt(self,res.success);
+					}else{
+						self.$message({
+							message: '分享失败',
+							type: 'error'
+						});
+					}
+				}
+			},
+			ImageOperationVal(type,val){
+				return {
+					type:type,
+					val:val
+				};
+			},
+			ImageContextmenu(data){//右键事件
+				const self = this;
+				this.DocumentHideAllPop();
+				let item = data.data;
+				let event = data.target;
+				if(this.fileMunu && this.fileMunu.show){
+					this.fileMunu.show = false;
+				}
+				if(this.LeftTreePopover && this.LeftTreePopover.show){
+					this.LeftTreePopover.show = false;
+				}
+				if(this.MainMenu && this.MainMenu.show){
+					this.MainMenu.show = false;
+				}
+				this.ImageMenu.operation = {
+					share:false,
+					cove:false,
+					link:false,
+					down:false,
+					location:false,
+					delfolder:false,
+					delete:false,
+					reduction:false,
+					permanentDelete:false
+				};
+				if(this.LeftCurrenType == 'recycle'){
+					var arr = ['share','down','reduction','permanentDelete'];
+					
+				}else if(this.LeftCurrenType == 'filelist'){
+					// if(self.RightActiveRid.length){
+					// 	var arr = ['delfolder','delete'];
+					// }else{
+						var arr = ['share','cove','down','location','delfolder','delete'];
+						if(item.link){
+							arr.push('link');
+						}
+					// }
+				}else{
+					// console.log(self.RightActiveRid);
+					// if(self.RightActiveRid.length){
+					// 	var arr = ['delete'];
+					// }else{
+						var arr = ['share','down','location','delete'];
+						if(item.link){
+							arr.push('link');
+						}
+					// }
+					
+				}
+				if(!item.download){
+					let findex = arr.findIndex(function(current){
+						return current == 'down';
+					});
+					arr.splice(findex,1);
+				}
+				if(!item.share){
+					let findex = arr.findIndex(function(current){
+						return current == 'share';
+					});
+					arr.splice(findex,1);
+				}
+				for(var i in this.ImageMenu.operation){
+					if(arr.indexOf(i)>-1){
+						this.ImageMenu.operation[i] = true;
+					}
+				}
+				
+				this.ImageMenu.data = item;
+				let status = this.RightActiveRid.length === data.checkedkeys.length && this.RightActiveRid.every((v, i) => v === data.checkedkeys[i]);
+				if(!status){
+					this.ImageClick({//单机事件
+						id:item.rid,
+						CheckedKeys:data.checkedkeys
+					});
+				}
+				
+				let menu = self.$refs.ImageRightMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+			
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				//给left和top分别赋值为鼠标的位置；
+				self.ImageMenu.left = evt.pageX+"px";
+				self.ImageMenu.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					self.ImageMenu.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					self.ImageMenu.top = top1+"px";
+				}
+				
+				self.$nextTick(function(){
+					self.ImageMenu.show = true;
+				});
+			},
+			Imagereturnparam(data){//列表加载完成返回得参数
+				let self = this;
+				this.ImageDataParam = data;
+				var arr = [];
+				for(var i in this.ImageDataParam.data){
+					let index = self.ImageIcon.data.findIndex(function(current){
+						return current == self.ImageDataParam.data[i].rid;
+					});
+					if(!this.ImageDataParam.data[i].icondata && index < 0){
+						self.ImageIcon.data.push(this.ImageDataParam.data[i].rid)
+					}
+					arr.push(this.ImageDataParam.data[i].dpath)
+				}
+
+				if(this.ImageDataIframe){
+					var params = this.CommonSetParam();
+					params['ispage'] = this.ImageDataParam.ismore;
+					params['page'] = this.ImageDataParam.page;
+					params['total'] = this.ImageDataParam.total;
+					params['totalpage'] = this.ImageDataParam.totalpage;
+					params['perpage'] = this.ImageDataParam.perpage;
+					params['moreurl'] = MOD_URL+'&op=library&do=filelist&operation=filelist';
+					this.ImageDataIframe.sessionStorage.setItem('imgparam',JSON.stringify(params));
+					
+					this.ImageDataIframe.sessionStorage.setItem('imgs',arr.join(','));
+				}else{
+					sessionStorage.setItem('imgs',arr.join(','));
+				}
+				this.ImageGetThumb();
+			},
+			ImagePageTurning(dpath){//详情翻页事件
+				const self = this;
+				self.$refs.RefImageLayout.SetScrollbarTop(dpath);
+				self.$refs.RefImageLayout.HandleElScrollbar();
+			},
+			ImageDetails(item){//双击事件
+				var arr = [];
+				for(var i in this.ImageDataParam.data){
+					arr.push(this.ImageDataParam.data[i].dpath)
+				}
+				let index = this.ImageDataParam.data.findIndex(function(current){
+					return current.dpath == item.dpath;
+				});
+				if(this.OpenDetailType == 'new' && this.ispc){
+					var params = this.CommonSetParam();
+					params['ispage'] = this.ImageDataParam.ismore;
+					params['page'] = this.ImageDataParam.page;
+					params['total'] = this.ImageDataParam.total;
+					params['totalpage'] = this.ImageDataParam.totalpage;
+					params['perpage'] = this.ImageDataParam.perpage;
+					params['moreurl'] = MOD_URL+'&op=library&do=filelist&operation=filelist';
+					this.ImageDataIframe = window.open('index.php?mod=details&isadmin=1#path='+item.dpath,'details');
+					this.ImageDataIframe.sessionStorage.setItem('imgparam',JSON.stringify(params));
+					this.ImageDataIframe.sessionStorage.setItem('imgs',arr.join(','));
+					this.ImageDataIframe.sessionStorage.setItem('selectindex',index);
+					this.ImageDataIframe.sessionStorage.setItem('href','{MOD_URL}&op=library&do=filelist#appid='+this.DocumentAppid);
+				}else{
+					sessionStorage.setItem('href','{MOD_URL}&op=library&do=filelist#appid='+this.DocumentAppid);
+					let div = document.createElement("div");
+                    div.className = 'Details-Iframe';
+                    let iframe = document.createElement("iframe");
+                    div.append(iframe);  
+					sessionStorage.setItem('selectindex',index);  
+                    iframe.src =  'index.php?mod=details&opentype=current&isadmin=1#path='+item.dpath;
+                    document.body.appendChild(div); 
+				}
+				window.removeEventListener('message', this.ImageDetailsMessage);
+				window.addEventListener('message', this.ImageDetailsMessage);
+			},
+			ImageDetailsMessage(event){
+		      	if (event.origin !== window.location.origin) {
+		        	return;
+		      	}
+		      	this.ImagePageTurning(event.data.dpath);
+			},
+			ImageClick({id,CheckedKeys}){//单击事件
+				const self = this;
+				if(this.LeftCurrenType == 'filelist'){
+					self.$refs.ImageFileRef.EmpytActivefid();
+				}
+				
+				if(CheckedKeys && !CheckedKeys.length){
+					this.Imagedragselect({
+						CheckedKeys:[]
+					})
+					return false;
+				}
+				this.ImageParam.checkedKdys = CheckedKeys;
+				if(this.RightActiveRid.length==1 && this.RightActiveRid[0] == id){
+					return false;
+				}
+				this.RightParamClean();
+				this.RightType = 'file';
+				this.RightActiveRid = CheckedKeys;
+				this.RightGetData();
+			},
+			Imagedragselect({CheckedKeys}){
+				if(CheckedKeys && CheckedKeys.length){
+					this.ImageParam.checkedKdys = CheckedKeys;
+					this.RightParamClean();
+					this.RightType = 'file';
+					this.RightActiveRid = CheckedKeys;
+					this.RightGetData();
+				}else{
+					if(this.RightType == 'folder' && this.RightActivefid.length && this.RightActivefid[0] == this.LeftTree.Currentkey)return false;
+					this.RightParamClean();
+					if(this.LeftCurrenType == 'filelist'){
+						this.RightType = 'folder';
+						this.RightActivefid = [this.LeftTree.Currentkey];
+					}else{
+						this.RightType = JSON.parse(JSON.stringify(this.LeftCurrenType));
+					}
+					this.RightGetData();
+				}
+				
+			},
+			async ImageOperation(type){
+				if(!this.ImageMenu.data){
+					return false;
+				}
+				this.ImageMenu.show = false;
+				var self = this;
+				switch(type){
+					case 'share'://分享
+						var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=createshare',{
+							path:this.ImageMenu.data.dpath,
+						});
+						
+						var data = res.data;
+						if(data.success){
+							CopyTxt(self,data.success);
+						}else{
+							self.$message({
+							  message: '分享失败',
+							  type: 'error'
+							});
+						}
+					break;
+					case 'cover'://设置封面
+						var res = await axios.post(MOD_URL+'&op=library&do=folder&operation=setfoldercover',{
+							fid:this.LeftTree.Currentkey,
+							rid:this.ImageMenu.data.rid
+						});
+						if(res.data.success){
+							self.$message({
+							  message: '设置封面成功',
+							  type: 'success'
+							});
+						}else{
+							self.$message({
+							  message: '设置封面失败',
+							  type: 'error'
+							});
+						}
+					break;
+					case 'down'://下载
+						window.open(SITEURL+MOD_URL+'&op=download&dpath='+this.ImageMenu.data.dpath);
+					break;
+					case 'link'://链接
+						var url = this.ImageMenu.data.link;
+						if(url.substring(0,8)=='https://' || url.substring(0,7)=='http://'){
+							window.open(url);
+						}else{
+							window.open('https://'+url);
+						}
+					break;
+					case 'address'://固定地址
+						var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=realfianllypath',{path:this.ImageMenu.data.dpath});
+						var data = res.data;
+						if(data.realfianllypath){
+							CopyTxt(self,data.realfianllypath);
+						}else{
+							self.$message({
+							  message: '获取固定地址失败',
+							  type: 'error'
+							});
+						}
+					break;
+					case 'folderdel'://将文件从目录中移除
+					case 'delete'://删除文件到回收站
+					case 'reduction'://恢复文件
+						var param = {}
+						var operation = '';
+						if(self.RightActiveRid.length){
+							param['rids'] = self.RightActiveRid.join(',')
+						}else{
+							param['rids'] = self.ImageMenu.data.rid
+						}
+						if(type == 'folderdel'){//将文件从目录中移除
+							param['fid'] = this.LeftTree.Currentkey;
+							operation = 'removefolder';
+						}else if(type == 'delete'){//删除文件到回收站
+							operation = 'deletefile';
+						}else if(type == 'reduction'){//恢复文件
+							operation = 'recoverfile';
+						}
+						var res = await axios.post(MOD_URL+'&op=library&do=recycle&operation='+operation,param);
+						
+						if(self.RightActiveRid.length){
+							self.$refs.RefImageLayout.DeleteData(self.RightActiveRid);
+							self.RightActiveRid = [];
+							self.Imagedragselect([]);
+						}else{
+							self.$refs.RefImageLayout.DeleteData(self.ImageMenu.data.rid);
+						}
+						self.LeftGetAllNum();
+					break;
+					case 'permanentDelete'://彻底删除
+						self.$messageBox.confirm(
+						'此操作无法恢复，确定永久删除吗?',
+						'永久删除',
+						{
+							confirmButtonText: '永久删除',
+							cancelButtonText: '取消',
+							type: 'warning',
+							icon:'QuestionFilled'
+						}).then(async () => {
+							if(self.RightActiveRid.length){
+								var param = {
+									rids:self.RightActiveRid.join(',')
+								}
+							}else{
+								var param = {
+									rids:self.ImageMenu.data.rid
+								}
+							}
+							var res = await axios.post(MOD_URL+'&op=library&do=recycle&operation=finallydel',param);
+							if(self.RightActiveRid.length){
+								self.$refs.RefImageLayout.DeleteData(self.RightActiveRid);
+								self.RightActiveRid = [];
+								self.Imagedragselect([]);
+							}else{
+
+								self.$refs.RefImageLayout.DeleteData(self.ImageMenu.data.rid);
+							}
+							self.LeftGetAllNum();
+						});
+					break;
+				}
+			},
+			async emptyRecycle(){//清空回收站
+				let self=this;
+				
+				self.main_scrollbar_loading=true;
+				self.recycleEmptying=true;
+				var res = await axios.post(MOD_URL+'&op=library&do=recycle&operation=emptyrecycle',{
+					appid:this.DocumentAppid,
+				});
+				self.recycleEmptying=false;
+				if(res.data.success){
+					try{self.$refs.RefImageLayout.EmptyData();}catch(e){};
+					self.LeftGetAllNum();
+				}
+				self.main_scrollbar_loading=false;
+			},
+			async ImageGetThumb(){
+				let self=this;
+				if(!this.ImageIcon.data.length || self.ImageIcon.time){
+					return false;
+				}
+				self.ImageIcon.time = setInterval(async function(){
+					let {data: res} = await axios.post('misc.php?mod=createthumb',{
+						rids:self.ImageIcon.data
+					});
+					for (const key in res.data) {
+						const element = res.data[key];
+						if(element){
+							let index = self.ImageIcon.data.findIndex(function(current){
+								return current == key;
+							});
+							self.ImageIcon.data.splice(index,1);
+							self.$refs.RefImageLayout.UpdateData(key,'icondata',element);
+						}
+					}
+					
+					if(!self.ImageIcon.data.length){
+						clearInterval(self.ImageIcon.time)
+					}
+				}, 12000);
+			}
+		},
+		mounted(){
+			var self = this;
+		}
+	};
+</script>

@@ -1,0 +1,177 @@
+<div 
+	class="detail-popup-content" 
+	v-for="item in showdata"
+	:class="{'prev':item.type=='left','next':item.type=='right','center':item.type=='center','opacity':item.loading}"
+	:key="item.data.opentype!='video'?item.data.rid+item.type:''"
+	:ref="'Detail_'+item.data.rid">
+	<template v-if="item.loading">
+		<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+	</template>
+	<template v-else>
+		<div class="detail-popup-img">
+			<template v-if="item.data.iniframe">
+				<div class="video-box" :style="{'height':item.data.fheight?item.data.fheight+'px':'100%'}">
+					<iframe
+						style="border: 0px;"
+						:src="item.data.iniframe" 
+						width="100%" 
+						height="100%"></iframe>
+				</div>
+			</template>
+			<template v-else>
+				<div class="img-box" :ref="'BoxImg_'+item.data.dpath+item.type">
+					<img :src="item.data.icondata" class="image-viewer__img thumbnail" />
+					<img
+						@load="MainImgload"
+						:data-rid="item.data.rid"
+						:src="item.data.originalimg"
+						class="image-viewer__img max opacity" />
+				</div>
+			</template>
+		</div>
+	</template>
+	
+</div>
+<script type="text/javascript">
+	var MainMixin = {
+		methods:{
+			MainImgload(event){
+				var self = this;
+				event.target.classList.remove('opacity');
+				event.target.previousSibling.remove();
+			},
+			MainFulloverlay(){
+				if(this.full){
+					if(this.PinchZoom){
+						if(this.PinchZoom.zoomFactor>1){
+							
+						}else{
+							this.full = false;
+						}
+					}else{
+						this.full = false;
+					}
+					
+				}else{
+					this.full = true;
+				}
+			},
+			MainPageTouchStart(event){
+				var self = this;
+				if(self.showdata[self.showdataindex].loading || self.TouchImg.move || self.InformationPopup){
+					self.TouchPage.move = false;
+					return false;
+				}
+				self.TouchPage.clickX = event.touches[0].pageX;
+				self.TouchPage.distance = 0;
+				self.TouchPage.move = true;
+			},
+			MainPageTouchMove(event){
+				var self = this;
+				if(self.showdata[self.showdataindex].loading || self.TouchImg.move || self.InformationPopup){
+					self.TouchPage.move = false;
+					return false;
+				}
+				event.preventDefault();
+				var sectouch = event.touches[0];
+				self.TouchPage.distance = sectouch.pageX - self.TouchPage.clickX;
+				if(self.TouchPage.distance>0){
+					if(self.paths.length<2){
+						showToast('已经是第一张');
+						self.TouchPage.move = false;
+						return false;
+					}
+					if(self.ridIndex == 0){
+						showToast('已经是第一张');
+						self.TouchPage.move = false;
+						return false;
+					}
+					var first = self.showdata.find(function(item){
+						return item.type == 'left';
+					});
+					if(first.loading){
+						self.TouchPage.move = false;
+						return false;
+					}
+				}
+				if(self.TouchPage.distance<0){
+					if(self.paths.length<2){
+						showToast('已经是最后一张');
+						self.TouchPage.move = false;
+						return false;
+					}
+					
+					if(window.parent.dzzoffice && window.parent.dzzoffice.WindowThis && window.parent.dzzoffice.WindowThis.ImageDataParam && window.parent.dzzoffice.WindowThis.ImageDataParam.ismore){
+						if(self.ridIndex == self.paths.length-1){
+							self.$message .error('已经是最后一张');
+							return false;
+						}
+					}else{
+						if(self.ridIndex == self.paths.length-1){
+							showToast('已经是最后一张');
+							self.TouchPage.move = false;
+							return false;
+						}
+					}
+
+
+					
+					var two = self.showdata.find(function(item){
+						return item.type == 'right';
+					});
+					if(two.loading){
+						self.TouchPage.move = false;
+						return false;
+					}
+					
+				}
+				self.TouchPage.move = true;
+				self.$refs['detail_popup_translate'].style.transform  = "translate3d("+self.TouchPage.distance+"px,0,0)";
+			},
+			MainPageTouchEnd(event){
+				// console.log(1111)
+				var self = this;
+				if(!self.TouchPage.move || self.InformationPopup){
+					return false;
+				}
+				var dom = self.$refs['detail_popup_translate'];
+				var screenWidth = document.body.clientWidth+10;
+				dom.style.transition  = "transform 0.2s cubic-bezier(0,0,0.4,1) 0s,-webkit-transform 0.2s";
+				if(Math.abs(self.TouchPage.distance)>100){
+					
+					if(self.TouchPage.distance>0){
+						self.$refs['detail_popup_translate'].style.transform  = "translate3d("+(screenWidth)+"px,0,0)";
+						var first = self.showdata.find(function(item){
+							return item.type == 'left';
+						});
+						self.path = first.id;
+						self.ridIndex -= 1;
+					}else{
+						var two = self.showdata.find(function(item){
+							return item.type == 'right';
+						});
+						self.path = two.id;
+						self.ridIndex += 1;
+						dom.style.transform  = "translate3d("+(-screenWidth)+"px,0,0)";
+					}
+					
+					setTimeout(function(){
+						dom.style.transform  = "none";
+						dom.style.transition  = "";
+						self.TouchPage.move = false;
+						self.CommonOrder();
+					},300);
+				}else{
+					dom.style.transform  = "translate3d(0,0,0)";
+					setTimeout(function(){
+						self.TouchPage.move = false;
+						dom.style.transform  = "none";
+						dom.style.transition  = "";
+					},300);
+				}
+				
+			},
+		}
+	};
+	
+</script>

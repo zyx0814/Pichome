@@ -1,0 +1,125 @@
+
+<script>
+	const UploaddzzMinxins = {
+		data() {
+			return {
+				
+			}
+		},
+		
+		methods: {
+		
+		    multiupload(item){
+				//分片数据
+				let self=this;
+				let bursts = this.UploadBurst(item.raw);//文件分片
+				if(bursts.length){
+					let argments = this.UploadExportLocation(self.UploaderData.folderData,item);
+					item['percentage']=0;
+					this.UploadRequest(bursts,item,argments);
+				}else{
+					item['fileStatus'] = 4;
+					item['error']='文件内容错误';
+					self.UploadAccomplish(item);
+				}
+			},
+			
+			
+			UploadBurst(fileObj){//文件分片
+				// 将文件按固定大小（2M）进行切片，注意此处同时声明了多个常量
+				const chunkSize = $_G['setting']['maxChunkSize'],
+					chunkList = [], // 保存所有切片的数组
+					chunkListLength = Math.ceil(fileObj.size / chunkSize),// 计算总共多个切片
+					suffix = fileObj.name.slice(fileObj.name.lastIndexOf('.') + 1)// 文件后缀名
+				let curChunk = 0 // 切片时的初始位置
+				for (let i = 0; i < chunkListLength; i++) {
+					let start = i * chunkSize;
+					let end = start + chunkSize;
+					
+					if(end >= fileObj.size){
+						end = fileObj.size;
+					}
+				
+					const _chunkFile = fileObj.slice(start, end) // 分片文件
+					let relativePath = '';
+					if(fileObj.webkitRelativePath){
+						relativePath = fileObj.webkitRelativePath;
+					}
+					if(fileObj.fullPath){
+						relativePath = fileObj.fullPath;
+					}
+					chunkList.push({
+						range:start+'-'+(end - 1),
+						// file:formdata,
+						size:fileObj.size,
+						formdata:{
+							chunkFile:_chunkFile,
+							relativePath:relativePath,
+						},
+						name:encodeURIComponent(fileObj.name)
+					})
+					curChunk += chunkSize
+					
+				}
+				return chunkList;
+			},
+			UploadRequest(bursts,item,argments){//请求上传
+				const self = this;
+				const burst=bursts.shift();
+				const formdata = new FormData();
+				formdata.append('files[]', burst.formdata.chunkFile);
+				formdata.append('container', this.DocumentAppid);
+				formdata.append('chunkSize', $_G['setting']['maxChunkSize']);
+				
+				if(argments.fid){
+					formdata.append('pfid', argments.fid);
+				}
+				if(argments.relativePath){
+					formdata.append('relativePath', argments.relativePath);
+				}
+				axios({
+					url: MOD_URL+'&op=library&do=upload&operation=uploads&notqs=1',
+					method: 'post',
+					headers: {
+						'Content-Disposition':'attachment; filename="'+burst.name+'"',
+						'Content-Type': 'multipart/form-data',
+						'Content-Range':'bytes '+burst.range+'/'+burst.size
+					},
+					data: formdata,
+					onUploadProgress: (progressEvent) => {
+						item['percentage'] +=  progressEvent.loaded;
+					}
+
+				}).then((res)=>{
+					let data=res.data.files;
+					
+					if(data && data.length){
+						if(data[0].error){//分块上传失败
+							item['fileStatus'] = 4;
+							item['error']=data[0].error;
+							self.UploadAccomplish(item);
+						}else if(data[0].data){//分块上传完成
+							
+							item['fileStatus'] = 3;
+							item['FileData'] = data[0].data;
+							self.UploadAccomplish(item);
+						}else{
+							if(bursts.length>0){
+								self.UploadRequest(bursts,item,argments);
+							}else{
+								item['fileStatus'] = 4;
+								item['error']='上传错误';
+								self.UploadAccomplish(item);
+							}
+						}
+					}
+				}).catch(function(error){
+					item['fileStatus'] = 4;
+					item['error']=error;
+					self.UploadAccomplish(item);
+				});
+				
+			}
+		}
+	}
+</script>

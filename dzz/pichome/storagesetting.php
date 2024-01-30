@@ -26,6 +26,25 @@ if($do == 'addspace'){
         C::t('connect_storage')->delete($id);
         exit(json_encode(array('success'=>true)));
     }
+}elseif($do == 'setdefault'){
+    $id = isset($_GET['id']) ? intval($_GET['id']):0;
+    if(!$id)exit(json_encode(array('success'=>false)));
+    $space = C::t('connect_storage')->fetch($id);
+    if($space['hostname'])$hostdataarr = explode(':',$space['hostname']);
+    else $hostdataarr = [];
+    $defaultspacesettingdata = [
+        'bucket'=>$space['bucket'],
+        'bz'=>$space['bz'],
+        'remoteid'=>$space['id'],
+        'region'=> ($space['bz'] == 'ALIOSS') ? $space['hostname']:($hostdataarr[1] ? $hostdataarr[1]:''),
+        'did'=>$space['id'],
+        'host'=>$space['host'],
+    ];
+    if(DB::update('connect_storage',['isdefault'=>0],'id !='.$id) && DB::update('connect_storage',['isdefault'=>1],'id ='.$id)){
+        C::t('setting')->update('defaultspacesetting',$defaultspacesettingdata);
+        updatecache('setting');
+    }
+    exit(json_encode(array('success'=>true)));
 }elseif($do == 'getsettingdata'){
     $id = isset($_GET['id']) ? intval($_GET['id']):0;
     $connectdata = C::t('connect_storage')->fetch($id);
@@ -35,9 +54,14 @@ if($do == 'addspace'){
         $ffmpegbinaries =(getglobal('config/pichomeffmpegposition')) ? getglobal('config/pichomeffmpegposition'):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg');
         $ffprobebinaries = (getglobal('config/pichomeffprobeposition')) ? (getglobal('config/pichomeffprobeposition')):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe');
         $connectdata['mediastate'] = 1;
-        if(!function_exists('proc_open') || !is_file($ffmpegbinaries) || !is_file($ffprobebinaries)){
+        if(!function_exists('proc_open') || !is_executable($ffmpegbinaries) || !is_executable($ffprobebinaries)){
             $connectdata['mediastate'] = 0;
         }
+        if($connectdata['docstatus']){
+            $app=C::t('app_market')->fetch_by_identifier('onlyoffice_view','dzz');
+            $connectdata['officedata']= unserialize($app['extra']);
+        }
+		
     }elseif($connectdata['bz'] == 'QCOS'){
         $hostarr = explode(':',$connectdata['hostname']);
         $config = [
@@ -64,7 +88,16 @@ if($do == 'addspace'){
     $setarr['videoquality'] = intval($_GET['videoquality']);
     $connectdata = C::t('connect_storage')->fetch($id);
     if($connectdata['bz'] == 'dzz') {
-        C::t('connect_storage')->update($id,$setarr);
+        //获取ffmpeg应用信息
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg','dzz');
+        $appextra = unserialize($app['extra']);
+        $appextra['status'] = $setarr['mediastatus'];
+        if(C::t("app_market")->update($app['appid'],array("extra"=> serialize($appextra)))){
+            C::t('connect_storage')->update($id,$setarr);
+            updateMediaStatus('dzz::',$setarr['mediastatus']);
+        }else{
+            exit(json_encode(array('error'=>true,'msg'=>'ffmpeg开启失败')));
+        }
     }elseif($connectdata['bz'] == 'QCOS'){
         if($setarr['mediastatus']){
             $hostarr = explode(':',$connectdata['hostname']);
@@ -79,12 +112,14 @@ if($do == 'addspace'){
             $video = new \video($config);
             if($video->check_videobucket()) {
                 C::t('connect_storage')->update($id,$setarr);
+                updateMediaStatus('QCOS:'.$id.':',$setarr['mediastatus']);
                // dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=convert', 0, '', '', false, '', 1);
             }else {
                 exit(json_encode(array('error'=>true,'msg'=>'请检查存储桶是否开启媒体处理')));
             }
         }else{
             C::t('connect_storage')->update($id,$setarr);
+            updateMediaStatus('QCOS:'.$id.':',$setarr['mediastatus']);
         }
        
     }
@@ -95,19 +130,24 @@ if($do == 'addspace'){
     $setarr['docstatus'] = intval($_GET['docstatus']);
     $connectdata = C::t('connect_storage')->fetch($id);
     if($connectdata['bz'] == 'dzz') {
-        $settingnew['onlyofficesetting']['onlyofficeurl'] = trim($_GET['onlyofficeurl']);
-        $settingnew['onlyofficesetting']['onlyofficedocurl'] = trim($_GET['onlyofficedocurl']);
+        $app=C::t('app_market')->fetch_by_identifier('onlyoffice_view','dzz');
+        $appextra = unserialize($app['extra']);
+        $extra["DocumentUrl"]=trim($_GET['onlyofficeurl']);
+        $extra["FileUrl"]=$_GET['fileurl']?trim($_GET['fileurl']):'';
+        $extra["exts"]=$_GET['exts']?trim($_GET['exts']):'';
+        $extra["secret"]=$_GET['secret']?trim($_GET['secret']):'';
+        C::t("app_market")->update($app['appid'],array("extra"=> serialize($extra)));
         if($setarr['docstatus']){
-            $onlyDocumentUrl=rtrim(str_replace('web-apps/apps/api/documents/api.js','',$settingnew['onlyofficesetting']['onlyofficeurl']),'/').'/web-apps/apps/api/documents/api.js';
-
-            if(curl_file_get_contents($onlyDocumentUrl) === false){
+            $onlyDocumentUrl=rtrim(str_replace('web-apps/apps/api/documents/api.js','',$extra["DocumentUrl"]),'/').'/web-apps/apps/api/documents/api.js';
+            /*if(curl_file_get_contents($onlyDocumentUrl) === false){
                 exit(json_encode(array('error'=>true,'msg'=>'请检查地址是否可用')));
             }else{
-                fclose($handle);
-            }
+                //fclose($handle);
+            }*/
         }
-        updatesetting($setting, $settingnew);
+        //updatesetting($setting, $settingnew);
         C::t('connect_storage')->update($id,$setarr);
+        updateDocStatus('dzz::',$setarr['docstatus']);
     } elseif($connectdata['bz'] == 'QCOS'){
         if($setarr['docstatus']){
             $hostarr = explode(':',$connectdata['hostname']);
@@ -122,11 +162,14 @@ if($do == 'addspace'){
             $video = new \video($config);
             if($video->check_docbucket()) {
                 C::t('connect_storage')->update($id,$setarr);
+                updateDocStatus('QCOS:'.$id.':',$setarr['docstatus']);
             }else {
                 exit(json_encode(array('error'=>true,'msg'=>'请检查存储桶是否开启文档处理')));
             }
         }else{
+
             C::t('connect_storage')->update($id,$setarr);
+            updateDocStatus('QCOS:'.$id.':',$setarr['docstatus']);
         }
     }
 	exit(json_encode(array('success'=>true)));
@@ -137,6 +180,9 @@ if($do == 'addspace'){
     if($connectdata['bz'] == 'dzz'){
         $settingnew['imagelib'] = trim($_GET['imagelib']);
         updatesetting($setting, $settingnew);
+        updateThumbStatus('dzz::',$setarr['imagestatus']);
+    }else{
+        updateThumbStatus('QCOS:'.$id.':',$setarr['imagestatus']);
     }
     C::t('connect_storage')->update($id,$setarr);
 
@@ -146,6 +192,9 @@ if($do == 'addspace'){
 	
 	$storagelist = C::t('connect')->fetch_all_by_available();
 }
+$themeid = isset($_G['setting']['pichometheme']) ? intval($_G['setting']['pichometheme']):1;
+$themedata = getthemedata($themeid);
+$lefsetdata = $themedata['singlepage'];
 function updatesetting($setting, $settingnew){
     $updatecache = false;
     $settings = array();
@@ -167,5 +216,59 @@ function updatesetting($setting, $settingnew){
     }
     return true;
 }
+function updateMediaStatus($k,$status){
+    $cachename = 'PICHOMECONVERTSTATUS';
+    $convertstatus = C::t('cache')->fetch_cachedata_by_cachename($cachename);
+    if (!$convertstatus) {
+        $convertdata = [];
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $appextra = unserialize($app['extra']);
+        $convertdata['dzz::'] = $appextra['status'];
+        foreach(DB::fetch_all("select id,bz,mediastatus from %t where 1",array('connect_storage')) as $v){
+            if($v['bz'] == 'dzz') continue;
+            $key = $v['bz'].':'.$v['id'].':';
+            $convertdata[$key] = intval($v['mediastatus']);
+        }
+    }
+    $convertstatus[$k] = $status;
+    $setarr = ['cachekey' => $cachename, 'cachevalue' => serialize($convertstatus), 'dateline' => time()];
+    C::t('cache')->insert_cachedata_by_cachename($setarr);
+}
+function updateDocStatus($k,$status){
+    $cachename = 'PICHOMEDOCSTATUS';
+    $convertstatus = C::t('cache')->fetch_cachedata_by_cachename($cachename);
+    if (!$convertstatus) {
+        $convertdata = [];
+        $app = C::t('app_market')->fetch_by_identifier('onlyoffice_view', 'dzz');
+        $appextra = unserialize($app['extra']);
+        $convertdata['dzz::'] = $appextra['status'];
+        foreach(DB::fetch_all("select id,bz,docstatus from %t where 1",array('connect_storage')) as $v){
+            if($v['bz'] == 'dzz') continue;
+            $key = $v['bz'].':'.$v['id'].':';
+            $convertdata[$key] = intval($v['docstatus']);
+        }
+    }
+    $convertstatus[$k] = $status;
+    $setarr = ['cachekey' => $cachename, 'cachevalue' => serialize($convertstatus), 'dateline' => time()];
+    C::t('cache')->insert_cachedata_by_cachename($setarr);
+}
+function updateThumbStatus($k,$status){
+    $cachename = 'PICHOMETHUMBSTATUS';
+    $convertstatus = C::t('cache')->fetch_cachedata_by_cachename($cachename);
+    if (!$convertstatus) {
+        $convertdata = [];
+        foreach(DB::fetch_all("select id,bz,imagestatus from %t where 1",array('connect_storage')) as $v){
+            if($v['bz'] == 'dzz'){
+                $key  = $v['bz'].'::';
+            }else{
+                $key = $v['bz'].':'.$v['id'].':';
+            }
+            $convertdata[$key] = intval($v['imagestatus']);
+        }
+    }
+    $convertstatus[$k] = $status;
+    $setarr = ['cachekey' => $cachename, 'cachevalue' => serialize($convertstatus), 'dateline' => time()];
+    C::t('cache')->insert_cachedata_by_cachename($setarr);
+}
 $theme = GetThemeColor();
-include template('pc/page/adminstorage');
+include template('admin/pc/page/adminstorage');

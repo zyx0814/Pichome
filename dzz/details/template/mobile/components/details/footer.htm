@@ -1,0 +1,93 @@
+
+<template v-if="!showdata[showdataindex].loading">
+	<div class="footer-tabbar-item" v-if="showdata[showdataindex].data.link" @click="FooterClick('link')">
+		<van-icon name="link-o" />
+	</div>
+	<div class="footer-tabbar-item" v-if="showdata[showdataindex].data.download" @click="FooterClick('download')">
+		<van-icon name="down" />
+	</div>
+	<div class="footer-tabbar-item" v-if="parseInt(showdata[showdataindex].data.collection)" @click="FooterClick('collect')">
+		<van-icon name="star-o" />
+	</div>
+	<div class="footer-tabbar-item" v-if="showdata[showdataindex].data.share" @click="FooterClick('share')">
+		<van-icon name="share-o" />
+	</div>
+	<!--{if $_G['adminid']}-->
+	<!-- <div class="footer-tabbar-item" @click="gradedata.Visible=true">
+		<i class="ri-shield-line"></i>
+	</div> -->
+	<!--{/if}-->
+</template>
+<script type="text/javascript">
+	var FooterMixin = {
+		methods:{
+			async FooterClick(type){
+				var self = this;
+				var path = self.path;
+				if(!self.showdata[self.showdataindex]){
+					showToast({
+						message: '参数错误',
+						icon: 'cross',
+					});
+					return false;
+				}
+				if(type == 'link'){
+					window.open(self.showdata[self.showdataindex].data.link);
+					return false;
+				}
+				if(type == 'collect'){
+					self.ParamImages.operation.type = 'collect';
+					self.ImagesClassify.PopupVisible = true;
+					return false;
+				}
+				if(type == 'download'){
+					if (self.showdata[self.showdataindex].data.dpath) {
+
+						if(self.isadmin){
+							window.open('index.php?mod=pichome&op=download&dpath=' + self.showdata[self.showdataindex].data.dpath);
+						}else{
+							window.open('index.php?mod=banner&op=download&dpath=' + self.showdata[self.showdataindex].data.dpath);
+						}
+					} else {
+						showToast({
+						  message: '数据错误',
+						  icon: 'cross',
+						});
+					}
+					return false;
+				}
+				if(type == 'share'){
+					if (self.showdata[self.showdataindex].data.dpath) {
+						var res = await axios.post('index.php?mod=banner&op=appajax&do=createshare',{path: path});
+						if(res == 'intercept'){
+							return false;
+						}
+						var data = res.data;
+						if (data.success) {
+							showConfirmDialog({
+								title: '分享成功',
+								message: data.success,
+								confirmButtonText:'复制地址',
+								cancelButtonText:'关闭'
+							}).then(function() {
+								self.CommonCopyTxt(data.success);
+							}).catch(function() {
+								// on cancel
+							 });
+						} else {
+							showToast({
+							  message: '分享失败',
+							  icon: 'cross',
+							});
+						}
+					} else {
+						showToast({
+						  message: '数据错误',
+						  icon: 'cross',
+						});
+					}
+				}
+			},
+		}
+	};
+</script>

@@ -12,6 +12,14 @@ class getpichomethumb
     public function run(&$data)
     {
         $thumbid = DB::result_first("select thumb from %t where appid = %s and rid = %s", array('billfish_record', $data['appid'], $data['rid']));
+        $iscloud = false;
+        $arr = explode(':', $data['apppath']);
+        if($arr[1] && is_numeric($arr[1])){
+            $iscloud = true;
+        }else{
+            $data['apppath'] = str_replace('/', BS, $data['apppath']);
+           $data['apppath'] = str_replace('dzz::', '', $data['apppath']);
+        }
         if(isset($data['version']) && $data['version'] >=30){
             $bid = DB::result_first("select bid from %t where rid = %s",array('billfish_record',$data['rid']));
             $thumbdir = dechex($bid);
@@ -21,7 +29,7 @@ class getpichomethumb
             }elseif(strlen($thumbdir) > 2){
                 $thumbdir = substr($thumbdir,-2);
             }
-            $pathdir = $data['apppath'].BS.'.bf'.BS.'.preview'.BS.$thumbdir.BS.$bid.'.small.webp';
+            $pathdir = ($iscloud) ? \IO::getStream($data['apppath'].'/.bf/.preview/'.$thumbdir.'/'.$bid.'.small.webp'):$data['apppath'].BS.'.bf'.BS.'.preview'.BS.$thumbdir.BS.$bid.'.small.webp';
             return array('icon'=>$pathdir);
         }else{
             if (strlen($thumbid) < 9) {
@@ -30,8 +38,16 @@ class getpichomethumb
             $pathdir = $data['apppath'].BS.'.bf'.BS.'.preview';
             $thumbpatharr = $this->mbStrSplit($thumbid,3);
             array_pop($thumbpatharr);
-            $thumbpath = implode(BS,$thumbpatharr);
-            return array('icon'=>$pathdir.BS.$thumbpath.BS.$thumbid.'.webp');
+            if($iscloud){
+                $thumbpath = implode('/',$thumbpatharr);
+                $pathdir = \IO::getStream($pathdir.'/'.$thumbpath.'/'.$thumbid.'.webp');
+
+            }else{
+                $thumbpath = implode(BS,$thumbpatharr);
+                $pathdir = $pathdir.BS.$thumbpath.BS.$thumbid.'.webp';
+            }
+
+            return array('icon'=>$pathdir);
         }
 
     }

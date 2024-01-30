@@ -1,0 +1,30 @@
+<template #left>
+	<div style="width: 25px;text-align: center;height: 25px;line-height: 25px;" @click.stop="HeaderNavbarLeftClick">
+		<van-icon name="arrow-left" size="18" />
+	</div>
+	
+</template>
+<template #right>
+	<div style="width: 25px;text-align: center;height: 25px;line-height: 25px;" @click.stop="InformationPopup=true">
+		<van-icon name="warning-o" size="18" />
+	</div>
+</template>
+<script type="text/javascript">
+	var HeaderMixin = {
+		methods:{
+			HeaderNavbarLeftClick(){
+				let div = window.parent.document.querySelector('.Details-Iframe');
+				if(div){
+					div.remove();
+				}
+				// window.parent.pvue.JsDetailsPopup.src = '';
+				// if(this.GetParam.historygo){
+				// 	window.location.href = this.GetParam.historygo
+				// }else{
+				// 	window.location.href = MOD_URL;
+				// }
+				
+			},
+		}
+	};
+</script>

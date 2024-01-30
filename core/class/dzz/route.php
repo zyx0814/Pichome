@@ -12,8 +12,9 @@ class Route{
     {
 
         global $_G,$_config,$_GET;
-        $mod = !empty($params[MOULD]) ? $params[MOULD]:$_config['default_mod'];
+        //判断是否开启pathinfo，默认不开启，测试时将其设为1
 
+        $mod = !empty($params[MOULD]) ? $params[MOULD]:$_config['default_mod'];
         $op  = !empty($params[DIVIDE]) ? $params[DIVIDE]:$_config['default_op'];
         if(empty($mod)){
 
@@ -27,13 +28,14 @@ class Route{
            $return =  require DZZ_ROOT.'./'.CURSCRIPT.'/'.$op.EXT;
 
         }else{
-		
+
 			if(strpos($mod,'vapp_')!==false){
 				$_GET['vapp']=preg_replace("/^vapp_/i",'',$mod);
 				$mod='vapp';
+
 			}
             if(strpos(strtolower($mod),':')!==false){
-
+                define('CURMODULE',str_replace(':', '/', $mod));
                 $patharr=explode(':',$mod);
 
                 foreach($patharr as $path){
@@ -54,6 +56,7 @@ class Route{
                 }
 
             }else{
+                define('CURMODULE',$mod);
 
                 if(!preg_match("/^\w+$/i",$mod) && $mod !== '') showmessage('undefined_action');
 
@@ -62,8 +65,8 @@ class Route{
                 if(@!file_exists(DZZ_ROOT.($modfile = './'.CURSCRIPT.'/'.$mod.'/'.$op.EXT)) && @!file_exists(DZZ_ROOT.($modfile = './'.CURSCRIPT.'/'.$mod.'/'.$mod.EXT))) {
                     //兼容老版
                     if(@!file_exists($modfile='./'.CURSCRIPT.'/'.$mod.EXT)){
-
-                        showmessage(lang('file_nonexistence',array('modfile'=>htmlspecialchars($modfile))));
+                        header('Location:/404.html');exit();
+                       // showmessage(lang('file_nonexistence',array('modfile'=>htmlspecialchars($modfile))));
                     }
 
                 }

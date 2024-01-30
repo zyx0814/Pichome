@@ -1,0 +1,57 @@
+<el-scrollbar>
+	<div style="padding: 8px 18px;">
+		<template v-if="RightActivefid.length == 1">
+			<div class="marginTop">
+				<el-input
+					class=""
+					v-model="RightData.title"
+					type="textarea"
+					:disabled="DocumentVapp.type != 3"
+					@change="RightFolderNameChange"
+					:autosize="{  maxRows: 8 }"
+					placeholder="文件名称"></el-input>
+			</div>
+		</template>
+		
+
+		<div class="marginTop">
+			<el-input
+				v-model="RightData.message"
+				@change="RightFileDescChange"
+				type="textarea"
+				:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+				:autosize="{  maxRows: 8 }"
+				placeholder="描述"></el-input>
+		</div>
+
+
+
+		<template v-for="(item,key) in RightData.filedsData">
+			<template v-if="item.flag == 'tag'">
+				<div class="marginTop">
+					<!--{template librarylist/pc/components/right/file/tag/temp}-->
+				</div>
+			</template>
+		</template>
+
+
+
+		<div class="basic-file marginTop" v-if="RightData.foldenum || RightData.foldersize || RightData.dateline">
+			<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+			<div class="marginTop">
+				<el-row v-if="RightData.foldenum" class="single" :gutter="12">
+					<el-col :span="8">文件数</el-col>
+					<el-col :span="16" class="message">{{RightData.foldenum}}</el-col>
+				</el-row>
+				<el-row v-if="RightData.foldersize" class="single" :gutter="12">
+					<el-col :span="8">文件大小</el-col>
+					<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+				</el-row>
+				<el-row class="single" :gutter="12" v-if="RightData.dateline">
+					<el-col :span="8">修改时间</el-col>
+					<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
+				</el-row>
+			</div>
+		</div>
+	</div>
+</el-scrollbar>

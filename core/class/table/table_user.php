@@ -97,9 +97,9 @@ class table_user extends dzz_table
 			C::t('organization_user')->delete_by_uid($uid,0);
 			
 			//删除用户文件
-			if($homefid=DB::result_first("select fid from %t where uid=%d and flag='home' ",array('folder',$uid))){
+			/*if($homefid=DB::result_first("select fid from %t where uid=%d and flag='home' ",array('folder',$uid))){
 				C::t('folder')->delete_by_fid($homefid,true);
-			}
+			}*/
 			 
 			Hook::listen('syntoline_user',$uid,'del');//删除对应到三方用户表
 			return true;

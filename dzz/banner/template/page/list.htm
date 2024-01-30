@@ -1,0 +1,209 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<!-- <script src="{MOD_PATH}/template/assets/js/common.js?{VERHASH}"></script> -->
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<link rel="stylesheet" href="{MOD_PATH}/template/assets/css/list.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/red/assets/css/root_red.css?{VERHASH}">
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+	function URLdecode(str) {
+		var ret = "";
+		for(var i=0;i<str.length;i++) {
+			var chr = str.charAt(i);
+			if(chr == "+") {
+				ret += " ";
+			}else if(chr=="%") {
+				var asc = str.substring(i+1,i+3);
+				if(parseInt("0x"+asc)>0x7f) {
+					ret += decodeURI("%"+ str.substring(i+1,i+9));
+					i += 8;
+				}else {
+					ret += String.fromCharCode(parseInt("0x"+asc));
+					i += 2;
+				}
+			}else {
+				ret += chr;
+			}
+		}
+		return ret;
+	};
+	function handleSize(size) {
+		if (!size)
+			return "0K";
+		var num = 1024.00; //byte
+		if (size < num)
+			return size + "B";
+		if (size < Math.pow(num, 2))
+			return (size / num).toFixed(2) + "K"; //kb
+		if (size < Math.pow(num, 3))
+			return (size / Math.pow(num, 2)).toFixed(2) + "M"; //M
+		if (size < Math.pow(num, 4))
+			return (size / Math.pow(num, 3)).toFixed(2) + "G"; //G
+		return (size / Math.pow(num, 4)).toFixed(2) + "T"; //T
+	};
+	function GetDateVal(type){
+		var str = '';
+		var start = new Date();
+		var end = new Date();
+		switch(type){
+			case '今日':
+			break;
+			case '昨日':
+				end.setTime(end.getTime() - 3600 * 1000 * 24);
+				start.setTime(start.getTime() - 3600 * 1000 * 24);
+			break;
+			case '最近7日':
+				start.setTime(start.getTime() - 3600 * 1000 * 24 * 6);
+			break;
+			case '最近30日':
+				start.setTime(start.getTime() - 3600 * 1000 * 24 * 29);
+			break;
+			case '最近90日':
+				start.setTime(start.getTime() - 3600 * 1000 * 24 * 89);
+			break;
+			case '最近365日':
+				start.setTime(start.getTime() - 3600 * 1000 * 24 * 364);
+			break;
+		}
+		str = start.getFullYear()+'-'+(start.getMonth()+1)+'-'+start.getDate()+'_'+end.getFullYear()+'-'+(end.getMonth()+1)+'-'+end.getDate();
+		return str;
+	}
+
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy')
+		item.$message({
+		message: '成功复制到剪切板',
+		type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+	function setcookie(cookieName, cookieValue, seconds, path, domain, secure) {
+		if(cookieValue == '' || seconds < 0) {
+			cookieValue = '';
+			seconds = -2592000;
+		}
+		if(seconds) {
+			var expires = new Date();
+			expires.setTime(expires.getTime() + seconds * 1000);
+		}
+		domain = !domain ? cookiedomain : domain;
+		path = !path ? cookiepath : path;
+		document.cookie = escape(cookiepre + cookieName) + '=' + escape(cookieValue)
+			+ (expires ? '; expires=' + expires.toGMTString() : '')
+			+ (path ? '; path=' + path : '/')
+			+ (domain ? '; domain=' + domain : '')
+			+ (secure ? '; secure' : '');
+	}
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+    <el-scrollbar class="affix-container">
+        <el-container style="height: auto;">
+            <el-header height="200px" style="background: #FDEDDC;">
+                <!--{template components/list/header/index}-->
+            </el-header>
+            <el-affix target=".affix-container" :offset="0">
+                <el-header style="height: 60px;background: var(--el-color-primary);">
+                    <div class="page-header">
+                        <el-menu
+                            :default-active="activeIndex2"
+                            mode="horizontal"
+                            text-color="#fff"
+                            background-color="transparent"
+                            active-text-color="#fff"
+                            style="width: 100%;border: 0;">
+                            <el-menu-item index="1" style="font-size: var(--el-font-size-large);">栏目1</el-menu-item>
+                            <el-menu-item index="12" style="font-size: var(--el-font-size-large);">栏目2</el-menu-item>
+                            <el-menu-item index="13" style="font-size: var(--el-font-size-large);">栏目3</el-menu-item>
+                            <el-menu-item index="14" style="font-size: var(--el-font-size-large);">栏目4</el-menu-item>
+                            <el-menu-item index="15" style="font-size: var(--el-font-size-large);">栏目5</el-menu-item>
+                            <el-menu-item index="16" style="font-size: var(--el-font-size-large);">栏目6</el-menu-item>
+                            <el-menu-item index="17" style="font-size: var(--el-font-size-large);">栏目7</el-menu-item>
+                        </el-menu>
+                    </div>
+                </el-header>
+            </el-affix>
+            
+            <el-container class="is-vertical">
+				<div style="width: 1440px;margin: 0 auto;padding: 0 20px;margin-top: 30px;display: flex;align-items: center;">
+					<el-icon><Location /></el-icon>
+					<el-text tag="b" style="margin-left: 6px;">您得位置：</el-text>
+					<el-breadcrumb separator-icon="Arrow-Right">
+						<el-breadcrumb-item>首页</el-breadcrumb-item>
+						<el-breadcrumb-item>地点</el-breadcrumb-item>
+						<el-breadcrumb-item>重庆</el-breadcrumb-item>
+					</el-breadcrumb>
+				</div>
+				<!--{template components/list/screen}-->
+				<!--{template components/list/main}-->
+            </el-container>
+        </el-container>
+    </el-scrollbar>
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+                activeIndex2:'1',
+                ScreenParam:{
+					hassub:0,
+					appid:'',
+					fids:''
+				},
+				ScreenProps:{
+					optionload:'index.php?mod=pichome&op=library&do=ajax&operation=getscreen',
+					contentload:'index.php?mod=pichome&op=library&do=ajax&operation=searchmenu_num',
+					classifyload:'',//分类url
+					tagload:'index.php?mod=pichome&op=library&do=ajax&operation=search_menu',
+					isclassify:true,//分类是否显示
+				}
+			}
+		},
+		mixins:[HeaderMixin],
+		created(){
+			console.log(111111);
+			document.querySelector('html').className = 'red';
+		},
+		watch:{
+			
+		},
+		
+		methods:{
+	
+		},
+		components: {
+		},
+		mounted(){
+
+		}
+	});
+	
+	
+	dzzoffice.component('comavatar', comavatar);
+    dzzoffice.use(DzzScreen);
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

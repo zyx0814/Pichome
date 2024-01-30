@@ -16,25 +16,23 @@
         {
             
             $this->_table = 'thumb_record';
-            $this->_pk = 'id';
+            $this->_pk = 'rid';
             $this->_pre_cache_key = 'thumb_record_';
-            $this->_cache_ttl = 5400;
+            //$this->_cache_ttl = 5400;
             
             parent::__construct();
         }
         
-        public function insert($setarr,$isreturn = false)
+        public function insert_data($setarr,$isreturn = false)
         {
 
-            $id = md5($setarr['rid'] . '_' . intval($setarr['width']) . '_' . intval($setarr['height'])
-                . '_' . intval($setarr['waterstatus']) . '_' . intval($setarr['waterstatus']) . '_' . intval($setarr['thumbtype']) . '_' . intval($setarr['thumbsign']));
-            $setarr['id'] = $id;
-            if ($returndata = DB::fetch_first("select * from %t where id = %s",array($this->_table,$id))) {
-                if(!$isreturn)$this->update($id,$setarr);
+            if ($returndata = DB::fetch_first("select * from %t where rid = %s",array($this->_table,$setarr['rid']))) {
+                if(!$isreturn)$this->update($setarr['rid'],$setarr);
                 return $returndata;
             } else {
 				try{
-                if (parent::insert($setarr)) {
+
+                if (parent::insert($setarr,1,1)) {
                     return $setarr;
                 }
 				}catch(\Exception $e){
@@ -79,9 +77,12 @@
         
         public function delete_by_rid($rids)
         {
-            foreach (DB::fetch_all("select path,id from %t where rid in(%n)", array($this->_table, $rids)) as $v) {
-               if($v['thumbstatus'] == 1) IO::Delete($v['path']);
-               self::delete($v['id']);
+            if(!is_array($rids)) $rids = (array)$rids;
+            foreach (DB::fetch_all("select * from %t where rid in(%n)", array($this->_table, $rids)) as $v) {
+               //if($v['sstatus'] == 1) IO::Delete($v['spath']);
+               //if($v['lstatus'] == 1) IO::Delete($v['lpath']);
+              // if($v['opath']) IO::Delete($v['opath']);
+               self::delete($v['rid']);
 
             }
         }

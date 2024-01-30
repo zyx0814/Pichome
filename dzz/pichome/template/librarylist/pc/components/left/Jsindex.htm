@@ -1,0 +1,522 @@
+<script>
+	const leftMixins = {
+		data(){
+			return {
+				DocumentOverlay:false,
+				LeftCurrenType:'',
+				LeftWidth:260,
+				leftsearch:'',
+				LeftTree:{
+					Visible:true,
+					loading:false,
+					show:false,
+					filterText:'',
+					defaultOpenkeys:[],
+					Currentkey:'',
+					arrangement:[],
+					arrangementLast:[],
+					defaultOpenkeysSearch:[],
+					defaultOpenkeysInit:[],
+					TopLevelNode:null,
+				},
+				LeftTreePopover:{
+					show:false,
+					node:null,
+					renameFid:null,
+					left:0,
+					top:0
+				},
+				LeftTreeDialog:{
+					fid:null,
+					Visible:false,
+					title:'',
+					checked:1,
+					loading:false
+				},
+				LeftTreeSidebar:{
+					all:0,
+					isrecycle:0,
+					nocat:0,
+					notag:0
+				},
+			}
+		},
+		watch:{
+			'LeftTree.Currentkey':{
+				handler(val){
+					this.ScreenParam.pfids = val
+				},
+				deep:true,
+			},
+		},
+		created(){
+			var self = this;
+			
+			<!--{if $_GET['do'] == 'tags' ||  $_GET['do'] == 'member'}-->
+			this.LeftCurrenType = '$_GET[do]';
+			<!--{else}-->
+			var type = this.CommonGetHashParam('type',1);
+			var fid = this.CommonGetHashParam('fid',1);
+			if(fid){
+				this.ScreenParam.fids = fid;
+				this.LeftCurrenType = 'filelist';
+				this.LeftTree.Currentkey = fid;
+				this.RightType = 'folder';
+				this.RightActivefid = [fid];
+			}else{
+				this.LeftCurrenType = type || '';
+				this.RightType = type;
+			}
+			
+			self.$nextTick(function(){
+				this.RightGetData();
+			});
+			<!--{/if}-->
+		},
+		methods:{
+			LeftTreeContextmenu(event,data,node){
+				const self = this;
+				if(this.DocumentVapp.type != 3)return false;
+				self.DocumentOverlay = true;
+				this.DocumentHideAllPop();
+				self.LeftTreePopover.node = node;
+				let menu = self.$refs.treeMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+							
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				
+				//给left和top分别赋值为鼠标的位置；
+				// menu.style.left = evt.pageX+"px";
+				// menu.style.top = evt.pageY+"px";
+				this.LeftTreePopover.left = evt.pageX+"px";
+				this.LeftTreePopover.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					// menu.style.left = left1+"px";
+					this.LeftTreePopover.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					// menu.style.top = top1+"px";
+					this.LeftTreePopover.top = top1+"px";
+				}
+				self.$nextTick(function(){
+					self.LeftTreePopover.show = true;
+				});
+			},
+			async LeftTreeOperation(type){
+				var self = this;
+				this.LeftTreePopover.show = false;
+				if(type == 'rename'){
+					this.LeftTreePopover.node.data.isRename = true;
+					self.$nextTick(function(){
+						self.$refs['treeinput'+this.LeftTreePopover.node.data.fid].select();
+					});
+				}else if(type == 'delete'){
+					this.LeftTreeDialog.fid = this.LeftTreePopover.node.data.fid;
+					if(parseInt(this.LeftTreePopover.node.data.filenum)){
+						this.LeftTreeDialog.title = this.LeftTreePopover.node.data.fname;
+						this.LeftTreeDialog.Visible = true;
+					}else{
+						this.LeftTreeDelete();
+					}
+				}else if(type == 'addparent'){
+					this.LeftTreePopover.node = this.LeftTree.TopLevelNode;
+					this.LeftTreeOperation('add')
+				}else if(type == 'add' || type == 'addchild'){
+					if(this.LeftTreePopover.node.level>=1){
+						var pfid = this.LeftTreePopover.node.data.pfid;
+						if(type == 'addchild'){
+							pfid = this.LeftTreePopover.node.data.fid;
+						}
+					}else{
+						var pfid = '';
+					}
+					
+					var {data: res} = await axios.post('{MOD_URL}&op=library&do=folder&operation=newfolder',{
+						appid:this.DocumentAppid,
+						pfid:pfid,
+						foldername:'未命名文件夹'
+					});
+					var str = {
+						fid:res.data.fid,
+						fname:'未命名文件夹',
+						pfname:'未命名文件夹',
+						filenum:0,
+						nosubfilenum:0,
+						children:[],
+						leaf:true,
+						isRename:true,
+						pathkey:res.data.pathkey,
+						pfid:pfid
+					};
+					if(this.ImageDataIsExpanded){
+						var str1 = {
+							fid:res.data.fid,
+							fname:'未命名文件夹',
+							pfname:'未命名文件夹',
+							filenum:0,
+							nosubfilenum:0,
+							children:[],
+							leaf:true,
+							isRename:true,
+							pathkey:res.data.pathkey,
+							pfid:pfid,
+							icon: "dzz/images/extimg/unknow.png"
+						};
+						this.filedata.data.push(str1);
+					}
+					if(type == 'addchild'){
+						if(this.LeftTreePopover.node.loaded){
+							this.LeftTreePopover.node.expanded = true;
+							self.$refs.LeftTreeRef.append(str,pfid);
+							self.$nextTick(function(){
+								var node = self.$refs.LeftTreeRef.getNode(res.data.fid);
+								self.LeftTreePopover.node = node;
+								setTimeout(function() {
+									self.$refs['treeinput'+res.data.fid].select();
+								}, 300);
+							});
+						}else{
+							this.LeftTreePopover.renameFid = res.data.fid;
+							this.LeftTreePopover.node.expand();
+						}
+					}else{
+						if(this.LeftTreePopover.node.level>0){
+							self.$refs.LeftTreeRef.insertAfter(str,this.LeftTreePopover.node.data.fid);
+						}else{
+							self.$refs.LeftTreeRef.append(str,this.LeftTreePopover.node);
+						}
+						self.$nextTick(function(){
+							var node = self.$refs.LeftTreeRef.getNode(res.data.fid);
+							self.LeftTreePopover.node = node;
+							setTimeout(function() {
+								self.$refs['treeinput'+res.data.fid].select();
+							}, 300);
+						});
+					}
+					
+				}
+			},
+			async LeftGetAllNum(){
+				var self = this;
+				var {data:res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getleftnum',{
+					appid:this.DocumentAppid,
+				});
+				this.LeftTreeSidebar = {
+					all:res.data.all,
+					isrecycle:res.data.isrecycle,
+					nocat:res.data.nocat,
+					notag:res.data.notag,
+					tagnum:res.data.tagname
+				};
+			},
+			async LeftTreeDelete(){
+				var self = this;
+				this.LeftTreeDialog.loading = true;
+				var res = await axios.post(MOD_URL+'&op=library&do=folder&operation=deletefolder',{
+					fid:this.LeftTreeDialog.fid,
+					isdelfile:this.LeftTreeDialog.checked,
+				});
+				if(res.data.success){
+					if(self.$refs.ImageFileRef){
+						self.$refs.ImageFileRef.Delete();
+					}
+					self.$refs.LeftTreeRef.remove(this.LeftTreeDialog.fid);
+					if(this.LeftCurrenType == 'filelist' && this.LeftTreeDialog.fid == this.LeftTree.Currentkey){
+						this.LeftClick('');
+					}
+					// self.$message({
+					// 	type:'success',
+					// 	message:'删除成功'
+					// });
+					window.location.reload();
+				}else{
+					self.$message({
+						type:'error',
+						message:'删除失败'
+					});
+				}
+				this.LeftTreeDialog.Visible = false;
+				this.LeftTreeDialog.loading = false;
+			},
+			async LefttreeinputRename(){
+				var self = this;
+				if(this.LeftTreePopover.node.data.fname == ''){
+					this.LeftTreePopover.node.data.fname = this.LeftTreePopover.node.data.pfname;
+					this.LeftTreePopover.node.data.isRename = false;
+					return false;
+				}
+				if(this.LeftTreePopover.node.data.fname != this.LeftTreePopover.node.data.pfname){
+					var res = await axios.post('{MOD_URL}&op=library&do=folder&operation=rename',{
+						fid:this.LeftTreePopover.node.data.fid,
+						name:this.LeftTreePopover.node.data.fname
+					});
+					if(res.data.success){
+						this.LeftTreePopover.node.data.pfname = this.LeftTreePopover.node.data.fname;
+						if(this.filedata.data.length){
+							var curr = this.filedata.data.find(function(current){
+								return current.fid == self.LeftTreePopover.node.data.fid
+							});
+							if(curr){
+								curr.fname = this.LeftTreePopover.node.data.fname;
+							}
+						}
+						this.LeftTreePopover.node.data.isRename = false;
+					}else{
+						self.$message({
+							type:'error',
+							message:'修改失败'
+						});
+						this.LeftTreePopover.node.data.fname = this.LeftTreePopover.node.data.pfname;
+						this.LeftTreePopover.node.data.isRename = false;
+					}
+				}else{
+					this.LeftTreePopover.node.data.isRename = false;
+				}
+				
+			},
+			LeftClick(type){
+				var self = this;
+				if(this.LeftCurrenType == type) return false;
+				<!--{if $_GET['do'] == 'tags' ||  $_GET['do'] == 'member'}-->
+				if(type == 'tags' || type == 'member'){
+					window.location.href = MOD_URL+`&op=library&do=${type}&appid=${this.DocumentAppid}`;
+				}else{
+					
+					if(type){
+						window.location.href = MOD_URL+`&op=library&do=filelist#appid=${this.DocumentAppid}&type=${type}`;
+					}else{
+						window.location.href = MOD_URL+`&op=library&do=filelist#appid=${this.DocumentAppid}`;
+					}
+					
+				}
+				<!--{else}-->
+				if(type == 'tags' || type == 'member'){
+					window.location.href = MOD_URL+`&op=library&do=${type}&appid=${this.DocumentAppid}`;
+				}else{
+					this.LeftCurrenType = type;
+					this.LeftTree.Currentkey = '';
+					this.ScreenParam.fids = '';
+					if(self.$refs.LeftTreeRef){
+						self.$refs.LeftTreeRef.setCurrentKey();
+					}
+					self.$refs.ScreenBoxRef.DeleteAll();
+					this.RightParamClean();
+					this.HeaderKeyword = '';
+					this.RightType = type;
+					this.CommonGetImageData();
+					this.RightGetData();
+				}
+				<!--{/if}-->
+			},
+			LeftTreeClick(node){
+				var self = this;
+				// if(self.DocumentIsPop){
+				// 	if(this.LeftCurrenType == 'filelist'){
+				// 		self.$refs.LeftTreeRef.setCurrentKey(this.LeftTree.Currentkey)
+				// 	}else{
+				// 		self.$refs.LeftTreeRef.setCurrentKey();
+				// 	}
+				// 	return false;
+				// }
+				if(this.LeftCurrenType == 'filelist'){
+					self.$refs.LeftTreeRef.setCurrentKey(this.LeftTree.Currentkey)
+				}
+				if(node.isRename){
+					return false;
+				}
+				<!--{if $_GET['do'] == 'tags' ||  $_GET['do'] == 'member'}-->
+				window.location.href = MOD_URL+`&op=library&do=filelist#appid=${this.DocumentAppid}&fid=${node.fid}`;
+				<!--{else}-->
+				if(this.LeftCurrenType == 'filelist' && this.LeftTree.Currentkey == node.fid){
+					return false;
+				}
+				this.ScreenParam.fids = node.fid;
+				var pathkey = node.pathkey.split(this.DocumentAppid);
+				var pathkeys = [];
+				
+				for(var i in pathkey){
+					if(pathkey[i]){
+						pathkeys.push(pathkey[i]+this.DocumentAppid);
+					}
+				}
+				pathkeys.splice(pathkeys.length-1,1)
+				this.LeftTree.defaultOpenkeysInit = pathkeys;
+				this.HeaderKeyword = '';
+				this.LeftTree.Currentkey = node.fid;
+				this.LeftCurrenType = 'filelist'
+				self.$refs.ScreenBoxRef.DeleteAll();
+				this.RightParamClean();
+				this.RightType = 'folder';
+				this.RightActivefid = [node.fid];
+				this.CommonGetImageData();
+				this.RightGetData();
+				<!--{/if}-->
+				
+			},
+			
+			async LeftTreeGetFolder(node,resolve){
+				var self = this;
+				var level = node.level;
+				var param = {
+					appid:this.DocumentAppid
+				};
+				if(level>0){
+					param['pfids'] = node.data.fid;
+				}else{
+					this.LeftTree.TopLevelNode = node;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfolder',param);
+				var new_data = res.data.folderdatanum;
+				var arr = [];
+				for(var i in new_data){
+					var item = new_data[i];
+					item['isRename'] = false;
+					item['pfname'] = item.fname;
+					if(self.LeftTree.filterText){
+						item['pfname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
+						if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
+							item['fname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
+							arr.push(item);
+						}
+						// this.LeftTree.defaultOpenkeysSearch.push(new_data[i].fid);
+					}else{
+						item['pfname'] = item['fname'];
+						arr.push(item);
+					}
+				}
+				resolve(arr);
+				self.$nextTick(function(){
+					for(var v in arr){
+						if(self.LeftTreePopover.renameFid && arr[v].fid == self.LeftTreePopover.renameFid){
+							var node = self.$refs.LeftTreeRef.getNode(arr[v].fid);
+							node.data.isRename = true;
+							self.LeftTreePopover.node = node;
+							self.LeftTreePopover.renameFid = '';
+							setTimeout(function() {
+								self.$refs['treeinput'+arr[v].fid].select();
+							}, 300);
+						}
+						
+						if(self.LeftTree.Currentkey == arr[v].fid){
+							self.$refs.LeftTreeRef.setCurrentKey(arr[v].fid);
+						}
+					}
+					// self.LeftGetTreeDataSubstringFinish();
+				});
+			},
+			LeftGetTreeDataSubstringFinish(){
+				var self = this;
+				if(self.LeftTree.defaultOpenkeys.length){
+					var status = false;
+					for(var i in self.LeftTree.defaultOpenkeys){
+						var id = self.LeftTree.defaultOpenkeys[i];
+						if(self.LeftTree.defaultOpenkeysSearch.indexOf(id)>-1){
+							status = true;
+						}else{
+							return false;
+						}
+					}
+					if(status){
+						self.LeftTree.loading = false;
+					}
+				}else{
+					self.LeftTree.loading = false;
+				}
+			},
+			LeftClassifyFilterInput:debounce(async function(val){//输入
+				var self = this;
+				// self.LeftTree.loading = true;
+				self.LeftTree.show = false;
+				self.LeftTree.defaultOpenkeys = [];
+				// self.LeftTree.defaultOpenkeysSearch = [];
+				if(val){
+					var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=searchfolderbyname', {keyword:val});
+					var data = res.data;
+					for(var b in data.folderdata){
+						var bitem = data.folderdata[b];
+						var pathkey = [];
+						if(self.LeftTree.arrangementLast.indexOf(bitem.fid)<0){
+							self.LeftTree.arrangementLast.push(bitem.fid);
+						}
+						self.LeftTree.arrangement = [];
+						if(bitem.pathkey){
+							self.LeftGetTreeDataSubstring(bitem.pathkey,bitem.appid);
+						}
+						for(var p in self.LeftTree.arrangement){
+							if(self.LeftTree.defaultOpenkeys.indexOf(self.LeftTree.arrangement[p])<0){
+								self.LeftTree.defaultOpenkeys.push(self.LeftTree.arrangement[p])
+							}
+						}
+					}
+					
+				}else{
+					this.LeftTree.defaultOpenkeys = this.LeftTree.defaultOpenkeysInit
+				}
+				self.$nextTick(function(){
+					self.LeftTree.show = true;
+				})
+			},800),
+			LeftGetTreeDataSubstring(str,appid){
+				var self = this;
+				var farr = str.split(appid);
+				var arr = [];
+				for(var f in farr){
+					if(farr[f]){
+						arr.push(farr[f]);
+					}
+				}
+				arr.pop();
+				for(var i in arr){
+					var pathkey = arr[i]+appid;
+					if(self.LeftTree.arrangement.indexOf(pathkey) == -1){
+						self.LeftTree.arrangement.push(pathkey);
+					}
+				}
+				
+			},
+			LeftdragControllerDiv () {
+				var self = this;
+				var boxw = document.body.clientWidth;
+				boxw = parseInt(boxw/3);
+				// 鼠标按下事件
+				document.onmousemove = function(e) {
+					var DocumentLeftWidth = e.clientX+1;
+					if(DocumentLeftWidth>boxw){
+						DocumentLeftWidth = boxw;
+					}else if(DocumentLeftWidth<260){
+						DocumentLeftWidth = 260;
+					}
+					self.LeftWidth = DocumentLeftWidth;
+					return false;
+				};
+				document.onmouseup = function() {
+					document.onmousemove = null;
+					document.onmouseup = null;
+					if(self.LeftCurrenType != 'tags' && self.LeftCurrenType != 'member'){
+						self.$refs.RefImageLayout.updateImageData();
+					}
+					return false;
+				};
+				return false;
+			},
+			LeftParentFilenum(id){//循环给父节点添加文件数量
+				let self = this;
+				let node = self.$refs.LeftTreeRef.getNode(id);
+				if(node && node.level > 0){
+					node.data.filenum = parseInt(node.data.filenum) + 1;
+					self.LeftParentFilenum(node.parent.data.fid);
+				}
+			}
+		},
+		mounted(){
+			this.LeftGetAllNum();
+		}
+	}
+</script>

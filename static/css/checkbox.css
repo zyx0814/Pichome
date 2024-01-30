@@ -8,7 +8,9 @@
     padding-left: 1em;
 	line-height:1em;
 }
-
+.checkbox-custom.inline, .radio-custom.inline {
+	display: inline-block;
+}
 .checkbox-custom input[type=radio], .checkbox-custom input[type=checkbox], .radio-custom input[type=radio]{
     z-index: 1;
     width: 100%;
@@ -30,6 +32,11 @@
     display: inline-block;
     padding-left: 1em;
     /*vertical-align: middle;*/
+}
+.checkbox-custom.inline label, .radio-custom.inline label{
+    padding-left: 0.5em;
+	padding-right:1em
+   
 }
 .checkbox-custom label, .radio-custom label {
     min-height: 1em;
@@ -78,7 +85,8 @@
     font-size: 1em;
     line-height: 1em;
     color: #76838f;
-    text-align: center;
+    text-align: center;outline: none;
+	
 }
 .radio-custom label::after {
     position: absolute;
@@ -128,9 +136,8 @@
 }
 
 .checkbox-custom input[type=radio]:focus+label::before, .checkbox-custom input[type=checkbox]:focus+label::before {
-    outline: thin dotted;
-    outline: 0.36em auto -webkit-focus-ring-color;
-    outline-offset: -2px;
+   
+	outline::none;
 }
 .checkbox-primary input[type=radio]:checked+label::before, .checkbox-primary input[type=checkbox]:checked+label::before {
     background-color: #4C89FB;

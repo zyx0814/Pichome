@@ -1,0 +1,111 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/admin/pc/assets/css/loginpage.css?{VERHASH}">
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px">
+            <!--{template admin/pc/components/header}-->
+        </el-header>
+		<el-container>
+			<el-aside class="page-left" width="200px">
+				<!--{template admin/pc/components/left}-->
+			</el-aside>
+			<el-container>
+				<el-header class="page-header" height="50px">
+					<span>登录页设置</span>
+				</el-header>
+				<el-main style="padding: 0px;overflow: hidden;position: relative;">
+					<el-scrollbar>
+						<div class="content" style="padding: 16px 25px;">
+							<el-form ref="form" :model="formdata" label-width="200px">
+								<el-form-item label="主标题：">
+									<el-input class="maxWidth" v-model="formdata.loginset.title"></el-input>
+									<el-text style="width: 100%;" tag="p" size="small">独立登录页左侧标题</el-text>
+								</el-form-item>
+								<el-form-item label="副标题：">
+									<el-input class="maxWidth" v-model="formdata.loginset.subtitle"></el-input>
+									<el-text style="width: 100%;" tag="p" size="small">独立登录页左侧副标题</el-text>
+								</el-form-item>
+								<el-form-item label="页面背景：">
+									<el-input class="maxWidth" v-model="formdata.loginset.background"></el-input>
+									<!-- <el-button 
+									class="register-bg-bt"
+									style="" 
+									plain 
+									icon="el-icon-search">上传图片</el-button> -->
+									<el-text style="width: 100%;" tag="p" size="small">可以为颜色（如：#FFF）；图片（以.jpeg，.jpg，.png结尾）或网址</el-text>
+								</el-form-item>
+								<el-form-item>
+									<el-button type="primary" @click="handleSubmit" :loading="btnloading">保存更改</el-button>
+								</el-form-item>
+							</el-form>
+						</div>
+					</el-scrollbar>
+							
+				</el-main>
+			</el-container>
+		    
+		  </el-container>
+	</el-container>
+</div>
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+				btnloading:false,
+				formdata:{
+					loginset:{
+						'title':'$setting[loginset][title]',
+						'subtitle':'$setting[loginset][subtitle]',
+						'background':'$setting[loginset][background]',
+						'template':'2',
+					}
+				},
+			}
+		},
+		created() {
+			var self = this;
+			
+		},
+		mixins:[LeftMixin],
+		methods: {
+			async handleSubmit() {
+				var self = this;
+				self.btnloading = true;
+				var res = await axios.post(MOD_URL+'&op=admin&do=loginpage',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					settingnew:self.formdata,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data){
+					self.$message({
+						type:'success',
+						message:'保存成功'
+					});
+				}else{
+					self.$message.error('保存失败');
+				}
+				self.btnloading = false;
+			}
+		},
+		mounted() {}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

@@ -13,7 +13,7 @@ if(!defined('IN_OAOOA')) {
 
 $lang = array
 (
-	'appname'=>'腾讯云视频',
+	'appname'=>'腾讯云',
 	'qcosvideo_setting'=>'腾讯云视频设置',
 	'exts'=>'转码的文件类型',
 	'exts_thumb'=>'生成缩略图支持的文件类型',

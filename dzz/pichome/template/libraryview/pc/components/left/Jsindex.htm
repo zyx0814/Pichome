@@ -1,0 +1,209 @@
+<script>
+	const leftMixins = {
+		data(){
+			return {
+				LeftCurrenType:'',
+				LeftWidth:260,
+				leftsearch:'',
+				LeftTree:{
+					Visible:true,
+					loading:false,
+					show:false,
+					filterText:'',
+					defaultOpenkeys:[],
+					Currentkey:'',
+					arrangement:[],
+					arrangementLast:[],
+					defaultOpenkeysSearch:[],
+					defaultOpenkeysInit:[],
+					TopLevelNode:null,
+				},
+			}
+		},
+		watch:{
+			'LeftTree.Currentkey':{
+				handler(val){
+					this.ScreenParam.pfids = val
+				},
+				deep:true,
+			},
+		},
+		created(){
+			let self = this;
+			let fid = this.CommonGetHashParam('fid');
+			let type = this.CommonGetHashParam('type');
+			if(fid){
+				this.LeftCurrenType = 'filelist';
+				this.LeftTree.Currentkey = fid;
+			}else{
+				this.LeftCurrenType = type || '';
+			}
+		},
+		methods:{
+			LeftInit(){//在获取偏好设置后执行
+				this.LeftTree.show = true;
+			},
+			LeftClick(type){//左侧点击
+				var self = this;
+				if(this.screenType.type && this.LeftCurrenType == 'filelist'){
+					self.screenType.show = false;
+				}
+				if(this.LeftCurrenType == type) return false;
+				this.LeftCurrenType = type;
+				this.LeftTree.Currentkey = '';
+				this.ScreenParam.fids = '';
+				if(self.$refs.LeftTreeRef){
+					self.$refs.LeftTreeRef.setCurrentKey()
+				}
+				self.$refs.ScreenBoxRef.DeleteAll();
+				this.HeaderKeyword = '';
+				this.CommonGetImageData();
+				self.$nextTick(function(){
+					self.screenType.show = true;
+				})
+			},
+			LeftTreeClick(node){//左侧树点击
+				var self = this;
+				if(this.LeftCurrenType == 'filelist'){
+					self.$refs.LeftTreeRef.setCurrentKey(this.LeftTree.Currentkey)
+				}
+				if(this.LeftCurrenType == 'filelist' && this.LeftTree.Currentkey == node.fid){
+					return false;
+				}
+				if(this.screenType.type){
+					this.screenType.show = false;
+				}
+				
+				this.ScreenParam.fids = node.fid;
+				var pathkey = node.pathkey.split(this.DocumentAppid);
+				var pathkeys = [];
+				
+				for(var i in pathkey){
+					if(pathkey[i]){
+						pathkeys.push(pathkey[i]+this.DocumentAppid);
+					}
+				}
+				pathkeys.splice(pathkeys.length-1,1)
+				this.LeftTree.defaultOpenkeysInit = pathkeys;
+				this.HeaderKeyword = '';
+				this.LeftTree.Currentkey = node.fid;
+				this.LeftCurrenType = 'filelist'
+				self.$refs.ScreenBoxRef.DeleteAll();
+				this.CommonGetImageData();
+				self.$nextTick(function(){
+					self.screenType.show = true;
+				})
+				
+			},
+			async LeftTreeGetFolder(node,resolve){
+				var self = this;
+				var level = node.level;
+				var param = {
+					appid:this.DocumentAppid
+				};
+				if(level>0){
+					param['pfids'] = node.data.fid;
+				}else{
+					this.LeftTree.TopLevelNode = node;
+				}
+				var res = await axios.post('index.php?mod=banner&op=appajax&do=getfolderdata',param);
+				var new_data = res.data.folderdatanum;
+				var arr = [];
+				for(var i in new_data){
+					var item = new_data[i];
+					item['isRename'] = false;
+					item['pfname'] = item.fname;
+					if(self.LeftTree.filterText){
+						item['pfname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
+						if(self.LeftTree.defaultOpenkeys.indexOf(item.fid)>-1 || self.LeftTree.arrangementLast.indexOf(item.fid)>-1){
+							item['fname'] = self.CommonHighlight(item['fname'],self.LeftTree.filterText);
+							arr.push(item);
+						}
+					}else{
+						item['pfname'] = item['fname'];
+						arr.push(item);
+					}
+
+					// this.LeftTree.defaultOpenkeysSearch.push(new_data[i].fid);
+				}
+				resolve(arr);
+			},
+			LeftClassifyFilterInput:debounce(async function(val){//输入
+				var self = this;
+				// self.LeftTree.loading = true;
+				self.LeftTree.show = false;
+				self.LeftTree.defaultOpenkeys = [];
+				// self.LeftTree.defaultOpenkeysSearch = [];
+				if(val){
+					var res = await axios.post('index.php?mod=banner&op=appajax&do=searchfolderbynamee', {keyword:val});
+					var data = res.data;
+					for(var b in data.folderdata){
+						var bitem = data.folderdata[b];
+						var pathkey = [];
+						if(self.LeftTree.arrangementLast.indexOf(bitem.fid)<0){
+							self.LeftTree.arrangementLast.push(bitem.fid);
+						}
+						self.LeftTree.arrangement = [];
+						if(bitem.pathkey){
+							self.LeftGetTreeDataSubstring(bitem.pathkey,bitem.appid);
+						}
+						for(var p in self.LeftTree.arrangement){
+							if(self.LeftTree.defaultOpenkeys.indexOf(self.LeftTree.arrangement[p])<0){
+								self.LeftTree.defaultOpenkeys.push(self.LeftTree.arrangement[p])
+							}
+						}
+					}
+					
+				}else{
+					this.LeftTree.defaultOpenkeys = this.LeftTree.defaultOpenkeysInit
+				}
+				self.$nextTick(function(){
+					self.LeftTree.show = true;
+				})
+			},800),
+			LeftGetTreeDataSubstring(str,appid){
+				var self = this;
+				var farr = str.split(appid);
+				var arr = [];
+				for(var f in farr){
+					if(farr[f]){
+						arr.push(farr[f]);
+					}
+				}
+				arr.pop();
+				for(var i in arr){
+					var pathkey = arr[i]+appid;
+					if(self.LeftTree.arrangement.indexOf(pathkey) == -1){
+						self.LeftTree.arrangement.push(pathkey);
+					}
+				}
+				
+			},
+			LeftdragControllerDiv () {
+				var self = this;
+				var boxw = document.body.clientWidth;
+				boxw = parseInt(boxw/3);
+				// 鼠标按下事件
+				document.onmousemove = function(e) {
+					var DocumentLeftWidth = e.clientX+1;
+					if(DocumentLeftWidth>boxw){
+						DocumentLeftWidth = boxw;
+					}else if(DocumentLeftWidth<260){
+						DocumentLeftWidth = 260;
+					}
+					self.LeftWidth = DocumentLeftWidth;
+					return false;
+				};
+				document.onmouseup = function() {
+					document.onmousemove = null;
+					document.onmouseup = null;
+					if(self.LeftCurrenType != 'tags' && self.LeftCurrenType != 'member'){
+						self.$refs.RefImageLayout.updateImageData();
+					}
+					return false;
+				};
+				return false;
+			},
+		}
+	}
+</script>

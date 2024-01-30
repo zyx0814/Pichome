@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>COS 上传队列</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+    <h1>COS 上传队列</h1>
+    <div id="app">
+        <form id="form">
+            <div class="float-right">共{{total}}个文件</div>
+            <input type="file" value="选择上传文件" multiple @change="selectedFile">
+        </form>
+        <table class="file-list">
+            <colgroup>
+                <col style="width:20%;">
+                <col style="width:10%;">
+                <col style="width:40%;">
+                <col style="width:30%;">
+            </colgroup>
+            <tr class="file-item">
+                <td>文件名</td>
+                <td>大小</td>
+                <td>进度</td>
+                <td class="file-action">操作</td>
+            </tr>
+            <tr class="file-item" v-for="item in list">
+                <td><span class="file-name">{{item.Key}}</span></td>
+                <td>{{formatSize(item.size)}}</td>
+                <td>
+                    <span class="file-progress" v-if="item.state==='uploading'">
+                        <span class="file-progress-loaded" :style="'width:'+item.percent*100+'%'"></span>
+                    </span>
+                    <span v-if="item.state==='success'">已完成</span>
+                    <span v-else-if="item.state==='waiting'">等待上传</span>
+                    <span v-else-if="item.state==='checking'">校验中({{parseInt(item.hashPercent*100)}}%)</span>
+                    <span v-else-if="item.state==='paused'">已暂停, 已传{{formatSize(item.loaded)}}</span>
+                    <span v-else-if="item.state==='canceled'">已取消</span>
+                    <span v-else>{{formatSize(item.speed)}}/s, 已传{{formatSize(item.loaded)}} {{parseInt(item.percent*100)}}%</span>
+                </td>
+                <td class="file-action">
+                    <a v-if="['waiting','checking','uploading'].includes(item.state)" href="javascript:void(0)" @click="pauseTask(item)">暂停</a>
+                    <a v-if="['error','paused'].includes(item.state)" href="javascript:void(0)" @click="restartTask(item)">开始</a>
+                    <a v-if="item.state!=='canceled'" href="javascript:void(0)" @click="cancelTask(item)">删除</a>
+                </td>
+            </tr>
+            <tr class="file-item" v-if="!list.length">
+                <td colspan="4" align="center">暂无上传文件</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<script src="../../dist/cos-js-sdk-v5.js"></script>
+<script src="../common/lodash.core.min.js"></script>
+<script src="../common/vue.min.js"></script>
+<script src="./index.js"></script>
+
+</body>
+</html>

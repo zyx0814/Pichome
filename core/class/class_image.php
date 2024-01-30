@@ -66,7 +66,6 @@ class image {
 		if($thumbwidth < 100 && $thumbheight < 100) {
 			$this->param['thumbquality'] = 100;
 		}
-
 		$return = !$this->libmethod ? $this->Thumb_GD() : $this->Thumb_IM();
 		$return = !$nosuffix ? $return : 0;
 
@@ -95,6 +94,7 @@ class image {
 
 	function Watermark($source,$target='') {
 		$return = $this->init('watermask', $source, $target,0);
+
 		if($return <= 0) {
 			return $this->returncode($return);
 		}
@@ -106,7 +106,6 @@ class image {
 		if(!is_readable($this->param['watermarkfile']) || ($this->param['watermarktype'] == 'text' && (!file_exists($this->param['watermarktext']['fontpath']) || !is_file($this->param['watermarktext']['fontpath'])))) {
 			return $this->returncode(-3);
 		}
-
 		$return = !$this->libmethod ? $this->Watermark_GD() : $this->Watermark_IM();
 
 		return $this->sleep($return);
@@ -169,20 +168,43 @@ class image {
 		}
 
 		if(!$this->libmethod) {
-			switch($this->imginfo['mime']) {
-				case 'image/jpeg':
-					$this->imagecreatefromfunc = function_exists('imagecreatefromjpeg') ? 'imagecreatefromjpeg' : '';
-					$this->imagefunc = function_exists('imagejpeg') ? 'imagejpeg' : '';
-					break;
-				case 'image/gif':
-					$this->imagecreatefromfunc = function_exists('imagecreatefromgif') ? 'imagecreatefromgif' : '';
-					$this->imagefunc = function_exists('imagegif') ? 'imagegif' : '';
-					break;
-				case 'image/png':
-					$this->imagecreatefromfunc = function_exists('imagecreatefrompng') ? 'imagecreatefrompng' : '';
-					$this->imagefunc = function_exists('imagepng') ? 'imagepng' : '';
-					break;
-			}
+		    if(function_exists('imagejpeg')){
+                $this->imagefunc =  'imagewebp';
+                switch($this->imginfo['mime']) {
+                    case 'image/jpeg':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefromjpeg') ? 'imagecreatefromjpeg' : '';
+                        //$this->imagefunc = function_exists('imagejpeg') ? 'imagejpeg' : '';
+                        break;
+                    case 'image/gif':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefromgif') ? 'imagecreatefromgif' : '';
+                        $this->imagefunc = function_exists('imagegif') ? 'imagegif' : '';
+                        break;
+                    case 'image/png':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefrompng') ? 'imagecreatefrompng' : '';
+                        //$this->imagefunc = function_exists('imagepng') ? 'imagepng' : '';
+                        break;
+                    default: $this->imagecreatefromfunc = function_exists('imagecreatefromwebp') ? 'imagecreatefromwebp' : '';
+                }
+            }else{
+                switch($this->imginfo['mime']) {
+                    case 'image/jpeg':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefromjpeg') ? 'imagecreatefromjpeg' : '';
+                        $this->imagefunc = function_exists('imagejpeg') ? 'imagejpeg' : '';
+                        break;
+                    case 'image/gif':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefromgif') ? 'imagecreatefromgif' : '';
+                        $this->imagefunc = function_exists('imagegif') ? 'imagegif' : '';
+                        break;
+                    case 'image/png':
+                        $this->imagecreatefromfunc = function_exists('imagecreatefrompng') ? 'imagecreatefrompng' : '';
+                        $this->imagefunc = function_exists('imagepng') ? 'imagepng' : '';
+                        break;
+                    default:
+                        $this->imagefunc = function_exists('imagejpeg') ? 'imagejpeg' : '';
+                        $this->imagecreatefromfunc = function_exists('imagecreatefromwebp') ? 'imagecreatefromwebp' : '';
+                }
+            }
+
 		} else {
 			$this->imagecreatefromfunc = $this->imagefunc = TRUE;
 		}
@@ -350,44 +372,34 @@ class image {
 			return 0;
 		}
 	}
-	function scaleImage($width,$height,$owidth,$oheight) {
-		if($owidth>$width || $oheight>$height){
-			$or=$owidth/$oheight;
-			$r=$width/$height;
-			if($r>$or){
-				if($oheight<$height){
-					$height=$oheight;
-					$width=$owidth;
-				}else{
+    function scaleImage($width,$height,$owidth,$oheight) {
+        if($owidth>$width && $oheight>$height){
+            $or=$owidth/$oheight;
+            $r=$width/$height;
+            if($or>$r){
+                if($oheight<$height){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
+                    $width=ceil($height*$or);
+                }
 
-					$width=ceil($height*$or);
-					if($width < 242){
-					    $width = 242;
-					    $height = ceil($width/$or);
-                    }
-				}
+            }else{
+                if($owidth<$width){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
+                    $height=ceil($width/$or);
+                }
+            }
 
-			}else{
-				if($owidth<$width){
-					$height=$oheight;
-					$width=$owidth;
-				}else{
-					$height=ceil($width/$or);
-					$width = ceil($height*$or);
-					if($width < 242){
-                        $width = 242;
-                        $height = ceil($width/$or);
-                    }
-				}
-			}
-
-		}else{
-			$width=$owidth;
-			$height=$oheight;
-		}
-		//Return the results
-		return array($width,$height);
-	}
+        }else{
+            $width=$owidth;
+            $height=$oheight;
+        }
+        //Return the results
+        return array($width,$height);
+    }
 	function Thumb_IM() {
 
 		switch($this->param['thumbtype']) {
@@ -400,10 +412,10 @@ class image {
 					$im->setIteratorIndex(0);
 					$newsize=$this->scaleImage($this->param['thumbwidth'], $this->param['thumbheight'],$im->getImageWidth(),$im->getImageHeight());
 					$im->thumbnailImage($newsize[0], $newsize[1]);
-					if($this->imginfo['mime'] == 'image/png') {
+					/*if($this->imginfo['mime'] == 'image/png') {
 						$prefix='png:';
-					}elseif($this->imginfo['mime'] == 'image/gif') {
-						$prefix='png:';
+					}else*/if($this->imginfo['mime'] == 'image/gif') {
+						$prefix='gif:';
 					}else{
 						$prefix='';
 						$im->setImageCompressionQuality($this->param['thumbquality']);

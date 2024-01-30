@@ -1,0 +1,265 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/pc/assets/index.css?{VERHASH}">
+<style>
+
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+		<el-main >
+			<div class="container">
+			<!--{template common/container/pc/ucenter_header}-->
+			<div class="notification">
+				<el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" >
+					<el-form-item label="头像：">
+						<el-upload 
+							class="avatar-uploader" 
+							action="user.php?mod=my&do=uploadimg"
+							name="file"
+							accept="image/png,image/jpg,image/jpeg,image/gif" 
+							:on-success="handleLogoSuccess"
+							:on-progress="handleLogoProgress"
+							:before-upload="beforeLogoUpload"
+							:show-file-list="false">
+							<el-progress v-show="ispercentage" type="circle" :width="148" :percentage="percentage"></el-progress>
+							<template v-if="ruleForm.imgpath||avatarstatus=='1'">
+								<template v-if="ruleForm.imgpath">
+									<el-image class="avatarimg" fit="contain" :src="ruleForm.imgpath" style="max-width:120px;max-height:120px;"></el-image>
+								</template>
+								<template v-else>
+									<div class="avatarstatus">
+										<img :src="'avatar.php?uid=$_G['uid']&random='+Math.ceil(Math.random()*100)" title="admin" class=" special_avatar_class" style="max-width: 100%'max-height:100%'">
+									</div>
+								</template>
+							</template>
+							<el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+						</el-upload>
+					</el-form-item>
+					<el-form-item label="邮箱：" prop="email">
+						<el-input class="maxWidth" v-model.trim="ruleForm.email"></el-input>
+						<el-text type="info" class="tipTxt" size="small">用于登录</el-text>
+					</el-form-item>
+					<el-form-item label="用户名：" prop="nickname">
+						<el-input class="maxWidth" v-model.trim="ruleForm.nickname"></el-input>
+						<el-text type="info" class="tipTxt" size="small">用于登录，站点中不显示</el-text>
+					</el-form-item>
+					<el-form-item label="姓名：" prop="username">
+						<el-input class="maxWidth" v-model.trim="ruleForm.username"></el-input>
+						<el-text type="info" class="tipTxt" size="small">用户界面中显示，不能用于登录</el-text>
+					</el-form-item>
+					<el-form-item label="手机号：" prop="phone">
+						<el-input class="maxWidth" v-model.trim="ruleForm.phone"></el-input>
+					</el-form-item>
+					<el-form-item label="微信号：" prop="weixinid">
+						<el-input class="maxWidth" v-model.trim="ruleForm.weixinid"></el-input>
+					</el-form-item>
+					<el-form-item label="原密码：" prop="password0">
+						<el-input class="maxWidth" v-model.trim="ruleForm.password0"></el-input>
+					</el-form-item>
+					<el-form-item label="新密码：" prop="password">
+						<el-input class="maxWidth" v-model.trim="ruleForm.password"></el-input>
+					</el-form-item>
+					<el-form-item label="确认新密码：" prop="password2">
+						<el-input class="maxWidth" v-model.trim="ruleForm.password2"></el-input>
+					</el-form-item>
+					<el-form-item>
+						<el-button type="primary" @click="handleSubmit">保存更改</el-button>
+					</el-form-item>
+				</el-form>
+			</div>
+			</div>
+		</el-main>
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			var self = this;
+			var inputpassword = function(rule, value, callback){
+				if (value) {
+					if (self.ruleForm.password2 !== '') {
+						self.$refs.ruleForm.validateField('password2');
+					}
+					callback();
+				}else{
+					callback();
+				}
+			};
+			var inputpassword2 = function(rule, value, callback){
+				if (value !== self.ruleForm.password) {
+					callback(new Error('两次输入密码不一致!'));
+				} else {
+					callback();
+				}
+			};
+			return {
+				DocumentThemeColor:'',
+				UcenterHeaderMenuIndex:'home',
+				percentage:0,
+				ispercentage:false,
+				btnloading:false,
+				avatarstatus:'$userdata[avatarstatus]',
+				ruleForm: {
+					imgpath:'',
+					email:'$userdata[email]',
+					nickname:'$userdata[nickname]',
+					username:'$userdata[username]',
+					phone:'$userdata[phone]',
+					weixinid:'$userdata[weixinid]',
+					password0:'',
+					password:'',
+					password2:'',
+				},
+				rules: {
+					email: [
+						{ required: true, message: '请输入邮箱地址', trigger: 'blur' },
+						{ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+					],
+					nickname: [
+						{ required: true, message: '请输入用户名', trigger: 'blur' },
+						{ min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: ['blur', 'change'] }
+					],
+					username: [
+						{ required: true, message: '请输入姓名', trigger: 'blur' },
+						{ min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: ['blur', 'change'] }
+					],
+					phone: [
+						{ required: false, message: '请输入手机号'}
+					],
+					weixinid: [
+						{ required: false, message: '请输入微信' },
+					],
+					password: [
+						{ validator: inputpassword, trigger: ['blur', 'change'] }
+					],
+					password2: [
+						{ validator: inputpassword2, trigger: ['blur', 'change'] }
+					]
+				}
+			
+			}
+		},
+		mixins:[UcenterHeader],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+			
+			
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			
+			beforeLogoUpload(file){
+				var self = this;
+				var isJPG = ['image/png','image/jpeg','image/jpg','image/gif'];
+				var isLt2M = file.size / 1024 / 1024 < 2;
+				if (isJPG.indexOf(file.type)<0) {
+				  self.$message.error('图片格式错误');
+				}
+				if (!isLt2M) {
+				  self.$message.error('图片大小不能超过 2MB!');
+				}
+				return isJPG && isLt2M;
+						
+				self.ispercentage = true;
+			},
+			handleLogoSuccess(res, file){
+				if(res.error){
+					var self = this;
+					self.$message.error(res.error);
+				}else{
+					this.ruleForm.imgpath = res.path;
+				}
+			},
+			handleLogoProgress(event, file, fileList) {
+				var percent = parseInt(event.percent);
+				this.percentage = percent;
+				if(percent == 100){
+					this.ispercentage = false;
+					this.percentage = 0
+				}
+			},
+			handleSubmit(){
+				var self = this;
+				self.$refs.ruleForm.validate(async function(valid){
+					if (valid) {
+						var params = {
+							'accountedit':true,
+							'formhash':'{FORMHASH}',
+							'uid':'$uid',
+							'email':self.ruleForm.email,
+							'nickname':self.ruleForm.nickname,
+							'username':self.ruleForm.username,
+							'phone':self.ruleForm.phone,
+							'weixinid':self.ruleForm.weixinid,
+							'password0':self.ruleForm.password0,
+							'password':self.ruleForm.password,
+							'password2':self.ruleForm.password2,
+						};
+						if(self.ruleForm.imgpath){
+							params['imgpath'] = self.ruleForm.imgpath;
+						}
+						self.btnloading = true;
+						const {data: res} = await axios.post('user.php?mod=my&do=personal',params);
+						if(res.success){
+							// self.$message({
+							// 	message: '保存成功',
+							// 	type: 'success'
+							// });
+							window.location.reload();
+						}else{
+							self.btnloading = false;
+							self.$message.error(res.msg || '提交失败');
+						}
+				    
+					} else {
+						self.$message.error('验证失败');
+						self.btnloading = false;
+						return false;
+					}
+				});
+			}
+			
+		},
+		mounted() {}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

@@ -1143,7 +1143,9 @@ class UploadHandler
 			$ext = $pathinfo['extension']?$pathinfo['extension']:'';
 			$attach['filetype']=$ext;
 			if(in_array(strtolower($attach['filetype']),array('png','jpeg','jpg','gif','bmp'))){
-				$attach['img']=C::t('attachment')->getThumbByAid($attach,$this->options['thumbnail']['max-width'],$this->options['thumbnail']['max-height']);
+                //$attach['img']=C::t('attachment')->getThumbByAid($attach['aid'],$this->options['thumbnail']['max-width'],$this->options['thumbnail']['max-height']);
+				$attach['img']=getglobal('siteurl').'index.php?mod=io&op=getfileStream&path='.dzzencode('attach::'.$attach['aid']);
+
 				$attach['isimage']=1;
 			}else{
 				$attach['img']=geticonfromext($ext);
@@ -1151,6 +1153,7 @@ class UploadHandler
 			}
 			$attach['ffilesize']=formatsize($attach['filesize']);
 			$attach['dpath']=dzzencode('attach::'.$attach['aid']);
+            //$attach['imgsrc'] =
 			@unlink($file_path);
 			return $attach;
 		}else{
@@ -1192,8 +1195,9 @@ class UploadHandler
 				C::t('local_storage')->update_usesize_by_remoteid($attach['remote'],$attach['filesize']);
 				if($this->options['tospace']) dfsockopen($_G['localurl'].'misc.php?mod=movetospace&aid='.$attach['aid'].'&remoteid=0',0, '', '', FALSE, '',1);
 				if(in_array(strtolower($attach['filetype']),array('png','jpeg','jpg','gif','bmp'))){
-					$attach['img']=C::t('attachment')->getThumbByAid($attach['aid'],$this->options['thumbnail']['max-width'],$this->options['thumbnail']['max-height']);
-					$attach['isimage']=1;
+					//$attach['img']=C::t('attachment')->getThumbByAid($attach['aid'],$this->options['thumbnail']['max-width'],$this->options['thumbnail']['max-height']);
+                    $attach['img'] = getglobal('siteurl').'index.php?mod=io&op=getfileStream&path='.dzzencode('attach::'.$attach['aid']);
+                    $attach['isimage']=1;
 				}else{
 					$attach['img']=geticonfromext($ext);
 					$attach['isimage']=0;

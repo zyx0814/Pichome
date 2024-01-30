@@ -9,7 +9,6 @@
 
 require __DIR__.'/coreBase.php';
 $dzz = C::app();
-
 Hook::listen('dzz_initbefore');//初始化前钩子
 $dzz->init();
 Hook::listen('dzz_initafter');//初始化后钩子

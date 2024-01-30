@@ -11,29 +11,26 @@
 
         public function run($data)
         {
-            if(strpos($data['realpath'],':') === false){
-                $bz = 'dzz';
-            }else{
-                $patharr = explode(':', $data['realpath']);
-                $bz = $patharr[0];
-                $did = $patharr[1];
-
-            }
-
-            if(!is_numeric($did) || $did < 2){
-                $bz = 'dzz';
-            }
-            if(!$data['ext'] || $bz != 'QCOS'){
+            if(!$data['ext'] || strpos($data['bz'],'QCOS') === false){
                 return '';
             }
 
-            $qcosconfig = C::t('connect_storage')->fetch($did);
+            $qcosconfig = C::t('connect_storage')->fetch($data['remoteid']);
             $videoexts = getglobal('config/qcosmedia') ? explode(',',getglobal('config/qcosmedia')):array('3gp','avi','flv','mp4','m3u8','mpg','asf','wmv','mkv','mov','ts','webm','mxf');
             $imageexts = getglobal('config/qcosimage') ? explode(',',getglobal('config/qcosimage')):array('jpg','bmp','gif','png','webp');
-
+            $cachepath = is_numeric($data['path']) ? intval($data['path']):($data['rid'] ? $data['rid']:md5($data['path']));
             if(in_array($data['ext'],$videoexts)){
-                if(!$qcosconfig['mediastatus']){
+               /* if(!$qcosconfig['mediastatus']){
                     return '';
+                }*/
+
+                if($infodata = C::t('ffmpegimage_cache')->fetch_by_path($cachepath)){
+                    $info = unserialize($infodata);
+                    $attr = array('width'=>$info['width'],'height'=>$info['height']);
+                    C::t('pichome_resources')->update($data['rid'], $attr);
+                    $attr1 = array('duration'=>$info['duration'],'isget'=>1);
+                    C::t('pichome_resources_attr')->update($data['rid'], $attr1);
+                    return false;
                 }
                 $hostarr = explode(':',$qcosconfig['hostname']);
                 $config = [
@@ -47,11 +44,17 @@
                 include_once DZZ_ROOT.'dzz'.BS.'qcos'.BS.'class'.BS.'class_video.php';
                 $this->video = new \video($config);
                 try {
-                    $fpatharr = explode('/',$data['realpath']);
+                    $fpatharr = explode(':',$data['path']);
                     unset($fpatharr[0]);
-                    $ofpath = implode('/',$fpatharr);
+                    $ofpath = implode('/',$fpatharr[2]);
                     $object = str_replace(BS,'/',$ofpath);
                     if ($info = $this->video->get_mediainfo($object)) {
+                        $cachearr = [
+                            'info'=>serialize($info),
+                            'path'=>$cachepath,
+                            'dateline'=>TIMESTAMP
+                        ];
+                        C::t('ffmpegimage_cache')->insert($cachearr);
                         $attr = array('width'=>$info['width'],'height'=>$info['height']);
                         C::t('pichome_resources')->update($data['rid'], $attr);
                         $attr1 = array('duration'=>$info['duration'],'isget'=>1);
@@ -71,13 +74,33 @@
                 if(!$qcosconfig['imagestatus']){
                     return '';
                 }
+                if($infodata = C::t('ffmpegimage_cache')->fetch_by_path($cachepath) ) {
+
+                    $palettes = unserialize($infodata);
+                    \DB::delete('pichome_palette', array('rid' => $data['rid']));
+                    foreach ($palettes as $k => $v) {
+                        $color = new \Color($k);
+                        $rgbcolor = $color->toRgb();
+                        $tdata = [
+                            'rid' => $data['rid'],
+                            'color' => $k,
+                            'r' => $rgbcolor[0],
+                            'g' => $rgbcolor[1],
+                            'b' => $rgbcolor[2],
+                            'weight' => $v
+                        ];
+                        \C::t('pichome_palette')->insert($tdata);
+                        \C::t('pichome_resources_attr')->update($data['rid'], array('isget' => 1));
+                        return false;
+                    }
+                }
                 $width = getglobal('config/pichomethumsmallwidth') ? getglobal('config/pichomethumsmallwidth') : 512;
                 $height = getglobal('config/pichomethumsmallheight') ? getglobal('config/pichomethumsmallheight') : 512;
                 //调用系统获取缩略图
                 $returnurl = \IO::getThumb($data['rid'],$width,$height,0,1,1);
                 $cachefile = '';
                 if(!is_file($returnurl)){
-                    $cachefile = getglobal('setting/attachdir') . 'cache/' . md5($data['realpath']) . '.' . $data['ext'];
+                    $cachefile = getglobal('setting/attachdir') . 'cache/' . md5($data['path']) . '.' . $data['ext'];
                     $handle = fopen($cachefile, 'w+');
                     $fp = fopen($returnurl, 'rb');
                     while (!feof($fp)) {
@@ -107,6 +130,12 @@
                     C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
                 }
                 else {
+                    $cachearr = [
+                        'info'=>serialize($palettes),
+                        'aid'=>$cachepath,
+                        'dateline'=>TIMESTAMP
+                    ];
+                    C::t('ffmpegimage_cache')->insert($cachearr);
                     \DB::delete('pichome_palette', array('rid' => $data['rid']));
                     foreach ($palettes as $k => $v) {
                         $color = new \Color($k);

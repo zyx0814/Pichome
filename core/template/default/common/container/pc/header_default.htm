@@ -1,0 +1,34 @@
+<el-header class="page-header"  height="60px">
+    <a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;">
+        <el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?VjP" fit="contain">
+            <template #error><div class="el-image__placeholder"></div></template>
+        </el-image>
+        <el-link :underline="false" href="$_G['siteurl']"><el-text tag="b" size="large" style="color:var(--el-text-color-primary)">{eval echo $appname?$appname:$_G['setting'][sitename]}</el-text></el-link>
+    </a>
+    <div class="h-right"> 
+        <el-tooltip content="切换页面配色" placement="bottom">
+            <el-button 
+                text 
+                :icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+                style="font-size: var(--el-font-size-extra-large);" 
+                circle  
+                size="large"
+                @click="DocumentThemeChange">
+            </el-button>
+        </el-tooltip>
+        <comavatar
+            :level="parseInt($_G[pichomelevel])"
+            iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+            :adminid="parseInt($_G[adminid])"
+            PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+            :uid="parseInt($_G[uid])"
+            upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+            version="$_G[setting][version]"
+            formhash="{FORMHASH}"
+            :isrefresh="true">
+            <el-avatar size="40">
+                {eval echo avatar_block($_G[uid]);}
+            </el-avatar>
+        </comavatar>
+    </div>
+</el-header>

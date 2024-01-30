@@ -2,83 +2,29 @@
 <script type="text/javascript" src="$onlyDocumentUrl"></script>
 <!--{template common/header_simple_end}-->
 <style>
-    html,body{
-        height:100%;
-        overflow:hidden;
-    }
+html,body{
+	height:100%;
+	overflow:hidden;
+}
 </style>
 <div id="placeholder" style="width:100%;height:100%;overflow:auto"></div>
 
 <script type="text/javascript">
-    config = {
-        "documentType": "$documentType",
-        "type":<!--{if helper_browser::ismobile()}-->"mobile"<!--{else}-->"view"<!--{/if}-->,
-        "width":"100%",
-        "height":"100%",
-        "document": {
-            "fileType": "$meta[ext]",
-            "key": "$key",
-            "title": "$meta[title]",
-            "url": "$stream",
 
-            "permissions": {
-                "reader":true,
-                "download": <!--{if $perm_download}-->true<!--{else}-->false<!--{/if}--> ,
-                "edit": <!--{if $perm_edit}-->true<!--{else}-->false<!--{/if}--> ,
-                "print":  <!--{if $perm_print}-->true<!--{else}-->false<!--{/if}-->,
-                "review":false,
-                "rename":false,
-                "changeHistory":true,
-                "fillForms":true,
-                "comment":true
-            }
-        },
-        "editorConfig": {
-            "embedded": {
-                "embedUrl": false,
-                "fullscreenUrl": "$fullscreenstream",
-                "saveUrl":false,
-                "shareUrl": false,
-                "toolbarDocked": "top"
-            },
-            "mode":"$mode",
-            "canAutosave":true,
 
-            "canCoAuthoring":true,
-            "callbackUrl": "$saveurl",
-            "createUrl":'',
-            "lang": "zh-CN",
-            "location":"zh-CN",
-            "user": {
-                id:'$_G[uid]',
-                firstname:'$_G[username]',
-                name:'$_G[username]'
-            }
-            ,"customization": {
-                "chat":true,
-                "comments":true,
-                "goback":false,
-                "compactToolbar":true,
-                "about": false,
-                "leftMenu": true,
-                "rightMenu": false,
-                "toolbar": true,
-                "header": false,
-                "autosave": true,
-                "showReviewChanges": true,
-                "forcesave":true,
-            }
-        },
-        "events": {
-            'onAppReady': function(){},
-            'onDocumentReady': function(){},
-            'onBack': function(){},
-            'onError': function(){},
-            'onSave': function(){}
-        }
-    };
-    jQuery(document).ready(function(){
-        var docEditor = new DocsAPI.DocEditor("placeholder", config);
-    });
+var config = {eval echo json_encode($config)};
+	config["events"] = {
+			'onAppReady': function(){},
+			'onDocumentReady': function(){},
+			'onBack': function(){},
+			'onError': function(){},
+			'onSave': function(){},
+			"onRequestHistoryData": function(){},
+			"onRequestHistory": function(){},
+			"onRequestHistoryClose": function(){},
+		}
+
+var docEditor = new DocsAPI.DocEditor("placeholder", config);
+
 </script>
-<!--{template common/footer_simple}--> 
+<!--{template common/footer_simple}-->

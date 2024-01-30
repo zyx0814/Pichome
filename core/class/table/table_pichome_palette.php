@@ -143,6 +143,14 @@
          }
             return $colordata;
         }
+        //获取文件调色板号和权重数据
+        public function fetch_colorp_by_rid($rid){
+            $data = [];
+            foreach(DB::fetch_all("select p,weight from %t where rid = %s",array($this->_table,$rid)) as $v){
+                $data[] = ['p'=>$v['p'],'weight'=>$v['weight']];
+            }
+            return $data;
+        }
         /*
          *$colors 该参数需带权重，以键为权重值，此处查询优先权重最大的查询近似颜色值
          *  ***/

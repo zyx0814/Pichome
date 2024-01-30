@@ -1,0 +1,52 @@
+	<div class="h-left" style="justify-content: start;width: 240px;
+    padding-right: 20px;">
+	<!--{if $_GET['do'] == 'tags'}-->
+	{$appdata['appname']}
+	<!--{else}-->
+		{{ DocumentVapp.appname }}
+	<!--{/if}-->
+	</div>
+	<div class="h-center" style="padding-left: 0px;">
+		<!--{if $_GET['do'] != 'tags'}-->
+		<el-input
+			style="max-width: 300px;"
+			v-model="HeaderKeyword"
+			@input="HeaderKeywordInput"
+			@keydown.enter="HeaderKeywordInput"
+			clearable
+			prefix-icon="Search"
+			></el-input>
+		<!--{/if}-->
+	</div>
+	<div class="h-right">
+		<!--{template librarylist/pc/components/index/header/right}-->
+	</div>
+<script>
+	var HeaderMixins = {
+		data(){
+			return {
+				HeaderKeyword:''
+			}
+		},
+		created(){
+			var self = this;
+			var hash=location.hash;
+			var url=hash.replace('#','');
+			var arr = url.split('&');
+			for(var i in arr){
+				var farr = arr[i].split('=');
+				switch(farr[0]){
+					case 'keyword':
+						self.HeaderKeyword = decodeURI(farr[1]);
+					break;
+				}
+			}
+		},
+		mixins:[HeaderRightMixin],
+		methods:{
+			HeaderKeywordInput:debounce(function(val){
+				this.CommonGetImageData();
+			},500),
+		}
+	};
+</script>

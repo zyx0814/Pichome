@@ -1,0 +1,29 @@
+<script type="text/javascript">
+	var ScreenMixin = {
+		data(){
+			return {
+				Screenshow:true,
+				ScreenParam:{
+					hassub:0,
+					appid:'',
+					pfids:'',
+					fids:''
+				},
+				ScreenProps:{
+					optionload:'index.php?mod=banner&op=appajax&do=getscreen',
+					contentload:'index.php?mod=banner&op=appajax&do=searchmenu_num',
+					classifyload:'index.php?mod=banner&op=appajax&do=getfolderdata',//分类url
+					tagload:'index.php?mod=banner&op=appajax&do=search_menu',
+					isclassify:true,//分类是否显示
+				}
+			}
+		},
+		methods:{
+			screenvisible(status){//弹窗显示/隐藏
+                this.DocumentOverlay = status;
+            }
+		}
+	};
+
+
+</script>

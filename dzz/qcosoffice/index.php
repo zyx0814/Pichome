@@ -11,17 +11,14 @@ if(!defined('IN_OAOOA') ) {
 if(!$rid = dzzdecode($_GET['path'],'',0)){
     exit('Access Denied');
 }
-
-$pathdata = DB::fetch_first("select v.path,ra.path as fpath   from %t r  left join %t ra on ra.rid = r.rid left join %t v on r.appid=v.appid where r.rid = %s", array('pichome_resources','pichome_resources_attr', 'pichome_vapp', $rid));
-$patharr = explode(':',$pathdata['path']);
-$did = $patharr[1] ? $patharr[1]:0;
+$data = C::t('pichome_resources')->fetch_data_by_rid($rid);
+$did = $data['remoteid'];
 $connectdata =  C::t('connect_storage')->fetch($did);
 if(!$connectdata['docstatus']){
     showmessage('该文件预览需文档处理支持，当前存储位置未开启文档处理，如需预览请联系管理员开启文档处理');
     exit();
 }else{
-    $thumbpath = $pathdata['path'].'/'.$pathdata['fpath'];
-    $url = IO::getStream($thumbpath);
+    $url = IO::getFileUri($data['path']);
     $signedUrl = explode('?',$url);
     $url = $signedUrl[0].'?ci-process=doc-preview&dstType=html&'.$signedUrl[1];
     $filename = rtrim($_GET['n'], '.dzz');

@@ -22,21 +22,20 @@ class table_video_record extends dzz_table
         parent::__construct();
     }
 
-    public function insert($setarr)
-    {
-        if (empty($setarr)) return false;
-        if (!$setarr['waterstatus']) $setarr['waterstatus'] = 0;
-        if (!$setarr['videoquality']) $setarr['videoquality'] = 0;
-        if (!$videodata = DB::fetch_first("select * from %t where rid=%s  and  videoquality=%d and  waterstatus = %d  and format=%s ",
-            array('video_record', $setarr['rid'], $setarr['videoquality'], $setarr['waterstatus'], $setarr['format']))) {
-            $setarr['id'] = parent::insert($setarr, 1);
-        } else {
-            parent::update($videodata['id'],$setarr);
-            $setarr['id']= $videodata['id'];
-        }
-        return $setarr;
-    }
 
+    public function insert_data($setarr){
+        if($recodedata = DB::fetch_first("select * from %t where rid = %s and aid = %d",array($this->_table,$setarr['rid'],$setarr['aid']))){
+            return $recodedata;
+        }else{
+            if($id = parent::insert($setarr)){
+                $setarr['id'] = $id;
+                $setarr['status'] = 0;
+                return $setarr;
+            }else{
+                return false;
+            }
+        }
+    }
     public function fetch_by_rid($rid)
     {
         if ($returndata = DB::fetch_first("select * from %t  where rid = %s order by `status` desc", array($this->_table, $rid))) {
@@ -59,6 +58,16 @@ class table_video_record extends dzz_table
             }
             self::delete($v['id']);
 
+        }
+    }
+
+    public function delete_by_aid($aids){
+        if(!is_array($aids)) $aids = (array)$aids;
+        foreach (DB::fetch_all("select path,id,status from %t where aid in(%n)", array($this->_table, $aids)) as $v) {
+            if($v['status'] == 2) {
+                IO::Delete($v['path']);
+            }
+            self::delete($v['id']);
         }
     }
 

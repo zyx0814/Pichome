@@ -34,12 +34,19 @@
             return parent::update($tid,$setarr);
         }
         
-        public function delete_by_tid($tid){
+        public function delete_by_tid($tid,$changehots = 1){
+            //临时修改为标签使用数为0不删除
             if(!$data = parent::fetch($tid)) return ;
-            if($data['hots'] > 1){
+            if($changehots && $data['hots'] >= 1){
                 return parent::update($tid,array('hots'=>$data['hots']-1));
             }else{
-                return parent::delete($tid);
+               /* if(parent::delete($tid)){
+                    C::t('pichome_tagrelation')->delete_by_tid($tid);
+                }*/
+                //修改为如果没有库使用当前标签则删除
+                if(!DB::result_first("select count(id) from %t where tid = %d",array('pichome_vapp_tag',$tid)) && parent::delete($tid)){
+                    C::t('pichome_tagrelation')->delete_by_tid($tid);
+                }
             }
         }
         public function getInitial($str){
@@ -50,7 +57,7 @@
             }
             return strtoupper($initial);
         }
-        //依据标签热度获取标签及对应图
+        //依据标签热度获取标签及对应图 该方法暂时弃用
         public function fetch_data_by_hot($limit=16){
             $hotsdata = [];
             //此处暂未确定图片以何种方式取，后面方法补充完成后修改

@@ -11,7 +11,7 @@ $appid = isset($_GET['appid']) ? trim($_GET['appid']) : 0;
 $processname = 'DZZ_EXPORTCHECKFILE_LOCK_' . $appid;
 //dzz_process::unlock($processname);
 $locked = true;
-if (!dzz_process::islocked($processname, 60*15)) {
+if (!dzz_process::islocked($processname, 60*5)) {
     $locked = false;
 }
 if ($locked) {

@@ -1,0 +1,272 @@
+<el-dialog
+	:title="Grade.title+'文件密级'"
+	v-model="Grade.dialogVisible"
+	:close-on-click-modal="false">
+	<el-table
+		v-if="Grade.dialogVisible"
+		:ref="'grade_'+Grade.appid"
+		class="grade-table"
+		style="width: 100%"
+		:data="Grade.tableData"
+		row-key="fid"
+		lazy
+		:load="GradeloadData"
+		:tree-props="{children: 'children', hasChildren: 'hasChildren'}">
+		<el-table-column prop="fname" label="目录"></el-table-column>
+		<el-table-column prop="perm" label="密级" width="100" align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.perm)==0">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/0.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="parseInt(scope.row.perm)==1">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/1.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="parseInt(scope.row.perm)==2">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/2.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="parseInt(scope.row.perm)==3">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/3.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="parseInt(scope.row.perm)==4">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/4.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="parseInt(scope.row.perm)==5">
+					<el-image style="width: 25px; height: 25px;" src="dzz/pichome/image/grade/5.png" fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column prop="operation" label="操作" width="60" align="center">
+			<template #default="scope">
+				<el-popover
+					width="505"
+					:ref="'GradePopover_'+scope.row.fid"
+					@show="GradePopoverShow(scope.row)"
+					trigger="click">
+					<el-form label-width="170px" class="grade-table-form">
+						<el-form-item label="密级：">
+							<el-radio-group v-model="Grade.setting.perm">
+								<el-radio style="margin-bottom: 5px;" :label="0" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/0.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+								<el-radio style="margin-bottom: 5px;" :label="1" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/1.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+								<el-radio style="margin-bottom: 5px;" :label="2" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/2.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+								<br>
+								<el-radio style="margin-bottom: 5px;" :label="3" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/3.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+								<el-radio style="margin-bottom: 5px;" :label="4" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/4.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+								<el-radio style="margin-bottom: 5px;" :label="5" border  size="medium">
+									<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/5.png" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+								</el-radio>
+							</el-radio-group>
+						</el-form-item>
+						<el-form-item label="设置下级目录默认密级：">
+							<el-switch v-model="Grade.setting.ischild" :active-value="1" :inactive-value="0"></el-switch>
+						</el-form-item>
+						<el-form-item label="更新文件密级：">
+							<el-switch v-model="Grade.setting.isforcechild" :active-value="1" :inactive-value="0"></el-switch>
+						</el-form-item>
+						<div class="notes-box" style="padding: 0;margin-bottom: 22px;">
+							<p class="title">注释：</p>
+							<div class="block">
+								<div class="message" style="width: 100%;">1.当仅选择设置下级目录默认密级时，不会修改当前所有文件的密级，只有新增文件时，会自动使用该密级</div>
+							</div>
+							<div class="block">
+								<div class="message" style="width: 100%;">2.当仅选择更新文件密级时，只会修改当前目录下所有文件密级，子级不做修改 </div>
+							</div>
+							<div class="block">
+								<div class="message" style="width: 100%;">3.如果两项都选择 则会修改所有子级目录默认密级（即新增文件，自动使用该密级），及其下所有文件密级</div>
+							</div>
+						</div>
+						<el-form-item style="margin-bottom: 0;">
+							<el-button type="primary" @click="GradePopoverSubmit(scope.row)"  :loading="Grade.setting.loading">确定</el-button>
+							<el-button @click="GradePopoverCancel" :loading="Grade.setting.loading">取消</el-button>
+						</el-form-item>
+					</el-form>
+                    <template #reference>
+                        <el-icon :size="18" style="cursor:pointer"><Edit-Pen /></el-icon>
+                    </template>
+				</el-popover>
+				
+			</template>
+		</el-table-column>
+	  </el-table>
+</el-dialog>
+<script type="text/javascript">
+	var GradeMixin = {
+		data(){
+			return {
+				Grade:{
+					title:'',
+					appid:'',
+					dialogVisible:false,
+					tableData: [],
+					setting:{
+						fid:'',
+						perm:0,
+						ischild:0,
+						isforcechild:0,
+						loading:false,
+					}
+				},
+			}
+		},
+		methods:{
+			async GradePopoverSubmit(data){
+				var self = this
+				if(!self.Grade.appid || !self.Grade.setting.fid){
+					self.$message.error('参数错误，请刷新重试');
+				}
+				self.Grade.setting.loading = true;
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appid:self.Grade.appid,
+					perm:self.Grade.setting.perm,
+					hassub:self.Grade.setting.ischild,
+					forceset:self.Grade.setting.isforcechild
+				};
+				if(self.Grade.setting.fid != 'topperm'){
+					param['fid'] = self.Grade.setting.fid;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&operation=setfolderperm',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					if(self.Grade.setting.ischild){
+						self.GradeSettingPerm(self.Grade.tableData,self.Grade.setting.fid,self.Grade.setting.perm);
+					}else{
+						data.perm = self.Grade.setting.perm;
+					}
+					if(self.Grade.setting.fid == 'topperm'){
+						for(var t in self.Table.data){
+							var titem = self.Table.data[t];
+							if(titem.appid == self.Grade.appid){
+								titem.perm = self.Grade.setting.perm;
+							}
+						}
+					}
+				}else{
+					self.$message.error('设置失败');
+				}
+				self.Grade.setting.loading = false;
+				self.GradePopoverCancel();
+			},
+			GradePopoverCancel(){
+				var self = this;
+				self.$refs['GradePopover_'+self.Grade.setting.fid].hide();
+			},
+			GradeDialogShow(item){
+
+				this.Grade.title = item.appname;
+				this.Grade.appid = item.appid;
+				this.Grade.tableData = [
+					{
+						fid: 'topperm',
+						perm: parseInt(item.perm),
+						fname: item.appname,
+						hasChildren: true,
+						children:[]
+					}
+				];
+				this.Grade.dialogVisible = true;
+			},
+			GradePopoverShow(data){
+				this.Grade.setting = {
+					fid:data.fid,
+					perm:parseInt(data.perm),
+					ischild:false,
+					isforcechild:false
+				}
+			},
+			GradeSettingPerm(data,fid,perm){
+				for(var i in data){
+					var item = data[i];
+					if(item.fid == fid){
+						item.perm = perm;
+						if(item.children && item.children.length){
+							this.GradeSettingPermChild(item.children,perm)
+							
+						}
+						break;
+					}
+					if(item.children && item.children.length){
+						this.GradeSettingPerm(item.children,fid,perm)
+					}
+				}
+			},
+			GradeSettingPermChild(data,perm){
+				for(var i in data){
+					var item = data[i];
+					item.perm = perm;
+					if(item.children && item.children.length){
+						this.GradeSettingPermChild(item.children,perm)
+					}
+				}
+			},
+			async GradeloadData(tree, treeNode, resolve){
+				var self = this;
+				var param = {
+					appid:self.Grade.appid
+				}
+				if(tree.fid != 'topperm'){
+					param['pfids'] = tree.fid;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfolder',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				var arr = [];
+				for(var i in data.folderdatanum){
+					var item = data.folderdatanum[i];
+					arr.push({
+						fid:item.fid,
+						fname:item.fname,
+						hasChildren: !item.leaf,
+						perm:parseInt(item.perm),
+						children:[]
+					});
+					if(tree.children){
+						tree.children = arr;
+					}else{
+						tree['children'] = arr;
+					}
+				}
+				resolve(arr);
+			},
+		}
+	};
+</script>

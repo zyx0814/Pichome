@@ -36,7 +36,7 @@ if($_GET['action'] == 'checkupgrade') {
 }elseif($_GET['action'] == 'upgradenotice') {
 	$html='';
 	$list = array();
-	
+	$isajax = isset($_GET['isajax']) ? intval($_GET['isajax']) : 0;
 	if($_G['member']['adminid'] == 1) {
 		$notelist='';
 		$dbversion = helper_dbtool::dbversion();
@@ -50,6 +50,9 @@ if($_GET['action'] == 'checkupgrade') {
 			$list[$type]['title']='oaooa &nbsp;<b>'.$upgrade['latestversion'].'</b>';
 			$list[$type]['appurl']= 'admin.php?mod=system&op=systemupgrade';
 			//&operation='.$type.'&version='.$upgrade['latestversion'].'&locale='.$locale.'&charset='.$charset.'&release='.$upgrade['latestrelease'];
+		}
+		if($isajax){
+			exit(json_encode(array('data' => $list)));
 		}
 		//查询所有待更新的应用
 		// $app_need_upgrade_list = DB::fetch_all("SELECT * FROM " . DB::table('app_market') . " WHERE 1 and upgrade_version!='' and available>0 ");

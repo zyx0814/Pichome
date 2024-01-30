@@ -1,0 +1,133 @@
+<script type="text/javascript" src="dzz/qcos/api/cos-js-sdk-v5-master/dist/cos-js-sdk-v5.js"></script>
+<script>
+	 const getAuthorization=(options, callback) => {
+		var url ='dzz/qcos/api/cos-js-sdk-v5-master/server/sts.php';
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.onload = function (e) {
+			try {
+				var data = JSON.parse(e.target.responseText);
+				if(data.error){
+					console.log(data.error);
+				}else{
+					var credentials = data.credentials;
+					callback({
+						TmpSecretId: credentials.tmpSecretId,
+						TmpSecretKey: credentials.tmpSecretKey,
+						XCosSecurityToken: credentials.sessionToken,
+						ExpiredTime: data.expiredTime, // SDK 在 ExpiredTime 时间前，不会再次调用 getAuthorization
+					});
+				}
+			} catch (error) {
+				console.log(error);
+				return false;
+			}
+
+		};
+		xhr.send();
+	};
+	const UploadQCOSMinxins = {
+		data() {
+			return {
+				cos:null,
+				
+			}
+		},
+		created(){
+						
+			 this.cos = new COS({
+				getAuthorization: getAuthorization,//获取签名
+				FileParallelLimit: 3,    // 控制文件上传并发数
+				ChunkParallelLimit: 16,   // 控制单个文件下分片上传并发数
+				ChunkSize: 1024*1024*2,  // 控制分片大小，单位 B
+				ProgressInterval: 1,  // 控制 onProgress 回调的间隔
+				ChunkRetryTimes: 3,   // 控制文件切片后单片上传失败后重试次数
+				UploadCheckContentMd5: true,   // 上传过程计算 Content-MD5
+			});
+		},
+		methods: {
+			
+			multiupload(item){
+				//分片数据
+				let self=this;
+				
+				item.Key = 'tmpupload/' + self.clouddata.uid + '/' + ((item.webkitRelativePath!='') ? item.webkitRelativePath : item.raw.name);
+				if(!item.size) {
+					item['fileStatus'] = 4;
+						item['error']='文件大小为0';
+						let findex=self.UploaderData.fqueue.indexOf(item.id);
+						let findex1=self.UploaderData.queue.indexOf(item.id);
+						if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+						if(findex1>-1) self.UploaderData.queue.splice(findex1,1);
+						return;
+				}
+				self.cos.sliceUploadFile({
+					Bucket: self.clouddata.Bucket, /* 必须 */
+					Region: self.clouddata.Region,     /* 存储桶所在地域，必须字段 */
+					Key: item.Key,              /* 必须 */
+					Body: item.raw,                /* 必须 */
+					onTaskReady: function (taskId) {
+						item.taskid=taskId;
+					},
+					onProgress: function (info) {           /* 非必须 */
+						var percent = parseInt(info.percent * 10000) / 100;
+						var speed = parseInt(info.speed / 1024 / 1024 * 100) / 100;
+						item['percentage'] = info.loaded;
+					}
+				}, function (err, data) {
+					item.taskid=null;
+					if (err) {
+						
+						item['fileStatus'] = 4;
+						item['error']=err;
+						let findex=self.UploaderData.fqueue.indexOf(item.id);
+						let findex1=self.UploaderData.queue.indexOf(item.id);
+						if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+						if(findex1>-1) self.UploaderData.queue.splice(findex1,1);
+					} else {
+						// 获取到文件的md5,添加到data中
+						data.md5 = item.md5;
+						data.size = item.size;
+						data.remoteid = self.clouddata.remoteid;
+						data.appid = self.DocumentAppid;
+						data.bz = self.clouddata.bz;
+						data.did = self.clouddata.did;
+						if (!data.Key && data.statusCode == 200) {
+							data.Key = item.Key;
+							data.Bucket = clouddata.Bucket;
+						}
+						let argments = self.UploadExportLocation(self.UploaderData.folderData,item);
+						if(argments.fid){
+							data.pfid=argments.fid;
+						}
+						if(argments.relativePath){
+							data.relativePath= argments.relativePath;
+						}
+						 axios({
+							url: MOD_URL+'&op=library&do=upload&operation=cloudupload',
+							method: 'post',
+							data: data,
+						}).then(res=>{
+							
+							if(res.data.success){
+								item['FileData'] = res.data.data;
+								item['FileData']['folder'] = res.data.data.folder;
+								
+								self.UploadAccomplish(item);
+							}else{
+								item['fileStatus'] = 4;
+								item['error']=res.data.msg;
+								self.UploadAccomplish(item);
+							}
+						}).catch(function(error){
+							 item['fileStatus'] = 4;
+							item['error']='上传失败';
+							self.UploadAccomplish(item);
+						 });
+
+					}
+				});
+			}
+		}
+}
+</script>

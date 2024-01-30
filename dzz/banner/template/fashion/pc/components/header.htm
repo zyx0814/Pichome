@@ -1,0 +1,231 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?VjP" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="overflow: hidden;">
+	<div style="width: 100%;margin-bottom: -5px;height: 100%;overflow: hidden;">
+		<el-menu
+			class="dzz-menu"
+			:default-active="bannerData.active"
+			mode="horizontal"
+			style="border:0;height: 100%;">
+			<template v-for="item in bannerData.data.top">
+				<template v-if="item.children && item.children.length">
+					<el-sub-menu 
+					:index="item.id" 
+					:class="{'is-active':bannerData.active==item.id}">
+						<template #title>
+							<el-image v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+						<menuitem 
+							:datalist="item.children" 
+							@handleselect="handleSelect"
+							:active="bannerData.active"></menuitem>
+					</el-sub-menu>
+				</template>
+				<template v-else>
+					<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3">
+						<template #title>
+							<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+					</el-menu-item>
+				</template>
+			</template>
+		</el-menu>
+	</div>
+	<el-autocomplete
+		ref="headerkeyword"
+		v-if="PageType == 'ku'"
+		style="width: 300px;min-width: 300px;"
+		v-model="fheaderkeyword"
+		:fetch-suggestions="querySearch"
+		@clear="headerkeywordInput"
+		@keydown.enter.native="headerkeywordInput"
+		clearable>
+		<template #append>
+			<el-button @click="headerkeywordInput" icon="Search"></el-button>
+		  </template>
+	</el-autocomplete>
+</div>
+<div class="h-right"> 
+	<el-tooltip content="切换页面配色" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<template v-if="PageType != 'page'">
+		<el-tooltip :content="Screenshow?'隐藏筛选':'显示筛选'" placement="bottom">
+			<el-button 
+				text 
+				icon="Filter" 
+				style="font-size: var(--el-font-size-extra-large);" 
+				circle  
+				size="large"
+				@click="Screenshow = !Screenshow"
+				:bg="!Screenshow">
+			</el-button>
+		</el-tooltip>
+	</template>
+	<template v-if="PageType != 'page'">
+		<el-popover
+			placement="bottom"
+			trigger="click"
+			popper-class="isdropdown header-dropdown-menu">
+			<comsort
+				:iscolumn="false"
+				:defaultval="HeaderRightBtnShow"
+				@change.self="HeaderShowChange">
+			</comsort>
+			<template #reference>
+				<div style="margin-left: 12px;">
+					<el-tooltip content="偏好设置" placement="bottom">
+						<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+					</el-tooltip>
+				</div>
+			</template>
+		</el-popover>
+	</template>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerdrawer_m:false,
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:''
+			}
+		},
+		methods:{
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+			handleSelect(data){
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+				}
+				setTimeout(() => {
+					window.location.reload();
+				}, 300);
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data,load){
+				const self = this;
+				if(data.type == 'show'){
+					this.HeaderRightBtnShow.display = data.value;
+				}else{
+					this.HeaderRightBtnShow[data.type] = data.value;
+				}
+				switch(data.type){
+					case 'display':
+					case 'show':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.imagereload = true;
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+				if(!load){
+					self.$refs.MainDomRef.settingpreference(data.type,data.value)
+				}
+				
+			},
+			headerkeywordInput(){
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				if(this.PageType != 'ku'){
+					this.bannerData.active = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+				}
+	
+				
+			}
+		},
+	}
+</script>

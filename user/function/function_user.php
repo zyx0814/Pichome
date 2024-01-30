@@ -118,9 +118,11 @@ function setloginstatus($member, $cookietime = 0)
     $_G['formhash'] = formhash();
     //$_G['session']['invisible'] = getuserprofile('invisible');
     $_G['member'] = $member;
+    C::t('admincp_session')->update($member['uid'], $member['groupid'], array('dateline' => TIMESTAMP, 'ip' => $_G['clientip'], 'errorcount' => -1));
     loadcache('usergroup_' . $_G['groupid']);
     C::app()->session->isnew = true;
     C::app()->session->updatesession();
+
     dsetcookie('auth', authcode("{$member['password']}\t{$member['uid']}", 'ENCODE'), $cookietime, 1, true);
     dsetcookie('logintime',TIMESTAMP,60*60*24*365);
     dsetcookie('loginuser');

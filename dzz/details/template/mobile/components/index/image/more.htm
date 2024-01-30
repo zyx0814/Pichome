@@ -1,0 +1,89 @@
+<van-action-sheet
+	style="padding-top: 10px;"
+	v-model="ImagesMore.visible"
+	:actions="ImagesMore.data"
+	cancel-text="取消"
+	@select="ImagesMoreSheetChange"
+	close-on-click-action>
+</van-action-sheet>
+<script type="text/javascript">
+	var ImagesMoreMixin = {
+		data(){
+			return {
+				ImagesMore:{
+					visible:false,
+					item:'',
+					data:[],
+				}
+			}
+		},
+		methods:{
+			async ImagesMoreSheetChange(data){
+				var self = this;
+				switch(data.type){
+					case 'share':
+						var res = await axios.post(MOD_URL+'&op=ajax&operation=createshare',{
+							path:self.ImagesMore.item.dpath
+						});
+						if(res == 'intercept'){
+							return false;
+						}
+						var json = res.data;
+						if(json.success){
+							showConfirmDialog({
+								title: '',
+								confirmButtonText:'复制地址',
+								message: json.success,
+							}).then(function(){
+								self.CommonCopyTxt(json.success);
+							}).catch(function(){
+								// on cancel
+							});
+						}else{
+							showFailToast('分享地址获取失败');
+						}
+					break;
+					case 'down':
+						if(self.ImagesMore.item.dpath){
+							window.open(SITEURL+MOD_URL+'&op=download&dpath='+self.ImagesMore.item.dpath);
+						}
+					break;
+					case 'collect':
+						self.ParamImages.operation.type = data.type;
+						self.ImagesClassify.PopupVisible = true;
+					break;
+					case 'grade':
+						self.MoreGradedata.Visible = true;
+					break;
+					case 'address':
+						if(!self.ImagesMore.item.dpath){
+							showFailToast('参数错误');
+							return false;
+						}
+						var res = await axios.post(MOD_URL+'&op=ajax&operation=realfianllypath',{
+							path:self.ImagesMore.item.dpath
+						});
+						if(res == 'intercept'){
+							return false;
+						}
+						var data = res.data;
+						if(data.realfianllypath){
+							showConfirmDialog({
+								title: '',
+								confirmButtonText:'复制地址',
+								message: data.realfianllypath,
+							}).then(function(){
+								self.CommonCopyTxt(data.realfianllypath)
+							}).catch(function(){
+								// on cancel
+							});
+						}else{
+							showFailToast('获取固定地址失败');
+						}
+						
+					break;
+				}
+			}
+		}
+	};
+</script>

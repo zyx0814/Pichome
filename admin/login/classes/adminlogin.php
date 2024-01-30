@@ -8,7 +8,14 @@ class Adminlogin{
         $admincp = new \dzz_admincp();
         $admincp->core  =  $dzz;
         $return = $admincp->init();
-        if(defined('IS_API') && IS_API && $return === 0){
+        $firstlogin = getglobal('adminfirstlogin') ? getglobal('adminfirstlogin'):1;
+
+        if($firstlogin || !getglobal('machinecode')){
+            \Hook::listen('sysreg');
+        }
+        $isapi = ((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') || (isset($_GET['inajax']) && $_GET['inajax']))
+        ? true : false;
+        if($isapi && $return === 0){
            exit(json_encode(array('loginstatus'=>0,'hash'=>FORMHASH)));
         }
     }

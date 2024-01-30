@@ -1,0 +1,317 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<link rel="stylesheet" href="dzz/stats/template/mobile/assets/index.css?{VERHASH}">
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+        <el-header class="page-header" height="40px" style="border: 0;background: transparent;padding: 0 10px">
+			<a class="h-left" href="user.php?mod=my" style="color: var(--el-text-color-regular);">
+				<el-icon><Arrow-Left /></el-icon>
+			</a>
+			<div class="h-center" style="justify-content: center;"> 
+				<el-text size="large">浏览记录</el-text>
+			</div>
+		 </el-header>
+        <el-main class="dzz-container" style="padding:0;overflow: hidden;position: relative;">
+            <el-scrollbar id="main_scrollbar" ref="MainscrollbarRef" @scroll="HandleElScrollbar">
+                <el-affix 
+                    class="dzz-affix" 
+                    target="#main_scrollbar>.el-scrollbar__wrap" 
+                    :offset="rollingdire=='down'?-90:40">
+                    <div style="padding: 8px 4px;padding-bottom: 0; display: flex;">
+                        <el-input v-model="keyword" prefix-icon="Search" @change="searchSubmit" type="search" placeholder="搜索" clearable ></el-input>
+                        <el-popover
+                            placement="bottom"
+                            trigger="click"
+                            popper-class="isdropdown header-dropdown-menu">
+                            <comsort
+                                :iscolumn="false"
+                                :issort="false"
+                                :defaultval="HeaderRightBtnShow"
+                                @change.self="HeaderShowChange">
+                            </comsort>
+                            <template #reference>
+                                <div style="margin-left: 12px;">
+                                    <el-button icon="Sort"></el-button>
+                                </div>
+                            </template>
+                        </el-popover>
+                    </div>
+                    <el-header height="50px" style="padding: 0px;padding-bottom: 4px;">
+                        <div id="ScreenBox">
+                            <div class="screen-wrap">
+                                <div class="screen-view">
+                                    <div class="screen-item" v-for="item in actionData">
+                                        <el-button 
+                                            plain
+                                            :type="dataActive==item.key?'primary':''"
+                                            @click="filterChange(item.key)"
+                                        >{{ item.name }}</el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </el-header>
+                </el-affix>
+                <Image-Layout
+                    ref="RefImageLayout"
+                    :props="{click:true}"
+                    :layout="HeaderRightBtnShow.layout"
+                    :showmessage="ShowMessage"
+                    :data="tableData"
+                    :scrollref="scrollref"
+                    nodekey="id"
+                    :isdata="true"
+                    @click="ImageClick">
+                </Image-Layout>
+                <div v-show="paramData.valLoading" style="height: 50px;text-align: center;line-height: 50px;">
+                    <el-icon style="vertical-align: text-bottom;" class="is-loading"><Loading /></el-icon>
+                    <el-text style="margin-left: 6px;">加载中...</el-text>
+                </div>
+            </el-scrollbar>
+        </el-main>
+        
+        
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	var dzzoffice = createApp({
+		data() {
+			return {
+				DocumentThemeColor:'',
+				rollingdire:'up',
+                actionData:{eval echo json_encode(array_values($actionData))},
+                keyword:'',
+                dataActive:'',
+                HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					layout:'rowGrid'//图片布局方式
+				},
+                ShowMessage:{
+                    display:[],
+                    other:null
+                },
+                tableData:[],
+                scrollref:null,
+                paramData:{
+                    page:1,
+                    perpage:20,
+                    next:true,
+                    valLoading:false
+                },
+                PostParam:''
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+			
+			
+		},
+		created() {
+            let self = this;
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+            this.getData();
+		},
+		methods: {
+            searchSubmit(){
+                this.paramData.page = 1;
+                this.getData();
+            },
+            filterChange(key){
+                if(this.dataActive == key)return false;
+                this.dataActive = key;
+                this.paramData.page = 1;
+                this.getData();
+            },
+            HandleElScrollbar(data){
+				var self = this;
+				self.$refs.RefImageLayout.HandleElScrollbar();
+                let afterScrollTop = data.scrollTop;
+                let updown = afterScrollTop - self.beforeScrollTop;
+
+
+                let parentH = self.$refs.MainscrollbarRef.wrapRef.clientHeight;
+                let childH = self.$refs.MainscrollbarRef.wrapRef.querySelector('.el-scrollbar__view').clientHeight;
+                if(childH - parentH - 30 < self.$refs.MainscrollbarRef.wrapRef.scrollTop && this.paramData.next && !this.paramData.valLoading){
+                    this.getData();
+                }
+
+                if(afterScrollTop == 0){
+                    self.rollingdire = 'up';
+                    return false; 
+                }
+                if( updown === 0 ) {
+                    return false;
+                }            
+                self.beforeScrollTop = afterScrollTop;
+                self.rollingdire = updown > 0 ? "down" : "up";  //判断往上还是往下
+
+			},
+            HeaderShowChange(data){
+                const self = this;
+				this.HeaderRightBtnShow[data.type] = data.value;
+				switch(data.type){
+					case 'display':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							self.ShowMessage.other = '';
+						}else{
+							display.splice(index,1);
+							self.ShowMessage.other = this.HeaderRightBtnShow.other; 
+						}
+						self.ShowMessage.display = display;
+					break;
+					case 'other':
+						self.ShowMessage.other = data.value;
+					break;
+				}
+            },
+            getData(){ 
+                let self = this;
+                let param = {
+                    page:this.paramData.page,
+                    perpage:this.paramData.perpage,
+                };
+                if(this.dataActive != 'all'){
+                    param['date'] = this.dataActive;
+                }
+                if(this.keyword){
+                    param['keyword'] = this.keyword;
+                }
+                if(this.paramData.page > 1){
+                    this.paramData.valLoading = true;
+                }
+
+                if(this.PostParam){
+					this.PostParam();
+				}
+                let CancelToken = axios.CancelToken;
+                axios.post('{MOD_URL}&op=views&do=filelist',param,{
+					cancelToken: new CancelToken(function executor(c) {
+					    self.PostParam = c;
+					})
+				}).then(function ({data:res}) {
+					if(res.success){
+                        if(self.paramData.page == 1){
+                            self.tableData = res.data.data || [];
+                            self.$refs.RefImageLayout.restart();
+                        }else{
+                            self.tableData.push.apply(self.tableData,res.data.data);
+                            self.$refs.RefImageLayout.ImageDataChange();
+                            self.$refs.RefImageLayout.HandleElScrollbar();
+                        }
+                        
+                        self.paramData.page += 1;
+                        self.paramData.next = res.data.next;
+                        self.ImageClick();
+                    }else{
+                        self.$message.error(res.msg || '数据获取失败');
+                    }
+                    self.paramData.valLoading = false;
+				}).catch(function (error) {
+				    console.log(error);
+				});
+            },
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			handleDelete(id){
+				let self=this;
+				axios.post('{MOD_URL}&op=views&do=delete', {
+					id:id
+				}).then(function(res){
+					//window.location.reload();
+					if(res.data.success){
+						let index=self.tableData.findIndex((item)=>{
+							if(item.id==id) return true;
+						});
+						if(index>-1) self.tableData.splice(index,1);
+						if(self.tableData.length<1) window.location.reload();
+					}else{
+						self.$message({
+							message: res.data.msg,
+							type: 'error',
+						  });
+					}
+				}).catch(function (error) {
+					console.log(error);
+				});
+					
+				  
+			},
+            ImageClick(data){
+                sessionStorage.removeItem('href');
+                var arr = [];
+                for(var i in this.tableData){
+					arr.push(this.tableData[i].dpath)
+				}
+                if(!data){
+                    sessionStorage.setItem('imgs',arr.join(','));
+                    return false;
+                }
+                let curr = this.tableData.find(function(current){
+					return current.id == data.id;
+				});
+				let index = this.tableData.findIndex(function(current){
+					return current.id == data.id;
+				});
+                sessionStorage.setItem('imgs',arr.join(','));
+                let div = document.createElement("div");
+                div.className = 'Details-Iframe';
+                let iframe = document.createElement("iframe");
+                div.append(iframe);  
+                sessionStorage.setItem('selectindex',index);  
+                iframe.src =  'index.php?mod=details&opentype=current#path='+curr.dpath;
+                document.body.appendChild(div); 
+            },
+            ImagePageTurning(dpath){//详情翻页事件
+				const self = this;
+				// self.$refs.RefImageLayout.SetScrollbarTop(dpath);
+				// self.$refs.RefImageLayout.HandleElScrollbar();
+			},
+		},
+		mounted() {
+            var self = this;
+            self.scrollref = self.$refs.MainscrollbarRef;
+            dzzoffice.WindowThis = this;
+        }
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+    dzzoffice.use(ImageLayout);
+    dzzoffice.component('comsort', comsort);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

@@ -97,12 +97,11 @@
             if ($data['copys'] > 1) {
                 return $this->update($aid, array('copys' => $data['copys'] - 1));
             } else {
-                
                 if (io_remote::DeleteFromSpace($data)) {
-                    
-                    
                     if ($return = $this->delete($aid)) {
-                       // C::t('thumb_record')->delete_by_aid($aid);
+                        C::t('thumb_cache')->delete_by_aid($aid);
+                        C::t('ffmpegimage_cache')->delete_by_path($aid);
+                        C::t('video_record')->delete_by_aid($aid);
                         $aiddata = $aid;
                         Hook::listen('finalydelete', $aiddata);
                     }

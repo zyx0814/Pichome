@@ -11,8 +11,10 @@ ignore_user_abort(true);
 if(!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
-$setting = C::t('setting')->fetch('ffmpeg_setting',true);
-if($setting['upload_convert_immediately']>1){
+$appdata = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+$app = unserialize($appdata['extra']);
+$status = $app['status'];
+if(!$status){
     exit('admin set not convert!');
 }
 include_once dzz_libfile('ffmpeg');
@@ -26,15 +28,17 @@ $id=intval($_GET['id']);
 if(!$ff=C::t('video_record')->fetch($id)){
     exit('convert error');
 }
+dzz_process::unlock('PICHOMEVIDEOCONVERT'.$id);
+
 if(dzz_process::islocked('PICHOMEVIDEOCONVERT'.$id,60*60)){
     exit('converting!');
 }
 
 if($ff['status']==2){
-    dzz_process::unlock('ffmpeg_convert_'.$id);
+    dzz_process::unlock('PICHOMEVIDEOCONVERT'.$id);
     exit('convert completed');
 }
 $fm=new fmpeg();
-$ret=$fm->convert($ff['rid'],$ff['format'],$ff['videoquality']);
+$ret=$fm->convert($ff['id'],$ff['format'],$ff['videoquality']);
 dzz_process::unlock('PICHOMEVIDEOCONVERT'.$id);
 exit('success');

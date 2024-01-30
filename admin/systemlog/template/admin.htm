@@ -1,160 +1,156 @@
-<!--{template common/header_simple_start}-->
-<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
-<link href="static/icheck/skins/minimal/blue.css?{VERHASH}" rel="stylesheet" media="all">
-<link rel="stylesheet" href="static/css/checkbox.css">
-<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
-<style>
-html,  body {
-	overflow: hidden;
-	background: #FFF;
-	color: #4B4B4B;
-}
-.form-horizontal-left .radio-inline {
-	padding: 5px 20px;
-	margin: 0;
-}
-.loginset-template{
-	width: 100px;
-	height: 100px;
-	overflow: hidden;
-	float: left;
-	margin-right: 10px;
-	display: block;
-	position: relative;
-}
-.loginset-template .loginset-template-icon{
-    width: 20px;
-    height: 20px;
-    border: 1px solid #AAB479;
-    position: absolute;
-    right: 1px;
-    top: 1px;
-    color: #DD4B39;
-    font-size: 15px;
-    display: none;
-}
-.loginset-template:hover  .loginset-template-icon{
-	display: block;
-}
-.loginset-template:hover  .loginset-template-icon>span{
-	display: none;
-}
-.loginset-template .loginset-template-icon1{
-    display: block!important;
-}
-.loginset-template .loginset-template-icon1>span{
-    display: block!important;
-}
-#cpform{
-	margin-top: 15px;
-}
+<!--{template common/container/pc/header_start}-->
+<style type="text/css">
+	:root{
+		--el-color-primary: #1c3676; 
+	}
+	body {
+		background: transparent;
+	}
+	.page-left .el-menu-item.is-active{
+		background-color: #e8ebf1;
+	}
+	.el-page-header__left {
+		margin-right: 8px;
+	}
+	.el-page-header__content {
+		color: #fff;
+	}
 </style>
-<!--{template common/header_simple_end}-->
-<!--{template common/commer_header}-->
-<div class="bs-container clearfix">
-  <div class="bs-left-container  clearfix">  
-	<!--{template left}--> 
-  </div>
-  <div class="left-drager">
-    <div class="left-drager-op">
-      <div class="left-drager-sub"></div>
-    </div>
-  </div>
-  <div class="bs-main-container  clearfix">  
- 	<div class="main-title clearfix"> 
-	</div>
-	
-    <div class="main-content">  
-    <form id="cpform" action="{MOD_URL}&op=admin" class="form-horizontal-left" method="post" name="cpform">
-		<input type="hidden" value="{FORMHASH}" name="formhash">
-		<input type="hidden" value="basic" name="operation">
-       
-		<dl>
-			<dt>{lang logswitch}:</dt>
-			<dd class="clearfix">
-			  <label class="radio-inline "><input type="radio" name="systemlog_open" value="1"<!--{if $_G[setting][systemlog_open]==1}-->checked<!--{/if}-->  onclick="document.getElementById('hidden1').style.display='block';">{lang enable}</label>
-			  <label class="radio radio-inline"><input type="radio" name="systemlog_open" value="0"<!--{if $_G[setting][systemlog_open]==0}-->checked<!--{/if}--> onclick="document.getElementById('hidden1').style.display='none';">{lang forbidden}</label>
-			</dd>
-		</dl>
-		<dl id="hidden1">
-			<dt>{lang logtype}:</dt>
-			<dd class="clearfix">
-				 
-				<table id="systemlogtable" class="table text-center" style="width: auto;margin-bottom:0; <!--{if $_G[setting][systemlog_open]==0}-->display:none<!--{/if}-->">
-				  <thead>
-					<tr>
-						<th>{lang logtypename}</th>
-						<th>{lang logflag}</th>
-						<th>{lang logswitch}</th>
-						<th>&nbsp;</th>
-					</tr>
-				  </thead>
-				  {eval $i=0;}
-					<!--{loop $systemlog_setting $mark $info}--> 
-				  <tr> 
-					<td>
-						<input type="hidden" name="settingnew[issystem][$i]" value="$info[issystem]" />
-						<input class="form-control" style="width:120px;" <!--{if $info[issystem]==1}-->readonly="readonly"<!--{/if}--> type="text" name="settingnew[title][$i]" value="$info[title]" />
-					</td>
-					<td><input class="form-control" style="width:100px;" <!--{if $info[issystem]==1}-->readonly="readonly"<!--{/if}--> type="text" name="settingnew[mark][$i]" value="$mark" /></td>
-					<td><input type="checkbox" name="settingnew[is_open][$i]" value="1" <!--{if $info[is_open]==1}-->checked<!--{/if}-->  /></td>
-					<td>
-						<!--{if $info[issystem]!=1}-->
-						<a href="javascript:;" class="col-xs-2 img_delete" onclick="deletesystem(this);"><span class="dzz dzz-delete" style="font-size:22px;"></span></a>
-						<!--{/if}--> 
-					</td>
-				  </tr>
-				  {eval $i++;}
-				  <!--{/loop}--> 
-				  <tr>
-					<td colspan="4" align="left"><a href="javascript:;" onclick="addsystemtype(this);"><i class="glyphicon glyphicon-plus"></i>{lang add}</a></td>
-				  </tr>
-				</table>
-			</dd>
-		</dl>
-		<dl>
-		   
-		  <dd>
-			  <input class="btn btn-primary" id="submit_editsubmit" name="settingsubmit" value="{lang save_changes}" type="submit">
-		  </dd>
-		</dl>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px" style="--el-header-padding: 0 8px;background: var(--el-color-primary);">
+			<!--{template header/index}-->
+		</el-header>
+		<el-container>
+			<el-aside width="300px" class="page-left">
+				<!--{template left}-->
+			</el-aside>
+			<el-main style="padding: 0;">
+				<el-scrollbar style="height: 100%;">
+					<div style="padding: 20px;">
+						<el-form ref="form" label-position="top" label-width="100px" label-suffix="：">
+							<el-form-item label="{lang logswitch}">
+								<el-radio-group v-model="systemlog_open">
+								    <el-radio border :label="1">{lang enable}</el-radio>
+								    <el-radio border :label="0">{lang forbidden}</el-radio>
+								</el-radio-group>
+							</el-form-item>
+							<el-form-item label="{lang logtype}" v-show="systemlog_open">
+								<el-table
+								    :data="tableData"
+								    style="width:480px">
+								    <el-table-column
+								        label="{lang logtypename}"
+								        width="180">
+										<template #default="scope">
+											<el-input :readonly="parseInt(scope.row.issystem)" v-model="scope.row.title" placeholder=""></el-input>
+										</template>
+								    </el-table-column>
+									<el-table-column
+									    label="{lang logflag}"
+									    width="180">
+										<template #default="scope">
+											<el-input :readonly="parseInt(scope.row.issystem)" v-model="scope.row.mark" placeholder=""></el-input>
+										</template>
+									</el-table-column>
+									<el-table-column
+									    label="{lang logswitch}"
+									    width="120"
+										align="center">
+										<template #default="scope">
+											<el-checkbox v-model="scope.row.issystem" :true-label="1" :false-label="0"></el-checkbox>
+										</template>
+									</el-table-column>
+							</el-form-item>
+							<el-form-item>
+								<el-button type="primary" @click="handleSubmit">{lang save_changes}</el-button>
+							</el-form-item>
+						</el-form>
+					</div>
+				</el-scrollbar>
+			</el-main>
+		</el-container>
+	</el-container>
+	<script type="text/javascript">
+		const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+		const dzzoffice = createApp({
+			data() {
+				return {
+					systemlog_open:<!--{if $_G[setting][systemlog_open]==1}-->1<!--{else}-->0<!--{/if}-->,
+					tableData:[],
+				};
+			},
+			mixins:[LeftMixin],
+			watch:{
 		
-    </form> 
-  </div>
-</div>
-</div>
-<script type="text/javascript">
-	jQuery('.left-drager').leftDrager_layout();
-	jQuery(document).ready(function(e) {
-		jQuery('input').iCheck({
-			checkboxClass: 'icheckbox_minimal-blue',
-			radioClass: 'iradio_minimal-blue',
-		});
-		jQuery('input').on('ifChecked', function(e) {
-			jQuery(this).trigger('click');
-		});
-		 
-		jQuery('input[required]').on('blur', function() {
-			if(this.value == '') { jQuery(this).addClass('input-error') } else { jQuery(this).removeClass('input-error'); }
-		});
-	});
-	function addsystemtype( obj ){
-		var num=jQuery("#systemlogtable").find("tr").length-1; 
-		var html='<tr><td><input  type="hidden" name="settingnew[issystem]['+num+']" value="0" /><input class="form-control" style="width:120px;" type="text" name="settingnew[title]['+num+']" value="" /></td><td><input class="form-control" style="width:100px;" type="text" name="settingnew[mark]['+num+']" value="" /></td><td><input type="checkbox" name="settingnew[is_open]['+num+']" value="1" checked /></td><td><a class="col-xs-2 img_delete" onclick="deletesystem(this);"  href="javascript:;"><span class="dzz dzz-delete" style="font-size:22px;"></span></a></td></tr>';
-		jQuery(obj).parents("tr").before(html);
-		
-		jQuery("#systemlogtable").iCheck({
-			checkboxClass: 'icheckbox_minimal-blue',
-			radioClass: 'iradio_minimal-blue',
-		});
-		return false;
-	}
+			},
+			computed:{
+				
+			},
+			created() {
+				<!--{loop $systemlog_setting $mark $info}-->
+				this.tableData.push({
+					issystem:$info[issystem],
+					title:'$info[title]',
+					mark:'$mark',
+				})
+				<!--{/loop}--> 
+			},
+			methods: {
+				async handleSubmit(){
+					var param = {
+						settingsubmit:true,
+						formhash:'{FORMHASH}',
+						operation: 'basic',
+						systemlog_open:this.systemlog_open,
+						settingnew:{
+							issystem:[],
+							title:[],
+							mark:[],
+							is_open:[]
+						}
+					};
+					this.tableData.forEach(function(item){
+						param.settingnew.issystem.push(item.issystem);
+						param.settingnew.title.push(item.title);
+						param.settingnew.mark.push(item.mark);
+						param.settingnew.is_open.push(item.issystem);
+					});
+					var res = await axios.post(MOD_URL+'&op=admin',param);
+					var json = res.data;
+					if(json.success){
+						this.$message({
+							type:'success',
+							message:'保存成功'
+						});
+					}else{
+						this.$message({
+							type:'error',
+							message:'保存失败'
+						});
+					}
+				}
+			},
+			mounted() {
+				var self = this;
 	
-	function deletesystem( obj ){
-		jQuery(obj).parents("tr").remove();
-		return false;
-	}
-</script> 
-<script src="static/bootstrap/js/bootstrap.min.js?{VERHASH}"></script> 
-<script type="text/javascript" src="static/icheck/icheck.min.js?{VERHASH}"></script> 
-<!--{template common/footer_simple}-->
+			},
+			components:{
+				comavatar,
+			}
+		})
+		dzzoffice.use(ElementPlus, {
+			locale: ElementPlusLocaleZhCn,
+		});
+		for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+			dzzoffice.component(key, component)
+		}
+		// 屏蔽警告信息
+		dzzoffice.config.warnHandler = function(){return null};
+		dzzoffice.mount('#dzzoffice');
+	</script>
+</div>
+
+
+<!--{template common/container/pc/footer}-->

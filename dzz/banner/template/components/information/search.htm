@@ -1,0 +1,15 @@
+<div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+    <Image-Layout
+        ref="RefImageLayoutsearch"
+        :props="{click:true}"
+        layout="imageList"
+        :windowresize="false"
+        @returnparam="Imagereturnparam"
+        :urlparam="bannerData.ImageLayout.urlparam"
+        @click="ImageDetails"
+        :showmessage="bannerData.ImageLayout.showmessage"
+        :url="bannerData.ImageLayout.url"
+        :scrollref="scrollref"
+        :parentbox="bannerData.ImageLayout.parentbox">
+    </Image-Layout>
+</div>

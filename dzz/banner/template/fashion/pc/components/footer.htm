@@ -1,0 +1,35 @@
+<div class="page-footer">
+    <el-menu
+        class="dzz-menu"
+        :default-active="bannerData.active"
+        mode="horizontal"
+        style="border:0;height: 100%;justify-content: center;"
+        @select="handleSelect">
+        <template v-for="item in bannerData.data.bottom">
+            <template v-if="item.children && item.children.length">
+                <el-sub-menu 
+                :index="item.realurl" 
+                :class="{'is-active':bannerData.active==item.realurl}"
+                popper-class="dzz-sub-menu">
+                    <template #title>
+                        {{item.bannername}}
+                        <div class="title-text" @click.stop="handleSelect(item)"></div>
+                    </template>
+                    <menuitem 
+                        :datalist="item.children" 
+                        @handleselect="handleSelect"
+                        :active="bannerData.active"></menuitem>
+                </el-sub-menu>
+            </template>
+            <template v-else>
+                <el-menu-item :index="item.realurl" :disabled="parseInt(item.btype) == 3">
+                    <template #title>
+                        {{item.bannername}}
+                        <div class="title-text" @click.stop="handleSelect(item)"></div>
+                    </template>
+                </el-menu-item>
+            </template>
+        </template>
+    </el-menu>
+    <el-text v-if="'{$_G['setting']['sitebeiantxt']}' || '{$_G['setting']['sitebeian']}'" tag="p" style="display: flex;align-items: center;justify-content: center;margin-top: 10px;">{$_G['setting']['sitebeiantxt']} <el-link href="https://beian.miit.gov.cn/" target="_blank">{$_G['setting']['sitebeian']}</el-link></el-text>
+</div>

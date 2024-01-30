@@ -1,91 +1,202 @@
 <?php
+
 namespace dzz\imageColor\classes;
 
 use \core as C;
 use \DB as DB;
 use \IO as IO;
 use \ImagePalette as ImagePalette;
-class imageColor{
-    public $palette = array(
-        0x111111, 0xFFFFFF, 0x9E9E9E, 0xA48057, 0xFC85B3, 0xFF2727, 0xFFA34B, 0xFFD534, 0x47C595, 0x51C4C4, 0x2B76E7, 0x6D50ED
-    );
-	public function run($data){
-	    global $_G;
+use \Color as Color;
+
+class imageColor
+{
+    //public $palette = array(
+    // 0x111111, 0xFFFFFF, 0x9E9E9E, 0xA48057, 0xFC85B3, 0xFF2727, 0xFFA34B, 0xFFD534, 0x47C595, 0x51C4C4, 0x2B76E7, 0x6D50ED
+    //);
+    public $palette = [
+        0xfff8e1, 0xf57c00, 0xffd740, 0xb3e5fc, 0x607d8b, 0xd7ccc8,
+        0xff80ab, 0x4e342e, 0x9e9e9e, 0x66bb6a, 0xaed581, 0x18ffff,
+        0xffe0b2, 0xc2185b, 0x00bfa5, 0x00e676, 0x0277bd, 0x26c6da,
+        0x7c4dff, 0xea80fc, 0x512da8, 0x7986cb, 0x00e5ff, 0x0288d1,
+        0x69f0ae, 0x3949ab, 0x8e24aa, 0x40c4ff, 0xdd2c00, 0x283593,
+        0xaeea00, 0xffa726, 0xd84315, 0x82b1ff, 0xab47bc, 0xd4e157,
+        0xb71c1c, 0x880e4f, 0x00897b, 0x689f38, 0x212121, 0xffff00,
+        0x827717, 0x8bc34a, 0xe0f7fa, 0x304ffe, 0xd500f9, 0xec407a,
+        0x6200ea, 0xffab00, 0xafb42b, 0x6a1b9a, 0x616161, 0x8d6e63,
+        0x80cbc4, 0x8c9eff, 0xffeb3b, 0xffe57f, 0xfff59d, 0xff7043,
+        0x1976d2, 0x5c6bc0, 0x64dd17, 0xffd600
+    ];
+
+    public function run($data)
+    {
+        global $_G;
+        $appid = $data['appid'];
         if (isset($_G['setting'])) $setting = $_G['setting'];
         else  $setting = C::t('setting')->fetch_all();
-        if(strpos($data['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $data['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
 
-        }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-        if(!$data['ext'] || $bz != 'dzz'){
-            return '';
-        }
+        if ($setting['imagelib']) $setting['imagelib'] = extension_loaded($setting['imagelib']) ? $lib : 'gd';
+        else $setting['imagelib'] = '';
+        $lib = isset($setting['imagelib']) ? $setting['imagelib'] : (extension_loaded('imagick') ? 'imagick' : 'gd');
+		$lib = extension_loaded($lib) ? $lib : 'gd';
+        //if ($lib == 'gd') {
+           // $exts = getglobal('config/gdgetcolorextlimit');
+           // $extsarr = explode(',', $exts);
 
-        $lib  = isset($setting['imagelib']) ? $setting['imagelib']:(extension_loaded('imagick')?'imagick':'gd');
+       // } else {
+        //    $exts = getglobal('config/imageickallowextlimit') . ',' . getglobal('config/gdgetcolorextlimit');
+        //    $extsarr = explode(',', $exts);
+        //}
 
-       if($lib== 'gd'){
-           $exts = getglobal('config/gdgetcolorextlimit');
-       }else{
-           //$exts='jpg,png,gif,jpeg,dwg,aai,art,arw,avs,bpg,bmp,bmp2,bmp3,brf,cals,cals,cgm,cin,cip,cmyk,cmyka,cr2,crw,cube,cur,cut,dcm,dcr,dcx,dds,dib,djvu,dng,dot,dpx,emf,epdf,epi,eps,eps2,eps3,epsf,epsi,ept,exr,fax,fig,fits,fpx,gplt,gray,graya,hdr,heic,hpgl,hrz,ico,info,isobrl,isobrl6,jbig,jng,jp2,jpt,j2c,j2k,jxr,json,man,mat,miff,mono,mng,m2v,mpc,mpr,mrwmmsl,mtv,mvg,nef,orf,otb,p7,palm,pam,clipboard,pbm,pcd,pcds,pcl,pcx,pdb,pef,pes,pfa,pfb,pfm,pgm,picon,pict,pix,png8,png00,png24,png32,png48,png64,pnm,ppm,ps,ps2,ps3,psb,psd,ptif,pwp,rad,raf,rgb,rgb565,rgba,rgf,rla,rle,sfw,sgi,shtml,sid,mrsid,sum,svg,text,tga,tif,tiff,tim,ttf,ubrl,ubrl6,uil,uyvy,vicar,viff,wbmp,wpg,webp,wmf,wpg,x,xbm,xcf,xpm,xwd,x3f,YCbCr,YCbCrA,yuv,sr2,srf,srw,rw2,nrw,mrw,kdc,erf,canvas,caption,clip,clipboard,fractal,gradient,hald,histogram,inline,map,mask,matte,null,pango,plasma,preview,print,scan,radial_gradient,scanx,screenshot,stegano,tile,unique,vid,win,xc,granite,logo,netscpe,rose,wizard,bricks,checkerboard,circles,crosshatch,crosshatch30,crosshatch45,fishscales,gray0,gray5,gray10,gray15,gray20,gray25,gray30,gray35,gray40,gray45,gray50,gray55,gray60,gray65,gray70,gray75,gray80,gray85,gray90,gray95,gray100,hexagons,horizontal,horizontal2,horizontal3,horizontalsaw,hs_bdiagonal,hs_cross,hs_diagcross,hs_fdiagonal,hs_vertical,left30,left45,leftshingle,octagons,right30,right45,rightshingle,smallfishcales,vertical,vertical2,vertical3,verticalfishingle,vericalrightshingle,verticalleftshingle,verticalsaw,fff,3fr,ai,iiq,cdr';
-           $exts = getglobal('config/imageickallowextlimit').','.getglobal('config/gdgetcolorextlimit');
-           $extsarr = explode(',',$exts);
-       }
-       $extsarr = explode(',',$exts);
-        if(!in_array($data['ext'],$extsarr)){
-           runlog('imageColor',' unablegetcolor img='.$data['realpath']);
-           return '';
+        //if (!in_array($data['ext'], $extsarr)) {
+
+         //   runlog('imageColor', ' unablegetcolor img=' . $data['realpath']);
+         //   return '';
+       // }
+        $cachepath = is_numeric($data['path']) ? intval($data['path']) : ($data['rid'] ? $data['rid']:md5($data['realpath']));
+        if ($infodata = C::t('ffmpegimage_cache')->fetch_by_path($cachepath)) {
+            $palettes = unserialize($infodata['info']);
+            DB::delete('pichome_palette', array('rid' => $data['rid']));
+            $colors = $palettesnum = [];
+            foreach ($palettes as $k => $v) {
+                if ($v > 0) {
+                    $p = $this->getPaletteNumber($k);
+                    $palettesnum[] = $p;
+                    $color = new \Color($k);
+                    $rgbcolor = $color->toRgb();
+                    $colors[] = $rgbcolor;
+                    $tdata = [
+                        'rid' => $data['rid'],
+                        'color' => $k,
+                        'r' => $rgbcolor[0],
+                        'g' => $rgbcolor[1],
+                        'b' => $rgbcolor[2],
+                        'weight' => $v,
+                        'p' => $p
+                    ];
+                    C::t('pichome_palette')->insert($tdata);
+                }
+
+            }
+            $isgray = $this->isgray($colors);
+            $setarr = array('isget' => 1, 'gray' => $isgray);
+            if ($palettesnum) {
+                $setarr['colors'] = implode(',', $palettesnum);
+            }
+            C::t('pichome_resources_attr')->update_by_rid($appid, $data['rid'], $setarr);
+            return false;
         }
-
-       // $width=isset($_G['setting']['thumbsize']['small']['width']) ? $_G['setting']['thumbsize']['small']['width']:64;
-        //$height=isset($_G['setting']['thumbsize']['small']['height']) ? $_G['setting']['thumbsize']['small']['width']:64 ;
         $width = 64;
         $height = 64;
-        $img = IO::getThumb($data['rid'],$width,$height,0,1,1,1);
-        if(!$img) {
-            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
+        $img = IO::gettmpThumb($data['rid'], $width, $height, 1, 1);
+        $img = IO::getStream($img);
+        if (!$img) {
+            C::t('pichome_resources_attr')->update($data['rid'], array('isget' => -1));
             return '';
         }
-        try{
-            $palette=new ImagePalette( $img,1,10,$lib,$this->palette);
-            $palettes=$palette->palette;
-        }
-        catch(\Exception $e){
-            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
-            runlog('imageColor',$e->getMessage().' img='.$img);
+        try {
+            $palette = new ImagePalette($img, 1, 12, $lib, $this->palette);
+            $palettes = $palette->palette;
+
+        } catch (\Exception $e) {
+            C::t('pichome_resources_attr')->update($data['rid'], array('isget' => -1));
+            @unlink($img);
+            runlog('imageColor', $e->getMessage() . ' img=' . $img);
             return '';
         }
         if (!is_array($palettes)) {
             DB::delete('pichome_palette', array('rid' => $data['rid']));
-            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>-1));
-        }
-        else {
+
+            C::t('pichome_resources_attr')->update($data['rid'], array('isget' => -1));
+            @unlink($img);
+        } else {
+
+            $cachearr = [
+                'info' => serialize($palettes),
+                'path' => $cachepath,
+                'dateline' => TIMESTAMP
+            ];
+            C::t('ffmpegimage_cache')->insert($cachearr);
             DB::delete('pichome_palette', array('rid' => $data['rid']));
+            $colors = $palettesnum = [];
             foreach ($palettes as $k => $v) {
-                $color = new \Color($k);
-                $rgbcolor = $color->toRgb();
-                $tdata = [
-                    'rid' => $data['rid'],
-                    'color' => $k,
-                    'r' => $rgbcolor[0],
-                    'g' => $rgbcolor[1],
-                    'b' => $rgbcolor[2],
-                    'weight' => $v
-                ];
-                C::t('pichome_palette')->insert($tdata);
+                if ($v > 0) {
+                    $p = $this->getPaletteNumber($k);
+                    $palettesnum[] = $p;
+                    $color = new Color($k);
+                    $rgbcolor = $color->toRgb();
+                    $colors[] = $rgbcolor;
+                    $tdata = [
+                        'rid' => $data['rid'],
+                        'color' => $k,
+                        'r' => $rgbcolor[0],
+                        'g' => $rgbcolor[1],
+                        'b' => $rgbcolor[2],
+                        'weight' => $v,
+                        'p' => $p
+                    ];
+                    C::t('pichome_palette')->insert($tdata);
+                }
 
             }
-            C::t('pichome_resources_attr')->update($data['rid'],array('isget'=>1));
+            $isgray = $this->isgray($colors);
+            $setarr = array('isget' => 1, 'gray' => $isgray);
+            if ($palettesnum) {
+                $setarr['colors'] = implode(',', $palettesnum);
+            }
+            C::t('pichome_resources_attr')->update_by_rid($appid, $data['rid'], $setarr);
             @unlink($img);
             return false;
         }
     }
 
-   
+    public function getPaletteNumber($colors, $palette = array())
+    {
+
+        if (empty($palette)) $palette = $this->palette;
+        $arr = array();
+
+        if (is_array($colors)) {
+            $isarray = 1;
+        } else {
+            $colors = (array)$colors;
+            $isarray = 0;
+        }
+
+        foreach ($colors as $color) {
+            $bestColor = 0x000000;
+            $bestDiff = PHP_INT_MAX;
+            $color = new Color($color);
+            foreach ($palette as $key => $wlColor) {
+                // calculate difference (don't sqrt)
+                $diff = $color->getDiff($wlColor);
+                // see if we got a new best
+                if ($diff < $bestDiff) {
+                    $bestDiff = $diff;
+                    $bestColor = $wlColor;
+                }
+            }
+            unset($color);
+            $arr[] = array_search($bestColor, $palette);
+        }
+        return $isarray ? $arr : $arr[0];
+    }
+
+    public function isgray($colors)
+    {
+        $i = 0;
+        if (count($colors) < 1) return 0;
+        foreach ($colors as $color => $value) {
+            $color = new Color($color);
+            $rgb = $color->toRGB();
+            if (abs($rgb[0] - $rgb[1]) < 10 && abs($rgb[2] - $rgb[1]) < 10) {
+                $i++;
+            }
+        }
+        if ($i == count($colors)) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
 }

@@ -11,6 +11,29 @@ $lang = array (
     'Home'=>'个人版',
     'no_perm'=>'对不起，您没有相关权限',
     'need_login'=>'请登录',
-    'home_not_allow'=>'个人版不可使用'
+    'home_not_allow'=>'个人版不可使用',
+    'setting'=>'设置',
+    'intgt'=>'大于',
+    'intge'=>'大于等于',
+    'inteq'=>'等于',
+    'intlt'=>'小于',
+    'intle'=>'小于等于',
+    'intrange'=>'范围',
+    'scn'=>'包含',
+    'sncn'=>'不包含',
+    'sstart'=>'开头为',
+    'send'=>'结尾为',
+    'seq'=>'相等',
+    'sempty'=>'没有内容',
+    'snempty'=>'有内容',
+    'spreg'=>'正则表达式',
+    'tor'=>'任意一项包含',
+     'tand'=>'全部包含',
+     'userset'=>'自定义',
+    'is'=>'是',
+    'no'=>'不是',
+    'banner_type_is_notallow_edit'=>'栏目类型不允许修改',
+
+
 );
 ?>

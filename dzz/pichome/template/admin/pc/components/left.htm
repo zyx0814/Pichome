@@ -1,0 +1,29 @@
+<el-menu :default-active="leftactive">
+	<el-menu-item index="basic" @click="handleRouter('basic')">
+		<span slot="title">站点信息</span>
+	</el-menu-item>
+	<el-menu-item index="loginpage" @click="handleRouter('loginpage')">
+		<span slot="title">登录页设置</span>
+	</el-menu-item>
+</el-menu>
+<script type="text/javascript">
+	var LeftMixin = {
+		data(){
+			return {
+				leftactive:"$_GET['do']"
+			}
+		},
+		methods:{
+			handleRouter(router,type){
+				if(type == 'single'){
+					window.location.href = MOD_URL+'&op=admin&do=tag&pagename='+router;
+				}else if(router == 'storagesetting'){
+					window.location.href = MOD_URL+'&op=storagesetting';
+				}else{
+					window.location.href = MOD_URL+'&op=admin&do='+router;
+				}
+				
+			},
+		}
+	};
+</script>

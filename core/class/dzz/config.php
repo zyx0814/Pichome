@@ -26,8 +26,9 @@ class Config{
             }
             $_config = array_merge($_config,$app_config);
         }
+
         $mod = isset($param[MOULD]) ? $param[MOULD]:$_config['default_mod'];
-		
+
         if(!empty($mod)){
 			if(strpos($mod,'vapp_')!==false){
 				$_GET['vapp']=preg_replace("/^vapp_/i",'',$mod);
@@ -39,15 +40,8 @@ class Config{
                 foreach ($patharr as $path) {
                     if (!preg_match("/\w+/i", $path)) $modvar = false;
                 }
-                if($modvar) define('CURMODULE',str_replace(':', '/', $mod));
             }else{
-               /* if(CURSCRIPT == 'dzz' && $mod == 'index'){
-                    define('CURMODULE',CURSCRIPT);
-                    $modconfig = DZZ_ROOT.CURMODULE.BS.CONFIG_NAME.BS.CONFIG_NAME.EXT;
-                }else{*/
-                    define('CURMODULE',$mod);
-                    $modconfig = DZZ_ROOT.APP_PATH.BS.CURMODULE.BS.CONFIG_NAME.BS.CONFIG_NAME.EXT;
-               // }
+                $modconfig = DZZ_ROOT.APP_PATH.BS.$mod.BS.CONFIG_NAME.BS.CONFIG_NAME.EXT;
             }
             if(@file_exists($modconfig)){
                 //模块配置
@@ -58,6 +52,7 @@ class Config{
                 //配置合并
                 if(is_array($mod_config)){
                     $_config = array_merge($_config,$mod_config);
+
                 }
             }
 

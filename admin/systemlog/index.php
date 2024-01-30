@@ -20,7 +20,7 @@ if($type=="list"){
 	//Hook::listen('adminlogin'); 
 	!isset($_GET['page']) && $_GET['page']=1;
 	$page=max(1,intval($_GET['page']));
-	$lpp = empty($_GET['lpp']) ? 15 : $_GET['lpp'];
+	$lpp = empty($_GET['lpp']) ? 20 : $_GET['lpp'];
 	$checklpp = array();
 	$checklpp[$lpp] = 'selected="selected"';
 	$extrainput = '';
@@ -38,7 +38,7 @@ if($type=="list"){
 	$firstlogsnum = count($firstlogs);
 	$countlogfile=count($logfiles);
 	$count = ($countlogfile-1)*4000+$firstlogsnum;
-	$multipage = multi($count, $lpp, $page, MOD_URL."&type=list&operation=$operation&lpp=$lpp",'pull-right' ); 
+	// $multipage = multi($count, $lpp, $page, MOD_URL."&type=list&operation=$operation&lpp=$lpp",'pull-right' ); 
 	 
 	$logs = array();
 	$jishu=4000;//每个日志文件最多行数
@@ -117,12 +117,14 @@ if($type=="list"){
 		 
 		$log[1] = dgmdate($log[1], 'y-n-j H:i');
 		$log[2] = $log[2];
-		$log[2] = ($log[2] != $_G['member']['username'] ? "<b>$log[2]</b>" : $log[2]);
+		$log[2] = ($log[2] != $_G['member']['username'] ? "$log[2]" : $log[2]);
 		$log[3] = $usergroup[$log[3]];
+		$log[5] = get_os($log[5]);
 		
 		$list[$k]=$log;
 	}
-	
+	// print_r($count);
+	// die;
 	include template('list');
 }
 

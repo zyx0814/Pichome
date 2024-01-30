@@ -121,7 +121,22 @@ function build_cache_setting() {
 	}
 
 	$data['verhash']=random(3);
-	
+
+	foreach(C::t('pichome_theme')->fech_all_theme() as $v){
+	    $data['pichomethemedata'][$v['id']] = $v;
+    }
+	//获取默认存储位置
+    $space = C::t('connect_storage')->fetch_default_space();
+    $hostdataarr = explode(':',$space['hostname']);
+    $defaultspacesettingdata = [
+        'bucket'=>$space['bucket'],
+        'bz'=>$space['bz'],
+        'remoteid'=>$space['id'],
+        'region'=> ($space['bz'] == 'ALIOSS') ? $space['hostname']:$hostdataarr[1],
+        'did'=>$space['id'],
+        'host'=>$space['host'],
+    ];
+    $data['defaultspacesetting'] = $defaultspacesettingdata;
 	$data['output'] = $output;
 	
 	savecache('setting', $data);

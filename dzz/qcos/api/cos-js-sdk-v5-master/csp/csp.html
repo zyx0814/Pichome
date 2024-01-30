@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>cos-js-sdk-v5</title>
+    <style>
+        body { font-family: "Microsoft YaHei"; }
+        .page {max-width:1024px;margin:0 auto;}
+        h1 { font-weight: normal; color:#333;}
+        a { color: #006eff; background-color: transparent; padding: 8px 16px; line-height: 1.3; display: inline-block; text-align: center; margin: 0 8px 8px 0; border: 1px solid #006eff; font-size: 14px; text-decoration: none; }
+        a:hover { color: #fff; background-color: #006eff; }
+        .result {display:none;line-height:1.3;font-size: 13px;font-family:monospace;border:1px solid #006eff;margin:0;height:200px;overflow:auto;box-sizing:border-box;padding:5px;}
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <h1>cos-js-sdk-v5</h1>
+    <div class="main"></div>
+    <pre class="result"></pre>
+</div>
+
+<script src="../dist/cos-js-sdk-v5.js"></script>
+<script>
+    var config = {
+        Bucket: 'test-1250000000',
+        Region: 'default'
+    };
+
+    var util = {
+        createFile: function (options) {
+            var buffer = new ArrayBuffer(options.size || 0);
+            var arr = new Uint8Array(buffer);
+            [].forEach.call(arr, function (char, i) {
+                arr[i] = 0;
+            });
+            var opt = {};
+            options.type && (opt.type = options.type);
+            var blob = new Blob([buffer], options);
+            return blob;
+        }
+    };
+
+    var cos = new COS({
+        CompatibilityMode: true,
+        ServiceDomain: 'http://cos.default.example.com',
+
+        // 后缀式
+        Domain: 'http://cos.{Region}.example.com', // 后缀式
+        ForcePathStyle: true, // 后缀式
+
+        // 前缀式
+        // Domain: 'http://{Bucket}.cos.{Region}.example.com', // 前缀式
+
+        getAuthorization: function (options, callback) {
+            var url = './auth-json.php?method=' + options.Method + '&path=' + encodeURIComponent(options.Key);
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onload = function (e) {
+                var sign;
+                try {
+                    sign = JSON.parse(e.target.responseText).sign;
+                } catch (e) {}
+                callback(sign);
+            };
+            xhr.send();
+        },
+    });
+
+    var TaskId;
+
+    var pre = document.querySelector('.result');
+    var showLogText = function (text, color) {
+        if (typeof text === 'object') {
+            try {
+                text = JSON.stringify(text);
+            } catch (e) {
+            }
+        }
+        var div = document.createElement('div');
+        div.innerText = text;
+        color && (div.style.color = color);
+        pre.appendChild(div);
+        pre.style.display = 'block';
+        pre.scrollTop = pre.scrollHeight;
+    };
+
+    var logger = {
+        log: function (text) {
+            console.log.apply(console, arguments);
+            showLogText([].join.call(arguments, ' '));
+        },
+        error: function (text) {
+            console.error(text);
+            showLogText(text, 'red');
+        },
+    };
+
+    function getObjectUrl() {
+        var url = cos.getObjectUrl({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip',
+            Expires: 60,
+            Sign: true,
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+        logger.log(url);
+    }
+
+    function getBucket() {
+        cos.getBucket({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function headBucket() {
+        cos.headBucket({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putBucketAcl() {
+        cos.putBucketAcl({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            // GrantFullControl: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantWrite: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantRead: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantReadAcp: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantWriteAcp: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // ACL: 'public-read-write',
+            // ACL: 'public-read',
+            ACL: 'private',
+            // AccessControlPolicy: {
+            // "Owner": { // AccessControlPolicy 里必须有 owner
+            //     "ID": 'qcs::cam::uin/459000000:uin/459000000' // 459000000 是 Bucket 所属用户的 uin(帐号ID)
+            // },
+            // "Grants": [{
+            //     "Grantee": {
+            //         "ID": "qcs::cam::uin/1001:uin/1001", // 10002 是 uin(帐号ID)
+            //         "DisplayName": "qcs::cam::uin/1001:uin/1001" // 10002 是 uin(帐号ID)
+            //     },
+            //     "Permission": "READ"
+            // }, {
+            //     "Grantee": {
+            //         "ID": "qcs::cam::uin/10002:uin/10002", // 10002 是 uin(帐号ID)
+            //     },
+            //     "Permission": "WRITE"
+            // }, {
+            //     "Grantee": {
+            //         "ID": "qcs::cam::uin/10002:uin/10002", // 10002 是 uin(帐号ID)
+            //     },
+            //     "Permission": "READ_ACP"
+            // }, {
+            //     "Grantee": {
+            //         "ID": "qcs::cam::uin/10002:uin/10002", // 10002 是 uin(帐号ID)
+            //     },
+            //     "Permission": "WRITE_ACP"
+            // }]
+            // }
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getBucketAcl() {
+        cos.getBucketAcl({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putBucketCors() {
+        cos.putBucketCors({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            CORSConfiguration: {
+                "CORSRules": [{
+                    "AllowedOrigin": ["*"],
+                    "AllowedMethod": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+                    "AllowedHeader": ["*"],
+                    "ExposeHeader": ["ETag", "x-cos-acl", "x-cos-delete-marker", "x-cos-server-side-encryption"],
+                    "MaxAgeSeconds": "5"
+                }]
+            }
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getBucketCors() {
+        cos.getBucketCors({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function deleteBucketCors() {
+        cos.deleteBucketCors({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getBucketLocation() {
+        cos.getBucketLocation({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putBucketLifecycle() {
+        cos.putBucketLifecycle({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            LifecycleConfiguration: {
+                "Rules": [{
+                    'ID': 1,
+                    'Filter': {
+                        'Prefix': 'test123',
+                    },
+                    'Status': 'Enabled',
+                    'Transition': {
+                        'Date': '2016-10-31T00:00:00+08:00',
+                        'StorageClass': 'STANDARD_IA'
+                    }
+                }]
+            }
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getBucketLifecycle() {
+        cos.getBucketLifecycle({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function deleteBucketLifecycle() {
+        cos.deleteBucketLifecycle({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function deleteBucket() {
+        cos.deleteBucket({
+            Bucket: 'testnew-' + config.Bucket.substr(config.Bucket.lastIndexOf('-') + 1),
+            Region: 'ap-guangzhou'
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putObject() {
+        // 创建测试文件
+        var filename = '1kb.zip';
+        var blob = util.createFile({size: 1024});
+        // 调用方法
+        cos.putObject({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: filename, /* 必须 */
+            Body: blob,
+            TaskReady: function (tid) {
+                TaskId = tid;
+            },
+            onProgress: function (progressData) {
+                logger.log(JSON.stringify(progressData));
+            },
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putObjectCopy() {
+        cos.putObjectCopy({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.copy.zip',
+            CopySource: config.Bucket + '.cos.' + config.Region + '.myqcloud.com/' + encodeURIComponent('1mb.zip').replace(/%2F/g, '/'), // Bucket 格式：test-1250000000
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getObject() {
+        cos.getObject({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip',
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function headObject() {
+        cos.headObject({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip'
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function putObjectAcl() {
+        cos.putObjectAcl({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip',
+            // GrantFullControl: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantWrite: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // GrantRead: 'id="qcs::cam::uin/1001:uin/1001",id="qcs::cam::uin/1002:uin/1002"',
+            // ACL: 'public-read-write',
+            // ACL: 'public-read',
+            // ACL: 'private',
+            ACL: 'default', // 继承上一级目录权限
+            // AccessControlPolicy: {
+            //     "Owner": { // AccessControlPolicy 里必须有 owner
+            //         "ID": 'qcs::cam::uin/459000000:uin/459000000' // 459000000 是 Bucket 所属用户的 uin(帐号ID)
+            //     },
+            //     "Grants": [{
+            //         "Grantee": {
+            //             "ID": "qcs::cam::uin/10002:uin/10002", // 10002 是 uin(帐号ID)
+            //         },
+            //         "Permission": "READ"
+            //     }]
+            // }
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function getObjectAcl() {
+        cos.getObjectAcl({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip'
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function deleteObject() {
+        cos.deleteObject({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '1mb.zip'
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function deleteMultipleObject() {
+        cos.deleteMultipleObject({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Objects: [
+                {Key: '中文/中文.txt'},
+                {Key: '中文/中文.zip'},
+            ]
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function abortUploadTask() {
+        cos.abortUploadTask({
+            Bucket: config.Bucket, /* 必须 */ // Bucket 格式：test-1250000000
+            Region: config.Region, /* 必须 */
+            // 格式1，删除单个上传任务
+            // Level: 'task',
+            // Key: '10mb.zip',
+            // UploadId: '14985543913e4e2642e31db217b9a1a3d9b3cd6cf62abfda23372c8d36ffa38585492681e3',
+            // 格式2，删除单个文件所有未完成上传任务
+            Level: 'file',
+            Key: '10mb.zip',
+            // 格式3，删除 Bucket 下所有未完成上传任务
+            // Level: 'bucket',
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function sliceUploadFile() {
+        var blob = util.createFile({size: 1024 * 1024 * 3});
+        cos.sliceUploadFile({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: '3mb.zip', /* 必须 */
+            Body: blob,
+            TaskReady: function (tid) {
+                TaskId = tid;
+            },
+            onHashProgress: function (progressData) {
+                logger.log('onHashProgress', JSON.stringify(progressData));
+            },
+            onProgress: function (progressData) {
+                logger.log('onProgress', JSON.stringify(progressData));
+            },
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function selectFileToUpload() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = function (e) {
+            var file = this.files[0];
+            if (file) {
+                if (file.size > 1024 * 1024) {
+                    cos.sliceUploadFile({
+                        Bucket: config.Bucket, // Bucket 格式：test-1250000000
+                        Region: config.Region,
+                        Key: file.name,
+                        Body: file,
+                        TaskReady: function (tid) {
+                            TaskId = tid;
+                        },
+                        onHashProgress: function (progressData) {
+                            logger.log('onHashProgress', JSON.stringify(progressData));
+                        },
+                        onProgress: function (progressData) {
+                            logger.log('onProgress', JSON.stringify(progressData));
+                        },
+                    }, function (err, data) {
+                        logger.log(err || data);
+                    });
+                } else {
+                    cos.putObject({
+                        Bucket: config.Bucket, // Bucket 格式：test-1250000000
+                        Region: config.Region,
+                        Key: file.name,
+                        Body: file,
+                        TaskReady: function (tid) {
+                            TaskId = tid;
+                        },
+                        onProgress: function (progressData) {
+                            logger.log(JSON.stringify(progressData));
+                        },
+                    }, function (err, data) {
+                        logger.log(err || data);
+                    });
+                }
+            }
+        };
+        input.click();
+    }
+
+    function cancelTask() {
+        cos.cancelTask(TaskId);
+        logger.log('canceled');
+    }
+
+    function pauseTask() {
+        cos.pauseTask(TaskId);
+        logger.log('paused');
+    }
+
+    function restartTask() {
+        cos.restartTask(TaskId);
+        logger.log('restart');
+    }
+
+    function uploadFiles() {
+        var filename = 'mb.zip';
+        var blob = util.createFile({size: 1024 * 1024 * 10});
+        cos.uploadFiles({
+            files: [{
+                Bucket: config.Bucket, // Bucket 格式：test-1250000000
+                Region: config.Region,
+                Key: '1' + filename,
+                Body: blob,
+            }, {
+                Bucket: config.Bucket, // Bucket 格式：test-1250000000
+                Region: config.Region,
+                Key: '2' + filename,
+                Body: blob,
+            }, {
+                Bucket: config.Bucket, // Bucket 格式：test-1250000000
+                Region: config.Region,
+                Key: '3' + filename,
+                Body: blob,
+            }],
+            SliceSize: 1024 * 1024,
+            onProgress: function (info) {
+                var percent = parseInt(info.percent * 10000) / 100;
+                var speed = parseInt(info.speed / 1024 / 1024 * 100) / 100;
+                logger.log('进度：' + percent + '%; 速度：' + speed + 'Mb/s;');
+            },
+            onFileFinish: function (err, data, options) {
+                logger.log(options.Key + ' 上传' + (err ? '失败' : '完成'));
+            },
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    function sliceCopyFile() {
+        // 创建测试文件
+        var sourceName = '3mb.zip';
+        var Key = '3mb.copy.zip';
+
+        var sourcePath = config.Bucket + '.cos.' + config.Region + '.myqcloud.com/'+ encodeURIComponent(sourceName).replace(/%2F/g, '/');
+
+        cos.sliceCopyFile({
+            Bucket: config.Bucket, // Bucket 格式：test-1250000000
+            Region: config.Region,
+            Key: Key,
+            CopySource: sourcePath,
+            SliceSize: 2 * 1024 * 1024, // 大于2M的文件用分片复制，小于则用单片复制
+            onProgress:function (info) {
+                var percent = parseInt(info.percent * 10000) / 100;
+                var speed = parseInt(info.speed / 1024 / 1024 * 100) / 100;
+                logger.log('进度：' + percent + '%; 速度：' + speed + 'Mb/s;');
+            }
+        },function (err,data) {
+            if(err){
+                logger.log(err);
+            }else{
+                logger.log(data);
+            }
+        });
+
+    }
+
+    var time0 = Date.now();
+    var preMsg = '页面加载完成';
+    var showTime = function (msg) {
+        var time1 = Date.now();
+        console.log(preMsg + '->' + msg, time1 - time0);
+        preMsg = msg;
+        time0 = time1;
+    };
+
+    var files;
+    function selectUploadFiles() {
+        showTime('弹出选文件窗口');
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.onchange = function (e) {
+            files = this.files;
+            showTime('选完文件');
+        };
+        input.click();
+    }
+    function startSelectUploadFiles() {
+        files.length && cos.uploadFiles({
+            files: [].map.call(files, function (file) {
+                return {
+                    Bucket: config.Bucket,
+                    Region: config.Region,
+                    Key: file.name,
+                    Body: file,
+                };
+            }),
+            SliceSize: 1024 * 1024,
+            onProgress: function (info) {
+                var percent = parseInt(info.percent * 10000) / 100;
+                var speed = parseInt(info.speed / 1024 / 1024 * 100) / 100;
+                logger.log('进度：' + percent + '%; 速度：' + speed + 'Mb/s;');
+            },
+            onFileFinish: function (err, data, options) {
+                logger.log(options.Key + ' 上传' + (err ? '失败' : '完成'));
+            },
+        }, function (err, data) {
+            logger.log(err || data);
+        });
+    }
+
+    (function () {
+        var list = [
+            // 'getService', // 不支持
+            'getAuth',
+            'getObjectUrl',
+            // 'putBucket', // 不支持
+            'getBucket',
+            'headBucket',
+            'putBucketAcl',
+            'getBucketAcl',
+            'putBucketCors',
+            'getBucketCors',
+            // 'deleteBucketCors', // 不提供
+            'getBucketLocation',
+            'getBucketLifecycle',
+            'putBucketLifecycle',
+            'deleteBucketLifecycle',
+            'deleteBucket',
+            'putObject',
+            'putObjectCopy',
+            'getObject',
+            'headObject',
+            'putObjectAcl',
+            'getObjectAcl',
+            'deleteObject',
+            'deleteMultipleObject',
+            'abortUploadTask',
+            'sliceUploadFile',
+            'selectFileToUpload',
+            'cancelTask',
+            'pauseTask',
+            'restartTask',
+            'uploadFiles',
+            'selectUploadFiles',
+            'startSelectUploadFiles',
+        ];
+        var container = document.querySelector('.main');
+        var html = [];
+        list.forEach(function (name) {
+            html.push('<a href="javascript:void(0)">' + name + '</a>');
+        });
+        container.innerHTML = html.join('');
+        container.onclick = function (e) {
+            if (e.target.tagName === 'A') {
+                var name = e.target.innerText.trim();
+                window[name]();
+            }
+        };
+    })();
+</script>
+
+</body>
+</html>

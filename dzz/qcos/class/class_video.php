@@ -472,7 +472,7 @@ EOF;
     //视频截帧
     public function get_Snapshot($filepath, $start = 5, $outputpath = '')
     {
-        if (!$outputpath) $outputpath = 'tmpthumbpath' . '/' . $this->get_basename($filepath) . '.jpg';
+        if (!$outputpath) $outputpath = 'tmpthumbpath' . '/' . $this->get_basename($filepath) . '.webp';
         $xmldata = <<<EOF
                 <Request>
                      <Input>
@@ -592,33 +592,71 @@ EOF;
     public function getDocthumb($data)
     {
         global $_G;
+        if($data['aid']){
+            $attachment = IO::getMeta('attach::'.$data['aid']);
+        }else{
+            $attachment = IO::getMeta($data['rid']);
+        }
 
-        $signedUrl = IO::getStream($data['realpath']);
+        $signedUrl = IO::getStream($data['path']);
 
         if (!$data['original']) {
             $params = $this->parseparams($signedUrl, $data['width'], $data['height'], $data['thumbtype']);
+        }
+        $extraparams = $data['extraparams'];
+        if($extraparams['watermarkstatus'] && !$extraparams['watermarktext']){
+            //获取水印图片地址
+            $extraparams['waterimg'] = $attachment['bz'].'static/waterimg/water.png';
         }
         //水印参数
         $waterparams = $this->parsewatermarkparams($signedUrl, $data['extraparams'], $data['width'], $data['height']);
 
         $signedUrl = explode('?', $signedUrl);
-        $url = $signedUrl[0] . '?ci-process=doc-preview&page=1&dstType=jpg&' . ($params ? $params : '') . ($waterparams ? '|' . $waterparams . '&' : '&') . $signedUrl[1];
+        $url = $signedUrl[0] . '?ci-process=doc-preview&page=1&dstType=webp&' . ($params ? $params : '') . ($waterparams ? '|' . $waterparams . '&' : '&') . $signedUrl[1];
         if (!$url) return false;
-        $targetpath = 'tmppichomethumb/' . $data['appid'] . '/' . md5($data['realpath'].$data['thumbsign']) . '.jpg';
-        $patharr = explode(':',$data['realpath']);
-        $bz = $patharr[0] . ':' . $patharr[1] . ':';
-        $arr = explode('/',$patharr[2]);
-        $cloudpath = $bz .  '/' . $targetpath;
+        //组合缩略图地址
+
+        $watermd5 = '';
+        if($extraparams['watermarkstatus']){
+            $watermd5 = !$extraparams['watermarktext'] ? $_G['setting']['watermd5']:($extraparams['watermarktext'] ? $extraparams['watermarktext']:$_G['setting']['watermarktext']);
+        }
+        $extraflag = '';
+
+        if ($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position']) {
+            $extraflag .= '_w';
+        }
+        if ($extraparams['watermarktype']) {
+            $extraflag .= '_' . $extraparams['watermarktype'];
+        }
+        if ($extraparams['watermarktype']['watermarktext']) {
+            $extraflag .= '_' . $extraparams['watermarktext'];
+        }
+        $thumbpath = $this->getthumbpath('pichomethumb');
+        if($data['aid']) $thumbname = md5($data['aid'].$extraflag).'.webp';
+        else $thumbname = md5($data['path'].$extraflag).'.webp';
+        $thumbpath = $thumbpath.$thumbname;
+        $defaultspace = $_G['setting']['defaultspacesetting'];
+        $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$thumbpath;
+        //如果获取到缩略图
         if (!$data['tmpfile']) {
             $return = IO::moveThumbFile($cloudpath, $url);
             if (isset($return['error'])) {
                 return false;
             } else {
-                return array('success'=>$cloudpath);
+                //插入缩略图记录表
+                return array('success'=>$thumbpath);
             }
         } else return array('success'=>$url);
     }
-
+    public function getthumbpath($dir = 'dzz'){
+        $subdir = $subdir1 = $subdir2 = '';
+        $subdir1 = date('Ym');
+        $subdir2 = date('d');
+        $subdir = $subdir1 . '/' . $subdir2 . '/';
+        // $target1 = $dir . '/' . $subdir . 'index.html';
+        $target = $dir . '/' . $subdir;
+        return $target;
+    }
     public function parseparams($signedUrl, $width, $height, $thumbtype)
     {
         $imgwidth = 842;
@@ -742,7 +780,9 @@ EOF;
         $dx = $watermarktext['skewx']? $watermarktext['skewx']:0;
         $dy = $watermarktext['skewy'] ? $watermarktext['skewy']:0 ;
         if($watermarktype != 'text'){
-            $imgurl = base64_encode(\IO::getStream($_G['setting']['qcoswaterimg']));
+            $imgurl = IO::getwaterimg($extraparams['waterimg']);
+            $imgurl = str_replace('https','http',$imgurl);
+            $imgurl = base64_encode($imgurl);
             $imgurl = str_replace(array('+','/'),array('-','_'),$imgurl);
             return 'watermark/1/image/'.$imgurl.'/gravity/'.$gravity.'/dx/'.$dx.'/dy/'.$dy;
         }else{

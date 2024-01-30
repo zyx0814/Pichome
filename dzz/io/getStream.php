@@ -20,8 +20,13 @@ $perm = isset($patharr[1]) ? intval($patharr[1]):0;
 //  print_r($perm);die;
 //是否忽略密级权限
 $ulevel = getglobal('pichomelevel') ? getglobal('pichomelevel'):0;
-if($perm&1){//是否获取真实文件地址
-    $rid = $patharr[0];
+//是否获取真实文件地址
+$rid = $patharr[0];
+
+if(strpos($rid, 'attach::') === 0){
+    $thumbpath = $rid;
+    $resourcesdata = IO::getMeta($rid);
+}else{
     $hasperm = true;
     $resourcesdata = C::t('pichome_resources')->fetch($rid);
     if(!$resourcesdata){
@@ -44,14 +49,18 @@ if($perm&1){//是否获取真实文件地址
         @header('HTTP/1.1 403 No Perm');
         @header('Status: 404 No Perm');
     }
-    $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
-
-}else{
-    $thumbpath = false;
+    if(is_numeric($resourcesdata['path'])){
+        $thumbpath = IO::getStream('attach::'.$resourcesdata['path']);
+    }else{
+        $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
+    }
 }
 
+
+
+
 $url = IO::getStream($thumbpath);
-$filename = rtrim($_GET['n'], '.dzz');
+$filename = ($resourcesdata['filename']) ? rtrim($resourcesdata['filename'], '.dzz'):rtrim($resourcesdata['name'], '.dzz');
 $ext = strtolower(substr(strrchr($filename, '.'), 1, 10));
 if (!$ext) $ext = strtolower(substr(strrchr(preg_replace("/\.dzz$/i", '', preg_replace("/\?.*/i", '', $url)), '.'), 1, 10));
 

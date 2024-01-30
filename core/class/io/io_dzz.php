@@ -1,1293 +1,1285 @@
 <?php
-    /*
- * @copyright   QiaoQiaoShiDai Internet Technology(Shanghai)Co.,Ltd
- * @license     https://www.oaooa.com/licenses/
- *
- * @link        https://www.oaooa.com
- * @author      zyx(zyx@oaooa.com)
- */
-    
-    if (!defined('IN_OAOOA')) {
-        exit('Access Denied');
-    }
-    @set_time_limit(0);
-    @ini_set('max_execution_time', 0);
-    
-    class io_dzz extends io_api
-    {
-        public function listFiles($rid, $by = 'name', $asc = 'DESC', $limit = 0, $force = 0)
-        {
-            $data = array();
-            $icoarr = C::t('resources_path')->fetch($rid);
-            switch ($by) {
-                case 'name':
-                    $orderby = 'name';
-                    break;
-                case 'size':
-                    $orderby = 'size';
-                    break;
-                case 'type':
-                    $orderby = array('type', 'ext');
-                    break;
-                case 'time':
-                    $orderby = 'dateline';
-                    break;
-                
-            }
-            if ($limit) list($start, $perpage) = explode('-', $limit);
-            foreach (C::t('resources')->fetch_all_by_pfid($icoarr['oid'], '', $perpage, $by, $asc, $start) as $value) {
-                $data[$value['rid']] = $value;
-            }
-            return $data;
-        }
+/*
+* @copyright   QiaoQiaoShiDai Internet Technology(Shanghai)Co.,Ltd
+* @license     https://www.oaooa.com/licenses/
+*
+* @link        https://www.oaooa.com
+* @author      zyx(zyx@oaooa.com)
+*/
 
-        //检查文件是否存在
-        public function checkfileexists($path,$isdir= false){
-            $path = $this->parsePath($path);
-            if(!$isdir && is_file($path)){
-                return true;
-            }elseif($isdir && is_dir($path)){
-                return true;
+if (!defined('IN_OAOOA')) {
+    exit('Access Denied');
+}
+@set_time_limit(0);
+@ini_set('max_execution_time', 0);
+
+class io_dzz extends io_api
+{
+
+    private function getPartInfo($content_range)
+    {
+        $arr = array();
+        if (!$content_range) {
+            $arr['ispart'] = false;
+            $arr['iscomplete'] = true;
+        } elseif (is_array($content_range)) {
+            $arr['ispart'] = true;
+            $partsize = isset($content_range[4])?intval($content_range[4]):getglobal('setting/maxChunkSize');
+            $arr['partnum'] = ceil(($content_range[2] + 1) / $partsize);
+            if (($content_range[2] + 1) >= $content_range[3]) {
+                $arr['iscomplete'] = true;
+            } else {
+                $arr['iscomplete'] = false;
             }
+        } else {
             return false;
         }
-        public function getMeta($path,$getimagedata= 0){
-            $path = $this->parsePath($path);
-            if(!is_file($path)){
-                $data = C::t('pichome_resources')->fetch_data_by_rid($path);
-                return $data;
-            }else{
-                global $Types;
-                $pathinfo = pathinfo($path);
-                $ext = strtolower($pathinfo['extension']);
-                $fileinfo = array(
-                    'name' => $this->getbasename($path),
-                    'ext' => $ext,
-                    'size' => filesize($path),
-                    'dateline'=>filemtime($path)
-                );
-                $imginfo = array();
-                if($getimagedata && (in_array($ext,$Types['commonimage']) || in_array($ext,$Types['image']))){
-                    //获取图片信息，以取得宽高
-                    $imgdata = @getimagesize($path);
-                    $imginfo['width'] = isset($imgdata[0]) ? $imgdata[0]:0;
-                    $imginfo['height'] = isset($imgdata[1]) ? $imgdata[1]:0;
+        return $arr;
+    }
+
+    public function uploadStream($file, $filename, $appid, $pfid = '', $relativePath = '', $content_range = array(), $params = array())
+    {
+        $data = array();
+        //处理目录(没有分片或者最后一个分片时创建目录
+        $arr = self::getPartInfo($content_range);
+        // echo $pfid;die;
+        if ($arr['iscomplete']) {
+            if($relativePath){
+                $fdata = C::t('pichome_folder')->createfolerbypath($appid, $relativePath, $pfid);
+                if (isset($fdata['error'])) {
+                    return array('error' => $data['error']);
                 }
-                return array_merge($fileinfo,$imginfo);
+            }elseif($pfid){
+                $folderdata = C::t('pichome_folder')->fetch($pfid);
+                $fdata = ['fid'=>$pfid,'level'=>$folderdata['level']];
             }
 
-
         }
-        //兼容linux获取中文文件名问题
-        public function getbasename($filename)
-        {
-            return preg_replace('/^.+[\\\\\\/]/', '', $filename);
-        }
-        /**
-         * 获取空间配额信息
-         * @return string
-         */
-        public function MoveToSpace($path, $attach = array())
-        {
-            global $_G;
-            $obz = io_remote::getBzByRemoteid($attach['remote']);
-            
-            if ($obz == 'dzz') {
-                return array('error' => lang('same_storage_area'));
-            } else {
-                $url = IO::getFileUri($obz . '/' . $attach['attachment']);
-                if (is_array($url)) return array('error' => $url['error']);
-                $target = $_G['setting']['attachdir'] . './' . $attach['attachment'];
-                $targetpath = dirname($target);
-                dmkdir($targetpath);
-                try {
-                    if (file_put_contents($target, fopen($url, 'rb')) === false) {
-                        return array('error' => lang('error_occurred_written_local'));
-                    }
-                } catch (Exception $e) {
-                    return array('error' => $e->getMessage());
-                }
-                if (md5_file($target) != $attach['md5']) {
-                    return array('error' => lang('file_transfer_errors'));
-                }
+        if (substr($filename, -7) == '.folder') {
+            if(!$relativePath){
+                $patharr = explode('/',$filename);
+                array_pop($patharr);
+                $relativePath = ($patharr) ? implode('/',$patharr):'';
             }
-            return true;
-            
-        }
-        
-        public function rename($rid, $text)
-        {
-            //查找当前目录下是否有同名文件
-            $icoarr = C::t('resources')->fetch_info_by_rid($rid);
-            /* $ext = '';
-        $namearr = explode('.', $text);
-        if (count($namearr) > 1) {
-            $ext = $namearr[count($namearr) - 1];
-            unset($namearr[count($namearr) - 1]);
-            $ext = $ext ? ('.' . $ext) : '';
-        }
-        $tname = implode('.', $namearr);
-        //如果有后缀名并且是文件
-        if ($ext && $icoarr['ext']) {
-            //如果后缀名和原后缀名不同,则加上原后缀名组成新的文件名
-            if ($ext != '.' . $icoarr['ext']) {
-                $text = $tname . $ext . '.' . $icoarr['ext'];
-            } else {
-                $text = $tname . $ext;
+            $fdata = C::t('pichome_folder')->createfolerbypath($appid, $relativePath, $pfid);
+            if (isset($fdata['error'])) {
+                return array('error' => $data['error']);
             }
-        } elseif (!$ext && $icoarr['ext']) {
-            $text = $tname . $ext . '.' . $icoarr['ext'];
-        }*/
-            /*$name=preg_replace("/\(\d+\)/i",'',$tname).'('.($i+1).')'.$ext;*/
-            if ($icoarr['name'] != $text && ($ricoid = io_dzz::getRepeatIDByName($text, $icoarr['pfid'], ($icoarr['type'] == 'folder') ? true : false))) {//如果目录下有同名文件
-                return array('error' => lang('filename_already_exists'));
-            }
-            if (!$arr = C::t('resources')->rename_by_rid($rid, $text)) {
-                return array('error' => 'Not modified!');
-            }
-            $icoarr['name'] = $text;
-            return $icoarr;
+            return $fdata;
         }
-        
-        public function parsePath($path)
-        {
-            $path = str_replace('dzz::','',$path);
-            return $path;
-        }
-        
-        //根据路径获取目录树的数据；
-        function getFolderDatasByPath($fid)
-        {
-            $fidarr = getTopFid($fid);
-            $folderarr = array();
-            foreach ($fidarr as $fid) {
-                $folderarr[$fid] = C::t('folder')->fetch_by_fid($fid);
-            }
-            return $folderarr;
-        }
-        
-        //获取文件流地址
-        public function getStream($path, $fop = '')
-        {
-            $prepath = DZZ_ROOT;
-            $path =   $this->parsePath($path);
-            $handle = @fopen($path,'r');
-            if($handle){
-                fclose($handle);
-                $path = str_replace('/',BS,$path);
-                $path = str_replace($prepath,'',$path);
-                $path = str_replace(BS,'/',$path);
-            }else{
-                $path = getglobal('setting/attachdir').$path;
-
-            }
-            return $path;
-
-        }
-        
-        //获取文件的真实地址
-        public function getFileUri($path, $fop = '')
-        {
-            $prepath = DZZ_ROOT;
-            $path =   $this->parsePath($path);
-            $handle = @fopen($path,'r');
-            if($handle){
-                fclose($handle);
-             return $path;
-            }else{
-                $path = getglobal('setting/attachdir').$path;
-
-            }
-            return $path;
-        }
-        
-        //根据路径移动文件到目标位置
-        public function moveThumbFile($path, $filepath)
-        {
-            $path = IO::getStream($path);
-            $pathdir = dirname($path);
-            if (!is_dir($pathdir)) {
-                mkdir($pathdir, 0777, true);
-                chmod($pathdir, 0777);
-            }
-            if(!is_file($filepath)){
-                $stream = IO::getStream($filepath);
-            }else{
-                $stream = $filepath;
-            }
-			$handle=fopen($stream,'rb');
-			$succ=1;
-			while (!feof($handle)) {
-				$fileContent = fread($handle, 8192);
-				if(file_put_contents($path, $fileContent, FILE_APPEND)===false){
-					$succ=0;
-				}
-				unset($fileContent);
-			}
-			fclose($handle);
-			if(!$succ){
-				@unlink($path);
-				return false;
-			}
-			return $path;
-           
-        }
-        
+        $arr['flag'] = $appid . '_' . $relativePath;
         //获取文件内容
-        public function getFileContent($path)
-        {
-            $url = self::getStream($path);
-            return file_get_contents($url);
+        $fileContent = '';
+        if (!$handle = fopen($file, 'rb')) {
+            return array('error' => lang('open_file_error'));
+        }
+        while (!feof($handle)) {
+            $fileContent .= fread($handle, 8192);
         }
 
-        
-        public function createThumbByOriginal($path,$data,$width = 0, $height = 0, $thumbtype = 1,$original=0,$tmpfile = 0,$extraparams=array(),$filesize=0)
-        {
-            global $_G;
-            $path = self::parsePath($path);
-            //取得原始文件路径
-            if($this->checkfileexists($path)){
-               if(!$tmpfile) $targetpath = 'pichomethumb/'.$data['appid'].'/'.md5($path.$data['thumbsign']).'.jpg';
-               else $targetpath = 'cache/'.md5($path.$data['thumbsign']).'.jpg';
-            }else{
-               return false;
-            }
+        fclose($handle);
+        if ($arr['ispart']) {
+            $re = self::upload($fileContent, $appid, $fdata['fid'], $filename, $fdata['level'], $arr);
 
-            $filedirpathinfo = pathinfo($path);
-            $filedirextensionarr = explode('?', $filedirpathinfo['extension']);
-            $filedirextension = strtolower($filedirextensionarr[0]);
-            //获取文件地址
-            $fileuri = IO::getStream($path);
+            if ($arr['iscomplete']) {
+                if (empty($re['error'])) {
+                    $data['icoarr'][] = $re;
+                    $data['folder'] =C::t('pichome_folder')->fetch_allfolder_by_fid($fdata['fid']);
 
-            $extraflag = '';
-
-            $target = $targetpath;
-
-
-            //如果服务器处理完成后，路径非图片类文件的时候，直接获取文件后缀对应的图片
-            if (!in_array($filedirextension, array('png', 'jpg', 'gif', 'jpeg')) || !$imginfo = @getimagesize($fileuri)) {
-
-                $thumbpath = false;
-            } else {
-                //图片小于最小水印最小设置时，不生成水印
-                if ($_G['setting']['IsWatermarkstatus'] == 0 || ($imginfo[0] < $_G['setting']['watermarkminwidth'] || $imginfo[1] < $_G['setting']['watermarkminheight'])) {
-                    $nomark = 1;
-                }
-                //返回原图的时候 或者图片小于缩略图宽高的不生成直接返回原图
-                if ($original || ($imginfo[0] < $width || $imginfo[1] < $height)) {
-
-                    $thumbpath = $path;
-
+                    return $data;
                 } else {
-                    //生成缩略图
-                    include_once libfile('class/image');
-                    $target_attach = $_G['setting']['attachdir'] . './' . $target;
-                    $targetpath = dirname($target_attach);
-                    dmkdir($targetpath);
-                    $image = new image();
-                    try {
-                        $thumb = $image->Thumb($fileuri, $target, $width, $height, $thumbtype, 0, $extraparams);
-
-                        if ($thumb) {
-
-                            $thumbpath = $target;
-                        } else {
-                            $thumbpath = false;
-                        }
-                    } catch (\Exception $e) {
-                        $thumbpath = false;
-                       
-                    }
+                    $data['error'] = $re['error'];
+                    return $data;
                 }
+            } else {
+                return true;
             }
-            if($thumbpath){
-                if(strpos($thumbpath,':') === false){
-                    $bz = 'dzz';
-                }else{
-                    $patharr = explode(':',$thumbpath);
-                    $bz = $patharr[0];
-                    $did = $patharr[1];
+        } else {
 
+            $re = self::upload($fileContent, $appid, $fdata['fid'], $filename, $fdata['level']);
+            if (empty($re['error'])) {
+                if ($re['type'] == 'image' && $re['aid']) {
+                    $re['imgpath'] = DZZSCRIPT . '?mod=io&op=thumbnail&path=' . dzzencode('attach::' . $re['aid']);
                 }
-                if(!is_numeric($did) || $did < 2){
-                    $bz = 'dzz';
+                $re['monthdate'] = dgmdate($re['dateline'], 'm-d');
+                $re['hourdate'] = dgmdate($re['dateline'], 'H:i');
+                $re['pfid'] = $data['pfid'];
+                $re['colect'] = 0;
+                $data['icoarr'][] = $re;
+                $data['folder'] =C::t('pichome_folder')->fetch_allfolder_by_fid($fdata['fid']);
+                return $data;
+            } else {
+                $data['error'] = $re['error'];
+                return $data;
+            }
+        }
+    }
+
+    public function upload_by_content($fileContent, $path, $fid = '', $filename, $level = 0, $partinfo = array())
+    {
+        return self::upload($fileContent, $path, $fid, $filename, $level = 0, $partinfo);
+    }
+
+    /**
+     * 上传文件
+     * 注意：此方法适用于上传不大于2G的单个文件。
+     * @param string $fileContent 文件内容字符串
+     * @param string $fid 上传文件的目标保存目录fid
+     * @param string $fileName 文件名
+     * @param string $ondup overwrite：表示覆盖同名文件；newcopy：表示生成文件副本并进行重命名，命名规则为“文件名_日期.后缀”。
+     * @param boolean $isCreateSuperFile 是否分片上传
+     * @return string
+     */
+    public function upload($fileContent, $appid, $fid = '', $filename, $level = 0, $partinfo = array(), $ondup = 'newcopy')
+    {
+
+        global $_G;
+        $filename = self::name_filter($filename);
+        /* if (($ondup == 'overwrite') && ($rid = self::getRepeatIDByName($filename, $fid))) {//如果目录下有同名文件
+             return self::overwriteUpload($fileContent, $rid, $filename, $partinfo);//覆盖
+         } else $nfilename = self::getFileName($filename, $fid); //重命名*/
+
+        if ($partinfo['ispart']) {
+            if ($partinfo['partnum'] == 1) {
+                if ($target = self::getCache($partinfo['flag'] . '_' . md5($filename))) {
+                    file_put_contents($_G['setting']['attachdir'] . $target, '');
+                } else {
+                    $pathinfo = pathinfo($filename);
+                    $ext = strtolower($pathinfo['extension']);
+                    $target = $this->getPath($ext ? ('.' . $ext) : '', 'dzz');
+                    self::saveCache($partinfo['flag'] . '_' . md5($filename), $target);
                 }
-                if($bz == 'dzz'){
-                    $rootpath = str_replace(BS,'/',DZZ_ROOT);
-                    $thumbpath = str_replace($rootpath,'',$thumbpath);
-                    $thumbpath = str_replace('./','/',$thumbpath);
-                    $thumbpath = str_replace('//','/',$thumbpath);
-                    $thumbpath = ltrim($thumbpath,'/');
-                    $thumbpath = 'dzz::'.$thumbpath;
-                }
+            } else {
+                if(!$target = self::getCache($partinfo['flag'] . '_' . md5($filename))){
+					  return array('error' => lang('cache_file_error'));
+				}
+            }
+            /* if(!filesize($fileContent)){
+                  return array('error' => lang('cache_file_error'));
+             }*/
+
+            if (file_put_contents($_G['setting']['attachdir'] . $target, $fileContent, FILE_APPEND) === false) {
+                return array('error' => lang('cache_file_error'));
             }
 
-          /*  if (strpos($thumbpath, $_G['setting']['attachurl']) === 0) {
-                    $thumbpath = str_replace(DZZ_ROOT, 'dzz::', $thumbpath);
+            if (!$partinfo['iscomplete']) return true;
+            else {
+                self::deleteCache($partinfo['flag'] . '_' . md5($filename));
 
-                }*/
-            return $thumbpath;
-            
+            }
+        } else {
+
+            $pathinfo = pathinfo($filename);
+            $ext = strtolower($pathinfo['extension']);
+            $target = $this->getPath($ext ? ('.' . $ext) : '', 'dzz');
+
+            if (!empty($fileContent) && file_put_contents($_G['setting']['attachdir'] . $target, $fileContent) === false) {
+                return array('error' => lang('cache_file_error'));
+            }
         }
 
-        //删除
-        //当文件在回收站时，彻底删除；
-        //finaldelete 真实删除，不放入回收站
-        //$force 强制删除，不受权限控制
-        public function Delete($path, $isdir = false)
-        {
-            $path = self::parsePath($path);
-            if($isdir){
-                removedirectory($path);
-            }else{
-                @unlink($path);
+        /*//判断空间大小
+        $gid = DB::result_first("select gid from %t where fid=%d", array('folder', $fid));
+        if (!SpaceSize(filesize($_G['setting']['attachdir'] . $target), $gid)) {
+            @unlink($_G['setting']['attachdir'] . $target);
+            return array('error' => lang('inadequate_capacity_space'));
+        }*/
+
+        if ($attach = $this->save($target, $filename)) {
+            if ($attach['error']) {
+                return array('error' => $attach['error']);
+            } else {
+
+                return $this->uploadToattachment($attach, $appid, $fid, $level);
             }
-            return true;
+        } else {
+            return array('error' => 'Could not save uploaded file. The upload was cancelled, or server error encountered');
         }
-        
-        //获取缩略图
-        public function getThumb($path, $width = 0, $height = 0, $original = false, $returnurl = false, $create = 0,$tmpfile=0, $thumbtype = 1, $extraparams = array(),$filesize=0)
+
+    }
+
+    public function getPath($ext, $dir = 'dzz')
+    {
+        global $_G;
+        if ($ext && in_array(trim($ext, '.'), $_G['setting']['unRunExts'])) {
+            $ext = '.dzz';
+        }
+        $subdir = $subdir1 = $subdir2 = '';
+        $subdir1 = date('Ym');
+        $subdir2 = date('d');
+        $subdir = $subdir1 . '/' . $subdir2 . '/';
+        $target1 = $dir . '/' . $subdir . 'index.html';
+        $target = $dir . '/' . $subdir;
+        $target_attach = $_G['setting']['attachdir'] . $target1;
+        $targetpath = dirname($target_attach);
+        dmkdir($targetpath);
+        return $target . date('His') . '' . strtolower(random(16)) . $ext;
+    }
+
+     private static function getCache($path)
         {
-            global $_G;
-            if (!$data = IO::getMeta($path)) return false;
-            if(!$tmpfile && !$original){
-                //缩略图记录表
-                $thumbrecodearr = [
-                    'rid' =>$data['rid'],
-                    'width' => $width,
-                    'height' => $height,
-                    'filesize' => $data['filesize'] ? $data['filesize'] : $data['size'],
-                    'thumbtype' => $thumbtype,
-                    'dateline' => TIMESTAMP,
-                    'thumbsign'=>0,
-                    'ext'=>$data['ext']
-                ];
-                //缩略图记录表数据
-                $thumbrecorddata = C::t('thumb_record')->insert($thumbrecodearr, 1);
-                //已存在缩略图不需要再生成
-                if ($thumbrecorddata['thumbstatus'] > 0) {
-                    $img = IO::getFileUri($thumbrecorddata['path']);
-                    if ($returnurl) return $img;
-                    else IO::output_thumb($img);
-                }elseif($thumbrecorddata['error']){
-                    return $thumbrecodearr['error'];
-                }
-            }
-            //如果文件为特殊格式类型，则先生成大图，再生成目标图片
-            if(!$original && in_array($data['ext'],explode(',',getglobal('config/pichomespecialimgext')))){
-                //查找是否有原图
-                $originalpath = DB::result_first("select path from %t where rid =%s and thumbsign = 1 and thumbstatus = 1",array('thumb_record',$data['rid']));
-                //如果没有原图尝试生成原图
-                if(!$originalpath){
-                   IO::getThumb($path,getglobal('config/pichomethumlargwidth'),getglobal('config/pichomethumlargheight'),1,1,1);
-                    $originalpath = DB::result_first("select path from %t where rid =%s and thumbsign = 1 and thumbstatus = 1",array('thumb_record',$data['rid']));
-                }
-                //如果有原图
-                if($originalpath){
-                    $thumbpath =  IO::createThumbByOriginal($originalpath,$data,$width,$height,$thumbtype,$original,$tmpfile,$extraparams,$filesize);
-                    if($thumbpath) {
-                        if (!$tmpfile) {
-                            C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => 1, 'dateline' => time(), 'path' => $thumbpath));
-                            C::t('pichome_resources')->update($data['rid'], array('hasthumb' => 1));
-                        }
-                    }
-                }else{
-                    $thumbpath = geticonfromext($data['ext'], $data['type']);
-                    if (!$tmpfile) {
-                        C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => -1, 'dateline' => time(), 'path' => $thumbpath));
-                        C::t('pichome_resources')->update($data['rid'], array('hasthumb' => -1));
-                    }
-                }
-
-                $img = IO::getFileUri($thumbpath);
-                if ($returnurl) return $img;
-                else IO::output_thumb($img);
-
-            }
-            if($original){
-                $thumbrecodearr = [
-                    'rid' =>$data['rid'],
-                    'width' => $width,
-                    'height' => $height,
-                    'filesize' => $data['filesize'] ? $data['filesize'] : $data['size'],
-                    'thumbtype' => $thumbtype,
-                    'dateline' => TIMESTAMP,
-                    'thumbsign'=>$original,
-                    'ext'=>$data['ext']
-                ];
-                //缩略图记录表数据
-                $thumbrecorddata = C::t('thumb_record')->insert($thumbrecodearr, 1);
-                if($thumbrecorddata['thumbstatus'] > 0){
-                    $img = IO::getFileUri($thumbrecorddata['path']);
-                    if ($returnurl) return $img;
-                    else IO::output_thumb($img);
-
-                }
-            }
-
-
-            if(!$create){
-                $img =  geticonfromext($data['ext'], $data['type']);
-                if ($returnurl) return $img;
-                else IO::output_thumb($img);
-            }else{
-                $filepath = $data['realpath'];
-                $thumbpath =  IO::createThumbByOriginal($filepath,$data,$width,$height,$thumbtype,$original,$tmpfile,$extraparams,$filesize);
-                if($thumbpath){
-                    if(!$tmpfile) {
-                        C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => 1, 'dateline' => time(), 'path' => $thumbpath));
-                        if(!$original) C::t('pichome_resources')->update($data['rid'],array('hasthumb'=>1));
-                    }
-                    $img = IO::getFileUri($thumbpath);
-                }else{
-                    $data['tmpfile'] = $tmpfile;
-                    $data['thumbwidth'] = $width;
-                    $data['thumbheight'] = $height;
-                    $data['original'] = $original;
-                    $data['thumbtype'] = $thumbtype;
-                    $data['extraparams'] = $extraparams;
-                    //如果符合挂载点生成规则
-
-                    $thumbpath = Hook::listen('pichomethumb',$data,null,false,true);
-                    if(!$thumbpath[0]){
-                        $img =geticonfromext($data['ext'], $data['type']);
-                        if(!$tmpfile){
-                            C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => -1, 'dateline' => time(), 'path' => $img));
-                            C::t('pichome_resources')->update($data['rid'],array('hasthumb'=>-1));
-                        }
-                    }else{
-                        $img = $thumbpath[0];
-                        if($img){
-                            if(strpos($img,':') === false){
-                                $bz = 'dzz';
-                            }else{
-                                $patharr = explode(':',$img);
-                                $bz = $patharr[0];
-                                $did = $patharr[1];
-                            }
-                            if(!is_numeric($did) || $did < 2){
-                                $bz = 'dzz';
-                            }
-                            if($bz == 'dzz'){
-                                $rootpath = str_replace(BS,'/',DZZ_ROOT);
-                                $img = str_replace($rootpath,'',$img);
-                                $img = str_replace('./','/',$img);
-                                $img = str_replace('//','/',$img);
-                                $img = ltrim($img,'/');
-                                $img = 'dzz::'.$img;
-                            }
-
-                            if(!$tmpfile){
-                                C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => 1, 'dateline' => time(), 'path' => $img));
-                                if(!$original) C::t('pichome_resources')->update($data['rid'],array('hasthumb'=>1));
-                            }
-                        }else{
-                            echo 'aaaa';die;
-                            if(!$tmpfile){
-                                C::t('thumb_record')->update($thumbrecorddata['id'], array('thumbstatus' => -1, 'dateline' => time(), 'path' => $img));
-                                if(!$original) C::t('pichome_resources')->update($data['rid'],array('hasthumb'=>-1));
-                            }
-                        }
-
-                    }
-                }
-                if ($returnurl) return $img;
-                else IO::output_thumb($img);
-            }
+            $cachekey = 'dzz_upload_' . md5($path);
+			if(memory('check')){
+				return memory('get',$cachekey);
+			}else{
+				if ($cache = C::t('cache')->fetch($cachekey)) {
+					return $cache['cachevalue'];
+				} else {
+					return false;
+				}
+			}
         }
         
-        private function watermark($fileurl, $target = '', $extraparams)
+        private static function saveCache($path, $str)
         {
             global $_G;
-            if (!($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position'])) {
+            $cachekey = 'dzz_upload_' . md5($path);
+			if(memory('check')){
+				return memory('set',$cachekey,$str,60*60*24);
+			}else{
+				C::t('cache')->insert(array(
+					'cachekey' => $cachekey,
+					'cachevalue' => $str,
+					'dateline' => $_G['timestamp'],
+				), false, true);
+			}
+		}
+        
+        private static function deleteCache($path)
+        {
+	
+            $cachekey = 'dzz_upload_' . md5($path);
+			if(memory('check')){
+				memory('rm',$cachekey);
+			}else{
+            	C::t('cache')->delete($cachekey);
+			}
+        }
+
+    public function save($target, $filename = '')
+    {
+        global $_G;
+        $filepath = $_G['setting']['attachdir'] . $target;
+        $md5 = md5_file($filepath);
+        $filesize = fix_integer_overflow(filesize($filepath));
+        if ($md5 && $attach = DB::fetch_first("select * from %t where md5=%s and filesize=%d", array('attachment', $md5, $filesize))) {
+            $attach['filename'] = $filename;
+            $pathinfo = pathinfo($filename);
+            $ext = $pathinfo['extension'] ? $pathinfo['extension'] : '';
+            $attach['filetype'] = strtolower($ext);
+            @unlink($filepath);
+            // unset($attach['attachment']);
+            return $attach;
+        } else {
+            $pathinfo = pathinfo($filename);
+            $ext = $pathinfo['extension'] ? $pathinfo['extension'] : '';
+
+            $pathinfo1 = pathinfo($target);
+            $ext_dzz = strtolower($pathinfo1['extension']);
+            if ($ext_dzz == 'dzz') {
+                $unrun = 1;
+            } else {
+                $unrun = 0;
+            }
+            $filesize = filesize($filepath);
+            $remote = 0;
+
+            $attach = array(
+
+                'filesize' => $filesize,
+                'attachment' => $target,
+                'filetype' => strtolower($ext),
+                'filename' => $filename,
+                'remote' => $remote,
+                'copys' => 0,
+                'md5' => $md5,
+                'unrun' => $unrun,
+                'dateline' => $_G['timestamp'],
+            );
+            if ($attach['aid'] = C::t('attachment')->insert($attach, 1)) {
+                /* $remoteid = io_remote::getRemoteid($attach);
+                 //主动模式生成缩略图
+                 // if ($_G['setting']['thumb_active'] > 0) {
+                 try {
+                     foreach ($_G['setting']['thumbsize'] as $key => $value) {
+                         if ($key != 'middle') getThumburl('attach::' . $attach['aid'], $key);
+                     }
+                 } catch (Exception $e) {
+                     //   }
+                 }
+
+                 C::t('local_storage')->update_usesize_by_remoteid($attach['remote'], $attach['filesize']);*/
+                //if ($remoteid > 1) dfsockopen($_G['localurl'] . 'misc.php?mod=movetospace&aid=' . $attach['aid'] . '&remoteid=0', 0, '', '', false, '', 0.1);
+                //unset($attach['attachment']);
+                return $attach;
+            } else {
                 return false;
             }
-            if ($target) {
+        }
+    }
+
+    public function uploadToattachment($attach, $appid, $fid = '', $level = 0)
+    {
+
+        global $_G;
+        //如果当前库有该文件
+        if ($rid = DB::result_first("select rid from %t where path = %d and appid = %s ", array('pichome_resources_attr', $attach['aid'], $appid))) {
+
+            $resourcesdata = C::t('pichome_resources')->fetch($rid);
+            $nfids = explode(',', $resourcesdata['fids']);
+            if (!in_array($fid, $nfids)) {
+                $nfids[] = $fid;
+            }
+            $icoarr = [
+                'lastdate' => TIMESTAMP * 1000,
+                'appid' => $appid,
+                'uid'=>$_G['uid'],
+                'username'=>$_G['username'],
+                'apptype' => 3,
+                'mtime' => TIMESTAMP * 1000,
+                'dateline' => TIMESTAMP * 1000,
+                'btime' => TIMESTAMP * 1000,
+                'lastdate' => TIMESTAMP,
+                'name' => $resourcesdata['name'],
+                'fids' => $nfids ? implode(',', $nfids) : '',
+            ];
+
+            if (C::t('pichome_resources')->update($rid, $icoarr)) {//插入主表
+                //目录数据
+                if ($fid) {
+                    $frsetarr = ['appid' => $appid, 'rid' => $icoarr['rid'], 'fid' => $fid];
+                    C::t('pichome_folderresources')->insert($frsetarr);
+                    C::t('pichome_folder')->add_filenum_by_fid($fid, 1);
+                }
+                $data = C::t('pichome_resources')->fetch_by_rid($rid);
+
+                $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($fid);
+                return $data;
+            }else{
+             return array('error' => lang('data_error'));
+             }
+
+        }
+        elseif ($rid = DB::result_first("select rid from %t where path = %d ", array('pichome_resources_attr',$attach['aid']))) {//如果当前库没有该文件，但其它库有
+            //获取原文件基本数据
+            $resourcesdata = C::t('pichome_resources')->fetch($rid);
+            $rsetarr = [
+                'lastdate' => TIMESTAMP * 1000,
+                'appid' => $appid,
+                'uid' => $_G['uid'],
+                'username' => $_G['username'],
+                'apptype' => 1,
+                'size' => $resourcesdata['size'],
+                'type' => $resourcesdata['type'],
+                'ext' => $resourcesdata['ext'],
+                'mtime' => TIMESTAMP * 1000,
+                'dateline' => TIMESTAMP * 1000,
+                'btime' => TIMESTAMP * 1000,
+                'width' => $resourcesdata['width'],
+                'height' => $resourcesdata['height'],
+                'lastdate' => TIMESTAMP,
+                'level' => isset($folderdata['level']) ? $folderdata['level'] : 0,
+                'name' => $resourcesdata['name'],
+                'fids' => $folderdata['fid'] ? $folderdata['fid'] : ''
+            ];
+
+            if ($rsetarr['rid'] = C::t('pichome_resources')->insert_data($rsetarr)) {//插入主表
+                //获取附属表数据
+                $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+                $attrdata['rid'] = $rsetarr['rid'];
+                $attrdata['appid'] = $appid;
+                $attrdata['searchval'] = $rsetarr['name'];
+                C::t('attachment')->addcopy_by_aid($attrdata['path']);//增加图片使用数
+                C::t('pichome_resources_attr')->insert($attrdata);
+                //目录数据
+                if ($folderdata['fid']) {
+                    $frsetarr = ['appid' => $appid, 'rid' => $rsetarr['rid'], 'fid' => $folderdata['fid']];
+                    C::t('pichome_folderresources')->insert($frsetarr);
+                    C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                }
+                //缩略图数据
+                $thumbrecorddata = C::t('thumb_record')->fetch($rid);
+                $thumbrecorddata['rid'] = $rsetarr['rid'];
+
+                C::t('thumb_record')->insert_data($thumbrecorddata);
+
+                //颜色数据
+                foreach (DB::fetch_all("select * from %t where rid = %s", array('pichome_palette', $rid)) as $v) {
+                    $v['rid'] = $rsetarr['rid'];
+                    unset($v['id']);
+                    C::t('pichome_palette')->insert($v);
+                }
+                C::t('pichome_vapp')->addcopy_by_appid($appid);
+                $data = C::t('pichome_resources')->fetch_by_rid($rsetarr['rid']);
+                $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                return $data;
+            }else{
+                return array('error' => lang('data_error'));
+            }
+
+        }else{
+            $imginfo = getimagesize($_G['setting']['attachdir'] . $attach['attachment']);
+            $setarr = [
+                'lastdate' => TIMESTAMP * 1000,
+                'appid' => $appid,
+                'apptype' => 1,
+                'uid' => $_G['uid'],
+                'username' => $_G['username'],
+                'size' => $attach['filesize'],
+                'type' => getTypeByExt($attach['filetype']),
+                'ext' => $attach['filetype'],
+                'mtime' => TIMESTAMP * 1000,
+                'dateline' => TIMESTAMP * 1000,
+                'btime' => TIMESTAMP * 1000,
+                'width' => isset($imginfo[0]) ? $imginfo[0] : 0,
+                'height' => isset($imginfo[1]) ? $imginfo[1] : 0,
+                'lastdate' => TIMESTAMP,
+                'level' => $level ? $level : 0,
+                'name' => $attach['filename'],
+                'fids' => $fid
+            ];
+            if ($setarr['rid'] = C::t('pichome_resources')->insert_data($setarr)) {//插入主表
+                C::t('attachment')->update($attach['aid'], array('copys' => $attach['copys'] + 1));//增加图片使用数
+                //属性表数据
+                $attrdata = [
+                    'rid' => $setarr['rid'],
+                    'appid' => $appid,
+                    'path' => $attach['aid'],
+                    'searchval' => $setarr['name']
+                ];
+
+                C::t('pichome_resources_attr')->insert($attrdata);
+                //目录数据
+                if ($fid) {
+                    $frsetarr = ['appid' => $appid, 'rid' => $setarr['rid'], 'fid' => $fid];
+                    C::t('pichome_folderresources')->insert($frsetarr);
+                }
+
+                C::t('pichome_vapp')->addcopy_by_appid($appid);
+            } else {
+                return array('error' => 'upload failer');
+            }
+
+            if ($setarr['rid']) {
+                C::t('pichome_vapp')->update($appid,['dateline'=>TIMESTAMP]);
+                $setarr['fsize'] = formatsize($setarr['size']);
+                $setarr['ftype'] = getFileTypeName($setarr['type'], $setarr['ext']);
+                $setarr['fdateline'] = dgmdate($setarr['dateline']);
+               /* $thumbparams = ['rid' => $setarr['rid'], 'hash' => VERHASH, 'download' => 1,
+                    'hasthumb' => 0, 'lastdate' => $setarr['lastdate']];*/
+                $setarr['icondata'] =  false;
+                $setarr['width'] = ($setarr['width']) ? intval($setarr['width']):900;
+                $setarr['height'] = ($setarr['height']) ? intval($setarr['height']):900;
+                $setarr['aid'] = $attach['aid'];
+                $setarr['dpath'] =  dzzencode($setarr['rid'], '', 0, 0);
+                $setarr['realpath'] = IO::getStream('attach::'.$attach['aid']);
+                return $setarr;
+            } else {
+                return array('error' => lang('data_error'));
+            }
+        }
+
+
+    }
+
+    //检查文件是否存在
+    public function checkfileexists($path, $isdir = false)
+    {
+        if (!$isdir) {
+            $path = IO::getStream($path);
+            if(is_file($path)){
+                return true;
+            }else{
+                if(!$handle = fopen($path,'r')){
+                    fclose($handle);
+                    return false;
+                }else{
+                    fclose($handle);
+                }
+                return true;
+            }
+        } else{
+            $path = str_replace('dzz::','',$path);
+            if(is_dir($path)) return true;
+            elseif(is_dir(getglobal('setting/attachdir').$path)) return true;
+            else return false;
+
+        }
+        return false;
+    }
+
+    public function getMeta($path, $getimagedata = 0)
+    {
+        if(strpos($path, 'attach::') === 0){
+            $attachment = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
+            $bz = io_remote::getBzByRemoteid($attachment['remoteid']);
+            $data = array(
+                'name' => $attachment['filename'],
+                'ext' => $attachment['filetype'],
+                'size' => $attachment['filesize'],
+                'dateline' => $attachment['dateline'],
+                'remoteid'=>$attachment['remoteid'],
+                'bz'=>$bz,
+                'path'=>$bz.$attachment['attachment'],
+                'aid'=>$attachment['aid']
+            );
+            return $data;
+        }elseif(preg_match('/^\w{32}$/i',$path)){
+            $data = C::t('pichome_resources')->fetch_data_by_rid($path);
+            return $data;
+        } else {
+            $path = $this->parsePath($path);
+            global $Types;
+            $pathinfo = pathinfo($path);
+            $ext = strtolower($pathinfo['extension']);
+            $fileinfo = array(
+                'name' => $this->getbasename($path),
+                'ext' => $ext,
+                'size' => filesize($path),
+                'bz'=>'dzz::',
+                'remoteid'=>0,
+                'dateline' => filemtime($path)
+            );
+            $imginfo = array();
+            if ($getimagedata && (in_array($ext, $Types['commonimage']) || in_array($ext, $Types['image']))) {
+                //获取图片信息，以取得宽高
+                $imgdata = @getimagesize($path);
+                $imginfo['width'] = isset($imgdata[0]) ? $imgdata[0] : 0;
+                $imginfo['height'] = isset($imgdata[1]) ? $imgdata[1] : 0;
+            }
+            return array_merge($fileinfo, $imginfo);
+        }
+
+
+    }
+
+    //兼容linux获取中文文件名问题
+    public function getbasename($filename)
+    {
+        return preg_replace('/^.+[\\\\\\/]/', '', $filename);
+    }
+
+    /**
+     * 获取空间配额信息
+     * @return string
+     */
+    public function MoveToSpace($path, $attach = array())
+    {
+        global $_G;
+        $obz = io_remote::getBzByRemoteid($attach['remote']);
+
+        if ($obz == 'dzz::') {
+            return array('error' => lang('same_storage_area'));
+        } else {
+            $url = IO::getFileUri($obz . '/' . $attach['attachment']);
+            if (is_array($url)) return array('error' => $url['error']);
+            $target = $_G['setting']['attachdir'] . './' . $attach['attachment'];
+            $targetpath = dirname($target);
+            dmkdir($targetpath);
+            try {
+                if (file_put_contents($target, fopen($url, 'rb')) === false) {
+                    return array('error' => lang('error_occurred_written_local'));
+                }
+            } catch (Exception $e) {
+                return array('error' => $e->getMessage());
+            }
+            if (md5_file($target) != $attach['md5']) {
+                return array('error' => lang('file_transfer_errors'));
+            }
+        }
+        return true;
+
+    }
+    //查找目录下的同名文件
+    //@param string $filename  文件名称
+    //@param number $fid  目录id
+    //@param bool $isfolder  查找同名目录
+    //return icoid  返回icoid
+    public function getRepeatIDByName($filename, $fid, $isfolder = false)
+    {
+
+        $sql = "pfid=%d and name=%s and isdelete<1";
+        if ($isfolder) $sql .= " and type='folder'";
+        else $sql .= " and type!='folder'";
+        if ($rid = DB::result_first("select rid from %t where $sql ", array('resources', $fid, $filename))) {
+            return $rid;
+        } else return false;
+    }
+
+    public function rename($rid, $text)
+    {
+        //查找当前目录下是否有同名文件
+        $icoarr = C::t('resources')->fetch_info_by_rid($rid);
+        /* $ext = '';
+    $namearr = explode('.', $text);
+    if (count($namearr) > 1) {
+        $ext = $namearr[count($namearr) - 1];
+        unset($namearr[count($namearr) - 1]);
+        $ext = $ext ? ('.' . $ext) : '';
+    }
+    $tname = implode('.', $namearr);
+    //如果有后缀名并且是文件
+    if ($ext && $icoarr['ext']) {
+        //如果后缀名和原后缀名不同,则加上原后缀名组成新的文件名
+        if ($ext != '.' . $icoarr['ext']) {
+            $text = $tname . $ext . '.' . $icoarr['ext'];
+        } else {
+            $text = $tname . $ext;
+        }
+    } elseif (!$ext && $icoarr['ext']) {
+        $text = $tname . $ext . '.' . $icoarr['ext'];
+    }*/
+        /*$name=preg_replace("/\(\d+\)/i",'',$tname).'('.($i+1).')'.$ext;*/
+        if ($icoarr['name'] != $text && ($ricoid = io_dzz::getRepeatIDByName($text, $icoarr['pfid'], ($icoarr['type'] == 'folder') ? true : false))) {//如果目录下有同名文件
+            return array('error' => lang('filename_already_exists'));
+        }
+        if (!$arr = C::t('resources')->rename_by_rid($rid, $text)) {
+            return array('error' => 'Not modified!');
+        }
+        $icoarr['name'] = $text;
+        return $icoarr;
+    }
+
+    public function parsePath($path)
+    {
+        $path = str_replace('dzz::', '', $path);
+        return $path;
+    }
+
+
+    //获取文件流地址
+    public function getFileUri($path, $fop = '')
+    {
+        global $_G;
+        if (strpos($path, 'attach::') === 0) {
+            $attach = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
+            if($attach['remote'] > 0){
+                $bz = io_remote::getBzByRemoteid($attach['remote']);
+                return IO::getFileUri($bz.$attach['attachment']);
+            }else{
+                return getglobal('setting/attachurl') . $attach['attachment'];
+            }
+
+        }elseif(preg_match('/^\w{32}$/',$path)){
+            $resources = C::t('resources')->fetch_data_by_rid($path);
+            return IO::getFileUri($resources['path']);
+        }elseif(strpos($path, 'dzz::') === 0){
+            $path = str_replace('dzz::','',$path);
+            return getglobal('setting/attachurl') . $path;
+        }else{
+            $path = $this->parsePath($path);
+            $localpath = BS . $path;
+            if(is_file($localpath)){
+                return  $localpath;
+            }else{
+                return $path;
+            }
+        }
+
+    }
+
+    //获取文件的真实地址
+    public function getStream($path, $fop = '')
+    {
+        global $_G;
+        if (strpos($path, 'attach::') === 0) {
+            $attach = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
+            if($attach['remote'] > 0){
+                $bz = io_remote::getBzByRemoteid($attach['remote']);
+                return IO::getStream($bz.$attach['attachment']);
+            }else{
+                return getglobal('setting/attachdir') . $attach['attachment'];
+            }
+
+        }elseif(strpos($path, 'dzz::') === 0){
+            $path = str_replace('dzz::','',$path);
+            return getglobal('setting/attachdir') . $path;
+        }elseif(preg_match('/^\w{32}$/',$path)){
+            $resources = C::t('resources')->fetch_data_by_rid($path);
+            return IO::getStream($resources['path']);
+        }else{
+            $path = $this->parsePath($path);
+            $localpath = BS . $path;
+            if(is_file(getglobal('setting/attachdir') . $path)){
+                return getglobal('setting/attachdir') . $path;
+            }
+            elseif(is_file($localpath)){
+                return  $localpath;
+            }else{
+                return $path;
+            }
+        }
+    }
+
+    //根据路径移动文件到目标位置
+    public function moveThumbFile($path, $filepath)
+    {
+        $path = IO::getStream($path);
+        $pathdir = dirname($path);
+        if (!is_dir($pathdir)) {
+            mkdir($pathdir, 0777, true);
+            chmod($pathdir, 0777);
+        }
+        $stream = IO::getStream($filepath);
+        $handle = fopen($stream, 'rb');
+        $succ = 1;
+        while (!feof($handle)) {
+            $fileContent = fread($handle, 8192);
+            if (file_put_contents($path, $fileContent, FILE_APPEND) === false) {
+                $succ = 0;
+            }
+            unset($fileContent);
+        }
+        fclose($handle);
+        if (!$succ) {
+            @unlink($path);
+            return false;
+        }
+        return $path;
+
+    }
+
+    //获取文件内容
+    public function getFileContent($path)
+    {
+        $url = self::getStream($path);
+        return file_get_contents($url);
+    }
+
+    private function watermark($fileurl, $target = '', $extraparams)
+    {
+        global $_G;
+        if (!($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position'])) {
+            return false;
+        }
+        if ($target) {
+            $target_attach = $_G['setting']['attachdir'] . './' . $target;
+            $targetpath = dirname($target_attach);
+            dmkdir($targetpath);
+            if (!file_put_contents($target_attach, file_get_contents($fileurl))) {
+                return false;
+            }
+            $fileurl = $target_attach;
+        }
+
+        if (!$extraparams['watermarktext'] && !$extraparams['watermarktype']) {//生成水印
+            $image = new image();
+            $watermark = $image->Watermark($fileurl);
+        } else {
+            if ($extraparams['watermarktext']) {//生成自定义文本的文本水印
+                $params1 = array();
+                $params1['watermarktype'] = 'text';
+                if ($extraparams['position_text']) {
+                    $params2['watermarkstatus'] = intval($extraparams['position_text']);
+                }
+
+                $params1['watermarktext'] = $_G['setting']['watermarktext'];
+                $params1['watermarktext']['text'] = $extraparams['watermarktext'];
+                $image1 = new image($params1);
+                $watermark1 = $image1->Watermark($fileurl);
+
+            }
+            if ($extraparams['watermarktype']) {//生成图片水印
+                $params2 = array();
+                $params2['watermarktype'] = $extraparams['watermarktype'];
+                if ($extraparams['position']) {
+                    $params2['watermarkstatus'] = intval($extraparams['position']);
+                }
+                //print_r($params2);die;
+                $image2 = new image($params2);
+                $watermark2 = $image2->Watermark($fileurl);
+            }
+        }
+        return true;
+    }
+    public function getthumbpath($dir = 'dzz'){
+        $subdir = $subdir1 = $subdir2 = '';
+        $subdir1 = date('Ym');
+        $subdir2 = date('d');
+        $subdir = $subdir1 . '/' . $subdir2 . '/';
+        // $target1 = $dir . '/' . $subdir . 'index.html';
+        $target = $dir . '/' . $subdir;
+        return $target;
+    }
+    public function createThumbByOriginal($path, $data, $width = 0, $height = 0, $thumbtype = 1, $original = 0, $extraparams = array(), $filesize = 0)
+    {
+        global $_G;
+        //获取文件地址
+        $fileuri = IO::getStream($path);
+        $filedirpathinfo = pathinfo($path);
+        $filedirextensionarr = explode('?', $filedirpathinfo['extension']);
+        $ext = strtolower($filedirextensionarr[0]);
+        if ($data['bz'] != 'dzz::') {
+            $cachefile = $_G['setting']['attachdir'] . './cache/' . md5($data['path']) . '.' . $data['ext'];
+            $handle = fopen($cachefile, 'w+');
+            $fp = fopen($fileuri, 'rb');
+            while (!feof($fp)) {
+                fwrite($handle, fread($fp, 8192));
+            }
+            fclose($handle);
+            fclose($fp);
+            $fileuri = $cachefile;
+        }
+
+        //如果服务器处理完成后，路径非图片类文件的时候，直接获取文件后缀对应的图片
+        if (!in_array($ext, array('png', 'jpg', 'gif', 'jpeg','webp')) || !$imginfo = @getimagesize($fileuri)) {
+            $thumbpath = false;
+        } else {
+            if($extraparams['istmp']){
+                $targetpath =  'cache/'.md5($path).'_'.$width.'_'.$height.'.webp';
+                if(is_file($_G['setting']['attachdir'].$targetpath)){
+                    return $targetpath;
+                }
+            }else{
+                $extraflag = '';
+                if ($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position']) {
+                    $extraflag .= '_w';
+                }
+                if ($extraparams['watermarktype']) {
+                    $extraflag .= '_' . $extraparams['watermarktype'];
+                }
+                if ($extraparams['watermarktype']['watermarktext']) {
+                    $extraflag .= '_' . $extraparams['watermarktext'];
+                }
+
+                if(in_array($data['ext'],array('gif'))){
+                    $thumbext = 'gif';
+                }else{
+                    $thumbext = 'webp';
+                }
+                $thumbpath = self::getthumbpath('pichomethumb');
+                if($data['aid']) $thumbname = md5($data['aid'].$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
+                else $thumbname = md5($path.$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
+                $targetpath = $thumbpath.$thumbname;
+            }
+            $target = $targetpath;
+            //图片小于最小水印最小设置时，不生成水印
+            if ($extraparams['nomark'] ||($_G['setting']['IsWatermarkstatus'] == 0 || ($imginfo[0] < $_G['setting']['watermarkminwidth'] || $imginfo[1] < $_G['setting']['watermarkminheight']))) {
+                $nomark = 1;
+            }
+            //返回原图的时候 或者图片小于缩略图宽高的不生成直接返回原图
+            if ($original || ($imginfo[0] < $width || $imginfo[1] < $height)) {
                 $target_attach = $_G['setting']['attachdir'] . './' . $target;
                 $targetpath = dirname($target_attach);
                 dmkdir($targetpath);
-                if (!file_put_contents($target_attach, file_get_contents($fileurl))) {
-                    return false;
-                }
-                $fileurl = $target_attach;
-            }
-            
-            if (!$extraparams['watermarktext'] && !$extraparams['watermarktype']) {//生成水印
-                $image = new image();
-                $watermark = $image->Watermark($fileurl);
-            } else {
-                if ($extraparams['watermarktext']) {//生成自定义文本的文本水印
-                    $params1 = array();
-                    $params1['watermarktype'] = 'text';
-                    if ($extraparams['position_text']) {
-                        $params2['watermarkstatus'] = intval($extraparams['position_text']);
-                    }
-                    
-                    $params1['watermarktext'] = $_G['setting']['watermarktext'];
-                    $params1['watermarktext']['text'] = $extraparams['watermarktext'];
-                    $image1 = new image($params1);
-                    $watermark1 = $image1->Watermark($fileurl);
-                    
-                }
-                if ($extraparams['watermarktype']) {//生成图片水印
-                    $params2 = array();
-                    $params2['watermarktype'] = $extraparams['watermarktype'];
-                    if ($extraparams['position']) {
-                        $params2['watermarkstatus'] = intval($extraparams['position']);
-                    }
-                    $image2 = new image($params2);
-                    $watermark2 = $image2->Watermark($fileurl);
-                }
-            }
-            return true;
-        }
 
-        //检查名称是否重复
-        public function check_name_repeat($name, $pfid)
-        {
-            return DB::result_first("select rid from " . DB::table('resources') . " where name='{$name}' and  pfid='{$pfid}'");
-        }
-        
-        //过滤文件名称
-        public function name_filter($name)
-        {
-            return str_replace(array('/', '\\', ':', '*', '?', '<', '>', '|', '"', "\n"), '', $name);
-        }
-        
-        //获取不重复的目录名称
-        public function getFolderName($name, $pfid)
-        {
-            static $i = 0;
-            $name = self::name_filter($name);
-            //echo("select COUNT(*) from ".DB::table('folder')." where fname='{$name}' and  pfid='{$pfid}'");
-            if (DB::result_first("select COUNT(*) from %t where fname=%s and  pfid=%d and isdelete<1", array('folder', $name, $pfid))) {
-                $name = preg_replace("/\(\d+\)/i", '', $name) . '(' . ($i + 1) . ')';
-                $i += 1;
-                return self::getFolderName($name, $pfid);
-            } else {
-                return $name;
-            }
-        }
-        
-        //获取不重复的文件名称
-        public function getFileName($name, $pfid)
-        {
-            static $i = 0;
-            $name = self::name_filter($name);
-            if (DB::result_first("select COUNT(*) from %t where type!='folder' and name=%s and isdelete<1 and pfid=%d", array('resources', $name, $pfid))) {
-                $ext = '';
-                $namearr = explode('.', $name);
-                if (count($namearr) > 1) {
-                    $ext = $namearr[count($namearr) - 1];
-                    unset($namearr[count($namearr) - 1]);
-                    $ext = $ext ? ('.' . $ext) : '';
+                if(copy($fileuri, $target_attach)){
+                    $thumbpath = $target_attach;
+                    if (!$nomark) self::watermark($target_attach = $_G['setting']['attachdir'] . './' . $target, '', $extraparams);
+                    $thumbpath =  $target;
                 }
-                $tname = implode('.', $namearr);
-                $name = preg_replace("/\(\d+\)/i", '', $tname) . '(' . ($i + 1) . ')' . $ext;
-                $i += 1;
-                return self::getFileName($name, $pfid);
             } else {
-                return $name;
-            }
-        }
-        
-        
-        //根据文件名创建顶级目录
-        public function createTopFolderByFname($fname, $perm = 0, $params = array(), $ondup = 'newcopy')
-        {
-            global $_G;
-            $folderparams = array('innav', 'fsperm', 'disp', 'iconview', 'display', 'flag', 'default', 'perm', 'gid');
-            $data = array();
-            if (($ondup == 'overwrite') && ($folder = C::t('folder')->fetch_topby_fname($fname))) {//如果目录下有同名目录
-                $data['folderarr'] = $folder;
-                return $data;
-            } else $fname = self::getFolderName($fname, 0); //重命名
-            
-            $flag = $params['flag'] ? $params['flag'] : 'folder';
-            $folder_set = array();
-            if ($flag != 'folder' && ($fset = Hook::listen('foldertemplate_getfolder_by_flag', $flag, null, true))) {
-                $folder_set = is_array($fset) ? $fset : array();
-            }
-            $top = array(
-                'pfid' => 0,
-                'uid' => $_G['uid'],
-                'username' => $_G['username'],
-                'perm' => $perm ? $perm : ($folder_set['perm'] ? $folder_set['perm'] : 0),
-                'fsperm' => $folder_set['fsperm'] ? $folder_set['fsperm'] : 0,
-                'fname' => $fname,
-                'flag' => $flag,
-                'disp' => $folder_set['disp'] ? $folder_set['disp'] : 0,
-                'iconview' => $folder_set['iconview'] ? $folder_set['iconview'] : 4,
-                'innav' => 0,
-                'isdelete' => 0,
-                'gid' => intval($params['gid']),
-                'dateline' => TIMESTAMP
-            );
-            foreach ($params as $k => $v) {
-                if (in_array($k, $folderparams)) {
-                    $top[$k] = $v;
-                }
-            }
-            if ($topfid = DB::result_first("select fid from " . DB::table('folder') . " where uid='{$_G[uid]}' and fname = '{$top[fname]}' and flag='{$top[flag]}' ")) {
-                C::t('folder')->update($topfid, $top);
-            } else {
-                $appid = $params['appid'] ? $params['appid'] : 0;
-                $folderattr = array();
-                foreach ($params as $k => $v) {
-                    if (in_array($k, $folderparams)) {
-                        $top[$k] = $v;
+                //生成缩略图
+                include_once libfile('class/image');
+                $target_attach = $_G['setting']['attachdir'] . './' . $target;
+                $targetpath = dirname($target_attach);
+                dmkdir($targetpath);
+                $image = new image();
+                try {
+                    $thumb = $image->Thumb($fileuri, $target, $width, $height, $thumbtype, 0, $extraparams);
+
+                    if ($thumb) {
+                        if (!$nomark) self::watermark($target_attach = $_G['setting']['attachdir'] . './' . $target, '', $extraparams);
+                        $thumbpath =  $target;
                     } else {
-                        $folderattr[$k] = $v;
+                        $thumbpath = false;
                     }
+                } catch (\Exception $e) {
+                    $thumbpath = false;
+
                 }
-                $topfid = C::t('folder')->insert($top, $appid);
-                if ($folderattr) {
-                    C::t('folder_attr')->insert_data_by_fid($topfid, $folderattr);
-                }
-                
             }
-            $data['folderarr'] = C::t('folder')->fetch_by_fid($topfid);
-            return $data;
         }
-        
-        //创建目录
-        public function CreateFolder($pfid, $fname, $perm = 0, $params = array(), $ondup = 'newcopy', $force = false)
-        {
-            global $_G, $_GET;
-            
-            $folderparams = array('innav', 'fsperm', 'disp', 'iconview', 'display', 'flag', 'default', 'perm', 'gid');
-            if ($pfid == 0) {
-                return self::createTopFolderByFname($fname, $perm, $params, $ondup);
-            }
-            $processname = 'CF_' . $pfid;
-            process_waiting($processname);
-            $fname = self::name_filter($fname);
-            
-            if (!$folder = C::t('folder')->fetch($pfid)) {//DB::fetch_first("select fid,pfid,iconview,disp,gid,perm_inherit from %t where fid=%d", array('folder', $pfid))) {
-                dzz_process::unlock($processname);
-                return array('error' => lang('parent_directory_not_exist'));
-            }
-            if (!$force && !perm_check::checkperm_Container($pfid, 'folder')) {
-                dzz_process::unlock($processname);
-                return array('error' => lang('no_privilege'));
-            }
-            if (($ondup == 'overwrite') && ($rid = self::getRepeatIDByName($fname, $pfid, true))) {//如果目录下有同名目录
-                $data = array();
-                $data['icoarr'] = C::t('resources')->fetch_by_rid($rid);
-                $data['folderarr'] = self::getFolderByIcosdata($data['icoarr']);
-                dzz_process::unlock($processname);
-                return $data;
-            } else $fname = self::getFolderName($fname, $pfid); //重命名
-            $path = C::t('resources_path')->fetch_pathby_pfid($folder['fid']);
-            //如果flag!=='folder'，使用此flag的默认设置
-            //根据pfid找flag
-            $isproject = 0;//是否是项目；
-            if (empty($params['flag'])) {
-                
-                if (defined('VAPP_ROOTFID')) {//是虚拟应用
-                    if (VAPP_ROOTFID == $folder['fid'] && $_G['vapp']['new'] > 0) {//是虚拟应用根目录时//是群组类时
-                        
-                        $tfids = $_G['vapp']['tfids_folder'];
-                        $ft = array_shift($tfids);
-                        if ($ft['flag']) $params['flag'] = $ft['flag'];
-                        else $params['flag'] = $folder['flag'];
-                        
-                        //创建群组
-                        $orgarr = array(
-                            'orgname' => C::t('organization')->get_uniqueName_by_forgid($pfid, $fname),
-                            'aid' => 0,
-                            'desc' => '',
-                            'type' => 1,
-                            'dateline' => TIMESTAMP,
-                            'maxspacesize' => 0,
-                            'manageon' => 1,
-                            'diron' => 1,
-                            'forgid' => $folder['gid']
-                        );
-                        if ($gid = C::t('organization')->insert($orgarr, 1)) {
-                            C::t('organization')->setPathkeyByOrgid($gid);
-                            C::t('organization_user')->insert_by_orgid($gid, getglobal('uid'));
-                            C::t('organization_admin')->insert(getglobal('uid'), $gid, 2);
-                            $params['gid'] = $gid;
-                            $isproject = 1;
+        //echo $thumbpath;die;
+        if($cachefile){
+            @unlink($cachefile);
+        }
+        //如果是生成临时图
+        if($extraparams['istmp']){
+            return $thumbpath;
+        }
+        $defaultspace = $_G['setting']['defaultspacesetting'];
+        if($defaultspace['bz'] != 'dzz'){
+            $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':' .$thumbpath;
+            $return = IO::moveThumbFile($cloudpath,$thumbpath);
+            //$thumbpath = $return;
+
+        }
+        if(isset($return['error'])){
+            return false;
+        }
+        return $thumbpath;
+
+    }
+
+    //删除
+    //当文件在回收站时，彻底删除；
+    //finaldelete 真实删除，不放入回收站
+    //$force 强制删除，不受权限控制
+    public function Delete($path, $isdir = false)
+    {
+        if ($isdir) {
+            $path = self::parsePath($path);
+            removedirectory($path);
+        } else {
+            $filurl = IO::getStream($path);
+            @unlink($filurl);
+        }
+        return true;
+    }
+    public function gettmpThumb($path, $width = 0, $height = 0, $returnurl = false, $thumbtype = 1, $extraparams = array()){
+        global $_G;
+        if (!$data = IO::getMeta($path)) return false;
+        $filepath = $data['path'];
+       //水印图md5或者水印文字
+        $watermd5 = '';
+        if($extraparams['watermarkstatus']){
+            $watermd5 = !$extraparams['watermarktext'] ? $_G['setting']['watermd5']:($extraparams['watermarktext'] ? $extraparams['watermarktext']:$_G['setting']['watermarktext']);
+        }
+        $defaultspace = $_G['setting']['defaultspacesetting'];
+        //如果文件为特殊格式类型，则先生成大图，再生成目标图片
+        if (!in_array($data['ext'], array('jpg','png','jpeg','gif','webp'))) {
+            //查找是否有原图
+            $cachedata = [];
+                //如果有aid从缓存表获取数据
+                if($data['aid']){
+                    //将数据插入缓存表
+                    $thumbarr = [
+                        'width'=>0,
+                        'height'=>0,
+                        'aid'=>$data['aid'],
+                        'thumbtype'=>$thumbtype,
+                        'watermd5'=>$watermd5
+                    ];
+                    $cachedata = C::t('thumb_cache')->fetch_data_by_thumbparam($thumbarr);
+                }
+
+                if($cachedata){
+                    $bz = io_remote::getBzByRemoteid($cachedata['remoteid']);
+                    if($data['rid']){
+                        $thumbarr = [
+                            'opath' => $bz.$cachedata['path'],
+                            'oremoteid'=>$cachedata['remoteid'],
+                            'ocacheid'=>$cachedata['id'],
+                        ];
+                        C::t('thumb_record')->update($data['rid'], $thumbarr);
+                        $attr = array('width' => $cachedata['wdith'], 'height' => $cachedata['height']);
+                        C::t('pichome_resources')->update($data['rid'], $attr);
+                    }
+                    $filepath = $bz.$cachedata['path'];
+                }
+                else{
+                    $data['original'] = 1;
+                    $data['thumbtype'] = $thumbtype;
+                    $data['extraparams'] = $extraparams;
+                    //获取原图
+                    $thumbpathdata = Hook::listen('pichomethumb', $data, null, false, true);
+
+                    $fileurl = $thumbpathdata[0];
+                    if ($fileurl) {
+                        //将原图计入缓存表
+                        $defaultbz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
+                        $filepath = $defaultbz.$fileurl;
+                        $infourl = IO::getStream($filepath);
+                        $info = @getimagesize($infourl);
+                        if($data['aid']){
+                            $thumbarr = [
+                                'width'=>isset($info[0]) ? intval($info[0]):0,
+                                'height'=>isset($info[1]) ? intval($info[1]):0,
+                                'aid'=>$data['aid'],
+                                'thumbtype'=>$thumbtype,
+                                'thumbsign'=>'original',
+                                'watermd5'=>$watermd5,
+                                'path'=>$fileurl,
+                                'remoteid'=>$defaultspace['did']
+                            ];
+                            $cachedata = C::t('thumb_cache')->insertdata($thumbarr);
                         }
-                    } else {
-                        $tfids = $_G['vapp']['ftfids_folder'];
-                        $ft = array_shift($tfids);
-                        
-                        if ($ft['flag']) $params['flag'] = $ft['flag'];
-                        else $params['flag'] = $folder['flag'];
-                    }
-                } elseif (class_exists('dzz\vapp\classes\vapplist')) {
-                    $topgid = C::t('organization')->getTopOrgid($folder['gid']);
-                    $vappid = DB::result_first("select appid from %t where rgid=%d", array('vapp', $topgid));
-                    if ($vapp = C::t('#vapp#vapp')->fetch($vappid)) {
-                        
-                        if ($folder['pfid'] == 0 && $vapp['new'] > 0) {//是创建项目时
-                            
-                            //创建群组
-                            $orgarr = array(
-                                'orgname' => C::t('organization')->get_uniqueName_by_forgid($pfid, $fname),
-                                'aid' => 0,
-                                'desc' => '',
-                                'type' => 1,
-                                'dateline' => TIMESTAMP,
-                                'maxspacesize' => 0,
-                                'manageon' => 1,
-                                'diron' => 1,
-                                'forgid' => $folder['gid']
-                            );
-                            if ($gid = C::t('organization')->insert($orgarr, 1)) {
-                                C::t('organization')->setPathkeyByOrgid($gid);
-                                C::t('organization_user')->insert_by_orgid($gid, getglobal('uid'));
-                                C::t('organization_admin')->insert(getglobal('uid'), $gid, 2);
-                                $params['gid'] = $gid;
-                                $isproject = 1;
-                            }
-                            
-                            
-                            $tfids = explode(',', $vapp['tfids']);
-                            $ft = C::t('#foldertemplate#folder_template')->fetch($tfids[0]);
-                            if ($ft['flag']) $params['flag'] = $ft['flag'];
-                            else $params['flag'] = $folder['flag'];
-                        } else {
-                            $tfids = explode(',', $vapp['ftfids']);
-                            $ft = C::t('#foldertemplate#folder_template')->fetch($tfids[0]);
-                            if ($ft['flag']) $params['flag'] = $ft['flag'];
-                            else $params['flag'] = $folder['flag'];
+                        if($data['rid']) {
+                            C::t('thumb_record')->update($data['rid'],['opath'=>$filepath,'ocacheid'=>$cachedata['id']]);
+                           if($info) {
+                               $attr = array('width' =>isset($info[0]) ? intval($info[0]):0, 'height' => isset($info[1]) ? intval($info[1]):0);
+                               C::t('pichome_resources')->update($data['rid'], $attr);
+                           }
                         }
+                    }else{
+                        return false;
                     }
+
                 }
             }
-            $flag = $params['flag'] ? $params['flag'] : (($folder['flag'] == 'organization') ? 'folder' : $folder['flag']);
-            
-            $folder_set = array();
-            if ($isproject && $flag != 'folder' && ($fset = Hook::listen('foldertemplate_getfolder_by_flag', $flag, null, true))) {
-                $folder_set = is_array($fset) ? $fset : array();
-                if ($folder_set['icon'] && !isset($params['icon'])) $params['icon'] = $folder_set['icon'];
-            }
-            $setarr = array('fname' => $fname,
-                'uid' => $_G['uid'],
-                'username' => $_G['username'],
-                'pfid' => $folder['fid'],
-                'disp' => isset($folder_set['disp']) ? $folder_set['disp'] : $folder['disp'],
-                'iconview' => isset($folder_set['iconview']) ? $folder_set['iconview'] : $folder['iconview'],
-                'perm' => $perm ? $perm : ($folder_set['perm'] ? $folder_set['perm'] : 0),
-                'fsperm' => $folder_set['fsperm'] ? $folder_set['fsperm'] : 0,
-                'flag' => $flag,
-                'dateline' => $_G['timestamp'],
-                'gid' => $folder['gid'],
-            
-            );
-            
-            $folderattr = array();
-            foreach ($params as $k => $v) {
-                if (in_array($k, $folderparams)) {
-                    $setarr[$k] = $v;
-                } else {
-                    $folderattr[$k] = $v;
-                }
-            }
-            if ($setarr['fid'] = C::t('folder')->insert($setarr)) {
-                $setarr['perm'] = perm_check::getPerm($setarr['fid']);
-                $setarr['perm1'] = perm_check::getPerm1($setarr['fid']);
-                
-                if ($folderattr) {
-                    C::t('folder_attr')->insert_data_by_fid($setarr['fid'], $folderattr);
-                }
-                if ($isproject) {//是项目时，更新群组对应的fid
-                    C::t('organization')->update($setarr['gid'], array('fid' => $setarr['fid']));
-                }
-                $setarr['title'] = $setarr['fname'];
-                $setarr['ext'] = '';
-                $setarr['size'] = 0;
-                if (!$params['nosub']) {
-                    $flagdata = array('pfid' => $setarr['fid'], 'flag' => $setarr['flag']);
-                    Hook::listen('io_CreateFolder_after', $flagdata);
-                }
-                
-                $setarr1 = array(
-                    'uid' => $_G['uid'],
-                    'username' => $_G['username'],
-                    'oid' => $setarr['fid'],
-                    'name' => $setarr['fname'],
-                    'type' => 'folder',
-                    'flag' => $setarr['flag'],
-                    'dateline' => $_G['timestamp'],
-                    'pfid' => intval($setarr['pfid']),
-                    'gid' => intval($setarr['gid']),
-                    'ext' => '',
-                    'size' => 0,
-                );
-                if ($setarr1['rid'] = C::t('resources')->insert_data($setarr1)) {
-                    $setarr1['relativepath'] = $path . $setarr1['name'] . '/';
-                    $setarr1['path'] = $setarr1['rid'];
-                    $setarr1['dpath'] = dzzencode($setarr1['rid']);
-                    $setarr1['bz'] = '';
-                    if ($fid = $setarr1['pfid']) {
-                        $event = 'creat_folder';
-                        $path = preg_replace('/dzz:(.+?):/', '', $path) ? preg_replace('/dzz:(.+?):/', '', $path) : '';
-                        $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($setarr1['pfid'], $setarr1['gid']);
-                        $eventdata = array(
-                            'foldername' => $setarr1['name'],
-                            'fid' => $setarr1['oid'],
-                            'username' => $setarr1['username'],
-                            'uid' => $setarr1['uid'],
-                            'path' => $setarr1['path'],
-                            'position' => $path,
-                            'hash' => $hash
-                        );
-                        C::t('resources_event')->addevent_by_pfid($setarr1['pfid'], $event, 'create', $eventdata, $setarr1['gid'], $setarr1['rid'], $setarr1['name']);
-                    }
-                    dzz_process::unlock($processname);
-                    return array('icoarr' => C::t('resources')->fetch_by_rid($setarr1['rid']), 'folderarr' => $setarr);
-                } else {
-                    C::t('folder')->delete_by_fid($setarr['fid'], true);
-                    dzz_process::unlock($processname);
-                    return array('error' => lang('data_error'));
-                }
-            }
-            
-            dzz_process::unlock($processname);
+
+        $extraparams['istmp'] = 1;
+        $extraparams['nomark'] = 1;
+        $thumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, 0,  $extraparams);
+        if($thumbpath){
+            $img = IO::getFileuri($thumbpath);
+            if ($returnurl) return $img;
+            else IO::output_thumb($img);
+        }else{
             return false;
         }
 
-        private function getPartInfo($content_range)
-        {
-            $arr = array();
-            if (!$content_range) {
-                $arr['ispart'] = false;
-                $arr['iscomplete'] = true;
-            } elseif (is_array($content_range)) {
-                $arr['ispart'] = true;
-                $partsize = getglobal('setting/maxChunkSize');
-                $arr['partnum'] = ceil(($content_range[2] + 1) / $partsize);
-                if (($content_range[2] + 1) >= $content_range[3]) {
-                    $arr['iscomplete'] = true;
-                } else {
-                    $arr['iscomplete'] = false;
-                }
-            } else {
-                return false;
-            }
-            return $arr;
-        }
 
-
-        //本地文件移动到本地其它区域
-        public function FileMove($rid, $pfid, $first = true, $force = false)
-        {
-            global $_G, $_GET;
-            @set_time_limit(0);
-           
-            //判断目标目录是否存在
-            if (!$tfolder = C::t('folder')->fetch($pfid)) {
-                return array('error' => lang('target_location_not_exist'));
-            }
-            //获取目标路径
-            $targetpdata = C::t('resources_path')->fetch_pathby_pfid($pfid, true);//目标路径
-            $targetpath = $targetpdata['path'];
-            $targetarr = getpath($targetpath);
-            $targetstr = implode('\\', $targetarr);//路径字符串
-            
-            //判断文件数据是否存在
-            if ($icoarr = C::t('resources')->fetch($rid)) {
-                //判断移动文件是否和目标文件在同一目录
-                
-                if ($icoarr['pfid'] == $tfolder['fid']) {
-					$return['icoarr'] = C::t('resources')->fetch_by_rid($rid);
-                    $return['icoarr']['monthdate'] = dgmdate($return['icoarr']['dateline'], 'm-d');
-                    $return['icoarr']['hourdate'] = dgmdate($return['icoarr']['dateline'], 'H:i');
-                    unset($icoarr);
-                    return $return;
-				}
-				
-				//判断有无删除权限
-				if (!$force) {
-					if ($icoarr['type'] == 'folder') {
-						$return = C::t('resources')->check_folder_perm($icoarr, 'delete');
-						if ($return['error']) {
-							return array('error' => $return['error']);
-						}
-					} else {
-						if (!perm_check::checkperm('delete', $icoarr)) {
-							return array('error' => lang('privilege'));
-						}
-					}
-
-					//判断有无新建权限,如果是文件夹判断是否有文件件新建权限
-					if ($icoarr['type'] == 'folder' && !perm_check::checkperm_Container($pfid, 'folder')) {
-						return array('error' => lang('privilege'));
-					} elseif (!perm_check::checkperm_Container($pfid, 'upload')) {
-						return array('error' => lang('privilege'));
-					}
-				}
-                    
-                
-                //源文件路径
-                $oldpath = C::t('resources_path')->fetch_pathby_pfid($icoarr['pfid'], true);
-                $oldarr = getpath($oldpath['path']);
-                $oldpathstr = implode('\\', $oldarr);
-                $oldpathstr = preg_replace('/dzz:(.+?):/', '', $oldpathstr);
-                
-                //判断空间大小
-                $ogid = $icoarr['gid'];
-                $gid = $tfolder['gid'];
-                $oldpfid = $icoarr['pfid'];
-                $oldgid = $icoarr['gid'];
-                //如果是文件夹类型
-                if ($icoarr['type'] == 'folder') {
-					if ($ogid != $gid){
-						$contains = C::t('resources')->get_contains_by_fid($icoarr['oid'], true);
-						if ($contains['size'] && !SpaceSize($contains['size'], $gid)) {
-							return array('error' => lang('inadequate_capacity_space'));
-						}
-					}
-                    
-                    //如果是文件夹，并且目标目录中有同名文件夹，则执行合并
-                    if ($currentfid = DB::result_first("select oid from %t where pfid = %d and `name` = %s and `type` = %s and isdelete < 1",
-                        array('resources', $tfolder['fid'], $icoarr['name'], 'folder'))
-                    ) {
-                        //移动源文件夹数据到目标目录同名文件夹
-                        foreach (C::t('resources')->fetch_basicinfo_by_pfid($icoarr['oid']) as $value) {
-                            try {
-                                self::FileMove($value['rid'], $currentfid, false, false);
-                                unset($value);
-                                unset($folder);
-                            } catch (Exception $e) {
-                            	return array('error' => lang('movement_error'));
-                            }
-                        }
-                        //修改分享表状态
-                        C::t('shares')->change_by_rid($icoarr['rid'], '-5');
-                        //删除原文件夹数据
-                        C::t('resources')->delete($icoarr['rid']);
-                        //删除路径表数据
-                        C::t('folder')->delete_by_fid($icoarr['oid']);
-                       
-                        
-                        //添加事件
-                        $oldhash = C::t('resources_event')->get_showtpl_hash_by_gpfid($oldpfid, $oldgid);
-                        $eventdata1 = array('username' => $_G['username'], 'olderposition' => $oldpathstr, 'newposition' => $targetstr, 'foldername' => $icoarr['name'], 'hash' => $oldhash);
-                        C::t('resources_event')->addevent_by_pfid($pfid, 'moved_folder', 'movedfolder', $eventdata1, $gid, $rid, $icoarr['name']);
-                        $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($icoarr['pfid'], $ogid);
-                        $eventdata2 = array('username' => $_G['username'], 'newposition' => $targetstr, 'foldername' => $icoarr['name'], 'hash' => $hash);
-                        C::t('resources_event')->addevent_by_pfid($oldpfid, 'move_folder', 'movefolder', $eventdata2, $ogid, $rid, $icoarr['name']);
-                    } else {
-                        //查询源文件夹数据
-                        
-                        if ($folder = C::t('folder')->fetch($icoarr['oid'])) {
-                            $icoarr['name'] = self::getFolderName($icoarr['name'], $tfolder['fid']);
-                            $folder['uid'] = $_G['uid'];
-                            $folder['username'] = $_G['username'];
-                            $folder['gid'] = $gid;
-                            $folder['pfid'] = $pfid;
-                            $folder['fname'] = $icoarr['name'];
-                            $updatefids = array();
-                            $fids = C::t('resources_path')->fetch_folder_containfid_by_pfid($folder['fid']);
-                            $folderinfo = array(
-                                'uid' => $_G['uid'],
-                                'username' => $_G['username'],
-                                'gid' => $gid
-                            );
-                           /* $rids = array();
-                            $oresources = array();
-                            foreach (DB::fetch_all("select * from %t where pfid in(%n) or oid in(%n)", array('resources', $fids, $fids)) as $v) {
-                                $rids[] = $v['rid'];
-                                $oresources[] = $v;
-                            }*/
-                            
-                            //修改文件夹表数据和resources表数据
-                            // DB::update('resources', array('oid' => $folder['fid'], 'pfid' => $pfid, 'gid' => $gid, 'uid' => $_G['uid'], 'username' => $_G['username']), array('rid' => $rid)
-                            if (C::t('folder')->update($folder['fid'], $folder) &&
-                                C::t('resources')->update_by_rid($rid, array('oid' => $folder['fid'], 'pfid' => $pfid, 'gid' => $gid, 'uid' => $_G['uid'], 'username' => $_G['username']))
-                            ) {
-                                
-                                //更改文件夹路径，此处使用模型表中更改solr路径
-                                C::t('resources_path')->update_pathdata_by_fid($folder['fid'], $pfid);
-                              
-                                if ($fids) {
-                                    //修改资源表数据
-                                    //DB::update('resources', $folderinfo, "pfid IN(" . dimplode($fids) . ")");
-                                    C::t('resources')->update_by_pfids($fids, $folderinfo);
-                                    //更改动态表数据
-                                    DB::update('resources_event', $folderinfo, "pfid IN(" . dimplode($fids) . ")");
-                                    //更改folder表数据
-                                    // DB::update('folder', $folderinfo, "pfid IN(" . dimplode($fids) . ")");
-                                    C::t('folder')->update_by_pfids($fids, $folderinfo);
-                                }
-                                if ($ogid!=$gid && $contains['size'] > 0) {
-                                    SpaceSize(-$contains['size'], $ogid, 1);
-                                    SpaceSize($contains['size'], $gid, 1);
-                                }
-                                //修改分享表状态
-                                //C::t('shares')->change_by_rid($rids, '-5');
-                                //更改文件夹动态归属位置
-                                DB::update('resources_event', array(
-                                    'uid' => $_G['uid'],
-                                    'username' => $_G['username'],
-                                    'gid' => $gid,
-                                    'pfid' => $pfid
-                                ), array('pfid' => $folder['fid']));
-                                
-                                //添加事件
-                                $oldhash = C::t('resources_event')->get_showtpl_hash_by_gpfid($oldpfid, $oldgid);
-                                $eventdata1 = array('username' => $_G['username'], 'olderposition' => $oldpathstr, 'newposition' => $targetstr, 'foldername' => $icoarr['name'], 'hash' => $oldhash);
-                                C::t('resources_event')->addevent_by_pfid($pfid, 'moved_folder', 'movedfolder', $eventdata1, $gid, $rid, $icoarr['name']);
-                                $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($icoarr['pfid'], $ogid);
-                                $eventdata2 = array('username' => $_G['username'], 'newposition' => $targetstr, 'foldername' => $icoarr['name'], 'hash' => $hash);
-                                C::t('resources_event')->addevent_by_pfid($oldpfid, 'move_folder', 'movefolder', $eventdata2, $ogid, $rid, $icoarr['name']);
-                            }
-                        } else {
-                            return array('error', lang('folder_not_exist'));
-                        }
-                    }
-                    
-                } else {
-                    $totalsize = 0;
-                    if ($icoarr['vid'] > 0) {
-                        $totalsize = DB::result_first("select sum(size) from %t where rid = %s", array('resources_version', $icoarr['rid']));
-                    } else {
-                        $totalsize = $icoarr['size'];
-                    }
-                    if ($ogid != $gid && $totalsize && !SpaceSize($totalsize, $gid)) {
-                        return array('error' => lang('inadequate_capacity_space'));
-                    }
-                    
-                    //如果不是文件夹判断文件名重复
-                   
-                        
-                    $icoarr['name'] = self::getFileName($icoarr['name'], $tfolder['fid']);
-                   
-                    $icoarr['gid'] = $gid;
-                    $icoarr['uid'] = $_G['uid'];
-                    $icoarr['username'] = $_G['username'];
-                    $icoarr['pfid'] = $pfid;
-                    $icoarr['isdelete'] = 0;
-                    if (C::t('resources')->update_by_rid($icoarr['rid'], $icoarr)) {
-                        $solrindexdata = array('rid' => $icoarr['rid'], 'data' => $icoarr);
-                        Hook::listen('movefile_after', $solrindexdata);
-                        //更改文件动态归属位置
-                        C::t('resources_event')->update_position_by_rid($icoarr['rid'], $icoarr['pfid'], $icoarr['gid']);
-                        //修改分享表状态
-                        C::t('shares')->change_by_rid($icoarr['rid'], '-5');
-                        //添加移动文件动态
-                        $oldhash = C::t('resources_event')->get_showtpl_hash_by_gpfid($oldpfid, $oldgid);
-                        $eventdata1 = array('username' => $_G['username'], 'olderposition' => $oldpathstr, 'newposition' => $targetstr, 'filename' => $icoarr['name'], 'hash' => $oldhash);
-                        C::t('resources_event')->addevent_by_pfid($pfid, 'moved_file', 'movedfile', $eventdata1, $gid, $rid, $icoarr['name']);
-                        
-                        $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($icoarr['pfid'], $ogid);
-                        $eventdata2 = array('username' => $_G['username'], 'newposition' => $targetstr, 'filename' => $icoarr['name'], 'hash' => $hash);
-                        C::t('resources_event')->addevent_by_pfid($oldpfid, 'move_file', 'movefile', $eventdata2, $ogid, $rid, $icoarr['name']);
-                    }
-                    if ($ogid != $gid) {
-                        if ($totalsize > 0) {
-                            SpaceSize(-$totalsize, $ogid, 1);
-                            SpaceSize($totalsize, $gid, 1);
-                        }
-                    }
-                    if (!$first) {
-                        //addtoconfig($icoarr);
-                    }
-                }
-                
-            } /*else {
-                C::t('resources')->update_by_rid($icoarr['rid'], array('isdelete' => 0, 'deldateline' => 0));
-                //addtoconfig($icoarr);
-            }*/
-            if ($icoarr['type'] == 'folder') C::t('folder')->update($icoarr['oid'], array('isdelete' => 0));
-            $return['icoarr'] = C::t('resources')->fetch_by_rid($icoarr['rid']);
-            $return['icoarr']['monthdate'] = dgmdate($return['icoarr']['dateline'], 'm-d');
-            $return['icoarr']['hourdate'] = dgmdate($return['icoarr']['dateline'], 'H:i');
-            unset($icoarr);
-            return $return;
-            return array('error' => lang('movement_error') . '！');
-        }
-        
-        //本地文件复制到本地其它区域
-        public function FileCopy($rid, $pfid, $first = true, $force = false)
-        {
-            global $_G, $_GET;
-            if (!$tfolder = DB::fetch_first("select * from " . DB::table('folder') . " where fid='{$pfid}'")) {
-                return array('error' => lang('target_location_not_exist'));
-            }
-            if ($icoarr = C::t('resources')->fetch_by_rid($rid)) {
-                
-                unset($icoarr['rid']);
-                //判断当前文件有没有拷贝权限；
-                if (!$force) {
-                    if ($icoarr['type'] == 'folder') {
-                        $permcheck = C::t('resources')->check_folder_perm($icoarr, 'copy');
-                        if ($permcheck['error']) {
-                            return array('error' => $permcheck['error']);
-                        }
-                    } else {
-                        if (!perm_check::checkperm('copy', $icoarr)) {
-                            return array('error' => lang('privilege'));
-                        }
-                    }
-                    
-                    //判断当前目录有无添加权限
-                    if (!perm_check::checkperm_Container($pfid, 'upload')) {
-                        return array('error' => lang('privilege'));
-                    }
-                }
-                $success = 0;
-                $gid = DB::result_first("select gid from " . DB::table('folder') . " where fid='{$pfid}'");
-                $targetpatharr = C::t('resources_path')->fetch_pathby_pfid($pfid, true);//目标路径
-                $targetpath = $targetpatharr['path'];
-                
-                if ($icoarr['type'] == 'folder') {
-                    $foldercontains = C::t('resources')->get_contains_by_fid($icoarr['oid']);
-                    if (!SpaceSize($foldercontains['size'], $gid)) {
-                        return array('error' => lang('inadequate_capacity_space'));
-                    }
-                    if ($icoarr['pfid'] == $pfid) {//判断源文件位置和目标位置是否相同,如果相同则生成副本
-                        
-                        $icoarr['name'] = $icoarr['name'] . lang('duplicate');
-                        
-                        if ($ricoid = self::getRepeatIDByName($icoarr['name'], $pfid, ($icoarr['type'] == 'folder') ? true : false)) {//如果目录下有同名文件
-                            
-                            $icoarr['name'] = self::getFolderName($icoarr['name'], $pfid);
-                            
-                        }
-                    }
-                    //查询原文件夹是否存在
-                    if ($folder = C::t('folder')->fetch($icoarr['oid'])) {
-                        
-                        //如果目标目录中有同名文件夹，并且源文件位置和目标位置不在同一目录，则将源文件夹中文件放入该目录下
-                        if ($icoarr['pfid'] != $pfid && $currentinfo = DB::fetch_first("select oid,rid from %t where pfid = %d and `name` = %s and `type` = %s and isdelete < 1",
-                                array('resources', $tfolder['fid'], $icoarr['name'], 'folder'))
-                        ) {
-                            $currentfid = $currentinfo['oid'];
-                            //复制源文件夹数据到目标目录同名文件夹
-                            foreach (C::t('resources')->fetch_by_pfid($icoarr['oid']) as $value) {
-                                try {
-                                    self::FileCopy($value['rid'], $currentfid, false, $force);
-                                } catch (Exception $e) {
-									
-                                }
-                            }
-                            $data = C::t('resources')->fetch_by_rid($currentinfo['rid']);
-                            $return['folderarr'] = $data;
-                            $icoarr['rid'] = $data['rid'];
-                            
-                        } else {//如果目标目录中不存在同名文件夹或者存在同名文件夹而源文件位置和目标位置在同一目录，执行创建
-                            if ($data = self::createFolderByPath($icoarr['name'], $pfid)) {//根据文件夹名字和当前文件夹路径创建文件夹
-                                foreach (C::t('resources')->fetch_by_pfid($folder['fid']) as $value) {//查询原文件夹中文件
-                                    try {
-                                        self::FileCopy($value['rid'], $data['pfid'], false, $force);//复制原文件夹中文件到新文件夹
-                                    } catch (Exception $e) {
-                                    }
-                                }
-                                $return['folderarr'] = $data['folderarr'][0];
-                                
-                                $icoarr['rid'] = $data['icoarr'][0]['rid'];
-                            }
-                        }
-                        
-                    } else {
-                        return array('error', lang('folder_not_exist'));
-                    }
-                } else {
-                    //判断空间大小是否足够
-                    if (!SpaceSize($icoarr['size'], $gid)) {
-                        return array('error' => lang('inadequate_capacity_space'));
-                    }
-                    //判断文件名重复
-                    if ($icoarr['pfid'] == $pfid) {
-                        $namestr = $icoarr['name'];
-                        $ext = '';
-                        $namearr = explode('.', $namestr);
-                        if (count($namearr) > 1) {
-                            $ext = $namearr[count($namearr) - 1];
-                            unset($namearr[count($namearr) - 1]);
-                            $ext = $ext ? ('.' . $ext) : '';
-                        }
-                        $tname = implode('.', $namearr);
-                        $icoarr['name'] = $tname . lang('duplicate') . $ext;
-                    }
-                    
-                    if ($ricoid = self::getRepeatIDByName($icoarr['name'], $pfid, ($icoarr['type'] == 'folder') ? true : false)) {//如果目录下有同名文件
-                        
-                        $icoarr['name'] = self::getFileName($icoarr['name'], $pfid);
-                        
-                    }
-                    $setarr = array(
-                        'name' => $icoarr['name'],
-                        'oid' => $icoarr['oid'],
-                        'uid' => getglobal('uid'),
-                        'username' => getglobal('username'),
-                        'pfid' => $pfid,
-                        'gid' => $tfolder['gid'],
-                        'type' => $icoarr['type'],
-                        'dateline' => TIMESTAMP,
-                        'ext' => $icoarr['ext'],
-                        'size' => $icoarr['size'],
-                        'vid' => 0,
-                    );
-					
-				
-                    //新建文件
-                    if ($icoarr['rid'] = C::t('resources')->insert_data($setarr)) {
-						
-                        $sourceattrdata = array(
-                            'postip' => $_G['clientip'],
-                            'title' => $setarr['filename'],
-                            'aid' => isset($icoarr['aid']) ? $icoarr['aid'] : '',
-                            'img' => $icoarr['img'],
-                        );
-						
-                        if (C::t('resources_attr')->insert_attr($icoarr['rid'], $setarr['vid'], $sourceattrdata)) {//插入属性表
-                            if ($icoarr['aid']) {
-                                $attach = C::t('attachment')->fetch($icoarr['aid']);
-                                C::t('attachment')->update($icoarr['aid'], array('copys' => $attach['copys'] + 1));//增加使用数
-                            }
-							
-                           /* if ($icoarr['oid']) {
-                                $attach = C::t('collect')->fetch($icoarr['oid']);
-                                C::t('collect')->update($icoarr['oid'], array('copys' => $attach['copys'] + 1));//增加使用数
-                            }*/
-                            $icoarr['path'] = $targetpath . $setarr['name'];
-                            $event = 'creat_file';
-                            $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($pfid, $setarr['gid']);
-                            $eventdata = array(
-                                'title' => $setarr['name'],
-                                'aid' => $icoarr['aid'],
-                                'username' => $setarr['username'],
-                                'uid' => $setarr['uid'],
-                                'position' => preg_replace('/dzz:(.+?):/', '', $targetpath),
-                                'hash' => $hash
-                            );
-                            C::t('resources_event')->addevent_by_pfid($pfid, $event, 'create', $eventdata, $setarr['gid'], $icoarr['rid'], $icoarr['name']);
-                        } else {
-                            C::t('resources')->delete_by_rid($icoarr['rid']);
-                            return array('error' => lang('data_error'));
-                        }
-                    }
-                }
-                if ($icoarr['rid']) {
-                    if ($icoarr['size'] > 0) {
-                        SpaceSize($icoarr['size'], $gid, 1, $icoarr['uid']);
-                    }
-					$return['icoarr'] = C::t('resources')->fetch_by_rid($icoarr['rid']);
-					$return['icoarr']['monthdate'] = dgmdate($return['icoarr']['dateline'], 'm-d');
-					$return['icoarr']['hourdate'] = dgmdate($return['icoarr']['dateline'], 'H:i');
-					Hook::listen('createafter_addindex_getvideo', $return['icoarr']);
-					Hook::listen('createafter_addindex', $return['icoarr']);
-                    return $return;
-                   
-                    
-                } else {
-                    return array('error' => lang('files_allowed_copy'));
-                }
-                return array('error' => 'copy error');
-            }
-        }
-
-        public function shenpiCreateFile($fid, $path, $attach)
-        {
-            $data = self::createFolderByPath($path, $fid);;
-            return self::uploadToattachment($attach, $data['pfid']);
-        }
     }
+    //获取缩略图
+    public function getThumb($path, $thumbsign='', $original = false, $returnurl = false, $create = 0,  $thumbtype = 1, $extraparams = array(), $filesize = 0)
+    {
+        global $_G;
+        if (!$data = IO::getMeta($path)) return false;
+        $filesize = $data['size'];
+        $filepath = $data['path'];
+        $wp = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarkstatus']:'';
+        $wt = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarktype']:'';
+        $wcontent = $_G['setting']['IsWatermarkstatus'] ? ($_G['setting']['watermarktype'] == 'png' ? $_G['setting']['waterimg']:$extraparams['position_text']):'';
+        //水印图md5或者水印文字
+        $watermd5 = '';
+        if($extraparams['watermarkstatus']){
+            $watermd5 = !$extraparams['watermarktext'] ? $_G['setting']['watermd5']:($extraparams['watermarktext'] ? $extraparams['watermarktext']:$_G['setting']['watermarktext']);
+        }
+        //水印参数处理
+        $extraparams['position_text'] = $extraparams['position_text'] ? $extraparams['position_text']:$wcontent;
+        $extraparams['position'] = $extraparams['position'] ? $extraparams['position']:$wp;
+        $extraparams['watermarkstatus'] = $extraparams['watermarkstatus'] ?$extraparams['watermarkstatus']:$_G['setting']['IsWatermarkstatus'];
+        $extraparams['watermarktype'] = $extraparams['watermarktype'] ?$extraparams['watermarktype']:$wt;
+        $extraparams['watermarktext'] = $extraparams['watermarktext'] ? $extraparams['watermarktext']:'';
+        //宽高值获取，原图默认为0
+        $data['thumbsign'] = $thumbsign;
+        $defaultspace = $_G['setting']['defaultspacesetting'];
+        if($thumbsign){
+            $width =   $_G['setting']['thumbsize'][$thumbsign]['width'];
+            $height =   $_G['setting']['thumbsize'][$thumbsign]['height'];
+        }else{
+            $width = $height = 0;
+        }
+        $thumbpath = '';
+        //如果是库文件，记录thumb_record表
+        if($data['rid']){
+            $thumbrecodearr = [
+                'rid' => $data['rid'],
+                'width' => $data['width'] ? intval($data['width']):0,
+                'height' => $data['height'] ? intval($data['height']):0,
+                'lwidth' => $_G['setting']['thumbsize']['large']['width'],
+                'lheight' => $_G['setting']['thumbsize']['large']['height'],
+                'swidth' => $_G['setting']['thumbsize']['small']['width'],
+                'sheight' =>$_G['setting']['thumbsize']['small']['height'],
+                'filesize' => $data['filesize'] ? $data['filesize'] : $data['size'],
+                'ext' => $data['ext'],
+                'lwaterposition'=>$wp,
+                'lwatertype'=>$wt,
+                'lwatercontent'=>$wcontent,
+                'swaterposition'=>$wp,
+                'swatertype'=>$wt,
+                'swatercontent'=>$wcontent
+            ];
+            //缩略图记录表数据
+            $thumbrecorddata = C::t('thumb_record')->insert_data($thumbrecodearr);
+            if($original && $thumbrecorddata['opath']){//原图
+                $thumbpath = $thumbrecorddata['opath'];
+            } elseif($thumbsign == 'small' && $thumbrecorddata['sstatus']){//小图
+                $thumbpath = $thumbrecorddata['spath'];
+            }elseif($thumbsign == 'large' && $thumbrecorddata['lstatus']){//大图
+                $thumbpath = $thumbrecorddata['lpath'];
+            }
+        }else{//如果是aid记录thumb_cache表
+            $thumbarr = [
+                'width'=>$width,
+                'height'=>$height,
+                'aid'=>$data['aid'],
+                'thumbtype'=>$thumbtype,
+                'watermd5'=>$watermd5
+            ];
+            $cachedata = C::t('thumb_cache')->fetch_data_by_thumbparam($thumbarr);
+            if($cachedata){
+                $bz = io_remote::getBzByRemoteid($cachedata['remoteid']);
+                $thumbpath = $bz.$cachedata['path'];
+            }
+        }
+
+        //如果没有强制生成根据查询结果返回
+        if (!$create) {
+            if(!$thumbpath) $thumbpath = geticonfromext($data['ext'], $data['type']);
+            if ($returnurl) return $thumbpath;
+            else IO::output_thumb($thumbpath);
+        } else {
+
+            if(!$thumbpath){
+                $cachedata = [];
+                //从缓存表获取数据
+                if($data['aid']){
+                    //尝试从缓存表获取数据
+                    $thumbarr = [
+                        'width'=>$width,
+                        'height'=>$height,
+                        'aid'=>$data['aid'],
+                        'thumbtype'=>$thumbtype,
+                        'watermd5'=>$watermd5,
+                    ];
+
+                    $cachedata = C::t('thumb_cache')->fetch_data_by_thumbparam($thumbarr);
+                }
+
+            }
+            if($cachedata){
+                $bz = io_remote::getBzByRemoteid($cachedata['remoteid']);
+                $thumbpath = $bz.$cachedata['path'];
+                if($thumbsign == 'small'){
+                    $thumbarr = [
+                        'spath'=>$thumbpath,
+                        'sstatus'=>1,
+                        'scacheid'=>$cachedata['id'],
+                        'sremoteid'=>$cachedata['remoteid'],
+                        'sdateline'=>TIMESTAMP,
+                        'schk'=>0,
+                        'schktimes'=>0
+                    ];
+                }elseif($thumbsign == 'large'){
+                    $thumbarr = [
+                        'lpath'=>$thumbpath,
+                        'lstatus'=>1,
+                        'lcacheid'=>$cachedata['id'],
+                        'lremoteid'=>$cachedata['remoteid'],
+                        'ldateline'=>TIMESTAMP,
+                        'lchk'=>0,
+                        'lchktimes'=>0
+                    ];
+                }
+                //插入缩略图记录表
+                C::t('thumb_record')->update($data['rid'], $thumbarr);
+            }
+            else{
+                //如果文件为特殊格式类型，则先生成大图，再生成目标图片
+                if (!in_array($data['ext'], array('jpg','png','jpeg','gif','webp'))) {
+                    //查找是否有原图
+                    $filepath = '';
+                    //如果没有原图尝试生成原图
+                    if (!$thumbrecorddata['opath']) {
+                        //如果有aid从缓存表获取数据
+                        if($data['aid']){
+                            //将数据插入缓存表
+                            $thumbarr = [
+                                'width'=>0,
+                                'height'=>0,
+                                'aid'=>$data['aid'],
+                                'thumbtype'=>$thumbtype,
+                                'watermd5'=>$watermd5
+                            ];
+                            $cachedata = C::t('thumb_cache')->fetch_data_by_thumbparam($thumbarr);
+                        }
+
+                        if($cachedata){
+                            $bz = io_remote::getBzByRemoteid($cachedata['remoteid']);
+                            $thumbarr = [
+                                'opath' => $bz.$cachedata['path'],
+                                'oremoteid'=>$cachedata['remoteid'],
+                                'ocacheid'=>$cachedata['id'],
+                            ];
+                            if($data['rid']){
+                                C::t('thumb_record')->update($data['rid'], $thumbarr);
+                                $attr = array('width' => $cachedata['wdith'], 'height' => $cachedata['height']);
+                                C::t('pichome_resources')->update($data['rid'], $attr);
+                            }
+                            $filepath = $bz.$cachedata['path'];
+                        }
+                        else{
+                            $data['original'] = 1;
+                            $data['thumbtype'] = $thumbtype;
+                            $data['extraparams'] = $extraparams;
+
+                            //获取原图
+                            $thumbpathdata = Hook::listen('pichomethumb', $data, null, false, true);
+
+                            $fileurl = $thumbpathdata[0];
+                            if ($fileurl) {
+                                //将原图计入缓存表
+                                $defaultbz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
+                                $filepath = $defaultbz.$fileurl;
+                                $infourl = IO::getStream($filepath);
+                                $info = @getimagesize($infourl);
+                                $thumbarr = [
+                                    'width'=>isset($info[0]) ? intval($info[0]):0,
+                                    'height'=>isset($info[1]) ? intval($info[1]):0,
+                                    'aid'=>$data['aid'],
+                                    'thumbtype'=>$thumbtype,
+                                    'thumbsign'=>'original',
+                                    'watermd5'=>$watermd5,
+                                    'path'=>$fileurl,
+                                    'remoteid'=>$defaultspace['did']
+                                ];
+                                $cachedata = C::t('thumb_cache')->insertdata($thumbarr);
+                                if($data['rid']) {
+                                    C::t('thumb_record')->update($data['rid'],['opath'=>$filepath,'ocacheid'=>$cachedata['id']]);
+                                    $attr = array('width' => $thumbarr['width'], 'height' => $thumbarr['height']);
+                                    C::t('pichome_resources')->update($data['rid'], $attr);
+                                }
+                            }
+                            else $thumbpath = geticonfromext($data['ext'], $data['type']);
+                        }
+                    }
+                    else{
+                        $filepath = $thumbrecorddata['opath'];
+                    }
+                }
+            }
+            //创建缩略图
+            if(!$thumbpath){
+                $cthumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, $original, $extraparams, $filesize);
+                $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
+                $thumbpath = $bz.$cthumbpath;
+                if($cthumbpath){
+                    $cacheid = '';
+                    if($data['aid']){
+                        $thumbarr = [
+                            'width'=>$width,
+                            'height'=>$height,
+                            'aid'=>$data['aid'],
+                            'thumbtype'=>$thumbtype,
+                            'watermd5'=>$watermd5,
+                            'path'=>$cthumbpath,
+                            'remoteid'=>$defaultspace['did']
+                        ];
+                        $cacheid = C::t('thumb_cache')->insertdata($thumbarr);
+                    }
+
+                    if($data['rid']){
+                        $thumbdataarr = [];
+                        if($thumbsign == 'small'){
+                            $thumbdataarr = [
+                                'spath'=>$thumbpath,
+                                'sstatus'=>1,
+                                'schk'=>0,
+                                'sremoteid'=>$defaultspace['did'],
+                                'scacheid'=>$cacheid
+                            ];
+                        }elseif($thumbsign == 'large'){
+                            $thumbdataarr = [
+                                'lpath'=>$thumbpath,
+                                'lstatus'=>1,
+                                'lchk'=>0,
+                                'lremoteid'=>$defaultspace['did'],
+                                'lcacheid'=>$cacheid
+                            ];
+                        }
+                        C::t('thumb_record')->update($data['rid'],$thumbdataarr);
+                    }
+                }
+
+            }
+        }
+        if ($thumbpath) {
+            $img = IO::getFileUri($thumbpath);
+        } else{
+            $img = geticonfromext($data['ext'], $data['type']);
+        }
+        if ($returnurl) return $img;
+        else IO::output_thumb($img);
+    }
+
+    //过滤文件名称
+    public function name_filter($name)
+    {
+        return str_replace(array('/', '\\', ':', '*', '?', '<', '>', '|', '"', "\n"), '', $name);
+    }
+
+
+}

@@ -40,6 +40,7 @@
 			if (in_array('memory', $type)) {
 				//清空内存缓存
 				C::memory()->clear();
+                C::t('cache')->clear_allcache();
 			}
 			exit(json_encode(array('msg'=>'success')));
 		}
@@ -51,17 +52,26 @@
 				if (!$_GET['filename'] || preg_match("/(\.)(exe|jsp|asp|aspx|cgi|fcgi|pl)(\.|$)/i", $_GET['filename'])) {
 					exit(json_encode(array('error'=>true,'msg'=>lang('database_export_filename_invalid'))));
 				}
+				if(!preg_match("/^[a-zA-Z0-9_]+$/i",$_GET['filename'])){
+					exit(json_encode(array('error'=>true,'msg'=>lang('database_export_filename_invalid'))));
+				}
 				
 				$time = dgmdate(TIMESTAMP);
 				if ($_GET['type'] == 'dzz') {
 					$tables = arraykeys2(fetchtablelist($tablepre), 'Name');
 				} elseif ($_GET['type'] == 'custom') {
 					$tables = array();
+					$alltables= arraykeys2(fetchtablelist($tablepre), 'Name');
 					if (empty($_GET['setup'])) {
 						$tables = C::t('setting') -> fetch('custombackup', true);
 					} else {
 						C::t('setting') -> update('custombackup', empty($_GET['customtables']) ? '' : $_GET['customtables']);
 						$tables = &$_GET['customtables'];
+					}
+					
+					//验证表名是否正确
+					foreach($tables as $key => $table){
+						if(!in_array($table,$alltabls)) unset($tables[$key]);
 					}
 					if (!is_array($tables) || empty($tables)) {
 						exit(json_encode(array('error'=>true,'msg'=>lang('database_export_custom_invalid'))));
@@ -75,8 +85,7 @@
 				}
 				
 				$volume = intval($_GET['volume']) + 1;
-				$idstring = '# Identify: ' . base64_encode("$_G[timestamp]," . $_G['setting']['version'] . ",{$_GET['type']},{$_GET['method']},{$volume},{$tablepre},{$dbcharset}") . "\n";
-				
+				$idstring = '# Identify: ' . base64_encode($_G['timestamp']."," . $_G['setting']['version'] . ",".$_GET['type'].",".$_GET['method'].",".$volume.",".$tablepre.",".$dbcharset) . "\n";
 				$dumpcharset = $_GET['sqlcharset'] ? $_GET['sqlcharset'] : str_replace('-', '', $_G['charset']);
 				$setnames = ($_GET['sqlcharset'] && $db -> version() > '4.1' && (!$_GET['sqlcompat'] || $_GET['sqlcompat'] == 'MYSQL41')) ? "SET NAMES '$dumpcharset';\n\n" : '';
 				if ($db -> version() > '4.1') {
@@ -119,7 +128,7 @@
 					$dumpfile = $backupfilename . "-%s" . '.sql';
 					!$complete && $tableid--;
 					if (trim($sqldump)) {
-						$sqldump = "$idstring" . "# <?php exit();?>\n" . "# oaooa PicHome Multi-Volume Data Dump Vol.$volume\n" . "# Version: oaooa PicHome! " . $_G['setting']['version'] . "\n" . "# Time: $time\n" . "# Type: {$_GET['type']}\n" . "# Table Prefix: $tablepre\n" . "#\n" . "# Dzz! Home: http://help.oaooa.com\n" . "# Please visit our website for newest infomation about DzzOffice\n" . "# --------------------------------------------------------\n\n\n" . "$setnames" . $sqldump;
+						$sqldump = $idstring."# <?php exit();?>\n" . "# oaooa Multi-Volume Data Dump Vol.".$volume."\n" . "# Version: oaooa! " . $_G['setting']['version'] . "\n" . "# Time: ".$time."\n" . "# Type: ".$_GET['type']."\n" . "# Table Prefix:". $tablepre."\n" . "#\n" . "# Dzz! Home: http://help.oaooa.com\n" . "# Please visit our website for newest infomation about DzzOffice\n" . "# --------------------------------------------------------\n\n\n" . $setnames . $sqldump;
 						$dumpfilename = sprintf($dumpfile, $volume);
 				
 						@$fp = fopen($dumpfilename, 'wb');
@@ -397,7 +406,7 @@
 					exit(json_encode(array('error'=>$msg)));
 				} else {
 					$msg = lang('database_run_query_succeed', array('affected_rows' => $affected_rows));
-					exit(json_encode(array(success=>true,'msg'=>$msg)));
+					exit(json_encode(array('success'=>true,'msg'=>$msg)));
 				}
 			}else{
 				$checkperm = checkpermission('runquery', 0);
@@ -465,7 +474,7 @@
 						$cronfile = DZZ_ROOT . './core/cron/' . $cron['filename'];
 					}
 					if (!file_exists($cronfile)) {
-						DB::update('cron', array('available' => '0', 'nextrun' => '0', ), "cronid='$cron[cronid]'");
+						DB::update('cron', array('available' => '0', 'nextrun' => '0', ), array('cronid'=>$cron['cronid']));
 					}
 				}
 				updatecache('setting');
@@ -485,7 +494,7 @@
 					} else {
 						$cron['time'] = lang('per_hour');
 					}
-					$cron['time'] .= $cron['hour'] >= 0 && $cron['hour'] < 24 ? sprintf('%02d', $cron[hour]) . lang('timeliness') : '';
+					$cron['time'] .= $cron['hour'] >= 0 && $cron['hour'] < 24 ? sprintf('%02d', $cron['hour']) . lang('timeliness') : '';
 					if (!in_array($cron['minute'], array(-1, ''))) {
 						foreach ($cron['minute'] = explode("\t", $cron['minute']) as $k => $v) {
 							$cron['minute'][$k] = sprintf('%02d', $v);
@@ -524,7 +533,7 @@
 					$minutenew = explode(',', $_GET['minute']);
 					foreach ($minutenew as $key => $val) {
 						$minutenew[$key] = $val = intval($val);
-						if ($val < 0 || $var > 59) {
+						if ($val < 0 || $val > 59) {
 							unset($minutenew[$key]);
 						}
 					}
@@ -537,14 +546,18 @@
 							
 				$msg = '';
 				$_GET['filename'] = str_replace(array('..', '/', '\\'), '', $_GET['filename']);
+				if(!preg_match("/^[a-zA-Z0-9_]+$/i",$_GET['filename'])){
+					$msg = lang('database_export_filename_invalid');
+					exit(json_encode(array('error'=>true,'msg'=>$msg)));
+				}
 				$efile = explode(':', $_GET['filename']);
 				if (count($efile) > 1) {
 					$filename = array_pop($efile);
 					$cronfile =  DZZ_ROOT. ''.implode("/",$efile).'/cron/'.$filename; 
 				} else {
-					$cronfile = DZZ_ROOT . './core/cron/' . $cron['filename'];
+					$cronfile = DZZ_ROOT . './core/cron/' . trim($_GET['filename']);
 				}
-				if (preg_match("/[\\\\\/\*\?\"\<\>\|]+/", $_GET['filename'])) {
+				if (preg_match("/[\\\\\/\*\?\"\<\>\|]+/", trim($_GET['filename']))) {
 					$msg = lang('crons_filename_illegal');
 				} elseif (!is_readable($cronfile)) {
 					$msg = lang('crons_filename_invalid', array('cronfile' => $cronfile));
@@ -585,7 +598,7 @@
 					);
 					$hourselect[] = $arr;
 				}
-				$cron[minute] = implode(',',$cron[minute]);
+				$cron['minute']= implode(',',$cron['minute']);
 				exit(json_encode(array('weekdayselect'=>$weekdayselect,'dayselect'=>$dayselect,'hourselect'=>$hourselect,'data'=>$cron)));
 			}
 		}elseif($do == 'run'){
@@ -672,7 +685,7 @@
 	function sqldumptablestruct($table) {
 		global $_G, $db, $excepttables;
 	
-		if (in_array($table, $excepttables)) {
+		if (is_array($excepttables) && in_array($table, $excepttables)) {
 			return;
 		}
 	
@@ -700,7 +713,7 @@
 		}
 	
 		$tablestatus = DB::fetch_first("SHOW TABLE STATUS LIKE '$table'");
-		$tabledump .= ($tablestatus['Auto_increment'] ? " AUTO_INCREMENT=$tablestatus[Auto_increment]" : ''). ";\n\n";
+		$tabledump .= ($tablestatus['Auto_increment'] ? " AUTO_INCREMENT=".$tablestatus['Auto_increment'] : ''). ";\n\n";
 		if ($_GET['sqlcompat'] == 'MYSQL40' && $db -> version() >= '4.1' && $db -> version() < '5.1') {
 			if ($tablestatus['Auto_increment'] <> '') {
 				$temppos = strpos($tabledump, ',');
@@ -733,7 +746,7 @@
 			}
 		}
 	
-		if (!in_array($table, $excepttables)) {
+		if (!is_array($excepttables) || !in_array($table, $excepttables)) {
 			$tabledumped = 0;
 			$numrows = $offset;
 			$firstfield = $tablefields[0];
@@ -741,7 +754,7 @@
 			if ($_GET['extendins'] == '0') {
 				while ($currsize + strlen($tabledump) + 500 < $_GET['sizelimit'] * 1000 && $numrows == $offset) {
 					if ($firstfield['Extra'] == 'auto_increment') {
-						$selectsql = "SELECT * FROM $table WHERE $firstfield[Field] > $startfrom ORDER BY $firstfield[Field] LIMIT $offset";
+						$selectsql = "SELECT * FROM ".$table." WHERE " .$firstfield['Field']." > ". $startfrom . " ORDER BY ".$firstfield['Field']." LIMIT ".$offset;
 					} else {
 						$selectsql = "SELECT * FROM $table LIMIT $startfrom, $offset";
 					}
@@ -772,7 +785,7 @@
 			} else {
 				while ($currsize + strlen($tabledump) + 500 < $_GET['sizelimit'] * 1000 && $numrows == $offset) {
 					if ($firstfield['Extra'] == 'auto_increment') {
-						$selectsql = "SELECT * FROM $table WHERE $firstfield[Field] > $startfrom LIMIT $offset";
+						$selectsql = "SELECT * FROM ". $table ." WHERE ". $firstfield['Field'] ." > ". $startfrom . " LIMIT ".$offset;
 					} else {
 						$selectsql = "SELECT * FROM $table LIMIT $startfrom, $offset";
 					}

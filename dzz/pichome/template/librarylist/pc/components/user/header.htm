@@ -1,0 +1,167 @@
+<div class="header" style="overflow: hidden;">
+	<div class="input-box" style="max-width: 260px;float: left;">
+		<el-input 
+		v-model="UserKeyword" 
+		clearable 
+		placeholder="请输入名称" 
+		prefix-icon="Search"
+		@input="UserKeywordInput"></el-input>
+	</div>
+		<el-popover
+			ref="AddPopoverUser"
+		    placement="bottom"
+			trigger="click"
+			popper-class="addcollection-dialog"
+		    width="300"
+			@show="UserAddPopoverShow"
+			@hide="UserAddPopoverHide"
+			@after-leave="UserAddPopoveAfterrHide">
+			<el-input 
+				v-model.trim="UserAddPopover.keyword" 
+				placeholder="姓名搜索" 
+				prefix-icon="Search"
+				@input="UserAddPopoverInput" 
+				clearable></el-input>
+			
+			<div style="padding:12px 0;overflow: hidden;">
+				<el-scrollbar max-height="400px">
+					<div style="padding: 0 24px;">
+						<template v-if="UserAddPopover.loading">
+							<div style="position: relative;width: 100%;height: 100px;">
+								<div class="img-loading center">
+									<span class="el-icon-loading"></span>加载中...
+								</div>
+							</div>
+						</template>
+						<template v-else>
+							<el-checkbox-group v-model="UserAddPopover.user">
+								<el-checkbox v-for="item in UserAddPopover.data" :label="item.uid">
+									<div>
+										<div style="display:inline-block" v-html="item.icon"></div>
+										{{item.username}}
+									</div>
+								</el-checkbox>
+							</el-checkbox-group>
+						</template>
+					</div>
+				</el-scrollbar>
+			</div>
+			<el-row :gutter="20">
+				<el-col :span="12">
+					<el-button style="width: 100%;" size="mini" type="info" plain @click="UserAddPopoverHide">取消</el-button>
+				</el-col>
+				<el-col :span="12">
+					<el-button style="width: 100%;" type="primary" size="mini" @click="UserAddPopoverSubmit"  :loading="UserAddPopover.btnloading">确定</el-button>
+				</el-col>
+			</el-row>
+			<template #reference>
+			    <el-button type="primary" icon="plus" @click="UserAddPopoverClick">添加成员</el-button>
+			</template>
+		</el-popover>
+</div>
+<script>
+	var MainHeaderMixin = {
+		data(){
+			return {
+				UserAddPopover:{
+					keyword:'',
+					perm:1,
+					visible:false,
+					loading:true,
+					data:[],
+					user:[],
+					btnloading:false
+				}
+			}
+		},
+		methods:{
+			UserAddPopoverInput:debounce(function(val){//输入
+				this.UserAddPopoverShow();
+			},800),
+			UserKeywordInput:debounce(function(val){//输入
+				this.UserGetdata();
+			},800),
+			async UserAddPopoverShow(){
+				var self = this;
+				self.UserAddPopover.loading = true;
+				var param = {
+					appid:this.DocumentAppid,
+					keyword:self.UserAddPopover.keyword
+				};
+				var res = await axios.post(MOD_URL+'&op=library&do=member&operation=getuser',param);
+				var json = res.data;
+				var uids = [];
+				var arr = [];
+				for(var i in self.UserDataList){
+					uids.push(parseInt(self.UserDataList[i].uid));
+				}
+				for(var u in json.data){
+					var item = json.data[u];
+					if(uids.indexOf(parseInt(item.uid))<0){
+						arr.push(item);
+					}
+				}
+				
+				self.UserAddPopover.data = arr;
+				self.UserAddPopover.loading = false;
+			},
+			UserAddPopoverHide(){
+				var self = this;
+				self.$refs.AddPopoverUser.hide();
+			},
+			UserAddPopoveAfterrHide(){
+				var self = this;
+				self.UserAddPopover.loading = false;
+				self.UserAddPopover.btnloading = false;
+				self.UserAddPopover.data = [];
+				self.UserAddPopover.user = [];
+			},
+			async UserAddPopoverSubmit(){
+				var self = this;
+				if(!self.UserAddPopover.user.length){
+					self.$message.error('请选择成员');
+				}
+				self.UserAddPopover.btnloading = true;
+				var param = {
+					appid:self.DocumentAppid,
+					uids:self.UserAddPopover.user.join(','),
+				};
+				var res = await axios.post(MOD_URL+'&op=library&do=member&operation=addmember',param);
+				var json = res.data;
+				self.UserAddPopover.btnloading = false;
+				if(json.success){
+					var uids = [];
+					for(var i in self.UserAddPopover.data){
+						var item = self.UserAddPopover.data[i];
+						if(self.UserAddPopover.user.indexOf(item.uid)>-1){
+							uids.push(item)
+						}
+					}
+					for(var u in uids){
+						var item = uids[u];
+						var status = true;
+						for(var x in self.UserDataList){
+							var fitem = self.UserDataList[x];
+							if(parseInt(item.uid) == parseInt(fitem.uid)){
+								status = false;
+							}
+						}
+						if(status){
+							item['loading'] = false;
+							self.UserDataList.push(item);
+						}
+					}
+					self.UserAddPopover.visible = false;
+					self.$message({
+						type:'success',
+						message:'添加成功'
+					});
+				}else{
+					
+					self.$message.error(json.msg || '添加失败');
+				}
+				self.UserAddPopoverHide();	
+			},
+		}
+	};
+</script>

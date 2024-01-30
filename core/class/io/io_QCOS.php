@@ -70,8 +70,8 @@
                         'secretId' => $access_id,
                         'secretKey' => $access_key
                     ),
-                    'region' => $hostnamearr[1],
-                    'schema' => $hostnamearr[0],
+                    'region' => $region,
+                    'schema' => $schema,
 
                 ];
                 $this->host = $root['host'];
@@ -106,6 +106,7 @@
             $stringToSign = "sha1\n$signTime\n$sha1edHttpString\n";
             $signature = hash_hmac('sha1', $stringToSign, $signKey);
 //组合结果
+
             $authorization = "q-sign-algorithm=sha1&q-ak=$secretId&q-sign-time=$qSignTime&q-key-time=$qKeyTime&q-header-list=$header_list&q-url-param-list=$url_param_list&q-signature=$signature";
             return $authorization;
         }
@@ -150,7 +151,66 @@
                 return false;
             }
         }
-        
+       public function getAuthorization($secretid, $secretkey, $filename,$method='get')
+        {
+            // 获取个人 API 密钥 https://console.qcloud.com/capi
+            $SecretId = $secretid;
+            $SecretKey = $secretkey;
+            // 整理参数
+            $queryParams = array();
+            $headers = array();
+            $method = strtolower($method ? $method : 'head');
+            $filename = $filename ? $filename : '/';
+            substr($filename, 0, 1) != '/' && ($filename = '/' . $filename);
+
+            // 要用到的 Authorization 参数列表
+            $qSignAlgorithm = 'sha1';
+            $qAk = $SecretId;
+            $qSignTime = (string)(time() - 60) . ';' . (string)(time() + 3600);
+            $qKeyTime = $qSignTime;
+            $qHeaderList = strtolower(implode(';', $this->getObjectKeys($headers)));
+            $qUrlParamList = strtolower(implode(';', $this->getObjectKeys($queryParams)));
+            // 签名算法说明文档：https://www.qcloud.com/document/product/436/7778
+            // 步骤一：计算 SignKey
+            $signKey = hash_hmac("sha1", $qKeyTime, $SecretKey);
+            // 步骤二：构成 FormatString
+            $formatString = implode("\n", array(strtolower($method), $filename, $this->obj2str($queryParams), $this->obj2str($headers), ''));
+            // 步骤三：计算 StringToSign
+            $stringToSign = implode("\n", array('sha1', $qSignTime, sha1($formatString), ''));
+            // 步骤四：计算 Signature
+            $qSignature = hash_hmac('sha1', $stringToSign, $signKey);
+            // 步骤五：构造 Authorization
+            $authorization = implode('&', array(
+                'q-sign-algorithm=' . $qSignAlgorithm,
+                'q-ak=' . $qAk,
+                'q-sign-time=' . $qSignTime,
+                'q-key-time=' . $qKeyTime,
+                'q-header-list=' . $qHeaderList,
+                'q-url-param-list=' . $qUrlParamList,
+                'q-signature=' . $qSignature
+            ));
+            return $authorization;
+        }
+        // 工具方法
+        public function getObjectKeys($obj)
+        {
+            $list = array_keys($obj);
+            sort($list);
+            return $list;
+        }
+        public function obj2str($obj)
+        {
+            $list = array();
+            $keyList = $this->getObjectKeys($obj);
+            $len = count($keyList);
+            for ($i = 0; $i < $len; $i++) {
+                $key = $keyList[$i];
+                $val = isset($obj[$key]) ? $obj[$key] : '';
+                $key = strtolower($key);
+                $list[] = rawurlencode($key) . '=' . rawurlencode($val);
+            }
+            return implode('&', $list);
+        }
         public  function getapidatas($bucket,$region,$url, $params, $authheader, $xmldata = '')
         {
             $arr_header[] = "Content-Type:application/xml";
@@ -188,13 +248,15 @@
             $secret_id = $this->qcos_config['credentials']['secretId'];
             $secret_key = $this->qcos_config['credentials']['secretKey'];
             $aclpermcache = $this->bucket.'_readPerm';
-            if($readperm = memory('get',$aclpermcache)){
-                    return $readperm;
+
+            if ($d = C::t('cache')->fetch_cachedata_by_cachename($aclpermcache,3600)) {
+                    return $d;
             }else {
                 $StartTimestamp = time();
                 $EndTimestamp = $StartTimestamp + 3600;
                 //请求地址
                 $queryurl = $this->bucket . '.cos.' . $this->qcos_config['region'] . '.myqcloud.com/';
+
                 $params = ['acl'];
                 //请求头
                 $headers = [];
@@ -205,7 +267,8 @@
                 foreach($result as $v){
                     if($v['Permission'] == 'READ') $readperm= 2;
                 }
-                memory('set',$aclpermcache,$readperm,3600);
+                $setarr = ['cachekey' => $aclpermcache, 'cachevalue' => $readperm, 'dateline' => time()];
+                C::t('cache')->insert_cachedata_by_cachename($setarr,3600);
                 return $readperm;
             }
         }
@@ -341,14 +404,15 @@
                 dsetcookie('_refer', rawurlencode(BASESCRIPT . '?mod=connect&op=oauth&bz=qcos'));
 
             }
+
             if (submitcheck('addspace')) {
                 $access_id = trim($_GET['access_id']);
                 $access_key = trim($_GET['access_key']);
                 $region = trim($_GET['region']);
                 $bucket = trim($_GET['bucket']);
                 $host = trim($_GET['host']);
-                $appid = trim($_GET['extra']);
-                $cloudname = trim($_GET['coludname']);
+                $extra = $_GET['extra'];
+                $cloudname = $_GET['coludname'] ? trim($_GET['coludname']):$bucket;
                 $urlarr = parse_url($host);
                 if (!$access_id || !$access_key) {
                    exit(json_encode(array('success'=>false,'msg'=>lang('input_QCOS_acc_sec') . 'Access Key ID and Access Key Secret')));
@@ -372,6 +436,13 @@
                 $cosClient = new Qcloud\Cos\Client($qcos_config);
                 $type = 'QCOS';
                 $uid = defined('IN_ADMIN') ? 0 : $_G['uid'];
+                //特殊参数
+                $specilext = [];
+                if(isset($_GET['sign'])){
+                    $specilext['sign'] = trim($_GET['sign']);
+                    $specilext['category'] = isset($_GET['category']) ? trim($_GET['category']):'A';
+                }
+                $specialext = serialize($specilext);
                 $setarr = array(
                     'cloudname'=>$cloudname,
                     'uid' => $uid,
@@ -382,7 +453,8 @@
                     'dateline' => TIMESTAMP,
                     'hostname' => $qcos_config['schema'] . ':' . $region,
                     'host'=>$host,
-                    'extra'=>$appid
+                    'extra'=>serialize($extra),
+                    'specialext'=>$specialext
                 );
                 if ($id = DB::result_first("select id from " . DB::table(self::T) . " where uid='{$uid}' and access_id='{$access_id}' and bucket='{$bucket}'")) {
                     DB::update(self::T, $setarr, "id ='{$id}'");
@@ -397,7 +469,7 @@
         public function checkqcos($config,$bucket){
             //实例化类
             $qcosclient = new Qcloud\Cos\Client($config);
-            $foldername = 'tmppichomethumb/';
+            $foldername = 'pichomethumb/';
             //创建目录
             try{
                 $return =  $qcosclient->putObject(array('Bucket'=>$bucket,'Key'=>$foldername,'Body'=>''));;
@@ -407,7 +479,17 @@
             if(isset($return['error'])){
                 return array( 'error' =>$return['error']);
             }
-           
+            //创建临时上传目录
+            $datafoldername = 'tmpupload/';
+            //创建目录
+            try{
+                $return =  $qcosclient->putObject(array('Bucket'=>$bucket,'Key'=>$datafoldername,'Body'=>''));;
+            } catch (Exception $e) {
+                return array('error' => $e->getMessage());
+            }
+            if(isset($return['error'])){
+                return array( 'error' =>$return['error']);
+            }
             //创建测试文件
             $filename = $foldername.'/testapi.txt';
             $filecontent = '123';
@@ -448,12 +530,21 @@
         }
         
         //获取文件地址
-        public function getFileUri($path)
+        public function getStream($path)
         {
             $arr = self::parsePath($path);
             $qcos = self::init($path, 1);
             if (is_array($qcos) && $qcos['error']) return $qcos;
-            return $qcos->getObjectUrl($arr['bucket'], $arr['object'], '+120 minutes');
+            $readperm = self::getAclPerm();
+            $hostdata = explode(':',$arr['hostname']);
+
+            $bucketurl = $hostdata[0].'://'.$arr['bucket'].'.cos.'.$hostdata[1].'.myqcloud.com';
+            if($readperm == 2  ){
+                return $d = ($this->host) ? $this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
+            }else{
+                return $qcos->getObjectUrl($arr['bucket'], $arr['object'], '+120 minutes');
+            }
+
             
         }
         public function uploadByStream($path,$filename,$file,$pfid,$relativePath='',$nohook=0){
@@ -549,7 +640,7 @@
             }
             
         }
-        public function parseparams($signedUrl, $width, $height, $thumbtype)
+        public function parseparams($signedUrl, $width, $height, $thumbtype,$format='webp')
         {
             //横图按高度给比例值 竖图按宽度比例给值
             $imginfo = @getimagesize($signedUrl);
@@ -558,6 +649,7 @@
             if ($imgwidth > 9999 || $imgheight > 9999) {
                 return false;
             }
+
             //如果缩略图宽高大于等于原图宽高则不生成缩略图
             if($width>= $imgwidth || $height>= $imgheight){
                 return '';
@@ -576,10 +668,10 @@
                 }*/
                 if ($oscale > $nscale) {
                     //按高度度等比剪裁
-                    return 'imageMogr2/thumbnail/x' . $height . '/|imageMogr2/gravity/center/crop/' . $width . 'x' . $height . '/interlace/0';
+                    return 'imageMogr2/format/'.$format.'/thumbnail/x' . $height . '/|imageMogr2/gravity/center/crop/' . $width . 'x' . $height . '/interlace/0';
                 } else {
                     //按宽度等比剪裁
-                    return 'imageMogr2/thumbnail/' . $width . 'x' . '/|imageMogr2/gravity/north/crop/' . $width . 'x' . $height . '/interlace/0';
+                    return 'imageMogr2/format/'.$format.'thumbnail/' . $width . 'x' . '/|imageMogr2/gravity/north/crop/' . $width . 'x' . $height . '/interlace/0';
                 }
             } else {
                 if ($oscale > $nscale) {
@@ -591,13 +683,32 @@
                 }
                 if ($oscale > $nscale) {
                     //按宽度等比缩放
-                    return 'imageMogr2/thumbnail/' . $width . 'x' . '/interlace/0 ';
+                    return 'imageMogr2/format/'.$format.'/thumbnail/' . $width . 'x' . '/interlace/0 ';
                 } else {
                     //按高度度等比缩放
-                    return 'imageMogr2/thumbnail/x' . $height . '/interlace/0 ';
+                    return 'imageMogr2/format/'.$format.'/thumbnail/x' . $height . '/interlace/0 ';
                 }
             }
             
+        }
+        //获取缩略图地址
+        public function getwaterimg($path){
+            $arr = self::parsePath($path);
+            $qcos = self::init($path, 1);
+            if (is_array($qcos) && $qcos['error']) return $qcos;
+            $readperm = self::getAclPerm();
+            $hostdata = explode(':',$arr['hostname']);
+
+            $bucketurl = $hostdata[0].'://'.$arr['bucket'].'.cos.'.$hostdata[1].'.myqcloud.com';
+            if($readperm == 2  ){
+                return $d = ($this->host) ? $this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
+            }else{
+                $auth = $this->getAuthorization($this->qcos_config['credentials']['secretId'], $this->qcos_config['credentials']['secretKey'],$arr['object']);
+                $d = ($this->host) ? $this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
+                return $d.'?sign='.urlencode($auth);
+
+            }
+
         }
         public function parsewatermarkparams($signedUrl,$extraparams,$width,$height){
             global  $_G;
@@ -625,14 +736,15 @@
                     $height = $height;
                     $width = $width*$oscale;
                 }
-            
             if (!($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position'])) {
                 return '';
             }
+
             if(($_G['setting']['watermarkminwidth'] && $width <= $_G['setting']['watermarkminwidth'])
                 || ($_G['setting']['watermarkminheight'] && $height <= $_G['setting']['watermarkminheight'])){
                 return '';
             }
+
             $watermarktype = ($extraparams['watermarktype']) ? $extraparams['watermarktype']:$_G['setting']['watermarktype'];
             $watermarktext = ($extraparams['watermarktext']) ? $extraparams['watermarktext']:$_G['setting']['watermarktext'];
             $gravity = 'center';
@@ -679,7 +791,11 @@
             $dx = $watermarktext['skewx']? $watermarktext['skewx']:0;
             $dy = $watermarktext['skewy'] ? $watermarktext['skewy']:0 ;
             if($watermarktype != 'text'){
-                $imgurl = base64_encode(\IO::getStream($_G['setting']['qcoswaterimg']));
+               // echo \IO::getStream($extraparams['waterimg']);die;
+                $imgurl = IO::getwaterimg($extraparams['waterimg']);
+                $imgurl = str_replace('https','http',$imgurl);
+                $imgurl = base64_encode($imgurl);
+                //$imgurl = base64_encode('http://pichome2-1300250401.cos.ap-beijing.myqcloud.com/static/waterimg/water.png');
                 $imgurl = str_replace(array('+','/'),array('-','_'),$imgurl);
                 return 'watermark/1/image/'.$imgurl.'/gravity/'.$gravity.'/dx/'.$dx.'/dy/'.$dy;
             }else{
@@ -726,44 +842,77 @@
             return $hexColor;
         }
 
-        public function createThumbByOriginal($path, $data,$width = 0, $height = 0, $thumbtype = 1, $original = 0, $tmpfile=0,$extraparams = array(),$filesize=0)
+        public function createThumbByOriginal($path, $data,$width = 0, $height = 0, $thumbtype = 1, $original = 0, $extraparams = array(),$filesize=0)
         {
-           
             global $_G;
+
             $filedirpathinfo = pathinfo($path);
             $filedirextensionarr = explode('?', $filedirpathinfo['extension']);
             $filedirextension = strtolower($filedirextensionarr[0]);
             $patharr = explode(':',$path);
-            $did = $patharr[1];
-            $connectdata = C::t('connect_storage')->fetch($did);
+            //print_r($patharr);die;
+           // $did = $patharr[1];
+            //$connectdata = C::t('connect_storage')->fetch($did);
+            $arr = self::parsePath($path);
+            $cachename = 'PICHOMETHUMBSTATUS';
+
+            $thumbstatus = C::t('cache')->fetch_cachedata_by_cachename($cachename);
+
+            if (!$thumbstatus) {
+                $thunbdata = [];
+                foreach(DB::fetch_all("select id,bz,mediastatus from %t where 1",array('connect_storage')) as $v){
+                    if($v['bz'] == 'dzz'){
+                        $key  = $v['bz'].'::';
+                    }else{
+                        $key = $v['bz'].':'.$v['id'].':';
+                    }
+                    $thunbdata[$key] = intval($v['mediastatus']);
+                }
+                $setarr = ['cachekey' => $cachename, 'cachevalue' => serialize($thunbdata), 'dateline' => time()];
+                C::t('cache')->insert_cachedata_by_cachename($setarr);
+            } else {
+                $thunbdata = $thumbstatus;
+            }
+            $cbz = $patharr[0].':'.$patharr[1].':';
+            if(isset($thunbdata[$cbz])){
+                $imgstate = $thunbdata[$cbz];
+            }
+
             //如果文件大小超过32M,尝试使用本地缩略图转换处理
-            if(!$connectdata['imagestatus'] || $filesize > 1024*1024*32){
-               //$url =  io_dzz::createThumbByOriginal($path, $width, $height ,$thumbtype, $original , $extraparams,$filesize);
-                return false;
+            if(!$imgstate || $filesize > 1024*1024*32){
+                return io_dzz::createThumbByOriginal($path, $data,$width, $height ,$thumbtype, $original , $extraparams,$filesize);
             }
             else{
                 $qcosimageexts = getglobal('config/qcosimage') ? explode(',',getglobal('config/qcosimage')):array('jpeg','jpg', 'png', 'gif', 'webp','bmp');
                 if(!in_array($filedirextension,$qcosimageexts)){
                     return false;
                 }
+                if($filedirextension == 'gif'){
+                    $thumbext = 'gif';
+                }else{
+                    $thumbext = 'webp';
+                }
                 $signedUrl = $this->getStream($path);
                 $params = '';
                 if(!$original){
-                    $params = $this->parseparams($signedUrl, $width, $height, $thumbtype);
+                    $params = $this->parseparams($signedUrl, $width, $height, $thumbtype,$thumbext);
                 }
                 $waterparams = '';
+                if($extraparams['watermarkstatus'] && !$extraparams['watermarktext']){
+                    //获取水印图片地址
+                    $extraparams['waterimg'] = $arr['bz'].'static/waterimg/water.png';
+                }
                 //水印参数
                 $waterparams = $this->parsewatermarkparams($signedUrl,$extraparams,$width, $height);
-    
-                if(!$params && !$waterparams){
-                    return $path;
+                if($params || $waterparams){
+                    $hassign = strpos($signedUrl,'?') === false ? false:true;
+                    $url = $signedUrl.($hassign ? '&':'?').$params.($waterparams ? ($params ? '|'.$waterparams:$waterparams):'');
                 }else{
-                    $signedUrl = explode('?',$signedUrl);
-                    $url = $signedUrl[0].'?'.($params ? $params:'').($waterparams ? '|'.$waterparams.'&':'&').$signedUrl[1];
+                    $url = $signedUrl;
                 }
             }
             if(!$url) return false;
-            $arr = self::parsePath($path);
+
             $extraflag = '';
             if ($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position']) {
                 $extraflag .= '_w';
@@ -774,22 +923,23 @@
             if ($extraparams['watermarktype']['watermarktext']) {
                 $extraflag .= '_' . $extraparams['watermarktext'];
             }
-    
-            $cachepath = str_replace('//', '/', str_replace(':', '/', $arr['object']));
-    
-            $cachethumbpath = 'tmppichomethumb/'.$data['appid'].'/'.md5($path.$data['thumbsign']). '.jpg';
-            $cloudpath = $arr['bz'] . '/' .$cachethumbpath;
-            if(!$tmpfile) {
-                $return = $this->moveThumbFile($cloudpath,$url);
-                if(isset($return['error'])){
-                    return false;
-                }else{
-                    return $cloudpath;
-                }
+            //如果是生成临时图
+            if($extraparams['istmp']){
+                return $url;
             }
-            else return $url;
+            $thumbpath = self::getthumbpath('pichomethumb');
 
-
+            if($data['aid'])$thumbname = md5($data['aid'].$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
+            else $thumbname = md5($data['path'].$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
+            $thumbpath = $thumbpath.$thumbname;
+            $defaultspace = $_G['setting']['defaultspacesetting'];
+            $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$thumbpath;
+            $return = IO::moveThumbFile($cloudpath,$url);
+            if(isset($return['error'])){
+                return false;
+            }else{
+                return $thumbpath;
+            }
 
         }
 
@@ -802,6 +952,7 @@
 
                 $object = ($isdir &&  substr($arr['object'], -1) != '/') ? $arr['object'].'/':$arr['object'];
                 $result = $qcos->doesObjectExist($arr['bucket'],$object);
+
                 if(!$result){
                     if($isdir){
                         try{
@@ -812,12 +963,13 @@
                                     'Prefix' => $object,
                                     'MaxKeys' => 1]
                             );
+                            //runlog('aaareturn',print_r($result,true));
                         }catch (Exception $e){
                             return false;
                         }
-                        if($result['Contents']){
+                        //if($result['CommonPrefixes']){
                             return true;
-                        }
+                       // }
                     }
                     return false;
                 }
@@ -826,15 +978,48 @@
             }
             return true;
         }
-        
+    public function  generate_url($path){
+        $arr = self::parsePath($path);
+       if($this->host){
+           if(isset($arr['extra']['sign'])){
+               $uri = '/'.$arr['object'];
+               $sign = $arr['extra']['sign'];
+               $category = $arr['extra']['category'];
+               $time = time();
+               $rand = random(6);
+               if($category == 'A'){
+                   $md5hash = md5($uri.'-'.$time.'-'.$rand.'-0-'.$sign);
+                   $url =$this->host.$uri.'?sign='.$time.'-'.$rand.'-0-'.$md5hash;
+               }elseif($category == 'B'){
+                   $md5hash = md5($sign.$time.$uri);
+                   $url =$this->host.'/'.$time.'/'.$md5hash.$uri;
+               }elseif($category == 'C'){
+                   $time = dechex($time);
+                   $md5hash = md5($sign.$path.$time);
+                   $url =$this->host.'/'.$md5hash.'/'.$time.$uri;
+               }elseif($category == 'D'){
+                   $md5hash = md5($sign.$uri.$time);
+                   $url =$this->host.$uri.'?sign='.$md5hash.'&t='.$time;
+               }
+           }else{
+               $url = $this->host .'/'. $arr['object'];
+           }
+       }else{
+           $qcos = self::init($path, 1);
+           $url = $qcos->getObjectUrl($arr['bucket'], $arr['object'], '+120 minutes');
+       }
+
+        return $url;
+    }
         //获取文件流；
         //$path: 路径
-        function getStream($path,$fileexists = false)
+        function getFileUri($path,$fileexists = false)
         {
+
             $arr = self::parsePath($path);
             $qcos = self::init($path, 1);
             if (is_array($qcos) && $qcos['error']) return array('error'=>$qcos);
-            if($fileexists){
+           /* if($fileexists){
                 try{
                     $result = $qcos->doesObjectExist($arr['bucket'],$arr['object']);
                     if(!$result){
@@ -843,15 +1028,22 @@
                 }catch (Exception $e){
                     return array('error'=>$e->getMessage());
                 }
-            }
-            
+            }*/
+
             $readperm = self::getAclPerm();
 
-            if($readperm == 2){
-                $d = $this->host .'/'. $arr['object'];
+
+            $hostdata = explode(':',$arr['hostname']);
+            $bucketurl = $hostdata[0].'://'.$arr['bucket'].'.cos.'.$hostdata[1].'.myqcloud.com';
+            if($readperm == 2  ){
+                $d = ($this->host) ? $this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
             }else{
+
                 $d = $qcos->getObjectUrl($arr['bucket'], $arr['object'], '+120 minutes');
+                if($this->host) $d = str_replace($bucketurl,$this->host,$d);
             }
+
+
             return $d;
         }
         
@@ -860,11 +1052,13 @@
             $path = str_replace(BS,'/',$path);
             $arr = explode(':', $path);
             $bz = $arr[0] . ':' . $arr[1] . ':';
-            $arr1 = explode('/', $arr[2]);
-            $bucket = DB::result_first("select bucket from %t where id = %d",array('connect_storage',$arr[1]));
-            unset($arr1[0]);
-            $object = implode('/', $arr1);
-            return array('bucket' => $bucket, 'object' => $object, 'bz' => $bz);
+            //$arr1 = explode('/', $arr[2]);
+            $connect = DB::fetch_first("select * from %t where id = %d",array('connect_storage',$arr[1]));
+            $bucket = $connect['bucket'];
+            $hostname = $connect['hostname'];
+           // unset($arr1[0]);
+            $object = $arr[2];
+            return array('bucket' => $bucket, 'object' => $object, 'bz' => $bz,'hostname'=>$hostname,'extra'=>unserialize($connect['specialext']));
         }
         //重写文件内容
         //@param number $path  文件的路径
@@ -947,13 +1141,17 @@
                     'Marker' => ($nextmarker) ? $nextmarker:$arr['object'],
                     'MaxKeys' => $limit,
                 );
+
+                if($arr['object'] == '/') $arr['object'] = '';
                 if($arr['object']) $querydata['Prefix'] =  $arr['object'].'/';
+                //else $querydata['Prefix'] =  '/';
                 $data = $qcos->listObjects($querydata);
+
             } catch (ErrorException $e) {
                 return array('error' => $e->getMessage());
             }
             foreach ($data['CommonPrefixes'] as $v) {
-                if($v['Prefix'] != 'tmppichomethumb/'){
+                if($v['Prefix'] != 'dzz/' && $v['Prefix'] != 'static/' && $v['Prefix'] != 'pichomethumb/' && $v['Prefix'] != 'tmpupload/'){
                     $folders[] = $v['Prefix'];
                 }
 
@@ -992,6 +1190,7 @@
                     'Marker' => ($nextmarker) ? $nextmarker:$arr['object'],
                     'MaxKeys' =>  $limit,
                 );
+
                 if($arr['object']) $querydata['Prefix'] =  $arr['object'].'/';
                 //if($nextmarker) print_r($querydata);die;
                 $data = $qcos->listObjects($querydata);
@@ -1005,7 +1204,7 @@
                 }
             }
             foreach ($data['CommonPrefixes'] as $v) {
-                if($v['Prefix'] != 'tmppichomethumb/'){
+                if($v['Prefix'] != 'pichomethumb/'){
                     $folders[] = $v['Prefix'];
                 }
 
@@ -1020,30 +1219,34 @@
         }
 
         //获取图片信息
-      function getImagedatabyPath($path){
+    function getImagedatabyPath($path){
 
 
-              $ch = curl_init();
-              $url = $this->getStream($path);
-              $url .= '?imageInfo';
-              curl_setopt($ch, CURLOPT_URL, $url);
-              curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-              if (!empty($arr_header)) {
-                  curl_setopt($ch, CURLOPT_HTTPHEADER, $arr_header);
-              }
+        $ch = curl_init();
+        $url = $this->getStream($path);
+        if(strpos($url,'?') !== false){
+            $url .= '&imageInfo';
+        }else{
+            $url .= '?imageInfo';
+        }
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        if (!empty($arr_header)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $arr_header);
+        }
 
-              curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-              curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-              curl_setopt($ch, CURLOPT_REFERER, '');
-              curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-              curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-              $response = curl_exec($ch);
-              $data = json_decode($response,true);
-              curl_close($ch);
-              return $data;
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_REFERER, '');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        $response = curl_exec($ch);
+        $data = json_decode($response,true);
+        curl_close($ch);
+        return $data;
 
 
-      }
+    }
         
         /*
      *获取文件的meta数据
@@ -1287,7 +1490,7 @@
         function getFileContent($path)
         {
             $arr = self::parsePath($path);
-            $url = self::getFileUri($path);
+            $url = self::getStream($path);
             return file_get_contents($url);
         }
         
@@ -2033,6 +2236,7 @@
             $oss = self::init($path);
             $arr = self::parsePath($path);
             $brr = self::parsePath($filepath);
+
             if ($arr['bz'] == $brr['bz'] && $arr['bucket'] == $brr['bucket']) {
                 try {
                     $CopySource = $brr['bucket'] . '.cos.' . $this->qcos_config ['region'] . '.myqcloud.com/' . $brr['object'];
@@ -2042,9 +2246,11 @@
                 }
             } else {
                 $filepath = IO::getStream($filepath);
+
                 if (!$handle = fopen($filepath, 'rb')) {
                     return array('error' => lang('open_file_error'));
                 }
+
                 $hascachfile = 0;
                 //判断是否是文件,如果不是文件读取地址文件内容，写入缓存
                 if (!is_file($filepath)) {
@@ -2076,6 +2282,7 @@
                         if(!$source){
                             return array('error'=>'file is empty ');
                         }
+
                         $result = $oss->putObject(array(
                             'Bucket' => $arr['bucket'],
                             'Key' => $arr['object'],
@@ -2135,7 +2342,7 @@
                 
             } else {
                 try {
-                    $stream = IO::getstream($filepath);
+                    $stream = IO::getStream($filepath);
                     $result = $oss->putObject(array(
                         'Bucket' => $arr['bucket'],
                         'Key' => $arr['object'],
@@ -2155,7 +2362,7 @@
                 return array('error' => $e->getMessage());
             }
         }
-        public function getPath($ext, $dir = 'dzz')
+        public function getPath($ext='', $dir = 'dzz')
         {
             global $_G;
             if ($ext && in_array(trim($ext, '.'), $_G['setting']['unRunExts'])) {
@@ -2168,6 +2375,15 @@
             $target1 = $dir . '/' . $subdir . 'index.html';
             $target = $dir . '/' . $subdir;
             return ($ext) ? $target . date('His') . '' . strtolower(random(16))  .'.'.$ext:$target . date('His') . '' . strtolower(random(16));
+        }
+        public function getthumbpath($dir = 'dzz'){
+            $subdir = $subdir1 = $subdir2 = '';
+            $subdir1 = date('Ym');
+            $subdir2 = date('d');
+            $subdir = $subdir1 . '/' . $subdir2 . '/';
+           // $target1 = $dir . '/' . $subdir . 'index.html';
+            $target = $dir . '/' . $subdir;
+           return $target;
         }
         public function path_info($filepath)
         {
@@ -2184,19 +2400,34 @@
             global $_G;
             //获取上传的目标目录
             $pathinfo = $this->path_info($data['Key']);
-            $dirname = $pathinfo['dirname'];
-            $dirarr = explode('/', $dirname);
-            $pfid = $dirarr[1];
-            unset($dirarr[0]);
-            unset($dirarr[1]);
+            $relativepath = $data['dirname'] ? getstr($data['dirname']):'';
+            $pfid = $data['pfid'] ? trim($data['pfid']):'';
+            $level = 0;
+            /*if($pfid){
+                $folderdata = DB::result_first("select pathkey,level from %t where fid = %s",array('pichome_folder',$pfid));
+                $tfids = explode($data['appid'],$folderdata['pathkey']);
+                $level = $folderdata['level'];
+                $pfids = [];
+                foreach($tfids as $v){
+                    $pfids[] = $v.$data['appid'];
+                }
+                //获取所有上级目录
+                $ppath = '';
+                foreach(DB::fetch_all("select fname from %t where fid in(%n)",array('pichome_folder',$pfids)) as $v){
+                    $ppath .= '/'.$v;
+                }
+                $relativepath = str_replace($relativepath,'',$ppath);
+            }*/
+
             //如果有不存在的目录则创建之
-            $relativepath = !empty($dirarr) ? implode('/', $dirarr) : '';
             $datas = array();
-            $datas['pfid'] = intval($pfid);
+            $datas['pfid'] = trim($pfid);
             if ($relativepath) {
-                $datas = IO::createFolderByPath($relativepath, $pfid);
-                $pfid = $datas['pfid'];
+                $folderdata = C::t('pichome_folder')->createfolerbypath($data['appid'],$relativepath,$pfid);
+                $pfid = $folderdata['fid'];
+                $level = isset($folderdata['level']) ? $folderdata['level']:0;
             }
+
             if (!isset($data['md5'])) {
                 $file = self::getStream($path);
                 $data['md5'] = md5_file($file);
@@ -2210,76 +2441,42 @@
                 'attachment' =>$filepath,
                 'filetype' => $ext,
                 'filename' => $filename,
-                'remote' => $data['remoteid'],
+                'remote' => $data['did'],
                 'copys' => 0,
                 'md5' => $data['md5'],
                 'unrun' => 0,
                 'dateline' => $_G['timestamp'],
             );
-            //获取文件路由对应位置
-            $routeremoteid = C::t('local_router')->getRemoteId($attachment);
-            //如果路由位置和当前文件位置不同,则移动临时区文件到路由所指定位置
-            if($routeremoteid && $routeremoteid != $data['remoteid']){
-                $localdata  = C::t('local_storage')->fetch($routeremoteid);
-                $did = $localdata['did'];
-                $connectdata = C::t('connect_storage')->fetch($did);
-                $topath = $localdata['bz'].':'.$did.':'.$connectdata['bucket'].'/'.$filepath;
-                $arr = self::parsePath($path);
-                $attachment['attachment'] = $arr['object'];
-                //$attachment['attachment'] = $routeremoteid;
-                $movereturn = IO::MoveToSpace($topath,$attachment);
-         
-                //移除临时区文件
+            $topath = $data[ 'bz' ] . ':' . $data[ 'did' ] . ':' .$attachment['attachment'];
+
+            $arr = self::parsePath($path);
+            $oarr = self::parsePath($topath);
+            if ($path != $topath) {//如果文件位置不相同则执行移动
                 $oss = self::init($path);
-                if($movereturn && !$movereturn['error'] ){
-                    $attachment['attachment'] = $filepath;
-                    $attachment['remote'] = $routeremoteid;
-                    $attachment['aid'] = C::t('attachment')->insert($attachment, 1);
-                    try {
-                        $response = $oss->deleteObject(array('Bucket' => $arr['bucket'], 'Key' => $arr['object']));
-                    } catch (\Exception $e) {
-                        runlog('qcosupload',$connectdata['bucket'].'/'.$filepath.' delete tmp file failed');
-                        // return array('error' => $e->getMessage());
-                    }
-                }else{
-                    try {
-                        $response = $oss->deleteObject(array('Bucket' => $arr['bucket'], 'Key' => $arr['object']));
-                    } catch (\Exception $e) {
-                        runlog('qcosupload',' delete tmp file failed');
-                        // return array('error' => $e->getMessage());
-                    }
-                    //如果移动文件失败，返回错误
-                    return array('error' => $movereturn['error']);
+                if (is_array($oss) && $oss['error']) return $oss;
+                $filename = $this->get_basename($arr['object']);
+                //$CopySource = $this->qcos_config['schema'].'://'.$arr['bucket'] . '.cos.' . $this->qcos_config ['region'] . '.myqcloud.com/' . dirname($arr['object']).'/'.urlencode($filename);
+                $CopySource = $arr['bucket'] . '.cos.' . $this->qcos_config ['region'] . '.myqcloud.com/' . dirname($arr['object']).'/'.urlencode($filename);
+                try {
+                    $result = $oss->copyObject(array('Bucket' => $oarr['bucket'], 'Key' => $oarr['object'], 'CopySource' => $CopySource));
+                } catch (\Exception $e) {
+                    runlog('qcosupload',$CopySource.' move to folder failed');
+                    return array('error' => $e->getMessage());
+                }
+
+                try {
+                    $response = $oss->deleteObject(array('Bucket' => $arr['bucket'], 'Key' => $arr['object']));
+                } catch (\Exception $e) {
+                    runlog('qcosupload',$CopySource.' delete tmp file failed');
+                    return array('error' => $e->getMessage());
                 }
             }
-            else{
-                $attachment['aid'] = C::t('attachment')->insert($attachment, 1);
-    
-                $topath = $data['bz'] . ':' . $data['did'] . ':' . $data['Bucket'] . '/' . $attachment['attachment'];
-                $arr = self::parsePath($path);
-                $oarr = self::parsePath($topath);
-                if ($path != $topath) {
-                    $oss = self::init($path);
-                    if (is_array($oss) && $oss['error']) return $oss;
-                    $filename = $this->get_basename($arr['object']);
-                    $CopySource = $arr['bucket'] . '.cos.' . $this->qcos_config ['region'] . '.myqcloud.com/' . dirname($arr['object']).'/'.urlencode($filename);
-                    try {
-                        $result = $oss->copyObject(array('Bucket' => $oarr['bucket'], 'Key' => $oarr['object'], 'CopySource' => $CopySource));
-                    } catch (\Exception $e) {
-                        runlog('qcosupload',$CopySource.' move to folder failed');
-                        return array('error' => $e->getMessage());
-                    }
-        
-                    try {
-                        $response = $oss->deleteObject(array('Bucket' => $arr['bucket'], 'Key' => $arr['object']));
-                    } catch (\Exception $e) {
-                        runlog('qcosupload',$CopySource.' delete tmp file failed');
-                        return array('error' => $e->getMessage());
-                    }
-                }
-                //C::t('attachment')->addcopy_by_aid($attachment['aid']);
-            }
-            $datas['icoarr'][] = self::uploadToattachment($attachment, $pfid);
+            //获取文件路由对应位置
+               if($attachment['aid'] = C::t('attachment')->insert($attachment, 1)){
+
+                   $datas['icoarr'][] = self::uploadToattachment($attachment,$data['appid'],$pfid,$level);
+               }
+			  $datas['folder'] =C::t('pichome_folder')->fetch_allfolder_by_fid($pfid);
             return $datas;
         }
         //兼容linux下获取文件名
@@ -2292,253 +2489,80 @@
             
         }
         
-        public function uploadToattachment($attach, $fid,$nohook=0)
+        public function uploadToattachment($attach, $appid,$fid,$level,$nohook=0)
         {
-            global $_G, $documentexts, $space, $docexts;
-            if ( !perm_check::checkperm_Container($fid, 'upload')) {
-                return array('error' => lang('no_privilege'));
+            global $_G;
+            $bz = io_remote::getBzByRemoteid($attach['remote']);
+            $path = $bz.$attach['attachment'];
+            $imginfo = $this->getMeta($path,1);
+            $setarr = [
+                'lastdate' => TIMESTAMP * 1000,
+                'appid' => $appid,
+                'apptype' => 1,
+                'uid' => $_G['uid'],
+                'username' => $_G['username'],
+                'size' => $attach['filesize'],
+                'type' => getTypeByExt($attach['filetype']),
+                'ext' => $attach['filetype'],
+                'mtime' => TIMESTAMP * 1000,
+                'dateline' => TIMESTAMP * 1000,
+                'btime' => TIMESTAMP * 1000,
+                'width' => isset($imginfo['width']) ? $imginfo['width'] : 0,
+                'height' => isset($imginfo['height']) ? $imginfo['height'] : 0,
+                'lastdate' => TIMESTAMP,
+                'level' => $level ? $level : 0,
+                'name' => $attach['filename'],
+                'fids' => $fid
+            ];
+            if ($setarr['rid'] = C::t('pichome_resources')->insert_data($setarr)) {//插入主表
+                C::t('pichome_vapp')->addcopy_by_appid($appid);
+                C::t('attachment')->update($attach['aid'], array('copys' => $attach['copys'] + 1));//增加图片使用数
+                //属性表数据
+                $attrdata = [
+                    'rid' => $setarr['rid'],
+                    'appid' => $appid,
+                    'path' => $attach['aid'],
+                    'searchval' => $setarr['name']
+                ];
+                C::t('pichome_resources_attr')->insert($attrdata);
+                //目录数据
+                if($fid){
+                    $frsetarr = ['appid' => $appid, 'rid' => $setarr['rid'], 'fid' => $fid];
+                    C::t('pichome_folderresources')->insert($frsetarr);
+                }
+
+            }else{
+                return array('error'=>'upload failer');
             }
-            $gid = DB::result_first("select gid from %t where fid=%d", array('folder', $fid));
-            
-            $attach['filename'] = io_dzz::getFileName($attach['filename'], $fid);
-            
-            $path = C::t('resources_path')->fetch_pathby_pfid($fid);
-            
-            $imgexts = array('jpg', 'jpeg', 'gif', 'png', 'bmp');
-            //图片文件时
-            if (in_array(strtolower($attach['filetype']), $imgexts)) {
-                $icoarr = array(
-                    'uid' => $_G['uid'],
-                    'username' => $_G['username'],
-                    'name' => $attach['filename'],
-                    'dateline' => $_G['timestamp'],
-                    'pfid' => intval($fid),
-                    'type' => 'image',
-                    'flag' => '',
-                    'vid' => 0,
-                    'gid' => intval($gid),
-                    'ext' => $attach['filetype'],
-                    'size' => $attach['filesize']
-                );
-                if ($icoarr['rid'] = C::t('resources')->insert_data($icoarr)) {//插入主表
-                    $sourceattrdata = array(
-                        'postip' => $_G['clientip'],
-                        'title' => $attach['filename'],
-                        'aid' => $attach['aid']
-                    );
-                    
-                    if ($imagesize = getimagesize($_G['setting']['attachdir'] . $attach['attachment'])) {
-                        $sourceattrdata['width'] = $imagesize[0];
-                        $sourceattrdata['height'] = $imagesize[1];
-                    }
-                    if (C::t('resources_attr')->insert_attr($icoarr['rid'], $icoarr['vid'], $sourceattrdata)) {//插入属性表
-                        C::t('attachment')->update($attach['aid'], array('copys' => $attach['copys'] + 1));//增加图片使用数
-                        $icoarr = array_merge($attach, $icoarr, $sourceattrdata);
-                        //$icoarr['img'] = DZZSCRIPT . '?mod=io&op=thumbnail&size=small&path=' . dzzencode($icoarr['rid']);
-                        $icoarr['img'] =  geticonfromext($icoarr['ext'], $icoarr['type']);
-                        $icoarr['thumbstatus'] = 0;
-                        $icoarr['url'] =    DZZSCRIPT . '?mod=io&op=thumbnail&size=large&create=1&path=' . dzzencode('attach::' . $icoarr['aid']);;
-                        $icoarr['bz'] = '';
-                        $icoarr['rbz'] = io_remote::getBzByRemoteid($attach['remote']);
-                        $icoarr['relativepath'] = $path . $icoarr['name'];
-                        $icoarr['path'] = $icoarr['rid'];
-                        $icoarr['dpath'] = dzzencode($icoarr['rid']);
-                        $icoarr['apath'] = dzzencode('attach::' . $attach['rid']);
-                        $event = 'creat_file';
-                        $path = preg_replace('/dzz:(.+?):/', '', $path) ? preg_replace('/dzz:(.+?):/', '', $path) : '';
-                        $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($fid, $icoarr['gid']);
-                        $eventdata = array(
-                            'title' => $icoarr['name'],
-                            'aid' => $icoarr['aid'],
-                            'username' => $icoarr['username'],
-                            'uid' => $icoarr['uid'],
-                            'path' => $icoarr['path'],
-                            'position' => $path,
-                            'hash' => $hash
-                        );
-                        
-                        C::t('resources_event')->addevent_by_pfid($fid, $event, 'create', $eventdata, $icoarr['gid'], $icoarr['rid'], $icoarr['name']);
-                    } else {
-                        C::t('resources')->delete_by_rid($icoarr['rid']);
-                        return array('error' => lang('data_error'));
-                    }
-                }
-                
-            } elseif (in_array(strtoupper($attach['filetype']), $documentexts)) {//文档文件时
-                $icoarr = array(
-                    'uid' => $_G['uid'],
-                    'username' => $_G['username'],
-                    'name' => $attach['filename'],
-                    'type' => ($attach['filetype'] == 'dzzdoc') ? 'dzzdoc' : 'document',
-                    'dateline' => $_G['timestamp'],
-                    'pfid' => intval($fid),
-                    'flag' => '',
-                    'vid' => 0,
-                    'gid' => intval($gid),
-                    'ext' => $attach['filetype'],
-                    'size' => $attach['filesize']
-                );
-                if ($icoarr['rid'] = C::t('resources')->insert_data($icoarr)) {
-                    C::t('attachment')->update($attach['aid'], array('copys' => $attach['copys'] + 1));//增加文档使用数
-                    $sourcedata = array(
-                        'title' => $attach['filename'],
-                        'desc' => '',
-                        'aid' => $attach['aid'],
-                        'img' => geticonfromext($icoarr['ext'], $icoarr['type'])
-                    );
-                    
-                    if (C::t('resources_attr')->insert_attr($icoarr['rid'], $icoarr['vid'], $sourcedata)) {
-                        
-                        $icoarr = array_merge($attach, $sourcedata, $icoarr);
-                        $icoarr['img'] = geticonfromext($icoarr['ext'], $icoarr['type']);
-                        $icoarr['url'] = DZZSCRIPT . '?mod=io&op=getStream&path=' . dzzencode($icoarr['rid']);
-                        $icoarr['bz'] = '';
-                        $icoarr['rbz'] = io_remote::getBzByRemoteid($attach['remote']);;
-                        $icoarr['relativepath'] = $path . $icoarr['name'];
-                        $icoarr['path'] = $icoarr['rid'];
-                        $icoarr['dpath'] = dzzencode($icoarr['rid']);
-                        $icoarr['apath'] = dzzencode('attach::' . $attach['aid']);
-                        $event = 'creat_file';
-                        $path = preg_replace('/dzz:(.+?):/', '', $path) ? preg_replace('/dzz:(.+?):/', '', $path) : '';
-                        $hash = C::t('resources_event')->get_showtpl_hash_by_gpfid($fid, $icoarr['gid']);
-                        $eventdata = array(
-                            'title' => $icoarr['name'],
-                            'aid' => $icoarr['aid'],
-                            'username' => $icoarr['username'],
-                            'uid' => $icoarr['uid'],
-                            'path' => $icoarr['path'],
-                            'position' => $path,
-                            'hash' => $hash
-                        );
-                        C::t('resources_event')->addevent_by_pfid($fid, $event, 'create', $eventdata, $icoarr['gid'], $icoarr['rid'], $icoarr['name'], $icoarr['name']);
-                    } else {
-                        C::t('resources')->delete_by_rid($icoarr['rid']);
-                        return array('error' => lang('data_error'));
-                    }
-                }
-                
-            } else {//附件
-                $icoarr = array(
-                    'uid' => $_G['uid'],
-                    'username' => $_G['username'],
-                    'name' => $attach['filename'],
-                    'type' => 'attach',
-                    'flag' => '',
-                    'vid' => 0,
-                    'dateline' => $_G['timestamp'],
-                    'pfid' => intval($fid),
-                    'gid' => intval($gid),
-                    'ext' => $attach['filetype'],
-                    'size' => $attach['filesize']
-                
-                );
-                
-                if ($icoarr['rid'] = C::t('resources')->insert_data($icoarr)) {
-                    $sourcedata = array(
-                        'title' => $attach['filename'],
-                        'desc' => '',
-                        'aid' => $attach['aid'],
-                        'img' => geticonfromext($icoarr['ext'], $icoarr['type'])
-                    );
-                    C::t('attachment')->update($attach['aid'], array('copys' => $attach['copys'] + 1));
-                    if (C::t('resources_attr')->insert_attr($icoarr['rid'], $icoarr['vid'], $sourcedata)) {
-                        $icoarr = array_merge($attach, $sourcedata, $icoarr);
-                        $icoarr['img'] = geticonfromext($icoarr['ext'], $icoarr['type']);
-                        $icoarr['url'] = DZZSCRIPT . '?mod=io&op=getStream&path=' . dzzencode($icoarr['rid']);
-                        $icoarr['bz'] = '';
-                        $icoarr['rbz'] = io_remote::getBzByRemoteid($attach['remote']);
-                        $icoarr['relativepath'] = $path . $icoarr['name'];
-                        $icoarr['path'] = $icoarr['rid'];
-                        $icoarr['dpath'] = dzzencode($icoarr['rid']);
-                        $icoarr['apath'] = dzzencode('attach::' . $attach['aid']);
-                        $event = 'creat_file';
-                        $path = preg_replace('/dzz:(.+?):/', '', $path) ? preg_replace('/dzz:(.+?):/', '', $path) : '';
-                        $eventdata = array(
-                            'title' => $icoarr['name'],
-                            'aid' => $icoarr['aid'],
-                            'username' => $icoarr['username'],
-                            'uid' => $icoarr['uid'],
-                            'path' => $icoarr['path'],
-                            'position' => $path
-                        );
-                       
-                        C::t('resources_event')->addevent_by_pfid($fid, $event, 'create', $eventdata, $icoarr['gid'], $icoarr['rid']);
-                    } else {
-                        C::t('resources')->delete_by_rid($icoarr['rid']);
-                        return array('error' => lang('data_error'));
-                    }
-                }
-                
-            }
-            $videoexts = ['mp4','ts','flv','wmv','asf','rm','rmvb','mpg','mpeg','3gp','mov','webm','mkv','avi'];
-            if ($icoarr['rid']) {
-                //如果不调用挂载点，则此处暂不处理缩略图数据交由调用方法处处理，避免计划任务执行导致的缩略图生成不相符
-                if(!$nohook){
-                    $icoarr['thumbstatus'] = 0;
-                    $settingthumbsize = $_G['setting']['thumbsize'];
-                    //主动模式生成缩略图
-                    if (in_array($icoarr['ext'], $videoexts)) {
-                        $thumbrecodearr = [
-                            'aid' => $icoarr['aid'],
-                            'width' => $_G['setting']['thumbsize']['small']['width'],
-                            'height' => $_G['setting']['thumbsize']['small']['height'],
-                            'filesize' => $icoarr['filesize'],
-                            'waterstatus' => ($_G['setting']['IsWatermarkstatus']) ? $_G['setting']['watermarkstatus'] : 0,
-                            'thumbtype' => 1,
-                            'dateline' => TIMESTAMP
-                        ];
-                        //缩略图记录id
-                        $thumbrecorddata = C::t('thumb_record')->insert($thumbrecodearr, 1);
-                        //已存在缩略图不需要再生成
-                        if (isset($thumbrecorddata['thumbstatus']) && $thumbrecorddata['thumbstatus'] && $thumbrecorddata['path']) {
-                            $icoarr['img'] = IO::getFileUri($thumbrecorddata['path']);
-                            $icoarr['thumbstatus'] = 1;
-                        }
-                    }
-                    else {
-                        // if ($_G['setting']['thumb_active'] > 0) {
-                        try {
-                            unset($settingthumbsize['middle']);
-                            foreach ($settingthumbsize as $key => $value) {
-                                // IO::createThumb($icoarr['rid'], $key);
-                                //缩略图记录表
-                                $thumbrecodearr = [
-                                    'aid' => $icoarr['aid'],
-                                    'width' => $_G['setting']['thumbsize'][$key]['width'],
-                                    'height' => $_G['setting']['thumbsize'][$key]['height'],
-                                    'filesize' => $icoarr['filesize'],
-                                    'thumbtype' => 1,
-                                    'waterstatus' => ($_G['setting']['IsWatermarkstatus']) ? $_G['setting']['watermarkstatus'] : 0,
-                                    'dateline' => TIMESTAMP
-                                ];
-                                //缩略图记录id
-                                $thumbrecorddata = C::t('thumb_record')->insert($thumbrecodearr, 1);
-                                //已存在缩略图不需要再生成
-                                if (isset($thumbrecorddata['thumbstatus']) && $thumbrecorddata['thumbstatus'] && $thumbrecorddata['path']) {
-                                    if ($key == 'small') {
-                                        $icoarr['img'] = IO::getStream($thumbrecorddata['path']);
-                                        $icoarr['thumbstatus'] = 1;
-                                    }
-                                    if ($key == 'large') $icoarr['url'] = IO::getStream($thumbrecorddata['path']);
-                                }
-                            }
-                        } catch (Exception $e) {
-                        }
-                        //}
-                    }
-                }
-    
-    
-                if ($icoarr['size']) SpaceSize($icoarr['size'], $gid, true);
-                $icoarr['fsize'] = formatsize($icoarr['size']);
-                $icoarr['ftype'] = getFileTypeName($icoarr['type'], $icoarr['ext']);
-                $icoarr['fdateline'] = dgmdate($icoarr['dateline']);
-                $icoarr['sperm'] = perm_FileSPerm::typePower($icoarr['type'], $icoarr['ext']);
-                return $icoarr;
+
+            if ($setarr['rid']) {
+                C::t('pichome_vapp')->update($appid,['dateline'=>TIMESTAMP]);
+                $setarr['fsize'] = formatsize($setarr['size']);
+                $setarr['ftype'] = getFileTypeName($setarr['type'], $setarr['ext']);
+                $setarr['fdateline'] = dgmdate($setarr['dateline']/1000);
+               /* $thumbparams = ['rid' => $setarr['rid'], 'hash' => VERHASH, 'download' => 1,
+                    'hasthumb' => 0, 'lastdate' => $setarr['lastdate']];
+                if(in_array($setarr['ext'],explode(',',getglobal('config/pichomecommimageext')))){
+                    //缩略图地址
+                    $setarr['icondata'] =  getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($thumbparams, 0, '');
+
+                }else{
+                    $setarr['icondata'] = geticonfromext($setarr['ext']);
+                }*/
+                $setarr['icondata'] = false;
+                $setarr['width'] = ($setarr['width']) ? intval($setarr['width']):900;
+                $setarr['height'] = ($setarr['height']) ? intval($setarr['height']):900;
+                $setarr['realpath'] = IO::getStream('attach::'.$attach['aid']);
+                $setarr['path'] = $path;
+                $setarr['path'] = dzzencode($setarr['rid'], '', 0, 0);
+                $setarr['aid'] = $attach['aid'];
+
+                return $setarr;
             } else {
                 return array('error' => lang('data_error'));
             }
-            
+
+
         }
         public function getThumburl($path,$size,$thumbtype=1,$original = 0,$extparams=array(),$width = 0,$height = 0){
             global $_G;

@@ -1,0 +1,106 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="{MOD_PATH}/template/storehouse/pc/assets/css/library.css?{VERHASH}">
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/OrguserSelect/index.js?{VERHASH}"></script>
+
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/ad_pic_header}-->
+		<el-main style="overflow: hidden;position: relative;padding: 0;">
+			<el-scrollbar>
+				<div class="page-container">
+					<!--{template storehouse/pc/components/library/main}-->
+				</div>
+			</el-scrollbar>
+		</el-main>
+	</el-container>
+	<!-- 创建文件 -->
+	<!--{template storehouse/pc/components/library/created}-->
+	<!-- 文件密级 -->
+	<!--{template storehouse/pc/components/library/grade}-->
+	<!-- 设置 -->
+	<!--{template storehouse/pc/components/library/right}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch,defineAsyncComponent, onBeforeUpdate } = Vue;
+	const dzzoffice = Vue.createApp({
+		data(){
+			return {
+				DocumentThemeColor:''
+			}
+		},
+		
+		created(){
+			this.HeaderMenu.active = 'library'
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			this.TableGetData();
+		},
+		mixins:[HeaderMixin,CreatedMixin,MainMixin,GradeMixin,RightMixin],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		
+		methods:{
+			TableAdd(type){
+				this.Catalogue.type = type;
+				this.Catalogue.dialogtype = 'add';
+				this.Catalogue.dialogVisible = true;
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			}
+		},
+		components: {
+			'orguser-select':orguserselect
+		},
+		mounted(){
+
+		}
+	});
+	dzzoffice.component('comavatar',comavatar);
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

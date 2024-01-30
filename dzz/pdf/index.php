@@ -20,7 +20,7 @@ if($_GET['src']){
 
     $resourcesdata = C::t('pichome_resources')->fetch($rid);
     $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    $downloadperm =(getglobal('adminid') == 1) ? 1:0;
+    $downloadperm = C::t('pichome_vapp')->getpermbypermdata($appdata['download'],'download');
     if($downloadperm){
         $perm_download=1;
         $perm_print=1;

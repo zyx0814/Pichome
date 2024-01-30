@@ -1,0 +1,139 @@
+<div class="h-left" style="justify-content: start;width: 252px;padding-right: 20px;">
+    <template v-if="ispc">
+        {{DocumentVapp.appname}}
+    </template>
+    <template v-else>
+        <a href="{$_G[siteurl]}">
+            <el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?VjP" fit="contain" style="margin-right: 12px;width: 40px;height: 40px;">
+                <template #error><div class="el-image__placeholder"></div></template>
+            </el-image>
+        </a>
+    </template>
+    
+</div>
+<div class="h-center">
+    <!-- <el-autocomplete
+        ref="autoCompleteRef"
+        class=" "
+        style="width: 360px;"
+        :class="{'show-popper':keywordpopper}"
+        prefix-icon="Search"
+        v-model="HeaderKeyword"
+        clearable
+        @select="handleSelect"
+        size="large"
+        :teleported="false"
+        hide-loading
+        :fetch-suggestions="keywordsuggestions"
+        popper-class="keyword-autocomplete"
+        @visible-change="handleHighlight">
+      </el-autocomplete> -->
+        <el-input
+			style="max-width: 300px;"
+			v-model="HeaderKeyword"
+			@input="HeaderKeywordInput"
+			@keydown.enter="HeaderKeywordInput"
+			clearable
+			prefix-icon="Search"
+        ></el-input>
+</div>
+<div class="h-right"> 
+    <!--{template libraryview/pc/components/index/rightBtn}-->
+    <comavatar
+        :level="parseInt($_G[pichomelevel])"
+        iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+        :adminid="parseInt($_G[adminid])"
+        PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+        :uid="parseInt($_G[uid])"
+        upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+        version="$_G[setting][version]"
+        formhash="{FORMHASH}">
+        <el-avatar size="40">
+            {eval echo avatar_block($_G[uid]);}
+        </el-avatar>
+    </comavatar>
+    
+</div>
+
+<script>
+    const HeaderMixin = {
+        data(){
+            return {
+                HeaderKeyword:'',
+                keywordpopper:false
+            }
+        },
+        watch:{
+
+        },
+        mixins:[HeaderRightBtnMixin],
+        methods:{
+            HeaderKeywordInput:debounce(function(val){
+				this.CommonGetImageData();
+			},500),
+            keywordsuggestions(value,cb){
+                var host = window.sessionStorage.getItem('HostKeyword');
+                var HeaderSearchList = [];
+				if(value){
+					if(host){
+						host = host.split(',');
+						var index = host.indexOf(value);
+						
+						if(index>-1){
+							host.splice(index,1);
+						}else{
+							if(host.length>9){
+								host.pop();
+							}
+						}
+						
+						for(var i in host){
+							if(host[i].indexOf(value)>-1){
+								HeaderSearchList.push({
+									value:host[i]
+								});
+							}
+						}
+						
+						host.unshift(value);
+						var newhost = host.join(',');
+						
+						if(host){
+							window.sessionStorage.setItem("HostKeyword",newhost);
+						}else{
+							window.sessionStorage.removeItem("HostKeyword");
+						}
+					}else{
+						window.sessionStorage.setItem("HostKeyword",value);
+					}
+					
+				}else{
+					if(host){
+						var HeaderSearchList = [];
+						var newhost = host.split(',');
+						for(var i in newhost){
+							HeaderSearchList.push({
+								value:newhost[i]
+							});
+						}
+					}
+				}
+                if(HeaderSearchList.length){
+                    this.keywordpopper = true;
+                }else{
+                    this.keywordpopper = false;
+                }
+                // console.log(HeaderSearchList);
+                cb(HeaderSearchList);
+            },
+            handleSelect(){
+                
+            },
+            handleHighlight(item){
+            }
+        },
+        mounted(){
+            const self = this;
+        }
+    }
+</script>

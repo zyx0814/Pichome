@@ -41,11 +41,14 @@ if(submitcheck('settingsubmit')){
 		include_once libfile('function/cache');
 		updatecache('setting');
 	}
-	writelog('otherlog', lang('Update_setting'));
-	showmessage('do_success', dreferer());
+	exit(json_encode(array('success'=>true)));
+	// writelog('otherlog', lang('Update_setting'));
+	// showmessage('do_success', dreferer());
 }
 else{
 	$systemlog_setting = ($_G["setting"]["systemlog_setting"]);
 	$navtitle=lang('systemlog_setting').' - '.lang('appname');
+	// print_r($systemlog_setting);
+	// die;
 	include template("admin");
 } 

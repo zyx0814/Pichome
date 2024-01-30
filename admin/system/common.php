@@ -137,7 +137,7 @@ if($operation == 'getApp'){//获取当前用户应用
 	$userData['language'] = $_G[language];
 	$userData['upgrade'] = $_G['setting']['upgrade'];
 	$userData['version'] = $_G['setting']['version'];
-	
+	$userData['PICHOME_LIENCE'] = defined('PICHOME_LIENCE');
 	// 获取顶部应用
 	if($userData['language'] == 'en-US'){
 		$navMenuNames = ['System setting','Cloud settings','Orguser','App','Statistics','System Tool'];

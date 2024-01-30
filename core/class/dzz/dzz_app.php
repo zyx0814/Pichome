@@ -4,7 +4,7 @@ if(!defined('IN_OAOOA')) {
 }
 class dzz_app extends dzz_base{
 
-
+    var $sessionlife = 60*30;
     var $mem = null;
 
     var $session = null;
@@ -474,7 +474,40 @@ class dzz_app extends dzz_base{
             }
         }
     }
+    private function check_session($user){
+        if(!$this->config['userlogin']['checksession']) return 3;
+        $cpaccess=0;
+        $session = C::t('admincp_session')->fetch($user['uid'], $user['groupid']);
+        if(empty($session)) {
+            $cpaccess = 1;
+        } elseif ($session && empty($session['uid'])) {
+            $cpaccess = 1;
+        } elseif ($this->config['userlogin']['checksession'] && ($session['dateline'] < (TIMESTAMP - $this->config['userlogin']['checksession']))) {
+            $cpaccess = 1;
+        } elseif ($this->config['userlogin']['checkip'] && ($session['ip'] != $this->var['clientip'])) {
+            $cpaccess = 1;
 
+        } elseif ($session['errorcount'] >= 0 && $session['errorcount'] <= 3) {
+            $cpaccess = 2;
+
+        } elseif ($session['errorcount'] == -1) {
+            $cpaccess = 3;
+        }
+        if($cpaccess == 1) {
+            C::t('admincp_session')->delete($user['uid'],$user['groupid'], $this->sessionlife);
+            C::t('admincp_session')->insert(array(
+                'uid' => $user['uid'],
+                'adminid' => $user['adminid'],
+                'panel' => $user['groupid'],
+                'ip' => $this->var['clientip'],
+                'dateline' => TIMESTAMP,
+                'errorcount' => 0,
+            ));
+        } elseif ($cpaccess == 3) {
+            C::t('admincp_session')->update($user['uid'], $user['groupid'], array('dateline' => TIMESTAMP, 'ip' => $this->var['clientip'], 'errorcount' => -1));
+        }
+        return $cpaccess;
+    }
     private function _init_user() {
         if($this->init_user) {
             if($auth = getglobal('auth', 'cookie')) {
@@ -488,7 +521,12 @@ class dzz_app extends dzz_base{
 
             if(!empty($user) && $user['password'] == $dzz_pw && ($user['status']<1 || $user['uid']==1)) {//加上判断用户是否被停用
 
-                $this->var['member'] = $user;
+                if($this->check_session($user)==3){
+                    $this->var['member'] = $user;
+                }else{
+                    $user = array();
+                    $this->_init_guest();
+                }
             } else {
                 $user = array();
                 $this->_init_guest();

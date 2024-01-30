@@ -20,9 +20,11 @@
             if ($id = DB::result_first("select id from %t where tid = %d and rid = %s", array($this->_table, $setarr['tid'],$setarr['rid']))) {
                 parent::update($id, $setarr);
             } else {
-               $id=parent::insert($setarr);
-                C::t('pichome_tag')->add_hots_by_tid($setarr['tid']);
-                C::t('pichome_vapp_tag')->add_hots_by_tid_appid($setarr['tid'],$setarr['appid']);
+               $id=parent::insert($setarr,1);
+                //C::t('pichome_tag')->add_hots_by_tid($setarr['tid']);
+                C::t('pichome_resources_tag')->add_hots_by_tid_appid($setarr['tid'],$setarr['appid']);
+                $indexarr = ['rid'=>$setarr['rid'],'tid'=>$setarr['tid'],'type'=>0];
+                Hook::listen('changefiletagafter',$indexarr);
             }
             return $id;
         }
@@ -39,16 +41,29 @@
             $ids = [];
             foreach(DB::fetch_all("select id from %t where rid = %s",array($this->_table,$rid)) as $v){
                 $ids[] = $v['id'];
+
             }
             return $ids;
         }
-        
+        public  function delete_by_rids_tids($rids,$tids){
+            if(!is_array($rids)) $rids = (array)$rids;
+            if(!is_array($tids)) $rids = (array)$tids;
+            foreach(DB::fetch_all("select id,tid,appid,rid from %t where rid in(%n) and tid in (%n)",array($this->_table,$rids,$tids)) as $v){
+                $dids[] = $v['id'];
+                C::t('pichome_resources_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
+                $indexarr = ['tid'=>$v['tid'],'rid'=>$v['rid'],'type'=>1];
+                Hook::listen('changefiletagafter',$indexarr);
+            }
+            return parent::delete($dids);
+        }
         //根据appid删除数据
         public function delete_by_appid($appid)
         {
             $dids = [];
-            foreach (DB::fetch_all("select id from %t where appid = %s", array($this->_table, $appid)) as $v) {
+            foreach (DB::fetch_all("select id,tid,appid from %t where appid = %s", array($this->_table, $appid)) as $v) {
                 $dids[] = $v['id'];
+               // C::t('pichome_tag')->delete_by_tid($v['tid']);
+                C::t('pichome_resources_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
             }
             return parent::delete($dids);
         }
@@ -58,8 +73,8 @@
             $delids = [];
             foreach (DB::fetch_all("select id,tid,appid from %t where rid in(%n)", array($this->_table, $rid)) as $v) {
                 $delids[] = $v['id'];
-                C::t('pichome_tag')->delete_by_tid($v['tid']);
-                C::t('pichome_vapp_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
+                //C::t('pichome_tag')->delete_by_tid($v['tid']);
+                C::t('pichome_resources_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
             }
             return parent::delete($delids);
         }
@@ -85,10 +100,25 @@
         public function delete_by_ridtid($rid,$tids){
             if(!is_array($tids)) $tids = (array) $tids;
             $ids = [];
-            foreach(DB::fetch_all("select id,tid from %t where rid = %s and tid in(%n)",array($this->_table,$rid,$tids)) as $v){
+            foreach(DB::fetch_all("select id,tid,appid from %t where rid = %s and tid in(%n)",array($this->_table,$rid,$tids)) as $v){
                 $ids[] = $v['id'];
                 C::t('pichome_tag')->delete_by_tid($v['tid']);
+                C::t('pichome_resources_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
             }
+            return parent::delete($ids);
+        }
+
+        public function delete_by_appid_tid($appid,$tids){
+            if(!is_array($tids)) $tids = (array) $tids;
+            $ids = [];
+            foreach(DB::fetch_all("select id,tid,rid from %t where appid = %s and tid in(%n)",array($this->_table,$appid,$tids)) as $v){
+                $ids[] = $v['id'];
+                $rids[] = $v['rid'];
+                C::t('pichome_tag')->delete_by_tid($v['tid']);
+                C::t('pichome_resources_tag')->delete_by_tid_appid($v['tid'],$v['appid']);
+            }
+            $solrdata = ['appid'=>$appid,'rids'=>$rids];
+            Hook::listen('updatedataafter',$solrdata);
             return parent::delete($ids);
         }
     }

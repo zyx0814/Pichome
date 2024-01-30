@@ -1,121 +1,165 @@
 <?php
+
 namespace dzz\onlyoffice_view\classes;
 
 use \core as C;
 use \DB as DB;
 use \IO as IO;
+
 require_once libfile('class/xml');
-class thumb{
+require_once(DZZ_ROOT . './dzz/onlyoffice_view/jwt/jwtmanager.php');
+
+class thumb
+{
     public $onlyofficethumbext = '';
     public $onlyDocumentUrl = '';
     public $onlyDocumentdocUrl = '';
+    public $onlyDocumentdocSecret = '';
 
-    public function run($meta){
-        if(strpos($meta['realpath'],':') === false){
+    public function run($meta)
+    {
+        global $_G;
+        if (strpos($meta['realpath'], ':') === false) {
             $bz = 'dzz';
-        }else{
+        } else {
             $patharr = explode(':', $meta['realpath']);
             $bz = $patharr[0];
             $did = $patharr[1];
 
         }
-        if(!is_numeric($did) || $did < 2){
+        if (!is_numeric($did) || $did < 2) {
             $bz = 'dzz';
         }
+        $app = C::t('app_market')->fetch_by_identifier('onlyoffice_view', 'dzz');
+        $onlyofficedata = unserialize($app['extra']);
 
-        if($bz != 'dzz') return '';
-        $onlyofficedata = C::t('setting')->fetch('onlyofficesetting',true);
-
-        $this->onlyDocumentUrl=$onlyofficedata['onlyofficeurl'];
-        $this->onlyDocumentdocUrl = $onlyofficedata['onlyofficedocurl'] ? $onlyofficedata['onlyofficedocurl']:getglobal('siteurl');
+        $this->onlyDocumentUrl = $onlyofficedata['DocumentUrl'];
+        $this->onlyDocumentdocSecret = $onlyofficedata['secret'];
+        $this->onlyDocumentdocUrl = $onlyofficedata['FileUrl'] ? $onlyofficedata['FileUrl'] : getglobal('siteurl');
         $onlyofficethumbext = getglobal('config/onlyofficeviewextlimit');
-        $this->onlyofficethumbext=explode(',',$onlyofficethumbext);
+        $this->onlyofficethumbext = explode(',', $onlyofficedata['exts']);
 
-        if(!in_array($meta['ext'],$this->onlyofficethumbext)){
+        if (!in_array($meta['ext'], $this->onlyofficethumbext)) {
             return '';
-        }else{
-            $meta['stream']=$this->onlyDocumentdocUrl . 'index.php?mod=io&op=getStream&hash='.VERHASH.'&path=' . dzzencode($meta['rid'].'_3', '', 0, 0);
-            if($url=$this->getThumb($meta,getglobal('config/pichomethumsmallwidth'),getglobal('config/pichomethumsmallheight'))){
-                if(is_file($url) && $info=getimagesize($url)){
-                    $attr=array('width'=>$info[0],'height'=>$info[1],'hasthumb'=>1);
-                    if($meta['rid']) C::t('pichome_resources')->update($meta['rid'],$attr);
-                    return array($url);
-                }
-            }
-        }
+        } else {
 
+            if($meta['aid']){
+                $attach = IO::getMeta('attach::'.$meta['aid']);
+            }else{
+                $attach = IO::getMeta($meta['rid']);
+            }
+            $attach['stream'] = IO::getFileUri($attach['path']);
+
+            if($meta['aid']) $attach['stream'] = $this->onlyDocumentdocUrl . 'index.php?mod=io&op=getStream&hash=' . VERHASH . '&path=' . dzzencode('attach::'.$meta['aid']);
+            else $attach['stream'] = $this->onlyDocumentdocUrl . 'index.php?mod=io&op=getStream&hash=' . VERHASH . '&path=' . dzzencode($attach['rid'] . '_3', '', 0, 0);
+
+            if ($url = $this->getThumb($attach)) {
+
+                return array($url);
+            }
+
+        }
     }
-    function textEncode($data){
-        $mime=\dzz_mime::get_type($data['ext']);
-        list($pre)=explode('/',$mime);
-        if($pre!='text') return $data['stream'];
+
+    function textEncode($data)
+    {
+        $mime = \dzz_mime::get_type($data['ext']);
+        list($pre) = explode('/', $mime);
+        if ($pre != 'text') return $data['stream'];
 
         $str = file_get_contents($data['stream']);
         require_once DZZ_ROOT . './dzz/class/class_encode.php';
         $p = new \Encode_Core();
-        $code = $p -> get_encoding($str);
-        if ($code!=CHARSET) $str = diconv($str, $code, CHARSET);
-        $cachekey='cache/'.$data['appid'].$data['rid'].'.'.$data['ext'];
-        $file=getglobal('setting/attachdir').$cachekey;
-        if(file_put_contents($file,$data['stream'])){
-            $data['stream']=getglobal('localurl').getglobal('setting/attachurl').$cachekey;
+        $code = $p->get_encoding($str);
+        if ($code != CHARSET) $str = diconv($str, $code, CHARSET);
+        if($data['aid'])$cachekey = 'cache/' .md5($data['aid']) . '.' . $data['ext'];
+        else $cachekey = 'cache/' .  $data['rid'] . '.' . $data['ext'];
+        $file = getglobal('setting/attachdir') . $cachekey;
+        if (file_put_contents($file, $data['stream'])) {
+            $data['stream'] = getglobal('localurl') . getglobal('setting/attachurl') . $cachekey;
         }
         return $data['stream'];
 
     }
-    function getThumb($data,$width=993,$height=1043){
-        //$stream=$this->textEncode($data);
-        $post_data = '{	"async":false,
-						"filetype": "'.$data['ext'].'",
-						"key": "'.md5($data['rid']).'",
-						"outputtype": "jpg",
-						"thumbnail": {
-							"aspect": 1,
-							"first": true,
-							"height": '.$width.',
-							"width": '.$height.'
-						},
-						"title": "'.$data['name'].'",
-						"url": "'.$data['stream'].'"
-					}';
-        $conversion_url=$this->getCUrl();
-        $ret = ($this->getConvertUrl($conversion_url, $post_data));
-        if($url=$ret['FileUrl']){
-            $target = md5($data['realpath'].$data['thumbsign']) . '.jpg';
-            $png = getglobal('setting/attachdir') . './pichomethumb/' . $data['appid'] . '/' . $target;
-            if (!is_dir(getglobal('setting/attachdir') . './' . 'pichomethumb/' . $data['appid'])) {
-                dmkdir(getglobal('setting/attachdir') . './' . 'pichomethumb/' . $data['appid'], 0777, false);
+
+    function getThumb($data, $width = 993, $height = 1043)
+    {
+
+        global $_G;
+        $stream=$this->textEncode($data);
+        //print_r($stream);die;
+        $post_data = array(
+            'async' => false,
+            'filetype' => $data['ext'],
+            'key' => ($data['aid']) ? md5($data['aid']):$data['rid'],
+            'outputtype' => 'png',
+            'thumbnail' => array(
+                'aspect' => true,
+                'first' => 1,
+                'height' => $height,
+                'width' => $width
+            ),
+            'title' => $data['name'],
+            'url' => $stream
+        );
+        if ($this->onlyDocumentdocSecret) {
+            $post_data['token'] = jwtEncode($post_data, $this->onlyDocumentdocSecret);
+        }
+        $conversion_url = $this->getCUrl();
+        $ret = ($this->getConvertUrl($conversion_url, json_encode($post_data)));
+        if ($url = $ret['FileUrl']) {
+            $target = 'pichomethumb/' . date('Ym') . '/' . date('d') .'/'.($data['aid'] ? md5($data['aid']):md5($data['rid'])) . '_original.png';
+            $png = getglobal('setting/attachdir') .$target;
+            $dir = dirname($png);
+            dmkdir($dir, 0777, false);
+
+            if (file_put_contents($png, curl_file_get_contents($url)) != false) {
+                $defaultspace = $_G['setting']['defaultspacesetting'];
+                //如果原文件位置不在本地，则将转换完成文件迁移到对应位置
+                if ($defaultspace['bz'] != 'dzz') {
+                    $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$target;
+                    //组合云端保存位置
+                    $filepath = \IO::moveThumbFile($cloudpath, 'dzz::'.$target);
+                    if (!isset($filepath['error'])) {
+                        @unlink($png);
+                        return $target;
+                    }
+                } else {
+                    return $target;
+                }
+
             }
 
-            if(file_put_contents($png,curl_file_get_contents($url)) != false){
-
-                return $png;
-            }
-
+        } else {
+            runlog('onlyoffice', $conversion_url . '===' . print_r($post_data,true) . '===' . print_r($ret, true));
         }
         return false;
     }
 
-    private  function curl_get($url)
+    private function curl_get($url)
     {
-        $ch=curl_init($url);
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        $content=curl_exec($ch);
+        $content = curl_exec($ch);
         curl_close($ch);
         return $content;
     }
-    private function getCUrl(){
+
+    private function getCUrl()
+    {
         global $_SERVER;
-        $onlyDocumentUrl=rtrim(str_replace('web-apps/apps/api/documents/api.js','',$this->onlyDocumentUrl),'/').'/ConvertService.ashx';
+        $onlyDocumentUrl = rtrim(str_replace('web-apps/apps/api/documents/api.js', '', $this->onlyDocumentUrl), '/') . '/ConvertService.ashx';
         return $onlyDocumentUrl;
 
     }
-    public function getConvertUrl($posturl, $post_data) {
+
+    public function getConvertUrl($posturl, $post_data)
+    {
         //CURLOPT_URL 是指提交到哪里？相当于表单里的“action”指定的路径
         //$url = "http://local.jumei.com/DemoIndex/curl_pos/";
         //$posturl.='?'.http_build_query($post_data);
@@ -144,9 +188,9 @@ class thumb{
 
         //执行并获取结果
         if (!$r = curl_exec($ch)) {
-            return ( array('error' => curl_error($ch)));
+            return (array('error' => curl_error($ch)));
         }
         curl_close($ch);
-        return $ret=xml2array($r,true,'utf-8');
+        return $ret = xml2array($r, true, 'utf-8');
     }
 }

@@ -1,0 +1,51 @@
+<van-popup 
+	style="width: 100%;height: 100%;"
+	v-model:show="JsDetailsPopup.show" 
+	position="right">
+	<div style="width: 100%;height: 100%;">
+		<van-loading v-show="JsDetailsPopup.loading" class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+		<iframe :src="JsDetailsPopup.src" width="100%" height="100%" style="border: 0;" class="Detailsiframe"></iframe>
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var JsDetailsMixin = {
+		data(){
+			return{
+				JsDetailsPopup :{
+					src:'',
+					show:false,
+					loading:false
+				}
+			}
+		},
+		watch:{
+			'JsDetailsPopup.src':{
+				handler(val){
+					var self = this;
+					if(val){
+						this.JsDetailsPopup.show = true;
+						this.JsDetailsPopup.loading = true;
+						self.$nextTick(function(){
+							self.JsDetailsiframe();
+						})
+					}else{
+						this.JsDetailsPopup.show = false;
+					}
+				},
+				deep:false
+			}
+		},
+		methods:{
+			JsDetailsiframe(){
+				var self = this;
+				var iframe = document.querySelector('.Detailsiframe');
+				iframe.onload = function(){
+					self.JsDetailsPopup.loading = false;
+				}
+			}
+		},
+		mounted(){
+			var self = this;
+		}
+	};
+</script>

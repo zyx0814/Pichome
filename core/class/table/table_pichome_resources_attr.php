@@ -18,10 +18,17 @@
       		$rid = trim($setarr['rid']);
       		if($attrdata = parent::fetch($rid)){
       			unset($setarr['rid']);
-      			return parent::update($rid,$setarr);
+      			if(parent::update($rid,$setarr)){
+                    $hookindex = ['rids'=>$setarr['rid'],'appid'=>$attrdata['appid']];
+                    Hook::listen('updatedataafter',$hookindex);
+                }
       		}else{
-      			return parent::insert($setarr);
+      			 if(parent::insert($setarr)){
+                     $hookindex = ['rids'=>$setarr['rid'],'appid'=>$setarr['appid']];
+                     Hook::listen('updatedataafter',$hookindex);
+                 }
       		}
+      		return true;
       	}
       	//删除文件属性数据
       	public function delete_by_rid($rids){
@@ -30,11 +37,16 @@
             $tids = [];
             foreach(DB::fetch_all("select * from %t where rid in(%n) ",array($this->_table,$rids)) as $v){
                 $tids= array_merge($tids,explode(',',$v['tags']));
+                if(is_numeric($v['path'])){
+                    C::t('attachment')->delete_by_aid($v['path']);
+                    C::t('pichome_vapp')->addcopy_by_appid($v['appid'],-1);
+                }
             }
             $tids = array_unique($tids);
             foreach ($tids as $tid){
                 C::t('pichome_tag')->delete_by_tid($tid);
             }
+
             return parent::delete($rids);
         }
         
@@ -62,5 +74,35 @@
                 $likewords[] = $v['desc'];
             }
             return $likewords;
+        }
+        public function update_by_rid($appid,$rid,$setarr){
+            if(parent::update($rid,$setarr)){
+                $this->update_searchval_by_rid($rid);
+                $hookindex = ['rids'=>[$rid],'appid'=>$appid];
+                Hook::listen('updatedataafter',$hookindex);
+            }
+            return true;
+        }
+        public function update_by_rids($appid,$rids,$setarr){
+            if(!is_array($rids)) $rids = (array)$rids;
+            foreach($rids as $v){
+                $this->update_by_rid($appid,$v,$setarr);
+            }
+        }
+        public function update_searchval_by_rid($rid){
+            $searchval = '';
+            $resourcesdata = C::t('pichome_resources')->fetch($rid);
+            $searchval .= $resourcesdata['name'];
+            $attrdata = parent::fetch($rid);
+            $searchval .= $attrdata['link'].$attrdata['desc'];
+            $tids = explode(',',$attrdata['tag']);
+            foreach (DB::fetch_all("select tagname from %t where tid in(%n)",array('pichome_tag',$tids)) as $v){
+                $searchval .= $v['tagname'];
+            }
+            foreach (DB::fetch_all("select annotation from %t where rid =%s",array('pichome_comments',$tids)) as $v){
+                $searchval .= $v['annotation'];
+            }
+            parent::update($rid,array('searchval'=>$searchval));
+
         }
     }

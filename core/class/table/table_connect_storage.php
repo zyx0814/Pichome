@@ -26,7 +26,19 @@ class table_connect_storage extends dzz_table
 	public function fetch_all_space(){
 	    return DB::fetch_all("select * from %t where 1 order by disp asc ",array($this->_table));
     }
-
+    public function getBzByRemoteid($remoteid){
+        if(!$remoteid || $remoteid == 1) return 'dzz::';
+        $bz = DB::result_first("select bz from %t where id = %d",array($this->_table,$remoteid));
+        return $bz.':'.$remoteid.':';
+    }
+    //查询默认存储位置
+    public function fetch_default_space(){
+        $return = [];
+        if(!$return = DB::fetch_first("select * from %t where isdefault = 1",array($this->_table))){
+           $return = parent::fetch(1);
+        }
+        return $return;
+    }
 	public function fetch_by_id($id){
 		
 		$value=self::fetch($id);

@@ -185,6 +185,10 @@ function env_check(&$env_items) {
 		if($item['r'] != 'notset' && strcmp($env_items[$key]['current'], $item['r']) < 0) {
 			$env_items[$key]['status'] = 0;
 		}
+		//判断最高版本
+		if(isset($item['m']) && strcmp($env_items[$key]['current'], $item['m']) >= 0) {
+			$env_items[$key]['status'] = 0;
+		}
 	}
 }
 function function_check(&$func_items) {
@@ -199,6 +203,9 @@ function show_env_result(&$env_items, &$func_items, &$filesock_items) {
 	$error_code = 0;
 	foreach($env_items as $key => $item) {
 		if($key == 'php' && strcmp($item['current'], $item['r']) < 0) {
+			show_msg('php_version_too_low', $item['current'], 0);
+		}
+		if($key == 'php' && strcmp($item['current'], $item['m']) >=0) {
 			show_msg('php_version_too_low', $item['current'], 0);
 		}
 		$status = 1;
@@ -524,9 +531,9 @@ function random($length) {
 	$hash = '';
 	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
 	$max = strlen($chars) - 1;
-	PHP_VERSION < '4.2.0' && mt_srand((double)microtime() * 1000000);
+
 	for($i = 0; $i < $length; $i++) {
-		$hash .= $chars[mt_rand(0, $max)];
+		$hash .= $chars[random_int(0, $max)];
 	}
 	return $hash;
 }
@@ -1166,10 +1173,18 @@ function dhtmlspecialchars($string) {
 	}
 	return $string;
 }
-function upgradeinformation($sitename) {
+function createmachinecode(){
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
+    $onlineip = $_SERVER['REMOTE_ADDR'];
+    $mcode = 'PH'.$chars[date('y')%60].$chars[date('n')].
+        $chars[date('j')].$chars[date('G')].$chars[date('i')].
+        $chars[date('s')].substr(md5($onlineip.TIMESTAMP), 0, 4).random(4);
+    return $mcode;
+}
+function upgradeinformation($sitename,$machinecode) {
    
     $update = array();
-    //$update[ 'mcode' ] = $uniqueid;
+    $update[ 'mcode' ] = $machinecode;
     $update[ 'usum' ] = 1;
     $update[ 'siteurl' ] = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'];
     $update[ 'sitename' ] = $sitename;
@@ -1177,8 +1192,8 @@ function upgradeinformation($sitename) {
     $update[ 'version_level' ] = CORE_VERSION_LEVEL;
     $update[ 'release' ] = CORE_RELEASE;
     $update[ 'fixbug' ] = CORE_FIXBUG;
-    $update[ 'license_version' ] = 'LICENSE_VERSION';
-    $update[ 'license_limit' ] = 'LICENSE_LIMIT';
+    $update[ 'license_version' ] = LICENSE_VERSION;
+    $update[ 'license_limit' ] = LICENSE_LIMIT;
     $data = '';
     foreach ( $update as $key => $value ) {
       $data .= $key . '=' . rawurlencode( $value ) . '&';

@@ -1,0 +1,447 @@
+<div class="tag-group-box">
+	<template v-if="!TagLeftActive || TagLeftActive=='nocat'">
+		<el-skeleton :loading="tagCententLoading" animated>
+			<template #template>
+				<div 
+					v-for="item in 5" 
+					class="tag-group">
+					<div class="title">
+						<el-skeleton-item variant="text" style="width: 80px;height: 29px;"></el-skeleton-item>
+					</div>
+					<div class="clearfix">
+						<el-skeleton-item v-for="key in 6" variant="text" style="width: 55px;height: 24px;border-radius: 9999px;margin-right: 8px;"></el-skeleton-item>
+					</div>
+				</div>
+			</template>
+			<template #default>
+				<template v-for="(item,key) in tagCententData">
+					<div 
+					class="tag-group" 
+					:class="'tag-group_'+key" 
+					v-if="item.data.length"
+					:ref="'taggroup_'+key">
+						<el-affix :target="'.tag-group_'+key" :offset="60">
+							<p class="title">{{ item.text }}
+								<span class="num">（{{item.num}}）</span>
+							</p>
+							
+						</el-affix>
+						<div style="padding-top: 1px;"></div>
+							<template v-for="fitem in item.data">
+								<el-button 
+									:class="['tagcontent'+fitem.tid]"
+									@contextmenu.prevent="TagContentContextmenu(fitem)"
+									@dblclick="TagContentSearch(fitem.tid)"
+									style="margin-right: 8px;"
+									:key="fitem.tid"
+									>
+									<span class="text">{{ fitem.tagname }}</span>
+									({{fitem.hots}})
+								</el-button>
+							</template>
+						</div>
+					</div>
+				</template>
+				
+				<div id="WordList_box">
+					<ul class="WordList">
+						<li v-for="(item,key) in tagContextWordList" @click="tagWordListClick(key)">{{item}}</li>
+					</ul>
+				</div>
+			</template>
+		</el-skeleton>
+	</template>
+	<template v-else>
+		<el-skeleton :loading="tagCententLoading" animated>
+			<template #template>
+				<div class="tag-group" style="border: 0;padding-right: 0;">
+					<div class="title">
+						<el-skeleton-item variant="text" style="width: 80px;height: 29px;"></el-skeleton-item>
+					</div>
+					<div class="clearfix">
+						<el-skeleton-item v-for="key in 6" variant="text" style="width: 55px;height: 24px;border-radius: 9999px;margin-right: 8px;"></el-skeleton-item>
+					</div>
+				</div>
+			</template>
+			<template #default>
+				<div class="tag-group tag-group-single" style="border: 0;padding-right: 0;">
+					<template v-for="item in TagLeftData">
+						<el-affix target=".tag-group-single" :offset="60">
+							<p 
+								v-if="item.cid == TagLeftActive" 
+								class="title">{{ item.text }}
+								<span class="num">（{{item.num}}）</span>
+								<el-icon @click="TagContextAddTag" style="vertical-align: middle;margin-left: 8px;cursor: pointer;"><Plus /></el-icon>
+							</p>
+						</el-affix>
+					</template>
+					<el-tag
+						v-for="item in tagCententData"
+						disable-transitions
+						:class="['tagcontent'+item.tid]"
+						@dblclick="TagContentSearch(fitem.tid)"
+						@contextmenu.prevent="TagContentContextmenu(item)"
+						style="margin-right: 8px;"
+						effect="plain"
+						round>
+						<span class="text">{{ item.tagname }}</span>
+						<span style="margin-left: 3px;">({{ item.hots }})</span>
+					</el-tag>
+				</div>
+			</template>
+		</el-skeleton>
+	</template>
+</div>
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	trigger="click"
+	ref="tagContextMenu"
+	:popper-style="{top: tagContextMenu.top, left: tagContextMenu.left}"
+    v-model:visible="tagContextMenu.show"
+	width="auto"
+	@after-enter="screenvisible(true)"
+	@before-leave="screenvisible(false)"
+	:show-arrow="false">
+    <ul class="el-dropdown-menu">
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('search')">
+			<el-icon><Search /></el-icon>
+			搜索包含标签的项目
+		</li>
+		<el-divider style="margin: 4px 0;"></el-divider>
+		<el-popover
+			popper-class="isdropdown header-dropdown-menu"
+			ref="TagContentMenuChildMove"
+			:offset="-5"
+		    placement="left-start"
+		    :width="auto">
+			<el-scrollbar max-height="260px">
+			    <ul class="el-dropdown-menu">
+					<li 
+						v-for="item in TagLeftData" 
+						:key="item.cid"
+						class="el-dropdown-menu__item"
+						@click="TagContentOperationMove(item.cid)">
+						{{item.text}}
+					</li>
+			    </ul>
+			</el-scrollbar>
+		    <template #reference>
+				<li
+					class="el-dropdown-menu__item" >
+					<el-icon><Rank /></el-icon>
+					移动至群组
+					<el-icon style="margin: 0;position: absolute;right: 3px;"><Caret-Right /></el-icon>
+				</li>
+		    </template>
+		</el-popover>
+		<el-popover
+			popper-class="isdropdown header-dropdown-menu"
+			ref="TagContentMenuChildAdd"
+			:offset="-5"
+		    placement="left-start"
+		    :width="auto">
+			<el-scrollbar max-height="260px">
+			    <ul class="el-dropdown-menu">
+					<li 
+						v-for="item in TagLeftData" 
+						:key="item.cid"
+						class="el-dropdown-menu__item"
+						@click="TagContentOperationAdd(item.cid)">
+						{{item.text}}
+					</li>
+			    </ul>
+			</el-scrollbar>
+		    <template #reference>
+				<li
+					class="el-dropdown-menu__item">
+					<el-icon><Circle-Plus /></el-icon>
+					添加至群组
+					<el-icon style="margin: 0;position: absolute;right: 3px;"><Caret-Right /></el-icon>
+				</li>
+		    </template>
+		</el-popover>
+		<li
+			v-show="tagContextMenu.remove"
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('remove')">
+			<el-icon><Remove /></el-icon>
+			从标签群组移除
+		</li>
+		<el-divider style="margin: 4px 0;"></el-divider>
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('delete')">
+			<el-icon><Delete /></el-icon>
+			删除标签
+		</li>
+	</ul>
+</el-popover>
+<script>
+	var TagContentMixin = {
+		data(){
+			return {
+				tagCententLoading:true,
+				tagCententData:[],
+				tagContextMenu:{
+					show:false,
+					data:null,
+					remove:true,
+					top:0,
+					left:0
+				},
+				tagContextWordList:[]
+			}
+		},
+		methods:{
+			TagContextAddTag(){
+				const self = this;
+				self.$messageBox.prompt('', '添加标签', {
+					confirmButtonText: '确定',
+					cancelButtonText: '取消',
+					inputPattern:/\S/,
+					inputErrorMessage: '内容不能为空',
+					validator: (value) => {
+						return !!value.trim();
+					} 
+				}).then(async ({ value }) => {
+					let {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_add',{
+						appid:self.DocumentAppid,
+						tags:value,
+						cid:self.TagLeftActive
+					});
+					if(res.success){
+
+						for (let index = 0; index < res.data.length; index++) {
+							const element = res.data[index];
+							let domtag = document.querySelector('.tagcontent'+element.tid);
+							if(domtag){
+								self.$message.error('标签已存在');
+								continue;
+							}
+							self.TagLeftTotal = parseInt(self.TagLeftTotal) + 1;
+							if(self.TagLeftActive){
+								self.tagCententData.push(element);
+							}else{
+								let curr = self.tagCententData.find(function(current){
+									return current.text == element.initial;
+								});
+								if(curr){
+									curr.data.push(element)
+								}else{
+									var str = {
+										text:element.initial,
+										num:1,
+										data:[element]
+									}
+									if(str.data.length){
+										self.tagCententData.push(str);
+										this.tagContextWordList.push(element.initial);
+									}
+								}
+							}
+						}
+						let curr = self.TagLeftData.find(function(current){
+							return current.cid == self.TagLeftActive;
+						});
+						if(curr){
+							curr.num = parseInt(curr.num) + 1;
+						}
+					}else{
+						self.$message.error(res.data.msg || '标签添加失败');
+					}
+				}).catch(() => {
+			
+				})
+			},
+			async TagContentOperationMove(cid){//移动标签到群组
+				var self = this;
+				this.tagContextMenu.show = false;
+				self.$refs.TagContentMenuChildMove.hide();
+				if(cid == this.TagLeftActive){
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=movetagtogroup',{
+					appid:this.DocumentAppid,
+					cid:cid,
+					tid:this.tagContextMenu.data.tid,
+				});
+				if(res.data.success){
+					if(this.TagLeftActive){
+						var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+						if(tag){
+							tag.remove();
+						}
+					}
+					this.TagLeftHandleNum(res.data.arr);
+				}else{
+					self.$message.error(res.data.msg || '移动群组失败')
+				}
+			},
+			async TagContentOperationAdd(cid){//添加标签到群组
+				var self = this;
+				this.tagContextMenu.show = false;
+				self.$refs.TagContentMenuChildAdd.hide();
+				if(cid == this.TagLeftActive){
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=addtagtogroup',{
+					appid:this.DocumentAppid,
+					cid:cid,
+					tid:this.tagContextMenu.data.tid,
+				});
+				if(res.data.success){
+					if(this.TagLeftActive == 'nocat'){
+						var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+						if(tag){
+							tag.remove();
+						}
+					}
+					this.TagLeftHandleNum(res.data.arr);
+				}else{
+					self.$message.error(res.data.msg || '添加群组失败')
+				}
+			},
+			async TagContentOperation(type){
+				var self = this;
+				this.tagContextMenu.show = false;
+				switch(type){
+					case 'search':
+						self.TagContentSearch(this.tagContextMenu.data.tid)
+					break;
+					case 'remove':
+						var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=removetagfromgroup',{
+							appid:this.DocumentAppid,
+							cid:this.TagLeftActive,
+							tid:this.tagContextMenu.data.tid,
+						});
+						if(res.data.success){
+							var index = this.tagCententData.findIndex(function(current){
+								return current.tid == self.tagContextMenu.data.tid;
+							});
+							this.tagCententData.splice(index,1);
+							this.TagLeftHandleNum(res.data.arr);
+						}else{
+							self.$message.error(res.data.msg || '移除群组失败')
+						}
+					break;
+					case 'delete':
+						self.$messageBox.confirm(
+						    '确定要删除标签?',
+						    '删除标签',
+						    {
+								confirmButtonText: '删除标签',
+								cancelButtonText: '取消',
+								type: 'warning',
+								icon:'QuestionFilled'
+						    }).then(async () => {
+								var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=deltag',{
+									appid:this.DocumentAppid,
+									tid:this.tagContextMenu.data.tid,
+								});
+								if(res.data.success){
+									var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+									if(tag){
+										tag.remove();
+									}
+									this.TagLeftHandleNum(res.data.arr)
+								}else{
+									self.$message.error(res.data.msg || '删除失败')
+								}
+						    });
+					break;
+				}
+			},
+			TagContentSearch(tid){
+				window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.DocumentAppid+'&tag='+tid;
+			},
+			async TagCententGetData(){
+				this.tagCententLoading = true;
+				var param = {
+					appid:this.DocumentAppid
+				}
+				if(this.TagLeftActive && this.TagLeftActive!='nocat'){
+					param['cid'] = this.TagLeftActive;
+				}
+				if(this.TagLeftActive && this.TagLeftActive=='nocat'){
+					param['nocat'] = 1;
+				}
+				this.tagContextWordList = [];
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=gettaggroup',param);
+				var data = res.data.data;
+				var arr = [];
+				if(!this.TagLeftActive || this.TagLeftActive=='nocat'){
+					for(var i in data){
+						if(!i)continue;
+						var str = {
+							text:i,
+							num:0,
+							data:[]
+						}
+						var item = data[i];
+						for(var x in item){
+							str.data.push(item[x])
+						}
+						
+						if(str.data.length){
+							str.num = str.data.length;
+							arr.push(str);
+							this.tagContextWordList.push(i);
+						}
+					}
+				}else{
+					for(var i in data){
+						arr.push(data[i]);
+					}
+				}
+				this.tagCententData = arr;
+				this.tagCententLoading = false;
+			},
+			TagContentContextmenu(item){
+				var self = this;
+				this.DocumentHideAllPop();
+				if(this.LeftTreePopover && this.LeftTreePopover.show){
+					this.LeftTreePopover.show = false;
+				}
+				if(this.tagLeftMenu && this.tagLeftMenu.show){
+					this.tagLeftMenu.show = false;
+				}
+				let menu = self.$refs.tagContextMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+							 
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				//给left和top分别赋值为鼠标的位置；
+				self.tagContextMenu.left = evt.pageX+"px";
+				self.tagContextMenu.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					self.tagContextMenu.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					self.tagContextMenu.top = top1+"px";
+				}
+				this.tagContextMenu.data = item;
+				this.tagContextMenu.remove = true;
+				if(!this.TagLeftActive || this.TagLeftActive =='nocat'){
+					this.tagContextMenu.remove = false;
+				}
+				self.$nextTick(function(){
+					self.tagContextMenu.show = true;
+				});
+				
+			},
+			tagWordListClick(val){
+				const self = this;
+				let offsetTop = self.$refs['taggroup_'+val][0].offsetTop;
+				self.$refs.scrollbar.setScrollTop(offsetTop+1);
+			}
+		}
+	}
+</script>

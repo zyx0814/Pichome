@@ -1,0 +1,29 @@
+<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">{{ item.name }}</p>
+<div class="marginTop">
+	<div class="tag-box" style="min-height: 31px;">
+		<el-tag
+			v-for="folder in item.data"
+			:key="folder.tid"
+			disable-transitions
+			type="info"
+			closable
+			@close="RightTabDelete(folder.tid,item.flag)">
+			<!-- <el-icon><Folder /></el-icon> -->
+			{{folder.tabname}}
+		</el-tag>
+		<el-popover
+			placement="left"
+			@before-enter="RightTabPopverShow(item.flag)"
+			@after-leave="RightTabPopverHide(item.flag)"
+			width="auto"
+			trigger="click">
+			<div class="popbox-body" style="padding: 5px 10px;width:850px;height: 480px; overflow:hidden;max-height: unset;">
+				<iframe frameborder="0" width="100%" height="100%"  :src="item.iframe"></iframe>
+			</div>
+			<template #reference>
+				<el-icon style="color: var(--el-color-info);vertical-align: middle;cursor:pointer;"><Circle-Plus-Filled /></el-icon>
+			</template>
+		</el-popover>
+		
+	</div>
+</div>

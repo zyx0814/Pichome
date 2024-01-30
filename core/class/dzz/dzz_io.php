@@ -100,10 +100,10 @@
         }
         
         //获取缩略图
-        function getThumb($path, $width, $height, $original, $returnurl = false, $create = 0, $tmpfile = 0,$thumbtype = 1, $extpramas = array())
+        function getThumb($path, $thumbsign, $original, $returnurl = false, $create = 0, $thumbtype = 1, $extpramas = array())
         {
             $path = self::clean($path);
-            if ($io = self::initIO($path)) return $io->getThumb($path, $width, $height, $original, $returnurl, $create,$tmpfile, $thumbtype, $extpramas);
+            if ($io = self::initIO($path)) return $io->getThumb($path, $thumbsign, $original, $returnurl, $create, $thumbtype, $extpramas);
         }
 
         //获取文件信息
@@ -117,7 +117,10 @@
             $path = self::clean($path);
             if ($io = self::initIO($path)) return $io->createThumbByOriginal($path,$data,$width, $height, $thumbtype, $original, $extraparams,$filesize);
         }
-        
+        function gettmpThumb($path, $width = 0, $height = 0, $returnurl = false, $thumbtype = 1, $extraparams = array()){
+            $path = self::clean($path);
+            if ($io = self::initIO($path)) return $io->gettmpThumb($path,$width, $height,$returnurl, $thumbtype, $extraparams);
+        }
         /*
          *通过icosdata获取folderdata数据
         */
@@ -357,8 +360,7 @@
             $filename = self::name_filter($filename);
             if ($io = self::initIO($path)) {
                 $return = $io->upload($fileContent, $path, $filename);
-                Hook::listen('createafter_addindex_getvideo', $return);
-                Hook::listen('createafter_addindex', $return);
+
                 return $return;
             } else return false;
         }
@@ -380,6 +382,7 @@
             $relativePath = self::clean(urldecode($relativePath));
             if ($io = self::initIO($path)) {
                 $return = $io->uploadByStream($path, $name, $file, $fid,$relativePath,$nohook);
+
                 if ($return['icoarr'] && !$nohook) {
                     foreach ($return['icoarr'] as $v) {
                         $tmpdata = $v;
@@ -391,18 +394,19 @@
             } else return false;
         }
     
-        public function uploadStream($file, $name, $path, $relativePath = '', $content_range = '')
+        //public function uploadStream($file, $name, $path, $relativePath = '', $content_range = '')
+        public function uploadStream($file, $name, $appid, $pfid = '', $relativePath = '', $content_range = array(), $params = array())
         {
-            $path = self::clean(urldecode($path));
+            $path = self::clean(urldecode($file));
             $name = self::name_filter(urldecode($name));
             $relativePath = self::clean(urldecode($relativePath));
             if ($io = self::initIO($path)) {
-                $return = $io->uploadStream($file, $name, $path, $relativePath, $content_range);
+                $return = $io->uploadStream($file, $name, $appid,$pfid, $relativePath, $content_range,$params);
                 if ($return['icoarr']) {
                     foreach ($return['icoarr'] as $v) {
-                        $tmpdata = $v;
-                        Hook::listen('createafter_addindex_getvideo', $tmpdata);
-                        Hook::listen('createafter_addindex', $tmpdata);
+                        $hookdata =  $v;
+                        //Hook::listen('pichomeconvert',$tmpdata);
+                        Hook::listen("addfileafter",$hookdata);
                     }
                 }
                 return $return;
@@ -547,7 +551,7 @@
                     'attachment' => $target,
                     'filetype' => strtolower($ext),
                     'filename' => $filename,
-                    'remote' => $remote,
+                    'remote' => 1,
                     'copys' => 0,
                     'md5' => $md5,
                     'unrun' => $unrun,
@@ -590,16 +594,27 @@
             dmkdir($targetpath);
             return $target . date('His') . '' . strtolower(random(16)) . '.' . $ext;
         }
-        
+        //获取水印图地址
+        public  function getwaterimg($path){
+            $path = self::clean($path);
+            if ($io = self::initIO($path)) {
+                $return = $io->getwaterimg($path);
+                return $return;
+            } else return false;
+        }
         //移动云端文件到上传区
         public function movetmpdataToattachment($path, $data)
         {
             $path = self::clean($path);
             if ($io = self::initIO($path)) {
                 $return = $io->movetmpdataToattachment($path, $data);
-                $icoarrdata = $return['icoarr'][0];
-                Hook::listen('createafter_addindex_getvideo', $icoarrdata);
-                Hook::listen('createafter_addindex', $icoarrdata);
+                if ($return['icoarr']) {
+                    foreach ($return['icoarr'] as $v) {
+                        $hookdata =  $v;
+                        //Hook::listen('pichomeconvert',$tmpdata);
+                        Hook::listen("addfileafter",$hookdata);
+                    }
+                }
                 return $return;
             } else return false;
         }
@@ -610,6 +625,7 @@
             $path = self::clean($path);
             if ($io = self::initIO($path)) {
                 $return = $io->moveFileToDownload($path, $filepath);
+
                 return $return;
             } else return false;
         }

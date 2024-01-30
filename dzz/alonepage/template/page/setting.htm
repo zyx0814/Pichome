@@ -1,0 +1,444 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script src="static/wangeditor/index.js?{VERHASH}"></script>
+<link rel="stylesheet" href="static/wangeditor/style.css?{VERHASH}">
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<link rel="stylesheet" href="{MOD_PATH}/template/assets/css/setting.css?{VERHASH}">
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/slide.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/rich_text.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/link.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/contact.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/question.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/manual_rec.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/file_rec.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/db_ids.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/banner.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/tab.js?{VERHASH}"></script>
+<script>
+	const BasicUrl = MOD_URL+'&op=alonepageinterface&do=';
+	function AxiosUrl(val,param,type){
+		if(type == 'get'){
+			return axios.get(BasicUrl+val+param);
+		}else{
+			return axios.post(BasicUrl+val,param);
+		}
+	}
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-container class="page-main">
+				<!--{template components/setting/right}-->
+				<el-main style="padding: 0px;overflow: hidden;position: relative;">
+					<el-scrollbar>
+						<!--{template components/setting/main}-->
+					</el-scrollbar>
+				</el-main>
+		</el-container>
+	</el-container>
+</div>
+<script>
+	
+	
+	const { createApp, reactive, ref, onMounted, nextTick, watch, onBeforeMount, onBeforeUpdate } = Vue;
+	let ttt = 0;
+	const dzzoffice = createApp({
+		data(){
+			return {
+				DocumentThemeColor:'',
+				TypeCollection:{
+					library:[],
+            		alonepage:[],
+           		 	banner:[],
+					tab:[]
+				},
+			}
+		},
+
+		created(){
+			let  _this = this;
+			axios.all([AxiosUrl('typecollection'),AxiosUrl('getpagecontent','&id=$id','get')]).then(
+				axios.spread((res1,res2)=>{
+					_this.GetTypeCollection(res1.data)
+					_this.MainGetContent(res2.data)
+				})
+			)
+		},
+		mixins:[MainMixin,RightMixin],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods:{
+			MainGetContent(res){
+                const self = this;
+				let data = [];
+				this.rightTitle = res.data.pagename;
+				for (let index = 0; index < res.data.data.length; index++) {
+					const item = res.data.data[index];
+					if(item.type == 'db_ids'){
+						// this.rightdb_idsStatus = true;
+					}
+					const str = this.MainHandlerContentValue(item);
+					str['key'] = this.MainGetId();
+					data.push(str);
+				}
+				
+				this.MianData = data;
+            },
+			GetTypeCollection(res){
+                this.TypeCollection = {
+					library:res.library || [],
+            		alonepage:res.alonepage || [],
+           		 	banner:res.banner || [],
+					tab:res.tab || [],
+				}
+            },
+			MainHandlerContentValue(item){
+				let str = {
+					loading:false,
+					tid:item.tid,//块id
+					type:item.type,//块类型
+					title:item.title,//块名称
+					style:item.style,//样式
+					data:[]
+				};
+				switch(item.type){
+					case 'slide':
+						if(item.data && item.data.length){
+							let fstr = {
+								tdid:item.data[0].tdid,
+								data:[]
+							}
+							if(item.data[0].tdata && item.data[0].tdata.length){
+								for (let index = 0; index < item.data[0].tdata.length; index++) {
+									let fitem = item.data[0].tdata[index];
+									fstr.data.push(
+										{
+											key:0,
+											url:fitem.imgurl || '',
+											img:fitem.img || '',
+											aid:fitem.aid || 0,
+											link:fitem.link || '',
+											linkval:fitem.linkval || '',
+										},
+									)
+								}
+							}
+							str.data.push(fstr);
+						}
+						
+					break;
+					case 'banner':
+						if(item.data && item.data.length){
+							let fstr = {
+								tdid:item.data[0].tdid,
+								data:[]
+							}
+							if(item.data[0].tdata && item.data[0].tdata.length){
+								for (let index = 0; index < item.data[0].tdata.length; index++) {
+									let fitem = item.data[0].tdata[index];
+									fstr.data.push(
+										{
+											key:0,
+											url:fitem.imgurl || '',
+											img:fitem.img || '',
+											aid:fitem.aid || 0,
+											link:fitem.link || '0',
+											linkval:fitem.linkval || '',
+										},
+									)
+								}
+							}
+							str.data.push(fstr);
+						}
+					break;
+					case 'manual_rec':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									name:fitem.tdataname || '标题',
+									tdid:fitem.tdid || 0,
+									key:0,
+									data:[]
+								}
+								for (let findex = 0; findex < fitem.tdata.length; findex++) {
+									const ditem = fitem.tdata[findex];
+									fstr.data.push(
+										{
+											key:0,
+											title:ditem.title || '',
+											url:ditem.imgurl || '',
+											img:ditem.img || '',
+											aid:ditem.aid || 0,
+											link:ditem.link || '0',
+											linkval:ditem.linkval || '',
+										},
+									)
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+
+					break;
+					case 'file_rec':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									tdid:fitem.tdid || 0,
+									data:[]
+								}
+								for (let findex = 0; findex < fitem.tdata.length; findex++) {
+									const ditem = fitem.tdata[findex];
+									var fclassify = {
+										text:[],
+										expandedkeys:[],
+										checked:[]
+									};
+									if(ditem.classify){
+										fclassify.text = ditem.classify.text;
+										fclassify.expandedkeys = ditem.classify.expandedkeys;
+										fclassify.checked = ditem.classify.checked;
+									}
+									
+									fstr.data.push(
+										{
+											key:0,
+											name: ditem.name || '标题',//tab标题
+											ftype: parseInt(ditem.ftype) || 0,//是0库还是1智能数据
+											id: ditem.id || '',//数据源id
+											type: parseInt(ditem.type) || 1,
+											sort: parseInt(ditem.sort) || 1,
+											number: parseInt(ditem.number) || 0,//获取数量
+											time:parseInt(ditem.time) || 600,//获取数量
+											isfilename: parseInt(ditem.isfilename) || 0,//文件名
+											isdown: parseInt(ditem.isdown) || 0,
+											link: ditem.link || '0',//更多链接
+											linkval: ditem.linkval,//更多链接
+											classify:ditem.classify || {text:[],expandedkeys:[],checked:[]},
+											gradetype:parseInt(ditem.gradetype) || 0,//评分类型，0是,1不是,2包含及以下3,包含及以上
+											moretxt: ditem.moretxt || '更多',
+											value: ditem.value || ''//推荐标签、评分的值
+										},
+									)
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+					break;
+					case 'tab_rec':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									tdid:fitem.tdid || 0,
+									data:[]
+								}
+								for (let findex = 0; findex < fitem.tdata.length; findex++) {
+									const ditem = fitem.tdata[findex];
+									var fclassify = {
+										text:[],
+										expandedkeys:[],
+										checked:[]
+									};
+									if(ditem.classify){
+										fclassify.text = ditem.classify.text;
+										fclassify.expandedkeys = ditem.classify.expandedkeys;
+										fclassify.checked = ditem.classify.checked;
+									}
+									
+									fstr.data.push(
+										{
+											key:0,
+											name: ditem.name || '标题',//tab标题
+											id: ditem.id || '',//数据源id
+											sort: parseInt(ditem.sort) || 1,
+											number: parseInt(ditem.number) || 0,//获取数量
+											time:parseInt(ditem.time) || 600,//获取数量
+											link: ditem.link || '0',//更多链接
+											linkval: ditem.linkval,//更多链接
+											classify:ditem.classify || {text:[],expandedkeys:[],checked:[]},
+											moretxt: ditem.moretxt || '更多',
+											value: ditem.value || ''//推荐标签、评分的值
+										},
+									)
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+					break;
+					case 'db_ids':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									name:fitem.tdataname || '标题',
+									tdid:fitem.tdid || 0,
+									key:0,
+									data:[]
+								}
+								for (let findex = 0; findex < fitem.tdata.length; findex++) {
+									const ditem = fitem.tdata[findex];
+									fstr.data.push(
+										{
+											ftype: parseInt(ditem.ftype) || 0,//是0库还是1智能数据
+											id: ditem.id || '',//数据源id
+											sort: parseInt(ditem.sort) || 1,
+											number: parseInt(ditem.number) || 0,//获取数量
+											time:parseInt(ditem.time) || 600,//获取数量
+											isfilename: parseInt(ditem.isfilename) || 0,//文件名
+											moretxt: ditem.moretxt || '更多',
+											link: ditem.link || '',
+											linkval: ditem.linkval || '',
+											
+										},
+									)
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+					break;
+					case 'question':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									tdid:fitem.tdid || 0,
+									data:[],
+									name:fitem.tdataname,
+								}
+								for (let findex = 0; findex < fitem.tdata.length; findex++) {
+									const ditem = fitem.tdata[findex];
+									fstr.data.push(
+										{
+											key:0,
+											title:ditem.title || '',
+											answer:ditem.answer || '',
+										},
+									)
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+					break;
+					case 'link':
+						if(item.data && item.data.length){
+							let fstr = {
+								tdid:item.data[0].tdid,
+								data:[]
+							}
+							if(item.data[0].tdata && item.data[0].tdata.length){
+								for (let index = 0; index < item.data[0].tdata.length; index++) {
+									let fitem = item.data[0].tdata[index];
+									fstr.data.push(
+										{
+											key:0,
+											aid:fitem.aid || 0,
+											img:fitem.img || '',
+											title:fitem.title || '',
+											message:fitem.message || '',
+											link:fitem.link || '',
+											linkval:fitem.linkval || '',
+											
+											
+											
+										},
+									)
+								}
+							}
+							str.data.push(fstr);
+						}
+					break;
+					case 'contact':
+						if(item.data && item.data.length){
+							let fstr = {
+								tdid:item.data[0].tdid,
+								data:[]
+							}
+							if(item.data[0].tdata && item.data[0].tdata.length){
+								for (let index = 0; index < item.data[0].tdata.length; index++) {
+									let fitem = item.data[0].tdata[index];
+									fstr.data.push(
+										{
+											key:0,
+											title:fitem.title || '',
+											img:fitem.img || '',
+											aid:fitem.aid || 0,
+										},
+									)
+								}
+							}
+							str.data.push(fstr);
+						}
+					break;
+					case 'rich_text':
+						if(item.data && item.data.length){
+							for (let index = 0; index < item.data.length; index++) {
+								let fitem = item.data[index];
+								let fstr = {
+									tdid:fitem.tdid || 0,
+									name:fitem.tdataname,
+									key:0,
+									data:fitem.tdata
+								}
+								str.data.push(fstr);
+							}
+							
+						}
+					break;
+				}
+				return str;
+			},
+			goBack(){
+				window.location.href = MOD_URL;
+			}
+		},
+		
+		mounted(){
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+		},
+		components:{
+			comavatar,
+			Tmpslide,
+			Tmprich_text,
+			Tmplink,
+			Tmpcontact,
+			Tmpquestion,
+			Tmpmanual_rec,
+			Tmpfile_rec,
+			Tmpdb_ids,
+			Tmpbanner,
+			Tmptab_rec,
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+
+<!--{template common/container/pc/footer}-->

@@ -10,6 +10,7 @@
 if (!defined('IN_OAOOA') ) {
     exit('Access Denied');
 }
+
 if (!function_exists('ajaxshowheader')) {
     function ajaxshowheader() {
         global $_G;
@@ -30,28 +31,23 @@ if (!function_exists('ajaxshowfooter')) {
     }
 
 }
-if ($admincp->core ->var['inajax']) {
+if ($dzz ->var['inajax']) {
     ajaxshowheader();
     ajaxshowfooter();
 }
+  html_login_header();
 
-if ($admincp -> cpaccess == -3) {
-    html_login_header(false);
-} else {
-    html_login_header();
-}
-
-if ($admincp -> cpaccess == -3) {
-    echo '<p class="logintips">' . lang('login_cp_noaccess') . '</p>';
-
-} elseif ($admincp -> cpaccess == -1) {
-    $ltime = $admincp -> sessionlife - (TIMESTAMP - $admincp -> adminsession['dateline']);
+if ($admincp -> cpaccess == -1) {
+    $ltime = $this -> sessionlife - (TIMESTAMP - $this -> adminsession['dateline']);
     echo '<p class="logintips">' . lang('login_cplock', array('ltime' => $ltime)) . '</p>';
 
 } elseif ($admincp -> cpaccess == -4) {
-    $ltime = $admincp -> sessionlife - (TIMESTAMP - $admincp -> adminsession['dateline']);
+    $ltime = $this -> sessionlife - (TIMESTAMP - $this -> adminsession['dateline']);
     echo '<p class="logintips">' . lang('login_user_lock') . '</p>';
 
+//} elseif($admincp->cpaccess = 3) {
+	//header("Location:".dreferer());
+	//exit();
 } else {
 
     html_login_form();
@@ -130,10 +126,12 @@ function html_login_form() {
     $sid = getglobal('sid');
     $avatarstatus=getglobal('avatarstatus','member');
     if(!$uid ){
-        $avastar ='<img src="data/attachment/sitelogo/sitelogo.png" />';
+        $avastar ='<img src="'.($_G['setting']['sitelogo']?\IO::getFileUri('attach::'.$_G['setting']['sitelogo']):'static/image/common/logo.png').'" />';
     }else{
         $avastar = avatar_block($uid);
     }
+	$_GET['referer'] = dhtmlspecialchars($_GET['referer'], ENT_QUOTES);
+    $_GET['referer'] = str_replace('&amp;', '&', $_GET['referer']);
     $avastar.='<div class="maintitle">'.$maintitle.'</div>';
     $extra = BASESCRIPT . '?' . $_SERVER['QUERY_STRING'];
     $forcesecques = '<option value="0">' . ($_G['config']['admincp']['forcesecques'] ? $lang1['forcesecques'] : $lang1['security_question_0']) . '</option>';
@@ -151,7 +149,7 @@ function html_login_form() {
 
                 </div>
                 <input name="submit" value="$lang1[login]" type="submit" class="btn btn-primary"  />
-                <div class="copyright">Powered by <a href="https://www.oaooa.com/" target="_blank">oaooa</a> &copy; 2012-$year</div>
+                <div class="copyright">Powered by <a href="https://www.oaooa.com/" target="_blank">Pichome</a> &copy; 2012-$year</div>
              </div>
              
 		 </form>

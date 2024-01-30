@@ -1,0 +1,114 @@
+<el-dialog
+	title="添加存储位置"
+	:close-on-click-modal="false"
+	@closed="AddDialogClose"
+	width="100%"
+	style="max-width:600px"
+	v-model="AddDialog.dialogVisible">
+	<el-form ref="AddDialogref" :model="AddDialog" label-width="110px">
+		<el-form-item class="title" label="腾讯云API"></el-form-item>
+		<el-form-item 
+			prop="coludname"
+			label="存储位置：" >
+			<el-input class="maxWidth " v-model="AddDialog.coludname"></el-input>
+		</el-form-item>
+		<el-form-item
+			prop="appid"
+			label="appid：" 
+			:rules="{required: true, message: 'appid不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.appid"></el-input>
+		</el-form-item>
+		<el-form-item 
+			prop="appkey"
+			label="secretid："
+			:rules="{required: true, message: 'secretid不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.appkey"></el-input>
+		</el-form-item>
+		<el-form-item 
+			prop="appsecret"
+			label="sercertkey："
+			:rules="{required: true, message: 'sercertkey不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.appsecret"></el-input>
+		</el-form-item>
+		<el-form-item class="title" label="存储桶设置"></el-form-item>
+		<el-form-item 
+			prop="bucket"
+			label="存储桶名称："
+			:rules="{required: true, message: '存储桶名称不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.bucket"></el-input>
+		</el-form-item>
+		<el-form-item 
+			prop="region"
+			label="存储桶地域："
+			:rules="{required: true, message: '存储桶地域不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.region"></el-input>
+			<p class="tipTxt" style="margin: 0;">例如：ap-beijing</p>
+		</el-form-item>
+		<el-form-item 
+			prop="realmname"
+			label="访问域名："
+			:rules="{required: true, message: '访问域名不能为空', trigger: 'blur'}">
+			<el-input class="maxWidth " v-model="AddDialog.realmname"></el-input>
+		</el-form-item>
+	</el-form>
+	<span #footer class="dialog-footer">
+		<el-button :loading="AddDialog.btnloading" @click="AddDialog.dialogVisible = false;">取 消</el-button>
+		<el-button type="primary" @click="AddDialogSubmit" :loading="AddDialog.btnloading">确 定</el-button>
+	</span>
+</el-dialog>
+<script type="text/javascript">
+	var AddDialogMixin = {
+		data(){
+			return {
+				AddDialog:{
+					btnloading:false,
+					dialogVisible:false,
+					bz:'',
+					coludname:'腾讯云QCOS',
+					appid:'',
+					appkey:'',
+					appsecret:'',
+					bucket:'',
+					region:'',
+					realmname:''
+				},
+			}
+		},
+		methods:{
+			AddDialogSubmit(){
+				var self = this;
+				self.$refs.AddDialogref.validate(async function(valid){
+					if(valid){
+						self.AddDialog.btnloading = true;
+						var res = await axios.post(MOD_URL+'&op=storagesetting&do=addspace',{
+							addspace:true,
+							formhash:'{FORMHASH}',
+							bz:self.AddDialog.bz,
+							extra:self.AddDialog.appid,
+							access_id:self.AddDialog.appkey,
+							access_key:self.AddDialog.appsecret,
+							bucket:self.AddDialog.bucket,
+							region:self.AddDialog.region,
+							host:self.AddDialog.realmname,
+							coludname:self.AddDialog.coludname,
+						});
+						if(res == 'intercept'){
+							return false;
+						}
+						var json = res.data;
+						if(json.success){
+							window.location.reload();
+						}else{
+							self.$message.error(json.msg);
+							self.AddDialog.btnloading = false;
+						}
+					}
+				})
+			},
+			AddDialogClose(){
+				var self = this;
+				self.$refs.AddDialogref.resetFields();
+			}
+		}
+	}
+</script>

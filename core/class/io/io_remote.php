@@ -14,7 +14,7 @@ if(!defined('IN_OAOOA')) {
 class io_remote
 {
 	public function getBzByRemoteid($remoteid){ //通过remoteid获取bz,默认返回dzz
-		return C::t('local_storage')->getBzByRemoteid($remoteid);
+		return C::t('connect_storage')->getBzByRemoteid($remoteid);
 	}
 	public function getRemoteid($attach){
 		if($remoteid=C::t('local_router')->getRemoteId($attach)){
@@ -26,14 +26,14 @@ class io_remote
 	public function DeleteFromSpace($attach){
 		global $_G;
 		$bz=self::getBzByRemoteid($attach['remote']);
-		if($bz=='dzz'){
+		if($bz=='dzz::'){
 			@unlink($_G['setting']['attachdir'].$attach['attachment']);
 		}else{
 			$path=$bz.'/'.$attach['attachment'];
 			IO::Delete($path);
 		}
 		//更新存储位置统计
-		C::t('local_storage')->update_usesize_by_remoteid($attach['remote'],-$attach['filesize']);
+		//C::t('local_storage')->update_usesize_by_remoteid($attach['remote'],-$attach['filesize']);
 		return true;
 	}
 	public function MoveToSpace($attach,$remoteid=0){ //注意：判断时使用===false;
@@ -43,12 +43,13 @@ class io_remote
 		$bz=self::getBzByRemoteid($remoteid);
 		$obz=self::getBzByRemoteid($attach['remote']);
 		if($bz==$obz) return false; //同一区域不需要移动
-		if($bz=='dzz'){
+		if($bz=='dzz::'){
 			$path='attach::'.$attach['aid'];
 		}else{
-			$path=$bz.'/'.$attach['attachment'];
+			$path=$bz.$attach['attachment'];
 		}
-		if($re=IO::MoveToSpace($path,$attach)){
+		$opath = $obz.$attach['attachment'];
+		if($re=IO::moveThumbFile($path,$opath)){
 			if(is_array($re) && $re['error']){
 				return $re;
 			}else{
@@ -66,15 +67,15 @@ class io_remote
 			if(C::t('attachment')->update($attach['aid'],array('remote'=>$re))){
 				//删除原文件
 				$obz=io_remote::getBzByRemoteid($attach['remote']);
-				if($obz=='dzz'){
+				if($obz=='dzz::'){
 					@unlink($_G['setting']['attachdir'].$attach['attachment']);
 				}else{
 					$opath=$obz.'/'.$attach['attachment'];
 					IO::Delete($opath,true);
 				}
 			}
-			C::t('local_storage')->update_usesize_by_remoteid($remoteid,$attach['filesize']);
-			C::t('local_storage')->update_usesize_by_remoteid($attach['remote'],-$attach['filesize']);
+			/*C::t('local_storage')->update_usesize_by_remoteid($remoteid,$attach['filesize']);
+			C::t('local_storage')->update_usesize_by_remoteid($attach['remote'],-$attach['filesize']);*/
 			$attach['remote']=$remoteid;
 			return $attach;
 		}else{

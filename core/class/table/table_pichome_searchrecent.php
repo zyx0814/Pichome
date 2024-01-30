@@ -15,7 +15,7 @@ class table_pichome_searchrecent extends dzz_table
         parent::__construct();
     }
 
-    public function add_search($keyword, $appid = '', $ktype = 0)
+    public function add_search($keyword, $appid = '', $ktype = 0,$gid=0)
     {
         global $_G;
         $wheresql = ' keywords = %s and ktype=%d ';
@@ -28,6 +28,10 @@ class table_pichome_searchrecent extends dzz_table
             $wheresql .= ' and appid = %s ';
             $params[] = $appid;
         }
+        if ($gid) {
+            $wheresql .= ' and gid = %d ';
+            $params[] = $gid;
+        }
         if ($data = DB::fetch_first("select id,hots from %t where$wheresql", $params)) {
             $hots = $data['hots'] + 1;
             return parent::update($data['id'], array('hots' => $hots, 'dateline' => TIMESTAMP));
@@ -38,12 +42,21 @@ class table_pichome_searchrecent extends dzz_table
                 'dateline' => TIMESTAMP,
                 'uid' => isset($_G['uid']) ? $_G['uid'] : 0,
                 'hots' => 1,
-                'appid' => $appid
+                'appid' => $appid,
+                'gid' => $gid
             ];
             return parent::insert($setarr);
         }
     }
 
+    public function fetch_recent_tag_by_appid($appid){
+        $datas = [];
+        foreach (DB::fetch_all("select t.tid,s.keywords,s.dateline from %t s left join %t  t on s.keywords = t.tagname where
+                s.appid = %s and s.ktype = 1  order by s.hots desc,s.dateline", array($this->_table,'pichome_tag',$appid)) as $v) {
+            $datas[$v['tid']] = $v;
+        }
+        return $datas;
+    }
     //查询最近搜索标签
     public function fetch_renctent_search_tag($appid = '', $limit = 8)
     {
@@ -65,7 +78,28 @@ class table_pichome_searchrecent extends dzz_table
         }
         return $datas;
     }
+    public function fetch_hotkeyword_by_keytype($ktype=3,$limit = 8, $noids = array(), $datas = array()){
+        $params = array($this->_table);
 
+        $count = DB::result_first("select count(id) from %t  where 1 order by hots desc limit 0,$limit", $params);
+        foreach (DB::fetch_all("select keywords,id from %t  where 1 order by hots desc limit 0,$limit", $params) as $v) {
+            $data = $this->get_data_by_keyword($v['keywords']);
+            if (!$data) {
+                parent::delete($v['id']);
+            } else {
+                $datas[$v['id']] = $data;
+            }
+        }
+        // print_r($datas);die;
+        $resultcount = count($datas);
+        //如果有关键词没有结果,并且结果数量大于查询出来的数量
+        if ($resultcount < $limit && $count > $limit) {
+            $ids = array_keys($datas);
+            $limit = $limit - $resultcount;
+            $datas = $this->fetch_hotkeyword_by_appid($appid, $limit, $ids, $datas);
+        }
+        return $datas;
+    }
     public function fetch_hotkeyword_by_appid($appid = '', $limit = 8, $noids = array(), $datas = array())
     {
         /* $start = strtotime(date("Y-m-d", strtotime("-7 day")));

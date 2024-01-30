@@ -21,7 +21,12 @@ class table_pichome_collectlist extends dzz_table
             return array('error'=>'no_perm');
         }
         if(empty($data['rid'])) return true;
-        $existsdata = DB::fetch_all("select rid from %t where rid in(%n) and clid = %d and cid = %d",array($this->_table,$data['rid'],$data['clid'],$data['cid']));
+        if($data['cid'] == 0){
+            $existsdata = DB::fetch_all("select rid from %t where rid in(%n) and clid = %d ",array($this->_table,$data['rid'],$data['clid']));
+        }else{
+            $existsdata = DB::fetch_all("select rid from %t where rid in(%n) and clid = %d and cid = %d",array($this->_table,$data['rid'],$data['clid'],$data['cid']));
+        }
+
         $existsrids = [];
         foreach($existsdata as $v){
             $existsrids[] = $v['rid'];
@@ -150,8 +155,8 @@ class table_pichome_collectlist extends dzz_table
             //取得第一张图
             $firstdata = DB::fetch_first("select * from %t where clid = %d order by id asc",array($this->_table,$clid));
             if($firstdata){
-                $icondatas = C::t('pichome_resources')->geticondata_by_rid($firstdata['rid']);
-                $setarr['covert'] = $icondatas['icondata'];
+                //$icondatas = C::t('pichome_resources')->geticondata_by_rid($firstdata['rid']);
+                $setarr['covert'] = $firstdata['rid'];
                 $setarr['lid'] = $firstdata['id'];
             }else{
                 $setarr['covert'] = '';
@@ -170,8 +175,8 @@ class table_pichome_collectlist extends dzz_table
             $setarr['lid2'] = 0;
         }elseif($count ==1) {
             foreach ($coverdata as $v) {
-                $icondatas = C::t('pichome_resources')->geticondata_by_rid($v['rid']);
-                $setarr['covert' . $i] = $icondatas['icondata'];
+                //$icondatas = $v['rid'];
+                $setarr['covert' . $i] = $v['rid'];
                 $setarr['lid' . $i] = $v['id'];
                 $i--;
             }
@@ -179,8 +184,8 @@ class table_pichome_collectlist extends dzz_table
             $setarr['lid2'] = 0;
         }else{
             foreach($coverdata as $v){
-                $icondatas = C::t('pichome_resources')->geticondata_by_rid($v['rid']);
-                $setarr['covert'.$i] = $icondatas['icondata'];
+                //$icondatas = C::t('pichome_resources')->geticondata_by_rid($v['rid']);
+                $setarr['covert'.$i] = $v['rid'];
                 $setarr['lid'.$i] = $v['id'];
                 $i--;
             }
@@ -209,19 +214,15 @@ class table_pichome_collectlist extends dzz_table
            $clid = $v['clid'];
            //如果收藏位置相同则不做任何处理
            if($v['clid'] == $oclid && $v['cid'] == $ocid){
-              /* if(parent::delete($v['id'])){
-                   //收藏夹文件数和分类数减1
-                   if($v['cid']) C::t('pichome_collectcat')->add_filenum_by_cid($v['cid'],-1);
-                   if($v['clid'])C::t('pichome_collect')->add_filenum_by_clid($v['clid'],-1);
-               }*/
                continue;
            }else{
-
+               //print_r($v);die;
                //如果该收藏文件在目标位置已经存在则删除原收藏位置文件
                if($id = DB::result_first("select id from %t where rid = %s and clid = %d and cid = %d",
-                   array($this->_table,$v['rird'],$oclid,$ocid))){
-                   $this->delete($id);
-                    C::t('pichome_collect')->add_filenum_by_clid($clid,-1);
+                   array($this->_table,$v['rid'],$oclid,$ocid))){
+                  //echo $id;die;
+                   $this->delete($v['id']);
+                    C::t('pichome_collect')->add_filenum_by_clid($v['clid'],-1);
                    if($v['cid'])C::t('pichome_collectcat')->add_filenum_by_cid($v['cid'],-1);
                }else{
                    $setarr = [
@@ -230,8 +231,7 @@ class table_pichome_collectlist extends dzz_table
                        'clid'=>$oclid,
                        'cid'=>$ocid
                    ];
-                  /* echo $ocid;
-                   print_r($v);die;*/
+
                    //更新数据
                    if(parent::update($v['id'],$setarr)){
 
@@ -333,11 +333,19 @@ class table_pichome_collectlist extends dzz_table
             $rids[] = $v['rid'];
         }
         $existsrids = [];
-        foreach(DB::fetch_all("select rid from %t where rid in(%n) and clid = %d and cid = %d",array($this->_table,$rids,$clid,$cid)) as $v){
-            $existsrids[] = $v['rid'];
+        if($cid == 0){
+            foreach(DB::fetch_all("select rid from %t where rid in(%n) and clid = %d ",array($this->_table,$rids,$clid)) as $v){
+                $existsrids[] = $v['rid'];
+            }
+        }else{
+            foreach(DB::fetch_all("select rid from %t where rid in(%n) and clid = %d and cid = %d",array($this->_table,$rids,$clid,$cid)) as $v){
+                $existsrids[] = $v['rid'];
+            }
         }
+
         $totalcount = count($rids);
         $insertrids = array_diff($rids,$existsrids);
+        if(empty($insertrids)) return true;
         //记录加入收藏个数
         $counti = 0;
         $namesarr = [];
@@ -398,6 +406,7 @@ class table_pichome_collectlist extends dzz_table
             $clid = $k;
             $counti = 0;
             $rids = [];
+            if(empty($val)) continue;
             foreach(DB::fetch_all("select rid,id,cid,clid from %t where id in(%n)",array($this->_table,$val)) as $v){
                 $rids[] = $v['rid'];
                 if($this->delete($v['id'])){

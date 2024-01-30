@@ -12,16 +12,19 @@ require_once(DZZ_ROOT . './dzz/class/class_encode.php');
 class fmpeg
 {
     private $fm;
+    private $status = 0;
     private $logger = NULL;
 
     public function __construct($options = array())
     {
-
+        $appdata = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $app = unserialize($appdata['extra']);
+        $this->status = $app['status'];
         $option = array(
-            'ffmpeg.binaries' =>(getglobal('config/pichomeffmpegposition')) ? getglobal('config/pichomeffmpegposition'):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg'),
-            'ffprobe.binaries' => (getglobal('config/pichomeffprobeposition')) ? (getglobal('config/pichomeffprobeposition')):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe'),
-            'timeout' => 3600, // The timeout for the underlying process
-            'ffmpeg.threads' => 1,   // The number of threads that FFMpeg should use
+            'ffmpeg.binaries' => $app['ffmpeg.binaries'] ? $app['ffmpeg.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg'),
+            'ffprobe.binaries' => $app['ffprobe.binaries'] ? $app['ffprobe.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe'),
+            'timeout' => $app['timeout'] ? $app['timeout'] : 3600, // The timeout for the underlying process
+            'ffmpeg.threads' => $app['ffmpeg.threads'] ? $app['ffmpeg.threads'] : 1,   // The number of threads that FFMpeg should use
         );
         $this->fm = FFMpeg\FFMpeg::create($option, $this->logger);
         return $this->fm;
@@ -31,54 +34,60 @@ class fmpeg
 
     public function getInfo($data)
     {
-
-            $option = array(
-                'ffmpeg.binaries' =>(getglobal('config/pichomeffmpegposition')) ? getglobal('config/pichomeffmpegposition'):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg'),
-                'ffprobe.binaries' => (getglobal('config/pichomeffprobeposition')) ? (getglobal('config/pichomeffprobeposition')):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe'),
-                'timeout' => 3600, // The timeout for the underlying process
-                'ffmpeg.threads' => 1,   // The number of threads that FFMpeg should use
-            );
-            $file = $path = $data['realpath'];
-            $file = str_replace('dzz::','',$file);
-            if (!is_file($file)) {
-               /* $cachepath = getglobal('setting/attachdir') . 'cache/ffmpeg_cahce_' . md5($path) . '.' . $data['ext'];
-                $file = IO::getStream($file);
-                if (!file_put_contents($cachepath, file_get_contents($file))) {
-                    return false;
-                }
-                $file = $cachepath;*/
-                return false;
+        global $_G;
+        if($data['aid']){
+            $attachment = IO::getMeta('attach::'.$data['aid']);
+        }else{
+            $attachment = IO::getMeta($data['rid']);
+        }
+        $file = IO::getStream($attachment['path']);;
+        //本地路径
+        if ($attachment['bz'] != 'dzz::') {
+            $cachefile = $_G['setting']['attachdir'] . './cache/' . md5($data['path']) . '.' . $data['ext'];
+            $handle = fopen($cachefile, 'w+');
+            $fp = fopen($file, 'rb');
+            while (!feof($fp)) {
+                fwrite($handle, fread($fp, 8192));
             }
+            fclose($handle);
+            fclose($fp);
+            $file = $cachefile;
+        }
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $option = array(
+            'ffmpeg.binaries' => $app['ffmpeg.binaries'] ? $app['ffmpeg.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg'),
+            'ffprobe.binaries' => $app['ffprobe.binaries'] ? $app['ffprobe.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe'),
+            'timeout' => $app['timeout'] ? $app['timeout'] : 3600, // The timeout for the underlying process
+            'ffmpeg.threads' => $app['ffmpeg.threads'] ? $app['ffmpeg.threads'] : 1,   // The number of threads that FFMpeg should use
+        );
+        $ffprobe = FFMpeg\FFProbe::create($option, null);
 
-            $ffprobe = FFMpeg\FFProbe::create($option, null);
-
-            if ('audio' == getTypeByExt($data['ext'])) {
-                $meta = $ffprobe
-                    ->streams($file) // extracts streams informations
-                    ->audios()                      // filters video streams
-                    ->first();
-                $info = array();
-                if ($meta) {
-                    $info = array(
-                        'duration' => round($meta->get('duration'), 2),
-                    );
-                }
-            } else {
-                $meta = $ffprobe
-                    ->streams($file) // extracts streams informations
-                    ->videos()                      // filters video streams
-                    ->first();
-                $info = array();
-                if ($meta) {
-                    $info = array(
-                        'width' => intval($meta->get('width')),
-                        'height' => intval($meta->get('height')),
-                        'duration' => round($meta->get('duration'), 2),
-                    );
-                }
+        if ('audio' == getTypeByExt($attachment['ext'])) {
+            $meta = $ffprobe
+                ->streams($file) // extracts streams informations
+                ->audios()                      // filters video streams
+                ->first();
+            $info = array();
+            if ($meta) {
+                $info = array(
+                    'duration' => round($meta->get('duration'), 2),
+                );
             }
-
-       // if ($cachepath) @unlink($cachepath);
+        } else {
+            $meta = $ffprobe
+                ->streams($file) // extracts streams informations
+                ->videos()                      // filters video streams
+                ->first();
+            $info = array();
+            if ($meta) {
+                $info = array(
+                    'width' => intval($meta->get('width')),
+                    'height' => intval($meta->get('height')),
+                    'duration' => round($meta->get('duration'), 2),
+                );
+            }
+        }
+        if ($cachefile) @unlink($cachefile);
         return $info;
 
     }
@@ -87,15 +96,19 @@ class fmpeg
        $file:文件地址
        $time:获取缩略图的时间点单位秒
     */
-    public function getThumb($data,$time = 1)
+    public function getThumb($data, $time = 0)
     {
         global $_G;
+        if($data['aid']){
+            $attachment = IO::getMeta('attach::'.$data['aid']);
+        }else{
+            $attachment = IO::getMeta($data['rid']);
+        }
 
-        $file = $data['realpath'];
-        $file = str_replace('dzz::','',$file);
+        $file = IO::getStream($attachment['path']);
         //本地路径
-        if (!is_file($file)) {
-           /* $cachefile = $_G['setting']['attachdir'] . './cache/' . md5($data['path']) . '.' . $data['ext'];
+        if ($attachment['bz'] != 'dzz::') {
+            $cachefile = $_G['setting']['attachdir'] . './cache/' . md5($attachment['path']) . '.' . $attachment['ext'];
             $handle = fopen($cachefile, 'w+');
             $fp = fopen($file, 'rb');
             while (!feof($fp)) {
@@ -103,13 +116,16 @@ class fmpeg
             }
             fclose($handle);
             fclose($fp);
-            $file = $cachefile;*/
-            return '';
+            $file = $cachefile;
         }
-        if ('audio' == getTypeByExt($data['ext'])) {
-            $target = md5($data['realpath'].$data['thumbsign']) . '.jpg';
+        $thumbpath = $this->getthumbpath('pichomethumb');
+        if($data['aid'])$thumbname = md5($data['aid'].$data['thumbsign']).'_original.webp';
+        else $thumbname = md5($data['path'].$data['thumbsign']).'_original.webp';
+        $target =  $thumbpath.$thumbname;
+        if ('audio' == getTypeByExt($attachment['ext'])) {
+            //$target = ($data['thumbsign']) ? $data['rid']. '.webp' : $data['rid'] . '.webp';
 
-            $jpg = $_G['setting']['attachdir'] . './pichomethumb/' . $data['appid'] . '/' . $target;
+            $jpg = $_G['setting']['attachdir']  . $target;
             $jpgpath = dirname($jpg);
             dmkdir($jpgpath);
             if (!in_array($data['ext'], array('mp3', 'wav'))) {
@@ -124,33 +140,73 @@ class fmpeg
             $waveform->save($jpg);
             if ($tmp) @unlink($tmp);
         } else {
-            $target = md5($data['realpath']) . '.jpg';
-            $jpg = $_G['setting']['attachdir'] . './pichomethumb/' . $data['appid'] . '/' . $target;
+          //  $target = $data['rid'] . '.jpg';
+            $jpg = $_G['setting']['attachdir']. $target;
             $jpgpath = dirname($jpg);
             dmkdir($jpgpath);
+            $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+            if(!$time){
+                $option = array(
+                    'ffmpeg.binaries' => $app['ffmpeg.binaries'] ? $app['ffmpeg.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg'),
+                    'ffprobe.binaries' => $app['ffprobe.binaries'] ? $app['ffprobe.binaries'] : (strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe'),
+                    'timeout' => $app['timeout'] ? $app['timeout'] : 3600, // The timeout for the underlying process
+                    'ffmpeg.threads' => $app['ffmpeg.threads'] ? $app['ffmpeg.threads'] : 1,   // The number of threads that FFMpeg should use
+                );
+                $ffprobe = FFMpeg\FFProbe::create($option, null);
+                $meta = $ffprobe
+                    ->streams($file) // extracts streams informations
+                    ->audios()                      // filters video streams
+                    ->first();
+                $duration = 0;
+                if ($meta) {
+                   $duration = round($meta->get('duration'), 2);
+
+                }
+                $time = getglobal('config/audiothumetime') ? intval(getglobal('config/audiothumetime')):5;
+                $time = ($duration > $time) ? $time:ceil($data['duration']);
+            }
 
             try {
+
                 $video = $this->fm->open($file);
                 $video
                     ->frame(FFMpeg\Coordinate\TimeCode::fromSeconds($time))
                     ->save($jpg);
             } catch (\Exception $e) {
+
                 runlog('ffmpeg', $e->getMessage() . ' File:' . $file);
             }
         }
-        //if ($cachefile) @unlink($cachefile);
-        if (is_file($jpg)) {
-           // C::t('pichome_resources')->update($data['rid'], array('hasthumb' => 1));
-            return $jpg;
-        } else {
-            return false;
-        }
+        if ($cachefile) @unlink($cachefile);
 
+        if (is_file($jpg)) {
+            $filesize = filesize($jpg);
+            $defaultspace = $_G['setting']['defaultspacesetting'];
+
+            //如果原文件位置不在本地，则将转换完成文件迁移到对应位置
+            if ($defaultspace['bz'] != 'dzz') {
+                $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$target;
+                //组合云端保存位置
+                //$cloudpath = $attachment['bz'] . ':' . $did . ':' . '/' . $target;
+                //echo $cloudpath;die;
+                $filepath = \IO::moveThumbFile($cloudpath, 'dzz::'.$target);
+                if (!isset($filepath['error'])) {
+                    @unlink($jpg);
+                    return $target;
+                }
+            } else {
+
+                return $target;
+            }
+        }
+        return false;
 
     }
-    public function getVideoQuality($videoquality = 0){
+
+    public function getVideoQuality($videoquality = 0)
+    {
         $templatename = '';
-        switch($videoquality){
+        switch ($videoquality) {
             case 0://流畅
                 $templatename = 'pichomeconvert-mp4-640-360-400-mp3';
                 $width = 640;
@@ -188,49 +244,42 @@ class fmpeg
                 $bitrate = 6000;
                 break;
         }
-        return array($templatename,$width,$height,$bitrate);
+        return array($templatename, $width, $height, $bitrate);
     }
+
     //转码,windows下大文件可能出现内部错误，X264报错，不知原因
-    public function convert($rid, $ext = 'webm', $videoquality = 0,$extra = array())
+    public function convert($id, $ext = 'webm', $videoquality = 0, $extra = array())
     {
         global $_G;
         //获取附件信息
-        $attachment = C::t('pichome_resources')->fetch_data_by_rid($rid);
-        list($templatename,$width,$height,$bitrate) = $this->getVideoQuality($videoquality);
+
         //获取记录表数据
-        $setarr = ['rid'=>$rid,'format'=>$ext,'dateline'=>TIMESTAMP,'videoquality'=>$videoquality];
-        $cron = C::t('video_record')->insert($setarr);
+        $cron = C::t('video_record')->fetch($id);
+        if($cron['aid']){
+            $attachment = IO::getMeta('attach::'.$cron['aid']);
+        }else{
+            $attachment = IO::getMeta($cron['rid']);
+        }
+        list($templatename, $width, $height, $bitrate) = $this->getVideoQuality($videoquality);
         //本地文件路径
-        $target =$_G['setting']['attachdir'].'./pichomethumb/'.$attachment['appid'].'/'.md5($attachment['realpath']).'.' . $cron['format'];
+        $target = 'pichomethumb/' . date('Ym') . '/' . date('d') .'/'.md5($attachment['path']) . '.' . $cron['format'];
         //本地存储时路径
         $recordpath = 'dzz::' . $target;
         //文件保存路径
-        $mp4 = $target;
+        $mp4 = $_G['setting']['attachdir'].$target;
         $mp4path = dirname($mp4);
 
         dmkdir($mp4path);
 
 
         //开始转换过程
-        $file = IO::getStream($attachment['realpath']);
-        if(strpos($attachment['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $attachment['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
-
-        }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-
-        if($bz != 'dzz'){
-            $cachefile = $_G['setting']['attachdir'] . './cache/' .md5($attachment['attachment']).'.'.$attachment['filetype'];
-            $handle = fopen($cachefile,'w+');
+        $file = IO::getStream($attachment['path']);
+        if ($attachment['bz'] != 'dzz::') {
+            $cachefile = $_G['setting']['attachdir'] . './cache/' . md5($attachment['path']) . '.' . $attachment['ext'];
+            $handle = fopen($cachefile, 'w+');
             $fp = fopen($file, 'rb');
-            while(!feof($fp)){
-                fwrite($handle,fread($fp,8192));
+            while (!feof($fp)) {
+                fwrite($handle, fread($fp, 8192));
             }
             fclose($handle);
             fclose($fp);
@@ -238,9 +287,9 @@ class fmpeg
         }
 
         //更新转换执行次数
-        C::t('video_record')->update($cron['id'],array('status'=>1,'dateline'=>TIMESTAMP,'jobnum'=>(($cron['jobnum']) ?intval($cron['jobnum'])+1:1)));
+        C::t('video_record')->update($cron['id'], array('status' => 1,'path'=>$target, 'dateline' => TIMESTAMP, 'jobnum' => (($cron['jobnum']) ? intval($cron['jobnum']) + 1 : 1)));
         $video = $this->fm->open($file);
-        if(!in_array($ext,array('mp3','wav'))){
+        if (!in_array($ext, array('mp3', 'wav'))) {
             //指定视频宽高
             $video->filters()->resize(new FFMpeg\Coordinate\Dimension($width, $height))->synchronize();
         }
@@ -271,7 +320,7 @@ class fmpeg
                 $format = new FFMpeg\Format\Video\X264();
 
         }
-        if(!in_array($ext,array('mp3','wav'))){
+        if (!in_array($ext, array('mp3', 'wav'))) {
             //获取视频信息
             try {
                 $info = $this->getInfo($attachment);
@@ -290,25 +339,26 @@ class fmpeg
             $video->save($format, $mp4);
         } catch (\Exception $e) {
             //失败时记录失败信息
-            C::t('video_record')->update($cron['id'], array('endtime' => strtotime('now'), 'status' => -1,'error'=>$e->getMessage()));
+            C::t('video_record')->update($cron['id'], array('endtime' => strtotime('now'), 'status' => -1, 'error' => $e->getMessage()));
             return array('error' => $e->getMessage());
         }
         //如果未发生错误更改记录表数据为成功，并存储本地存储时路径
         C::t('video_record')->update($cron['id'], array('percent' => 100, 'endtime' => strtotime('now'), 'status' => 2, 'path' => $recordpath));
-        if($cachefile) @unlink($cachefile);
+        if ($cachefile) @unlink($cachefile);
         //如果原文件位置不在本地，则将转换完成文件迁移到对应位置
-        if ($bz != 'dzz') {
+        if ($attachment['bz'] != 'dzz::') {
             //组合云端保存位置
-            $cloudpath = $bz . '/tmppichomethumb/' . $attachment['appid']. '.'.md5($attachment['realpath']).'.' . $cron['format'];
+            $cloudpath =$attachment['bz']. ':' . '/tmppichomethumb/' . md5($attachment['path']) . '.' . $cron['format'];
             $filepath = IO::moveThumbFile($cloudpath, $mp4);
             if (!isset($filepath['error'])) {
-                C::t('video_record')->update($cron['id'], array('path' => $cloudpath));
+                C::t('video_record')->update($cron['id'], array('path' => $cloudpath,'remoteid'=>$attachment['remoteid']));
                 @unlink($mp4);
             }
         }
 
         return $cron;
     }
+
     //兼容linux下获取文件名
     public function get_basename($filename)
     {
@@ -327,6 +377,15 @@ class fmpeg
         $targetpath = dirname($target_attach);
         dmkdir($targetpath);
         return $dir;
+    }
+    public function getthumbpath($dir = 'pichomethumb'){
+        $subdir = $subdir1 = $subdir2 = '';
+        $subdir1 = date('Ym');
+        $subdir2 = date('d');
+        $subdir = $subdir1 . '/' . $subdir2 . '/';
+        // $target1 = $dir . '/' . $subdir . 'index.html';
+        $target = $dir . '/' . $subdir;
+        return $target;
     }
 
 }

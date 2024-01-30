@@ -1,0 +1,132 @@
+<el-popover
+	popper-class="MainMenu isdropdown header-dropdown-menu"
+	trigger="click"
+    v-model:visible="MainMenu.show"
+	:persistent="false"
+	:show-arrow="false">
+	<comsort
+		iscolumn
+		:defaultval="HeaderRightBtnShow"
+		placement="right-start"
+		@change.self="HeaderShowChange">
+		<template #centent>
+			<li class="el-dropdown-menu__item--divided"></li>
+			<el-popover
+				placement="right-start"
+				popper-class="isdropdown header-dropdown-menu"
+				:hide-after="0"
+				:teleported="false"
+				trigger="hover">
+				<ul class="el-dropdown-menu">
+					<li class="el-dropdown-menu__item">
+						<label 
+							class="el-checkbox" 
+							@click.stop="MainMenuOperation('uploadfolder')">
+							<span class="el-checkbox__label">上传文件夹</span>
+						</label>
+					</li>
+					<li class="el-dropdown-menu__item">
+						<label 
+							class="el-checkbox" 
+							@click.stop="MainMenuOperation('uploadfile')">
+							<span class="el-checkbox__label">上传文件</span>
+						</label>
+					</li>
+					<li class="el-dropdown-menu__item" v-if="LeftCurrenType == 'filelist'">
+						<label 
+							class="el-checkbox" 
+							@click.stop="MainMenuOperation('addchild')">
+							<span class="el-checkbox__label">新增子级文件夹</span>
+						</label>
+					</li>
+					<li class="el-dropdown-menu__item" v-if="LeftCurrenType != 'filelist'">
+						<label 
+							class="el-checkbox" 
+							@click.stop="MainMenuOperation('add')">
+							<span class="el-checkbox__label">新增文件夹</span>
+						</label>
+					</li>
+				</ul>
+				<template #reference>
+					<li class="el-dropdown-menu__item">
+						<label class="el-checkbox">
+							<span class="el-checkbox__input">
+								<span class="el-checkbox__inner" style="opacity:0;"></span>
+							</span>
+							<span class="el-checkbox__label">新建</span>
+							<el-icon :size="size" class="el-icon--right">
+								<Arrow-Right/>
+							</el-icon>
+						</label>
+					</li>
+				</template>
+			</el-popover>
+		</template>
+	</comsort>
+</el-popover>
+<script>
+	const MainMixins = {
+		data(){
+			return {
+				MainMenu:{
+					show:false
+				}
+			}
+		},
+		methods:{
+			MainMenuShow(){
+				var self = this;
+				if(this.ImageMenu && this.ImageMenu.show){
+					this.ImageMenu.show = false;
+				}
+				if(this.fileMunu && this.fileMunu.show){
+					this.fileMunu.show = false;
+				}
+				if(this.LeftTreePopover && this.LeftTreePopover.show){
+					this.LeftTreePopover.show = false;
+				}
+				this.MainMenu.show = true;
+				self.$nextTick(function(){
+					let menu = document.querySelector('.MainMenu')
+					var evt = event || window.event;
+					var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+					var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+				
+					var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+					var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+					//给left和top分别赋值为鼠标的位置；
+					menu.style.left = evt.pageX+"px";
+					menu.style.top = evt.pageY+"px";
+					//如果鼠标右边放不下菜单，就把left的值的改了
+					if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+						var left1 = evt.pageX-100;
+						menu.style.left = left1+"px";
+					}
+					//如果鼠标下边放不下菜单，就把top的值的改了
+					if(evt.pageY+100>clientHeight+scrollTop){
+						var top1 = (evt.pageY-100);
+						menu.style.top = top1+"px";
+					}
+				})
+				
+			},
+			MainMenuOperation(type){
+				var self = this;
+				self.$refs.popoverUploadBtn.hide();
+				if(type == 'addchild'){
+					this.MainMenu.show = false;
+					var node = self.$refs.LeftTreeRef.getNode(this.LeftTree.Currentkey);
+					this.LeftTreePopover.node = node;
+					this.LeftTreeOperation('addchild')
+				}else if(type == 'add'){
+					this.LeftTreeOperation('addparent')
+				}else if(type == 'uploadfolder'){
+					
+				}else if(type == 'uploadfile'){
+					
+				}
+				
+			}
+		}
+	};
+</script>

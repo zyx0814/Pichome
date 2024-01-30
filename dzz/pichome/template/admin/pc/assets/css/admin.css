@@ -1,0 +1,200 @@
+.el-aside {
+	border-right: 1px solid var(--border-color-base);
+}
+
+.maxWidth {
+	width: 370px;
+}
+#center_title {
+	line-height: 55px;
+	border-bottom: 1px solid var(--border-color-base);
+	padding: 0 25px;
+	font-size: 16px;
+}
+
+.el-scrollbar.h300>.el-scrollbar__wrap{
+    max-height: 300px;
+	min-height: 100px;
+   overflow: scroll;
+}
+.el-scrollbar.h350>.el-scrollbar__wrap{
+    max-height: 350px;
+	min-height: 100px;
+   overflow: scroll;
+}
+.el-scrollbar.h400>.el-scrollbar__wrap{
+    max-height: 400px;
+	min-height: 100px;
+   overflow: scroll;
+}
+
+.el-checkbox,
+.el-radio {
+	margin-right: 16px;
+	margin-left: 0 !important;
+}
+
+
+.avatar-uploader .el-upload {
+	border: 1px dashed var(--border-color-base);
+	border-radius: 6px;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+	width: 150px;
+	height: 150px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.avatar-uploader .el-upload:hover {
+}
+
+.avatar-uploader .avatar-uploader-icon {
+    font-size: 16px;
+}
+.avatar-uploader .el-image{
+	height: 150px;
+	width: 100%;
+	line-height: 150px;
+}
+.avatar-uploader .el-image img{
+	max-width: 100%;
+	max-height: 150px;
+	width: auto;
+	height: auto;
+	vertical-align: middle;
+}
+.avatar-uploader .el-progress{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	z-index: 100;
+}
+.avatar {
+	max-width: 100%;
+	max-height: 100%;
+	display: inline-block;
+}
+
+.register-bg-bt{
+	background-color: transparent;
+	margin-left: 6px;
+}
+
+.el-checkbox,.el-radio{
+	min-width: 120px;
+	margin-bottom: 8px;
+}
+.theme-block{
+	margin-right: 12px;
+	float: left;
+}
+.theme-block .bg{
+	height: 40px;
+	width: 40px;
+	border: 1px solid var(--border-color-base);
+	border-radius: 4px;
+	position: relative;
+	overflow: hidden;
+	cursor: pointer;
+}
+.theme-block .bg.active{
+}
+
+.theme-block .bg .triangle{
+	position: absolute;
+    right: 0px;
+    bottom: 0px;
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+	display: none;
+	border-bottom: 30px solid #409EFF;
+}
+.theme-block .bg .icon{
+	color: #FFFFFF;
+	font-size: 14px;
+	position: absolute;
+	bottom: 2px;
+	right: 2px;
+	display: none;
+}
+.theme-block .bg.active .triangle,
+.theme-block .bg.active .icon{
+	display: block;
+}
+
+
+.theme-main{
+	
+}
+.theme-main .theme-item{
+	margin-left: -8px;
+}
+.theme-main .theme-item li{
+	list-style: none;
+	display: inline-block;
+	background: #EFEEF1;
+	padding: 8px;
+	position: relative;
+	cursor: pointer;
+	margin-left: 8px;
+	float: left;
+	margin-bottom: 16px;
+}
+.theme-main .theme-item li .el-image{
+	background: #3E3D40;
+}
+.theme-main .theme-item li p{
+	font-size: 14px;
+	margin-top: 8px;
+}
+.theme-main .theme-item li .icon{
+    position: absolute;
+	right: 10px;
+	top: 10px;
+	z-index: 10;
+	font-size: 16px;
+	color: #FFFFFF;
+    display: none;
+}
+.theme-main .theme-item li.active{
+	background: #409EFF;
+}
+.theme-main .theme-item li.active .icon{
+	display: block;
+	background: #409EFF;
+	border-radius: 50%;
+	padding: 6px;
+}
+.theme-main .theme-item li.active p{
+	color: #FFFFFF;
+}
+.theme-main .administration{
+	margin-left: -8px;
+}
+.theme-main .administration li{
+	width: 140px;
+	height: 140px;
+	list-style: none;
+	float: left;
+	margin-left: 8px;
+	cursor: pointer;
+	margin-bottom: 16px;
+}
+.theme-main .administration li .el-card{
+	
+}
+.theme-main .administration li .el-card .el-card__body{
+	padding: 16px;
+	text-align: center;
+}
+.theme-main .administration li .el-card .el-image{
+	width: 70px;
+	height: 70px;
+}
+.theme-main .administration li .el-card p{
+	padding-top: 15px;
+}

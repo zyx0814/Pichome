@@ -1,0 +1,464 @@
+<!--{template common/container/pc/header_start}-->
+<script src="static/vant/index.min.js?{VERHASH}" type="text/javascript" charset="utf-8"></script>
+<script src="{MOD_PATH}/template/mobile/assets/js/pinchzoom.js?{VERHASH}" type="text/javascript" charset="utf-8"></script>
+<script src="{MOD_PATH}/template/mobile/assets/js/JsCollect.js?{VERHASH}" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="static/vant/index.css?{VERHASH}" />
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/template/mobile/assets/css/details.css?{VERHASH}" />
+<style>
+	.screen-classify-collapse .van-cell{
+		background-color: transparent;
+		margin-bottom: 6px;
+	}
+	.screen-classify-collapse .van-collapse-item.active>.van-cell{
+		background-color: var(--bg-poperHover);
+		border-radius: 999px;
+	}
+	.screen-classify-collapse .van-cell::after,
+	.screen-classify-collapse .van-hairline--top-bottom::after,
+	.screen-classify-collapse .van-collapse-item--border::after{
+		display: none;
+	}
+	.screen-classify-collapse .van-collapse-item__content{
+		background-color: transparent;
+		padding: 0;
+		padding-left: 1rem;
+	}
+	.screen-classify-collapse .van-cell__value{
+		flex: none;
+	}
+	.van-popup{
+		overflow: unset;
+	}
+	.van-popup .vam-popup-title {
+		height: 40px;
+		font-weight: 700;
+		position: absolute;
+		top: -40px;
+		left: 0;
+		width: 100%;
+		padding: 0 12px;
+		font-size: 18px;
+		color: #FFFFFF;
+	}
+	.footer-popup .van-search-box {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+	}
+	.seasrch-popup .search-val-box {
+		padding: 0 12px;
+		height: 100%;
+		overflow: auto;
+		position: relative;
+	}
+	.footer-popup .btn-bottom {
+		padding: 10px;
+		height: 70px;
+		position: absolute;
+		width: 100%;
+		bottom: 0;
+		left: 0;
+	}
+	.screen-classify-collapse .van-collapse-item.active>.van-cell {
+		background-color: var(--el-color-primary-light-9);;
+		border-radius: 999px;
+	}
+</style>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<div
+		id="DetailPopup"
+		class="detail-popup" 
+		:class="{'NotFooter':showdata[showdataindex]&&!showdata[showdataindex].data.footer,'full':full}"
+		@touchstart="MainPageTouchStart"
+		@touchmove="MainPageTouchMove" 
+		@touchend="MainPageTouchEnd">
+		<!--{template mobile/components/details/message}-->
+		<van-nav-bar class="header-top">
+			<!--{template mobile/components/details/header}-->
+		</van-nav-bar>
+		<div class="detail-popup-translate" ref="detail_popup_translate" @click="MainFulloverlay">
+			<!--{template mobile/components/details/main}-->
+		</div>
+		<div class="footer-tabbar" v-show="showdata[showdataindex] && showdata[showdataindex].data.footer">
+			<!--{template mobile/components/details/footer}-->
+		</div>
+		<!--{template mobile/components/index/image/classify}-->
+		<!--{template mobile/components/details/setGrade}-->
+</div>
+
+<script type="text/javascript">
+	const { showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, showConfirmDialog, showNotify   } = vant;
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		el: '#dzzoffice',
+		data: function() {
+			return {
+				DocumentAdminId:'$_G[adminid]',
+				paths:[],
+				path:'',
+				ridIndex:0,
+				showdata:[],
+				showdataindex:0,
+				PinchZoom:null,
+				storagedata:{},
+				TouchPage:{
+					clickX:0,
+					distance:0,
+					move:true
+				},
+				TouchImg:{
+					move:false,
+				},
+				full:false,
+				ParamImages:{
+					operation:{
+						rids:[]
+					}
+				},
+				InformationPopup:false,
+				GetParam:null,
+				DocumentThemeColor:'',//dark,
+				DocumentHref:'',
+				isadmin:'$isadmin'
+			};
+		},
+		watch:{
+			path:{
+				handler(val){
+					<!--{if $opentype=='current'}-->
+					if(window.parent.dzzoffice && window.parent.dzzoffice.WindowThis && window.parent.dzzoffice.WindowThis.ImagePageTurning){
+						window.parent.dzzoffice.WindowThis.ImagePageTurning(val);
+					}
+					
+					<!--{/if}-->
+					window.location.hash = 'path='+val;
+				},
+				deep:true
+			},
+			ridIndex:{
+				handler(val){
+					var self = this;
+					sessionStorage.setItem('selectindex',val);
+				},
+				deep:true
+			},
+			'ParamImages.operation.rids':{
+				handler(val){
+					// console.log(val)
+				},
+				deep:true
+			},
+			full:{
+				handler(val){
+					var self = this;
+					if(this.PinchZoom){
+						if(val){
+							this.PinchZoom.enable();
+						}else{
+							this.PinchZoom.disable();
+						}
+					}
+					self.$nextTick(function(){
+						document.querySelector('.img-box').style.height = document.querySelector('.detail-popup-content').clientHeight+'px'
+					});
+					
+				},
+				deep:true
+			},
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+			
+		},
+		computed: {
+	
+		},
+		created() {
+			//主题颜色
+			let url = sessionStorage.getItem('href');
+			this.DocumentHref = url;
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			var arr = (location.hash || "").replace(/^\?/,'').split("&");
+			if(arr.length){
+				var path=arr[0].replace("#","").split('=')[1];
+				this.path = path;
+			}
+			if(!this.path){
+				var storpath = sessionStorage.getItem('detailpath');
+				if(storpath){
+					this.path = storpath;
+				}
+			}
+			var paths = sessionStorage.getItem('imgs');
+			if(paths){
+				this.paths = paths.split(',');
+			}
+			
+			this.ridIndex = parseInt(sessionStorage.getItem('selectindex'));
+			this.CommonOrder();
+		},
+		mixins:[HeaderMixin,MainMixin,MessageMixin,DetailGradeMixin,FooterMixin,ImagesClassifyMixin],
+		methods:{
+			CommonOrder(){
+				var self = this;
+				var NewShowData = [];
+				if (self.paths.length) {
+					if(self.storagedata[self.paths[self.ridIndex]]){
+						NewShowData.push({
+							type:'center',
+							loading:false,
+							id:self.paths[self.ridIndex],
+							data:self.storagedata[self.paths[self.ridIndex]]
+						});
+					}else{
+						NewShowData.push({
+							type:'center',
+							loading:true,
+							id:self.paths[self.ridIndex],
+							data:{}
+						});
+					}
+
+					var first = self.ridIndex-1;
+					if(self.paths[first]){
+						if(self.storagedata[self.paths[first]]){
+							NewShowData.push({
+								type:'left',
+								loading:false,
+								id:self.paths[first],
+								data:self.storagedata[self.paths[first]]
+							});
+						}else{
+							NewShowData.push({
+								type:'left',
+								loading:true,
+								id:self.paths[first],
+								data:{}
+							});
+						}
+					}
+					var two = self.ridIndex+1;
+					if(self.paths[two]){
+						if(self.storagedata[self.paths[two]]){
+							NewShowData.push({
+								type:'right',
+								loading:false,
+								id:self.paths[two],
+								data:self.storagedata[self.paths[two]]
+							});
+						}else{
+							NewShowData.push({
+								type:'right',
+								loading:true,
+								id:self.paths[two],
+								data:{}
+							});
+						}
+					}
+				}else{
+					NewShowData.push({
+							type:'center',
+							loading:true,
+							id:self.path,
+							data:{}
+						});
+				}
+				
+				
+				self.showdata = NewShowData;
+				self.PinchZoom = null;
+				for(var i in NewShowData){
+					if(NewShowData[i].type == 'center'){
+						this.showdataindex = i;
+					}
+					if(NewShowData[i].loading){
+						this.GetData(i,NewShowData[i]);
+					}else{
+						if(NewShowData[i].type == 'center'){
+							self.ParamImages.operation.rids = [NewShowData[i].data.rid];
+							if(NewShowData[i].data.opentype == 'image' || NewShowData[i].data.opentype == 'other'){
+								this.CommonZomm(NewShowData[i]);
+							}
+						}
+						
+					}
+					
+					
+				}
+	
+			},
+			async GetData(index,fitem){
+				var self = this;
+				var res = await axios.post(MOD_URL+'&operation=fetch',{
+					path:fitem.id,
+					isadmin:this.isadmin
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				var item = json.resourcesdata;
+				if(json.error){
+					if(parseInt(json.status) == 2){
+						showToast({
+							type:'fail',
+							message:json.error,
+							forbidClick:true,
+							duration:0
+						});
+					}else if(parseInt(json.status) == 0){
+						sessionStorage.setItem('detailpath',self.path);
+						sessionStorage.setItem('selectindex',self.ridIndex);
+						window.location.href = 'user.php?mod=login';
+					}
+					return false;
+				}
+				
+				
+				document.title = item.name+'-$_G[setting][sitename]';
+				// self.ParamImages.operation.rids = [item.rid];
+				var colors = [];
+				
+				if(item.colors){
+					for(var c in item.colors){
+						colors.push(item.colors[c]);
+					}
+				}
+				item.colors = colors;
+				var tags = [];
+				if(item.tag){
+					for(var t in item.tag){
+						var tstr = {
+							key:t,
+							val:item.tag[t]
+						};
+						tags.push(tstr);
+					}
+				}
+				item.tag = tags;
+				
+				var foldernames = [];
+				if(item.foldernames){
+					for(var f in item.foldernames){
+						var fstr = {
+							key:f,
+							val:item.foldernames[f]
+						};
+						foldernames.push(fstr);
+					}
+				}
+				item.foldernames = foldernames;
+				item.download = item.download;
+				item.share = item.share;
+				if(item.link || item.download || parseInt(self.DocumentAdminId) || item.share || parseInt(item.collection)){
+					item['footer'] =  true;
+				}else{
+					item['footer'] = false;
+				}
+				
+				if(item.opentype == 'video'){
+					var boxW = document.body.clientWidth;
+					var ra = boxW/parseFloat(item['width'])
+					item['fwidth'] = boxW;
+					item['fheight'] = ra*parseFloat(item['height']);
+				}
+				self.showdata[index].loading = false;
+				self.showdata[index].data = item;
+				
+				self.storagedata[fitem.id] = item;
+				self.$forceUpdate();
+				if(fitem.type == 'center'){
+					self.ParamImages.operation.rids = [item.rid];
+					if(item.opentype == 'image' || item.opentype == 'other'){
+						self.$nextTick(function(){
+							self.CommonZomm(fitem);
+						})
+						
+					}
+				}
+				var paths = sessionStorage.getItem('imgs');
+				if(paths){
+					paths = paths.split(',');
+					if(self.paths.length != paths.length){
+						self.paths = paths;
+					}
+				}	
+			},
+			CommonZomm(item){
+				var self = this;
+				self.$nextTick(function(){
+					if(self.$refs['BoxImg_'+item.id+'center']){
+						self.$refs['BoxImg_'+item.id+'center'][0].style.height = document.querySelector('.detail-popup-content').offsetHeight+'px';
+						self.PinchZoom = new PinchZoom(self.$refs['BoxImg_'+item.id+'center'][0]);
+						if(!self.full){
+							self.PinchZoom.disable()
+						}
+					}
+				})
+			},
+			CommonCopyTxt(text){
+				var self = this;
+				var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+				input.setAttribute('value', text);
+				document.getElementsByTagName('body')[0].appendChild(input);
+				document.getElementById('copyInput').select();
+				document.execCommand('copy');
+				document.getElementById('copyInput').remove();
+				showSuccessToast('复制成功');
+			}
+		},
+		mounted() {
+			var self = this;
+			if(window.history && window.history.pushState) {
+				history.pushState(null, null, document.URL);
+				window.addEventListener('popstate', function(item){
+					if(!self.TouchPage.move){
+						let div = window.parent.document.querySelector('.Details-Iframe');
+						if(div){
+							div.remove();
+						}
+					}
+				}, false);
+			}
+			window.addEventListener('message',function(event){
+				var data = event.data.data;
+				var paths = [];
+				for(var i in data){
+					paths.push(data[i].dpath);
+				}
+				self.paths = paths;
+			});
+		}
+	});
+	dzzoffice.use(vant);
+	dzzoffice.component('collect-all', collect_all);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

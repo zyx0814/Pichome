@@ -4,6 +4,7 @@ $lang = array (
 	'logs' => 'Operation record',
     'systemlog_setting'=>'setting',
     'systemlog_list'=>'Log list',
+    'os'=>'Device',
 	'info'=>'information',
 	'loginfo'=>'Log information',
 	'visit'=>'Access page',

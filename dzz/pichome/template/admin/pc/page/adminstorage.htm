@@ -1,0 +1,118 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style type="text/css">
+	.title .el-form-item__label{
+		color: var(--starsActive);
+		font-size: 18px;
+	}
+	.maxWidth {
+		width: 100%;
+	}
+	.el-tag{
+		background: transparent !important;
+		border: 0;
+	}
+	.el-tooltip__popper .popper__arrow {
+	    display: none;
+	}
+	.notification{
+		position: relative;
+		background: var(--el-bg-color);
+		border: var(--el-border);
+		border-radius: 5px;
+
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+		    <el-main>
+				<div class="container">
+					<div class="breadcrumb-wrapper" style="margin:15px 0">
+					 <el-breadcrumb separator-icon="ArrowRight">
+						<el-breadcrumb-item><el-link href="/index.php?mod=manage">系统工具</el-link></el-breadcrumb-item>
+						<el-breadcrumb-item>存储位置设置</el-breadcrumb-item>
+
+					  </el-breadcrumb>
+					</div>
+					<div class="notification ">
+						<!--{template admin/pc/components/storage/table}-->
+					</div>
+				</div>
+			</el-main>
+		  </el-container>
+	</el-container>
+	<!-- 添加弹窗 -->
+	<!--{template admin/pc/components/storage/addDialog}-->
+	
+	<!-- 本地编辑弹窗 -->
+	<!--{template admin/pc/components/storage/editDialogDzz}-->
+	
+	<!-- 其他编辑弹窗 -->
+	<!--{template admin/pc/components/storage/editDialogOther}-->
+</div>
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+				HtmlLoading:true,
+				DocumentThemeColor:'',
+				FormEdit:{
+					dialogVisible:false,
+					name:'',
+					radio:1,
+					select:''
+				},
+			}
+		},
+		watch: {
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true
+			}
+		},
+		created(){
+			 //主题颜色
+			 let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+		},
+		mixins:[TableMixin,AddDialogMixin,EditDialogDzzMixin,EditDialogOtherMixin],
+		methods:{
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+		},
+		components: {
+		},
+		mounted(){
+	
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

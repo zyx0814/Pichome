@@ -1,0 +1,223 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="dzz/banner/template/fashion/pc/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="dzz/banner/template/fashion/pc/assets/js/menu.js?{VERHASH}"></script>
+<style>
+	.ucenter-header{
+		border: 0;
+		width: 100%;
+	}
+	.el-collapse{
+		--el-collapse-header-height: 44px;
+    	--el-collapse-header-font-size: var(--el-font-size-base);
+		margin-top: 20px;
+	}
+	.el-collapse .el-collapse-item__header {
+		font-weight: 500;
+		padding: 10px 16px;
+    	padding-right: 0;
+		text-decoration: none;
+	}
+	.el-collapse .el-collapse-item:last-child .el-collapse-item__header{
+		border: 0;
+	}
+	.ucenter-header .Topcarousel{
+		width: 50px;
+		height: 50px;
+		font-size: 14px;
+		text-align: center;
+		line-height: 50px;
+	}
+	.img-circle{
+		width: 100%;
+		height: 100%;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<el-header class="page-header" height="auto" style="border: 0px;padding: 0;">
+			<!--{template common/container/mobile/ucenter_header}-->
+		</el-header>
+		<el-main style="--el-main-padding:10px;padding-top: 0;">
+			<div class="el-collapse">
+				<div class="el-collapse-item" v-for="(item,index) in UcenterNavigations">
+					<a class="el-collapse-item__header" :href="item.url">
+						{{item.name}}
+						<div class="el-collapse-item__arrow">
+							{{item.number}}
+							<el-icon><Arrow-Right /></el-icon>
+						</div>
+					</a>
+				</div>
+			</div>
+			<el-button style="margin-top: 20px;width: 100%;" size="large" @click="OutLogin">退出登录</el-button>
+		</el-main>
+		<el-header class="page-header"  height="50px" style="border:0;border-top: var(--el-border);">
+			<div class="h-left">
+				<a href="{$_G[siteurl]}" style="margin-right: 10px;width: 25px;height: 25px;">
+					<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?VjP" fit="contain" style="width: 100%;height: 100%;">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</a>
+			</div>
+			<div class="h-center" style="overflow: hidden;justify-content: center;" @click="headerdrawer_m=true">
+				<button class="reset-btn menu-hamburger hamburger" :class="{active:headerdrawer_m}">
+					<span class="hamburger-1"></span>
+					<span class="hamburger-2"></span>
+					<span class="hamburger-3"></span>
+				</button>
+				<el-text >个人中心</el-text>
+			</div>
+			<div class="h-right"> 
+				<a href="user.php?mod=my" style="height: 25px;">
+					<el-avatar style="width: 25px;height: 25px;">
+						{eval echo avatar_block($_G[uid]);}
+					</el-avatar>
+				</a>
+			</div>
+        </el-header>
+	</el-container>
+
+	<el-drawer
+		v-model="headerdrawer_m"
+		direction="btt"
+		size="85%"
+		title="导航"
+		custom-class="m-header-munu">
+		<el-menu
+			class="dzz-menu-m"
+			:default-active="bannerData.active">
+			<template v-for="item in bannerData.data.top">
+				<template v-if="item.children && item.children.length">
+					<el-sub-menu 
+					:index="item.id" 
+					:class="{'is-active':bannerData.active==item.id}"
+					popper-class="dzz-sub-menu">
+						<template #title>
+							<el-image v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+						<menuitem 
+							:datalist="item.children" 
+							@handleselect="handleSelect"
+							:active="bannerData.active"></menuitem>
+					</el-sub-menu>
+				</template>
+				<template v-else>
+					<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3">
+						<template #title>
+							<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+					</el-menu-item>
+				</template>
+			</template>
+		</el-menu>
+	</el-drawer>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			var self = this;
+			return {
+				DocumentThemeColor:'light',
+				headerdrawer_m:false,
+				bannerData:{
+					data:[],
+					active:'',
+				}
+			}
+		},
+		mixins:[UcenterHeader],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			let data = '$bannerdata';
+			if(!data){
+				return false;
+			}
+			this.bannerData.data = JSON.parse(data);
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			handleSelect(data){
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+				}
+				setTimeout(() => {
+					window.location.reload();
+				}, 300);
+			},
+			OutLogin(){
+				let self = this;
+				self.$messageBox.confirm('您确定要注销登录?', '提示', {
+					confirmButtonText: '确定',
+					cancelButtonText: '取消',
+					type: 'warning'
+				}).then(async function() {
+					let {data: res} = await axios.post('user.php?mod=login&op=logging&inajax=1&action=logout&formhash={FORMHASH}&t='+new Date().getTime());
+					if(res.success){
+						window.location.href = '$_G[siteurl]'
+					}else{
+						self.$message.error(res.msg || '退出登录失败')
+					}
+				}).catch(function() {
+							
+				});
+			}
+			
+			
+		},
+		mounted() {
+
+		},
+		components:{
+			menuitem
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

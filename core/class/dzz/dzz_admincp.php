@@ -21,7 +21,7 @@ class dzz_admincp
 
 	var $cpaccess = 0;
 
-	var $sessionlife = 1800;
+	var $sessionlife = 30;
 	var $sessionlimit = 0;
 	var $isapi = 0;
 	var  $isnotloginop = ['interface','kuinterface','updatesession'];
@@ -53,7 +53,8 @@ class dzz_admincp
         if(!$this->api && in_array($opname,$this->isnotloginop)){
             $this->isnotlogin = true;
         }
-        $this->isapi = defined('IS_API') ? IS_API:0;
+        $this->isapi = ((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') || (!isset($_GET['ajax_submit']) && $_GET['ajax_submit']))
+            ? true : false;
 		$return  = $this->check_cpaccess();
 		if( $return === 0){
 		    return $return;
@@ -71,6 +72,7 @@ class dzz_admincp
 	}
 
 	function check_cpaccess() {
+
 		global $_G;
 		$session = array();
 
@@ -95,7 +97,7 @@ class dzz_admincp
 			} elseif ($session && empty($session['uid'])) {
 				$this->cpaccess = 1;
 
-			} elseif ($session['dateline'] < $this->sessionlimit) {
+			} elseif ($this->config['admincp']['checksession'] && ($session['dateline'] < (TIMESTAMP - $this->config['admincp']['checksession']))) {
 				$this->cpaccess = 1;
 
 			} elseif ($this->cpsetting['checkip'] && ($session['ip'] != $this->core->var['clientip'])) {

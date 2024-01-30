@@ -1,0 +1,344 @@
+<div class="left-main left-tag-main" style="padding-bottom:0;">
+	<el-scrollbar 
+		ref="TagLeftScroll" 
+		view-class="TagLeftScrollView"
+		@scroll="DocumentHideAllPop">
+		<el-menu style="border:0;padding-left: 10px;" :default-active="TagLeftActive">
+			<el-menu-item index="" @click="TagLeftClick('')">
+				<el-icon class="icon">
+					<Suitcase />
+				</el-icon>
+				<el-text>标签管理</el-text>
+				<span class="num">{{TagLeftTotal}}</span>
+			</el-menu-item>
+			<el-menu-item index="nocat" @click="TagLeftClick('nocat')">
+				<el-icon class="icon"><Discount /></el-icon>
+				<el-text>未分类</el-text>
+				<span class="num">{{TagLeftNocatTotal}}</span>
+			</el-menu-item>
+		</el-menu>
+		<div class="tree-tip" style="padding-left: 16px;margin-top: 10px;">
+			<span style="font-size: 14px;">
+				标签群组
+			</span>
+			<div class="rigth" style="opacity: 1;cursor: pointer;" @click.stop="TagLeftAdd">
+				<el-icon><Plus></Plus></el-icon>
+			</div>
+		</div>
+		<el-menu style="border:0;padding-left: 10px;" id="TagGroupBox" :default-active="TagLeftActive">
+			<el-menu-item
+				v-for="item in TagLeftData"
+				:key="item.cid"
+				:index="item.cid"
+				@contextmenu.prevent="TagLeftContextmenu(item)"
+				@click="TagLeftClick(item.cid)">
+				<el-icon  class="icon"><Collection-Tag /></el-icon>
+				<div class="el-text">
+					<template v-if="item.edit">
+						<el-input
+							:ref="'tagleftinput'+item.cid" 
+							v-model.trim="item.text" 
+							maxlength="20" 
+							placeholder="请输入"
+							size="small"
+							@click.stop.native 
+							@keyup.enter.native="TagLeftinputRename"
+							@blur="TagLeftinputRename" />
+					</template>
+					<template v-else>
+						{{item.text}}
+					</template>
+				</div>
+				<span class="num">{{item.num}}</span>
+			</el-menu-item>
+		</el-menu>
+	</el-scrollbar>
+</div>
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	trigger="click"
+	ref="tagLeftMenu"
+	:popper-style="{top: tagLeftMenu.top, left: tagLeftMenu.left}"
+    v-model:visible="tagLeftMenu.show"
+	@after-enter="screenvisible(true)"
+	@before-leave="screenvisible(false)"
+	width="auto"
+	:show-arrow="false">
+    <ul class="el-dropdown-menu">
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagLeftOperation('search')">
+			<el-icon><Search /></el-icon>
+			搜索包含群组标签的项目
+		</li>
+		<li 
+			class="el-dropdown-menu__item" 
+			@click="TagLeftOperation('rename')">
+			<el-icon><Edit-Pen /></el-icon>
+			重命名
+		</li>
+		<el-divider style="margin: 4px 0;"></el-divider>
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagLeftOperation('delete')">
+			<el-icon><Delete /></el-icon>
+			删除群组
+		</li>
+	</ul>
+</el-popover>
+<script>
+	const TagLeftMixin = {
+		data(){
+			return {
+				TagLeftActive:'',
+				TagLeftData:[],
+				TagLeftTotal:0,
+				TagLeftNocatTotal:0,
+				tagLeftMenu:{
+					show:false,
+					data:null,
+					top:0,
+					left:0
+				},
+				TagLeftAddloading:false,
+			}
+		},
+		created(){
+			var TagLeftData = [];
+			var arr = $arr;
+			this.TagLeftTotal = arr.all;
+			this.TagLeftNocatTotal = arr.nocat;
+			
+			for(var i in arr.data){
+				TagLeftData.push({
+					text:arr.data[i].text,
+					cid:arr.data[i].cid,
+					ptext:arr.data[i].text,
+					edit:false,
+					num:arr.data[i].num,
+				})
+			}
+			this.TagLeftData = TagLeftData;
+			var hash = location.hash;
+			if(hash){
+				hash = hash.replace('#type=','');
+				this.TagLeftActive = hash;
+			}
+			this.TagCententGetData();
+		},
+		methods:{
+			async TagLeftAdd(){
+				var self = this;
+				if(this.TagLeftAddloading){
+					return false;
+				}
+				this.TagLeftAddloading = true;
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=addgroup',{
+					formhash:'{FORMHASH}',
+					classifysubmit:true,
+					appid:this.DocumentAppid,
+					name:'未命名群组',
+				});
+				if(!res.data.success){
+					self.$message.error(res.data.msg || '群组添加失败');
+					return false;
+				}
+				this.TagLeftData.push({
+					text:'未命名群组',
+					cid:res.data.cid,
+					ptext:'未命名群组',
+					edit:true,
+					num:0,
+				});
+				this.tagLeftMenu.data = this.TagLeftData.find(function(current){
+					return current.cid == res.data.cid;
+				});
+				this.TagLeftAddloading = false;
+				self.$nextTick(function(){
+					var box = document.querySelector('.left-tag-main').clientHeight;
+					var View = document.querySelector('.TagLeftScrollView').clientHeight;
+					if(View>box){
+						self.$refs.TagLeftScroll.setScrollTop(View-box);
+					}
+					self.$refs['tagleftinput'+res.data.cid][0].select();
+				});
+			},
+			async TagLeftinputRename(){
+				var self = this;
+				this.tagLeftMenu.data.edit = false;
+				if(this.tagLeftMenu.data.text == ''){
+					this.tagLeftMenu.data.text = this.tagLeftMenu.data.ptext;
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=renametaggroup',{
+					appid:this.DocumentAppid,
+					catname:this.tagLeftMenu.data.text,
+					cid:this.tagLeftMenu.data.cid,
+				});
+				if(res.data.success){
+					this.tagLeftMenu.data.ptext = this.tagLeftMenu.data.text;
+				}else{
+					this.tagLeftMenu.data.text = this.tagLeftMenu.data.ptext;
+					self.$message.error(res.data.msg || '修改失败');
+				}
+			},
+			async TagLeftDelete(){//群组删除
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=delgroup',{
+					appid:this.DocumentAppid,
+					cid:this.tagLeftMenu.data.cid,
+				});
+				
+				if(res.data.success){
+					var index = this.TagLeftData.findIndex(function(current){
+						return current.cid == self.tagLeftMenu.data.cid;
+					});
+					this.TagLeftData.splice(index,1);
+					this.TagLeftHandleNum(res.data.arr);
+					self.$nextTick(function(){
+						var curr = this.TagLeftData[index];
+						if(curr){
+							self.TagLeftActive = curr.cid;
+						}else{
+							self.TagLeftActive = '';
+						}
+						self.TagCententGetData();
+					});
+				}else{
+					self.$message.error(res.data.msg || '删除失败');
+				}
+			},
+			async TagLeftOperation(type){
+				var self = this;
+				this.tagLeftMenu.show = false;
+				if(type == 'rename'){
+					this.tagLeftMenu.data.edit = true;
+					self.$nextTick(function(){
+						self.$refs['tagleftinput'+this.tagLeftMenu.data.cid][0].select();
+					});
+				}else if(type == 'search'){
+					var tags = [];
+					if(this.TagLeftActive == this.tagLeftMenu.data.cid){
+						for(var i in this.tagCententData){
+							tags.push(this.tagCententData[i].tid)
+						}
+					}else{
+						var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=gettaggroup',{
+							appid:this.DocumentAppid,
+							cid:this.tagLeftMenu.data.cid,
+						});
+						for(var i in res.data.data){
+							tags.push(res.data.data[i].tid);
+						}
+					}
+					if(tags.length){
+						window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.DocumentAppid+'&tag='+tags.join(',')
+					}
+				}else{
+					if(parseInt(this.tagLeftMenu.data.num)){
+						self.$messageBox.confirm(
+							'确定要删除这个标签群组吗？',
+							'删除标签群组',
+						{
+							confirmButtonText: '删除标签群组',
+							cancelButtonText: '取消',
+							type: 'error',
+							icon: 'QuestionFilled',
+						}).then(function(){
+							self.TagLeftDelete();
+						});
+					}else{
+						self.TagLeftDelete();
+					}
+					
+				}
+			},
+			TagLeftContextmenu(item){
+				var self = this;
+				this.DocumentHideAllPop();
+				if(this.LeftTreePopover && this.LeftTreePopover.show){
+					this.LeftTreePopover.show = false;
+				}
+				if(this.tagContextMenu && this.tagContextMenu.show){
+					this.tagContextMenu.show = false;
+				}
+				let menu = self.$refs.tagLeftMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+			 
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				//给left和top分别赋值为鼠标的位置；
+				this.tagLeftMenu.left = evt.pageX+"px";
+				this.tagLeftMenu.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					this.tagLeftMenu.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					this.tagLeftMenu.top = top1+"px";
+				}
+				this.tagLeftMenu.data = item;
+				self.$nextTick(function(){
+					self.tagLeftMenu.show = true;
+				});
+			},
+			TagLeftClick(val){
+				if(this.TagLeftActive == val){
+					return false;
+				}
+				this.TagLeftActive = val;
+				if(this.TagLeftActive){
+					location.hash='#type='+this.TagLeftActive;
+				}else{
+					location.hash='';
+				}
+				this.TagCententGetData();
+			},
+			async TagLeftSort(){
+				var cids = this.TagLeftData.map(function(item){
+					return item.cid;
+				})
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=sorttaggroup',{
+					appid:this.DocumentAppid,
+					cids:cids,
+				});
+				if(res.data.success){
+				}else{
+					self.$message.error(res.data.msg || '排序失败');
+				}
+			},
+			TagLeftHandleNum(data){//处理数量
+				this.TagLeftTotal = data.all;
+				this.TagLeftNocatTotal = data.nocat;
+				for(var i in this.TagLeftData){
+					var item = this.TagLeftData[i];
+					var curr = data.data.find(function(current){
+						return current.cid == item.cid;
+					});
+					item.num = curr.num;
+				}
+			},
+		},
+		mounted(){
+			var self = this;
+			var el = document.getElementById('TagGroupBox');
+			//设置配置
+			var ops = {
+				animation: 200,
+				//拖动结束
+				onEnd: function ({ newIndex, oldIndex }) {
+					var val = self.TagLeftData[oldIndex];
+					self.TagLeftData.splice(oldIndex, 1);
+					self.TagLeftData.splice(newIndex, 0, val);
+					self.TagLeftSort();
+				},};
+			//初始化
+			var sortable = Sortable.create(el, ops);
+		}
+	}
+</script>

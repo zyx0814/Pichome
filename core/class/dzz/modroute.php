@@ -19,7 +19,7 @@ class Modroute{
 
                 if(@!file_exists($file = DZZ_ROOT.CURSCRIPT.BS.CURMODULE.BS.OP_NAME.BS.$action.BS.$do.EXT)){
 
-                    showmessage($file.lang('file_nonexistence',array('file'=>htmlspecialchars($file))));
+                    header('Location:/404.html');exit();
                 }
 
             }

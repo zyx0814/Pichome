@@ -7,7 +7,7 @@ $lang=array (
   'clientuin_error_1001' => '您还未设置我们为服务商，请访问<a href="https://partners.cloud.tencent.com/invitation/1000114662255de4c09ce8471">https://partners.cloud.tencent.com/invitation/1000114662255de4c09ce8471</a>申请,请申请后再试',
   'clientuin_error_1002' => '请输入您的腾讯云账号id,如果忘了，可登陆您的腾讯云账号，在账号信息中查看',
   'to_back' => '返回上一步',
-  'php_version_too_low' => 'php版本太低啦，请先升级php到5.3以上，建议使用php5.4及以上',
+  'php_version_too_low' => 'php版本不支持，仅支持php7+到php8以下，建议使用php7.4',
   'SC_UTF8' => '简体中文 UTF8 版',
   'EN_UTF8' => 'PICHOME UTF-8',
   'error_quit_msg' => '安装出现问题了，无法继续，请解决下面提示的问题后刷新继续',

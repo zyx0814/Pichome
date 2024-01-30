@@ -1,0 +1,413 @@
+<el-dialog
+	title="选择目录"
+	:close-on-click-modal="false"
+	v-model="Catalogue.dialogVisible"
+	@open="cataloguedialogOpen">
+	<div style="padding-bottom:16px">
+		<span style="color: var(--header-text);padding-right: 12px;">库类型：</span>
+		<el-radio-group v-model="Catalogue.type" :disabled="Catalogue.dialogtype=='add'?false:true" @change="catalogTypeChange">
+			<el-radio label="3">PicHome库</el-radio>
+			<el-radio label="0">Eagle库</el-radio>
+			<el-radio label="2">billfish</el-radio>
+			<el-radio label="1">普通目录</el-radio>
+		</el-radio-group>
+	</div>
+	<template v-if="parseInt(Catalogue.type)==3">
+		<el-form label-width="auto" :model="Catalogue" ref="catalogueFormSearch">
+			<el-form-item label="库名称:" prop="search" :rules="[{ required: true, message: '库名称不能为空'}]">
+				<el-input v-model="Catalogue.search" placeholder="请输入"></el-input>
+			</el-form-item>
+		</el-form>
+	</template>
+	<template v-else>
+		<div style="padding-bottom:16px">
+			<el-input placeholder="输入快捷路径" clearable v-model="Catalogue.search" @input="cataloguesearch" class="input-with-select">
+				<template #append>
+					<el-select class="auto-scroll" v-model="Catalogue.select" placeholder="快捷路径" clearable style="width: 120px;" @change="catalogueselect">
+						<template v-for="(item,index) in Catalogue.selectData">
+							<template v-if="item.type == 1">
+								<el-option label="站点Library目录" :value="index" :key="index"></el-option>
+							</template>
+							<template v-else>
+								<el-option :label="item.path" :value="index" :key="index"></el-option>
+							</template>
+						</template>
+						
+					</el-select>
+				</template>
+				
+			</el-input>
+		</div>
+		<div style="color: var(--header-text);">路径选择：</div>
+		<el-scrollbar class="page-component__scroll h350">
+			<div style="padding-left: 16px;">
+				<el-tree
+					class="border"
+					highlight-current 
+					:load="CatalogueLoadNodeTree" 
+					lazy 
+					node-key="id"
+					ref="tree_catalogue"
+					accordion
+					@current-change="CatalogueTreeCurrentChange">
+                    <template #default="{ node, data }">
+                        <span class="custom-tree-node">
+                            <span>
+                                <i class="ri-folder-2-line"></i><span style="margin-left: 6px;">{{ node.label }}</span>
+                            </span>              
+                        </span>
+                    </template>
+					
+				</el-tree>
+			</div>
+		</el-scrollbar>
+		<div style="color: var(--header-text);padding-top: 16px;">已选择路径：{{Catalogue.showVal}}</div>	
+	</template>
+	<template #footer>
+        <span class="dialog-footer">
+            <el-button @click="Catalogue.dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="CatalogueSubmit">确 定</el-button>
+        </span>
+    </template>
+	
+</el-dialog>
+<script type="text/javascript">
+	var CreatedMixin = {
+		data(){
+			return {
+				Catalogue:{
+					appid:'',
+					dialogtype:'',
+					search:'',
+					defaultsearch:'',
+					searchStatus:false,
+					select:'',
+					type:'3',
+					parentresolve:'',
+					parentnode:'',
+					selectData:[],
+					nodeId:0,
+					parent:[],
+					dialogVisible:false,
+					defaultVal:[],
+					showVal:'',
+					charset:'utf8',
+					force:0,
+					gettype:null
+				},
+			}
+		},
+		methods:{
+			catalogTypeChange(val){
+				this.Catalogue.search = '';
+			},
+			cataloguedialogOpen(){
+				if(this.Catalogue.dialogtype == 'setting'){
+					return false;
+				}
+				var dzzroot = '$dzzroot';
+				var defaultVal = [];
+				var showVal = '';
+				if(dzzroot){
+					var str = dzzroot+'library';
+					defaultVal = str.split('/');
+					showVal = defaultVal.join('/');
+				}
+				
+				this.Catalogue.search = '';
+				this.Catalogue.defaultsearch = '';
+				this.Catalogue.searchStatus = '';
+				this.Catalogue.select = '';
+				// this.Catalogue.type = '3';
+				this.Catalogue.nodeId = 0;
+				this.Catalogue.parent = [];
+				this.Catalogue.showVal = '';
+				this.Catalogue.charset = 'utf8';
+				this.Catalogue.force = 0;
+				this.Catalogue.gettype = 1;
+				// if(this.Catalogue.parentnode){
+				// 	this.Catalogue.parentnode.childNodes = [];
+					
+				// 	this.CatalogueLoadNodeTree(this.Catalogue.parentnode,this.Catalogue.parentresolve);
+				// }
+				this.Catalogue.parentnode.childNodes = [];
+				this.GetCatalogueSelect();
+			},
+			cataloguesearch:debounce(function(val){//输入
+				var self = this;
+				self.Catalogue.select = '';
+				if(val){
+					self.Catalogue.searchStatus = true;
+				}else{ 
+					for(var i in self.Catalogue.selectData){
+						if(self.Catalogue.selectData[i].type == 1){
+							self.Catalogue.charset = self.Catalogue.selectData[i].charset;
+						}
+					}
+					self.Catalogue.searchStatus = false;
+				}
+				this.Catalogue.defaultsearch = val;
+				self.Catalogue.parentnode.childNodes = []
+				this.CatalogueLoadNodeTree(self.Catalogue.parentnode,self.Catalogue.parentresolve);
+			},800),
+			async CatalogueLoadNodeTree(node, resolve){
+				var self = this;
+				var param = {};
+				var fparam = '';
+				if(self.Catalogue.searchStatus){
+					if(node.level > 0){
+						if(node.level > 1){
+							self.Catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.Catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.Catalogue.defaultsearch+'/'+fparam;
+							
+						}else{
+							param['path'] = self.Catalogue.defaultsearch+'/'+node.data.label;
+						}
+						
+					}else{
+						param['path'] = self.Catalogue.search;
+					}
+					if(self.Catalogue.gettype){
+						param['gettype'] = self.Catalogue.gettype;
+					}
+				}else{
+					if(node.level > 0){
+						if(node.level > 1){
+							self.Catalogue.parent = [];
+							this.GetTreeParens(node.parent);
+							var oparam = self.Catalogue.parent.reverse();
+							fparam = oparam.join('/');
+							fparam += '/'+node.data.label;
+							param['path'] = self.Catalogue.defaultVal.join('/')+'/'+fparam;
+							
+						}else{
+							param['path'] = self.Catalogue.defaultVal.join('/')+'/'+node.data.label;
+							
+						}
+						if(self.Catalogue.gettype){
+							param['gettype'] = self.Catalogue.gettype;
+						}
+					}else{
+						// param['path'] = self.Catalogue.defaultVal.join('/');
+						self.Catalogue.showVal = self.Catalogue.defaultVal.join('/');
+					}
+					
+				}
+				
+				if(node.level == 0){
+					self.Catalogue.parentresolve = resolve;
+					self.Catalogue.parentnode = node;
+				}else{
+					param['charset'] = node.data && node.data.charset?node.data.charset:'';
+				}
+				var res = await axios.post(MOD_URL+'&op=library&operation=getpath',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				var fdata = [];
+				for(var i in data.data){
+					self.Catalogue.nodeId++;
+					var item  = data.data[i];
+					fdata.push({
+						label:item.path,
+						id:self.Catalogue.nodeId,
+						charset:item.charset
+					});
+				}
+				if(self.Catalogue.searchStatus){
+					resolve(fdata);
+					if(fdata.length){
+						self.Catalogue.showVal = self.Catalogue.search;
+					}
+				}else{
+					resolve(fdata);
+				}
+					
+			},
+			GetTreeParens(node){
+				var self = this;
+				var data = self.$refs.tree_catalogue.getNode(node);
+				self.Catalogue.parent.push(data.data.label);
+				if(node.level > 1){
+					self.GetTreeParens(node.parent);
+				}
+			},
+			CatalogueTreeCurrentChange(data,node){
+				var self = this;
+				self.Catalogue.parent = [];
+				var path = '';
+				if(node.level>1){
+					self.GetTreeParens(node.parent);
+					var oparam = self.Catalogue.parent.reverse();
+					var fparam = oparam.join('/');
+					path = fparam+'/'+data.label;
+				}else{
+					path = data.label;
+				}
+				if(self.Catalogue.defaultsearch){
+					self.Catalogue.searchStatus = true;
+					this.Catalogue.showVal = self.Catalogue.defaultsearch+'/'+path;
+					this.Catalogue.search = self.Catalogue.defaultsearch+'/'+path;
+				}else{
+					self.Catalogue.showVal = self.Catalogue.defaultVal.join('/')+'/'+path;
+					// self.Catalogue.showVal = path;
+					self.Catalogue.searchStatus = false;
+				}
+				this.Catalogue.charset = data.charset;
+			},
+			async CatalogueSubmit(){
+				var self = this;
+				var url = MOD_URL+'&op=library&operation=addlibrary';
+				if(parseInt(this.Catalogue.type) == 3){
+					self.$refs.catalogueFormSearch.validate(function(valid){
+						if (valid) {
+							
+							var param = {
+								appname:self.Catalogue.search,
+								type:self.Catalogue.type,
+							}
+							self.CatalogueSubmitPost(url,param);
+						} else {
+							// console.log('error submit!!');
+							return false;
+						}
+						
+					});
+				}else{
+					
+					if(!self.Catalogue.showVal){
+						self.$message.error('请选择路径');
+						return false;
+					}
+					
+					if(this.Catalogue.dialogtype == 'setting'){
+						url = MOD_URL+'&op=library&operation=changePath';
+						var param = {
+							appid:self.Catalogue.appid,
+							path:self.Catalogue.showVal,
+							type:self.Catalogue.type,
+							gettype:self.Catalogue.gettype,
+							charset:self.Catalogue.charset
+						}
+					}else{
+						var param = {
+							path:self.Catalogue.showVal,
+							type:self.Catalogue.type,
+							gettype:self.Catalogue.gettype,
+							charset:self.Catalogue.charset
+						}
+					}
+					
+					if(self.Catalogue.type == 1 && self.Catalogue.force){
+						param['force'] = 1;
+					}
+					self.CatalogueSubmitPost(url,param);
+				}
+
+			},
+			async CatalogueSubmitPost(url,param){
+				var self = this;
+				var res = await axios.post(url,param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.tips){
+					self.$message.error(data.tips);
+					return false;
+				}
+				if(data.error){
+					self.$message.error(data.error);
+				}else{
+					if(self.Catalogue.dialogtype == 'setting'){
+						// for(var a in self.tableData){
+						// 	if(self.tableData[a].appid == param.appid){
+						// 		self.tableData[a].path = param.path;
+						// 	}
+						// }
+						// self.$message({
+						// 	message: '修改成功',
+						// 	type: 'success'
+						// });
+						window.location.reload();
+					}else{
+						self.$message({
+							message: '添加成功',
+							type: 'success'
+						});
+						var fdata = data.data;
+						fdata['state'] = 0;
+						fdata['filenum'] = 0;
+						fdata['percent'] = 0;
+						fdata['connect'] = parseInt(self.Catalogue.type) == 3?4:1;
+						fdata['type'] = self.Catalogue.type;
+						fdata['getinfonum'] = 0;
+						self.Table.data.splice(1,0,fdata);
+					}
+					
+					self.Catalogue.dialogVisible = false;
+				}
+			},
+			async GetCatalogueSelect(){
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&operation=getpath',{gettype:1});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				var fdata = data.data;
+				self.Catalogue.selectData = [];
+				for(var i in fdata){
+					if(fdata[i].type==1){
+						var path = fdata[i].path.split('\\');
+						self.Catalogue.defaultVal = path;
+						self.Catalogue.gettype = fdata[i].type;
+						var str = {
+							path:path.join('/'),
+							charset:fdata[i].charset,
+							type:fdata[i].type,
+						}
+					}else{
+						var str = {
+							path:fdata[i].path,
+							charset:fdata[i].charset,
+							type:fdata[i].type,
+						}
+					}
+					self.Catalogue.selectData.push(str);
+				}
+					
+			},
+			catalogueselect(val){
+				var self = this;
+				var path = '';
+				self.Catalogue.gettype = null;
+				if(self.Catalogue.selectData[val]){
+					self.Catalogue.searchStatus = true;
+					var item = self.Catalogue.selectData[val];
+					path = item.path;
+					self.Catalogue.charset = item.charset;
+					self.Catalogue.gettype = item.type;
+				}else{
+					for(var i in self.Catalogue.selectData){
+						if(self.Catalogue.selectData[i].type==1){
+							self.Catalogue.charset = self.Catalogue.selectData[i].charset;
+							self.Catalogue.gettype = self.Catalogue.selectData[i].type;
+						}
+					}
+					self.Catalogue.searchStatus = false;
+				}
+			
+				this.Catalogue.defaultsearch = path;
+				self.Catalogue.search = path;
+				self.Catalogue.parentnode.childNodes = [];
+				this.CatalogueLoadNodeTree(self.Catalogue.parentnode,self.Catalogue.parentresolve);
+			},
+		}
+	}
+</script>

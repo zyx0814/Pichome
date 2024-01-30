@@ -8,6 +8,16 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
  html{
 	font-size:14px;
 }
+:root {
+  --btn-primary-background-color: #A85E39;
+  --btn-primary-border-color: transparent; 
+  --btn-primary-background-color-hover:rgba(202,132,108,0.7);
+  --btn-primary-border-color-hover: transparent;
+	
+  --default-color-border: #e1e1e1;
+  --input-border-color-focus: #CA846C;
+  
+}
 /*下来菜单支持二级*/
 .dropdown-submenu {  
 	position: relative;  
@@ -600,6 +610,7 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
 
 /*下拉菜单结束*/
 
+
 /*面包屑导航开始*/
 .breadcrumb{
 	padding: 25px 22px;
@@ -622,7 +633,7 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
 	color: #71717A;
 }
 .breadcrumb>li.active>a{
-	color: #A85E39;
+	color: var(--btn-primary-background-color);
 }
 .breadcrumb > li:before{
 	font-family: 'dzz' !important;					
@@ -683,8 +694,8 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
     z-index: 3;
     color: #fff;
     cursor: default;
-    background-color: #A85E39;
-    border-color: #A85E39;
+    background-color: var(--btn-primary-background-color);
+    border-color: var(--btn-primary-background-color);
 }
 .pagination>li>a:focus, .pagination>li>a:hover, .pagination>li>span:focus, .pagination>li>span:hover {
     z-index: 2;
@@ -798,30 +809,30 @@ html{font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:1
 /*首选样式开始*/
 .btn-primary{
 	color:#FFFFFF;
-	background-color: #A85E39;
-	border-color: transparent;
+	background-color: var(--btn-primary-background-color);
+	border-color: var(--btn-primary-border-color);
 }
 .btn-primary:hover{
 	color:#FFFFFF;
-	background-color: rgba(202,132,108,0.7);
-	border-color: transparent;
+	background-color: var(--btn-primary-background-color-hover);
+	border-color: var(--btn-primary-border-color-hover);
 	
 }
 .btn-primary.active.focus, .btn-primary.active:focus, .btn-primary.active:hover, .btn-primary:active.focus, .btn-primary:active:focus, .btn-primary:active:hover, .open>.dropdown-toggle.btn-primary.focus, .open>.dropdown-toggle.btn-primary:focus, .open>.dropdown-toggle.btn-primary:hover{
-	background-color: #A85E39;
+	background-color: var(--btn-primary-background-color-hover);
 	color: #fff;
 	border-color: transparent;
 }
 .btn-primary:focus{
-color:#FFFFFF;
-background-color: #A85E39;	
-border-color:#ff9c00;
+	color:#FFFFFF;
+	background-color: var(--btn-primary-background-color);	
+	border-color:var(--btn-primary-border-color);
 }
 
 .btn-primary:active{
-	background-color: #A85E39;
+	background-color: var(--btn-primary-background-color);
 	color: #fff;
-	border-color:#A85E39 ;
+	border-color:var(--btn-primary-background-color) ;
 	text-shadow: 0rem 0.05rem 0rem rgba(255, 255, 255, 0.20);
     -webkit-transition-property: all;
             transition-property: all;
@@ -829,30 +840,30 @@ border-color:#ff9c00;
             transition-duration: .15s;
 }
 .btn-primary:active:focus{
-	background-color: #A85E39;
+	background-color: var(--btn-primary-background-color);
 	color: #fff;
-	border-color:#A85E39 ;
+	border-color:var(--btn-primary-background-color) ;
 }
 /*边框首选样式开始*/
 .btn-primary-outline{
 	background: none;
-	border: 1px solid #A85E39;
-	color: #A85E39;
+	border: 1px solid var(--btn-primary-background-color);
+	color: var(--btn-primary-background-color);
 	transition: 0.5s linear;
 }
 .btn-primary-outline:hover{
-	background:#A85E39;
-	border: 1px solid #A85E39;
+	background:var(--btn-primary-background-color);
+	border: 1px solid var(--btn-primary-background-color);
 	color: #FFFFFF;
 }
 .btn-primary-outline:focus{
-	background:#A85E39;
+	background:var(--btn-primary-background-color);
 	/*border: 1px solid #ff9c00;*/
 	color: #FFFFFF;
 }
 .btn-primary-outline:active{
-	background-color: #A85E39;
-	border: 1px solid #A85E39;
+	background-color: var(--btn-primary-background-color);
+	border: 1px solid var(--btn-primary-border-color);
 	color: #fff;
 	text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.20);
     -webkit-transition-property: all;
@@ -1758,13 +1769,13 @@ fieldset[disabled] .btn-pure.focus {
 
 /*输入框下划线部分结束*/
 .form-control:focus{
-	border-color:#CA846C;	
+	border-color:var(--input-border-color-focus);	
 }
 .input-group input.form-control:focus+.input-group-addon{
-	border-color:#CA846C;	
+	border-color:var(--input-border-color-focus);	
 }
 .form-control:focus{
-	border-color:#CA846C;	
+	border-color:var(--input-border-color-focus);	
 }
 
 .has-error .form-control{
@@ -1774,10 +1785,10 @@ fieldset[disabled] .btn-pure.focus {
 	color:#FF0000
 }
 a{
-	color: #CA846C;
+	color: var(--input-border-color-focus);
 }
 a:focus, a:hover {
-    color: #A85E39;
+    color: var(--btn-primary-background-color);
     text-decoration: underline;
 }
 .navbar-inverse .navbar-nav>li>a:hover{

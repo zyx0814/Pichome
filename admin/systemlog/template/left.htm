@@ -1,4 +1,43 @@
-<ul class="nav-stacked">
-    <li <!--{if $_GET[op]!="admin" }-->  class="active" <!--{/if}-->><a hidefocus="true" href="{MOD_URL}">{lang systemlog_list}</a></li> 
-    <li <!--{if $_GET[op]=="admin" }-->  class="active" <!--{/if}-->><a hidefocus="true" href="{MOD_URL}&op=admin">{lang systemlog_setting}</a></li> 
-</ul>
+<el-menu :default-active="leftdata.activeIndex" @select="leftSelectMenu" style="height: 100%;">
+	<el-menu-item v-for="item in leftdata.data" :index="item.index">{{item.text}}</el-menu-item>
+</el-menu>
+<script type="text/javascript">
+	var LeftMixin = {
+		data(){
+			return {
+				leftdata:{
+					activeIndex:'',
+					data:[
+						{
+							text:'{lang systemlog_list}',
+							index:0
+						},
+						{
+							text:'{lang systemlog_setting}',
+							index:1
+						}
+					],
+				}
+			}
+		},
+		created(){
+			<!--{if $_GET[op]!="admin" }-->
+			this.leftdata.activeIndex = 0;
+			<!--{else}-->
+			this.leftdata.activeIndex = 1;
+			<!--{/if}-->
+		},
+		methods:{
+			leftSelectMenu(key){
+				if(this.leftdata.activeIndex == key){
+					return false;
+				}
+				if(key){
+					window.location.href = '{MOD_URL}&op=admin';
+				}else{
+					window.location.href = '{MOD_URL}';
+				}
+			}
+		}
+	};
+</script>

@@ -1,9 +1,10 @@
 <?php
 $lang = array (
-    'appname'=>'系统日志',
+    'appname'=>'登录日志',
 	'logs' => '运行记录',
     'systemlog_setting'=>'设置',
     'systemlog_list'=>'日志列表',
+    'os'=>'设备',
 	'info'=>'信息',
 	'loginfo'=>'日志信息',
 	'visit'=>'访问页面',

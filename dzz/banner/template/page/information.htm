@@ -1,0 +1,539 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="{MOD_PATH}/template/red/assets/css/root_red.css?{VERHASH}">
+<!-- <link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}"> -->
+<link rel="stylesheet" href="{MOD_PATH}/template/red/assets/css/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/asstes/css/information.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/red/assets/js/menu.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script>
+    function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+    function obtainDataId(arr,id){
+		if(!arr.length)return false;
+		if(arr[0].id == id) return arr[0];
+		return obtainDataId(arr.slice(1), id) || obtainDataId(arr[0].children, id);
+	}
+</script>
+<style>
+    #main_scrollbar {
+        padding: 0;
+    }
+    .imagelayout .image-wrapper .imagtablelayout:hover{
+		background: var(--el-color-primary-light-9);
+	}
+    .imagelayout .image-wrapper .imagtablelayout{
+		cursor: pointer;
+	}
+    .el-menu--horizontal.dzz-menu-type .el-menu-item{
+        height: 32px;
+        border-radius: 4px;
+        border: 0;
+    }
+    .el-menu--horizontal.dzz-menu-type .el-menu-item.is-active{
+        border: 0;
+        background: var(--el-menu-hover-bg-color) !important;
+    }
+    .dzz-menu-type.dzz-menu .el-menu-item:not(.is-disabled):focus,
+    .dzz-menu-type.dzz-menu .el-menu-item:not(.is-disabled):hover{
+        background: transparent;
+    }
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice" class="dzz-container">
+    <el-scrollbar class="affix-container" id="main_scrollbar" ref="scrollref">
+        <el-backtop target="#main_scrollbar>.el-scrollbar__wrap" :right="20" :bottom="20"></el-backtop>
+        <el-container style="height: auto;">
+            <el-header height="200px" style="background: var(--dzz-background);padding:0;">
+                <!--{template red/components/header/index}-->
+            </el-header>
+            <el-header v-if="bannerData.ChildData.length" style="height: 60px;background: var(--el-color-primary);padding: 0;">
+                <div class="page-header w1440" style="margin-top: 0;padding: 0;">
+                    <el-menu
+                        class="dzz-menu dzz-default-menu"
+                        :default-active="bannerData.ChildActive"
+                        mode="horizontal"
+                        style="border:0;height: 100%;width: 100%;"
+                        @select="handleSelect">
+                        <template v-for="item in bannerData.ChildData">
+                            <template v-if="item.children && item.children.length">
+                                <el-sub-menu 
+                                :index="item.id" 
+                                :class="{'is-active':bannerData.ChildActive==item.id}"
+                                popper-class="dzz-sub-menu">
+                                    <template #title>
+                                        <div class="title">{{item.bannername}}</div>
+                                        <div class="title-text" @click.stop="handleSelect(item)"></div>
+                                    </template>
+                                    <menuitem 
+                                        :datalist="item.children" 
+                                        @handleselect="handleSelect"
+                                        :active="bannerData.ChildActive"></menuitem>
+                                </el-sub-menu>
+                            </template>
+                            <template v-else>
+                                <el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3">
+                                    <template #title>
+                                        <div class="title">{{item.bannername}}</div>
+                                        <div class="title-text" @click.stop="handleSelect(item)"></div>
+                                    </template>
+                                </el-menu-item>
+                            </template>
+                        </template>
+                    </el-menu>
+                </div>
+            </el-header>
+            <el-container class="is-vertical">
+                <div class="w1440" style="display: flex;align-items: center;">
+					<el-icon><Location /></el-icon>
+					<el-text tag="b" style="margin-left: 6px;">您得位置：</el-text>
+					<el-breadcrumb separator-icon="Arrow-Right">
+						<el-breadcrumb-item v-for="(item,key) in breadcrumb">
+							<template v-if="breadcrumb.length - 1 == key">
+								{{ item.bannername }}
+							</template>
+							<template v-else>
+								<a :href="item.url?item.url:item.realurl">{{ item.bannername }}</a>
+							</template>
+						</el-breadcrumb-item>
+					</el-breadcrumb>
+				</div>
+                <!--{template components/information/message}-->
+                <div style="background: #EBEBEB;border-top: 2px solid var(--el-color-primary);">
+                    <div class="page-footer">
+                        <el-menu
+                            class="dzz-menu dzz-footer-menu"
+                            :default-active="active"
+                            mode="horizontal"
+                            style="border:0;height: 100%;justify-content: center;"
+                            @select="handleSelect">
+                            <template v-for="item in headeralldata.data">
+                                <template v-if="item.children && item.children.length">
+                                    <el-sub-menu 
+                                    :index="item.realurl" 
+                                    :class="{'is-active':active==item.realurl}"
+                                    popper-class="dzz-sub-menu">
+                                        <template #title>
+                                            {{item.bannername}}
+                                            <div class="title-text" @click.stop="handleSelect(item)"></div>
+                                        </template>
+                                        <menuitem 
+                                            :datalist="item.children" 
+                                            @handleselect="handleSelect"
+                                            :active="active"></menuitem>
+                                    </el-sub-menu>
+                                </template>
+                                <template v-else>
+                                    <el-menu-item :index="item.realurl" :disabled="parseInt(item.btype) == 3">
+                                        <template #title>
+                                            {{item.bannername}}
+                                            <div class="title-text" @click.stop="handleSelect(item)"></div>
+                                        </template>
+                                    </el-menu-item>
+                                </template>
+                            </template>
+                        </el-menu>
+                        <el-text 
+                            v-if="headeralldata.message.sitebeiantxt || headeralldata.message.sitebeian" 
+                            tag="p" 
+                            style="display: flex;align-items: center;justify-content: center;margin-top: 20px;color: var(--el-text-color-primary);">{{headeralldata.message.sitebeiantxt}} <el-link href="https://beian.miit.gov.cn/" target="_blank" style="color: var(--el-text-color-primary);">{{headeralldata.message.sitebeian}}</el-link>
+                        </el-text>
+                    </div>
+                </div>
+            </el-container>
+        </el-container>
+    </el-scrollbar>
+    
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+                scrollref:'',
+                bannerData:{
+                    active:'',
+					data:[],
+                    gid:$gid,
+                    tid:$tid,
+                    title:'',
+                    banneractive:'all',
+                    icon:'',
+                    icotype:1,
+                    banner:{
+                        all:{name:'概览',num:0},
+                        image:{name:'图片',num:0,layout:'rowGrid'},
+                        video:{name:'视频',num:0,layout:'rowGrid'},
+                        audio:{name:'音频',num:0,layout:'imageList'},
+                        document:{name:'文档',num:0,layout:'tabodd'},
+                        other:{name:'其它',num:0,layout:'imageList'},
+                    },
+                    tags:[],
+                    fileds:[],
+                    AllData:[
+                        {flag:'image',name:'图片',data:[],loading:true,layout:'rowGrid'},
+                        {flag:'video',name:'视频',data:[],loading:true,layout:'rowGrid'},
+                        {flag:'audio',name:'音频',data:[],loading:true,layout:'imageList'},
+                        {flag:'document',name:'文档',data:[],loading:true,layout:'tabodd'},
+                    ],
+                    ImageLayout:{
+                        url:'',
+                        urlparam:{},
+                        parentbox:'',
+                        showmessage:{
+                            display:['name'],
+                            other:null
+                        },
+                        data:[],
+                        returnParam:{}
+                    },
+                    ChildData:[],
+					SearchData:[],
+                    ChildActive:null,
+				},
+                tagactive:'',
+                headeralldata:{
+					data:[],
+					message:{
+						sitebeiantxt:'{$_G['setting']['sitebeiantxt']}',
+						sitebeian:'{$_G['setting']['sitebeian']}',
+					}
+				},
+                breadcrumb:[],
+                tabkeyword:'',
+                ImageDataIframe:'',
+                template:3,
+                tyttvalue:[],
+                tyttvalue1:''
+			}
+		},
+		mixins:[HeaderMixins],
+		created(){
+            let self = this;
+            document.querySelector('html').className = 'red';
+            let keyword = this.GetUrlParam('keyword');
+            let tid = this.GetUrlParam('tid');
+            let ftype = this.GetUrlParam('type');
+            this.tabkeyword = keyword || '';
+            this.tagactive = tid || '';
+            this.bannerData.banneractive = ftype || 'all';
+			let data = '$bannerdata';
+			if(!data){
+				return false;
+			}
+            
+
+			this.bannerData.data = JSON.parse(data);
+            this.headeralldata.data = this.bannerData.data.bottom?this.bannerData.data.bottom:[];
+            this.GetData();
+            if(this.template == 1){
+                
+            }else if(this.template == 2){
+                this.GetTag();
+            }else{
+                this.GetTag();
+            }
+
+			
+           
+            this.handlebreadcrumb('index.php?mod=banner&op=index#id=$kid',this.bannerData.data.top);
+            if(this.breadcrumb.length > 2){
+                this.bannerData.ChildActive = this.breadcrumb[this.breadcrumb.length-2].id;
+            }
+            if(this.breadcrumb.length > 1){
+                this.bannerData.active = this.breadcrumb[0].id;
+            }
+            if(this.bannerData.data.top && this.bannerData.data.top.length){
+                let curr = this.bannerData.data.top.find(function(current){
+                    return current.id == self.bannerData.active;
+                });
+                
+                if(curr){
+                    if(curr.children && curr.children.length){
+                        this.bannerData.ChildData = curr.children;
+                    }
+                }
+                
+            }
+            for (let index = 0; index < this.bannerData.data.top.length; index++) {
+                const element = this.bannerData.data.top[index];
+                if(parseInt(element.btype) != 2 && parseInt(element.btype) != 3){
+                    this.HeaderActive.id = element.id;
+                    this.HeaderActive.text = element.bannername;
+                    break;
+                }
+            }
+            if(this.bannerData.banneractive == 'all'){
+                this.GettAllData();
+            }else{
+                this.handleBannerGetData();
+            }
+		},
+		watch:{
+			
+		},
+		methods:{
+            async GetData(){
+                const {data: res} = await axios.post('index.php?mod=banner&op=information&do=tabdetail',{
+                    gid:this.bannerData.gid,
+                    tid:this.bannerData.tid,
+                });
+                let numdata = res.numdata;
+                let total = 0;
+                for (const key in numdata) {
+                    this.bannerData.banner[key].num = numdata[key];
+                    total += parseInt(numdata[key]);
+                }
+                this.bannerData.banner.all.num = total;
+                this.bannerData.title = res.tabdata.tabname;
+                this.bannerData.icon = res.tabdata.icon;
+                this.bannerData.icotype = parseInt(res.tabdata.icotype) || 1;
+                if(res.tabdata && res.tabdata.forms && res.tabdata.forms.length && res.tabdata.forms[0].fileds){
+                    let fileds = res.tabdata.forms[0].fileds;
+                    for (let index = 0; index < fileds.length; index++) {
+                        const element = fileds[index];
+                        let value = res.tabdata[element.flag];
+                        if(element.type == 'timerange' || element.type == 'multiselect'){
+                            value = value?value.split(','):''
+                        }
+                        this.bannerData.fileds.push({
+                            name:element.labelname,
+                            value:value,
+                            type:element.type
+                        })
+                    }
+                }
+            },
+            async GetTag(){
+                const {data: res} = await axios.post('index.php?mod=banner&op=information&do=gettag',{
+                    tid:this.bannerData.tid,
+                });
+                let arr = [];
+                for (const key in res.tagdata) {
+                    const element = res.tagdata[key];
+                    arr.push(element)
+                }
+                this.bannerData.tags = arr;
+            },
+            async GettAllData(){
+                const {data: res} = await axios.post('index.php?mod=banner&op=information&do=getoverviewfile',{
+                    tid:this.bannerData.tid,
+                });
+                if(res.data){
+                    for (let index = 0; index < this.bannerData.AllData.length; index++) {
+                        const element = this.bannerData.AllData[index];
+                        element.data = res.data[element.flag];
+                        element.loading = false;
+                    }
+                }
+            },
+            handleSelect(data){
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+				}
+				setTimeout(() => {
+					window.location.reload();
+				}, 300);
+			},
+            TabinputKeyWordClear(){
+                let self = this;
+                this.tabkeyword = '';
+                self.$nextTick(function(){
+                    if(this.bannerData.banneractive == 'search' && !this.tagactive){
+                        this.bannerData.banneractive = 'all';
+                        this.GettAllData();
+                    }else{
+                        this.handleBannerGetData();
+                    }
+                });
+            },
+            TabinputKeyWord(val){
+                if(this.bannerData.banneractive == 'all'){
+                    this.bannerData.banneractive = 'search';
+                }
+                this.handleBannerGetData();
+			},
+            handleBannerSelect(type){
+                this.bannerData.banneractive = type;
+                this.tabkeyword = '';
+                this.tagactive = '';
+                if(type == 'all'){
+                    location.hash = '';
+                    this.GettAllData();
+                }else{
+                    this.handleBannerGetData();
+                }
+                
+                
+            },
+            GetUrlParam(name){
+				let hash = location.hash;
+				hash = hash.replace(/^#/i, '');
+				if (!name) {
+					return false;
+				}
+				var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+				if (!hash) {
+  					return false;
+				}
+				var r = hash.match(reg);
+
+				if (r !== null) {
+					return decodeURIComponent(r[2]);
+				}
+			},
+            handleBannerGetData(){
+                let self = this;
+                let type = this.bannerData.banneractive;
+                this.bannerData.ImageLayout.urlparam = {
+                    tid:this.bannerData.tid,
+                    page:1,
+                    perpage:50,
+                    type:type != 'search'?type:'',
+                }
+                let hash = ['type='+this.bannerData.banneractive];
+
+                if(this.tabkeyword){
+                    this.bannerData.ImageLayout.urlparam['keyword'] = this.tabkeyword
+                    hash.push('keyword='+this.tabkeyword)
+                }
+                if(this.tagactive){
+                    this.bannerData.ImageLayout.urlparam['tagid'] = this.tagactive
+                    hash.push('tid='+this.tagactive)
+                }
+                this.bannerData.ImageLayout.url = 'index.php?mod=banner&op=information&do=getfilelist';
+                this.bannerData.ImageLayout.parentbox = self.$refs.parentbox;
+                
+                hash = hash.join('&');
+                location.hash = hash;
+                
+                self.$nextTick(function(){
+                    switch(type){
+                        case 'image':
+                            self.$refs.RefImageLayoutimage.restart();
+                        break;
+                        case 'video':
+                            self.$refs.RefImageLayoutvideo.restart();
+                        break;
+                        case 'audio':
+                            self.$refs.RefImageLayoutaudio.restart();
+                        break;
+                        case 'document':
+                            self.$refs.RefImageLayoutdocument.restart();
+                        break;
+                        case 'other':
+                            self.$refs.RefImageLayoutother.restart();
+                        break;
+                        case 'search':
+                            self.$refs.RefImageLayoutsearch.restart();
+                        break;
+                    }
+                })
+            },
+            ImageDetails(){
+
+            },
+            handleLayoutType(type){
+                this.bannerData.banner[this.bannerData.banneractive].layout = type;
+            },
+            tagserach(data){
+                if(this.tagactive == data.tid){
+                    this.tagactive = '';
+                }else{
+                    this.tagactive = data.tid;
+                }
+
+                this.TabinputKeyWord();
+                
+            },
+            handlebreadcrumb(curKey, data){
+				let result = []; // 记录路径结果
+				let traverse = (curKey, path, data) => {
+					if (data.length === 0) {
+					return;
+					}
+					for (let item of data) {
+						path.push(item);
+						if (item.realurl === curKey) {
+							result = JSON.parse(JSON.stringify(path));
+							return;
+						}
+						const children = Array.isArray(item.children) ? item.children : [];
+						traverse(curKey, path, children); // 遍历
+						path.pop(); // 回溯
+					}
+				}
+				traverse(curKey, [],data);
+				this.breadcrumb = result;
+                this.breadcrumb.push({
+                    bannername:'专辑详情'
+                })
+			},
+            Imagereturnparam(data){
+                this.bannerData.ImageLayout.data = data.data;
+                this.bannerData.ImageLayout.returnParam = {
+                    ismore:data.ismore,
+                    page:data.page,
+                    perpage:data.perpage,
+                };
+            },
+            ImageDetails(item){//双击事件
+				var arr = [];
+                this.bannerData.ImageLayout.url = 'index.php?mod=banner&op=information&do=getfilelist';
+
+                let curr = '';
+				for(var i in this.bannerData.ImageLayout.data){
+                    if(item.id == this.bannerData.ImageLayout.data[i].rid){
+                        curr = this.bannerData.ImageLayout.data[i];
+                    }
+					arr.push(this.bannerData.ImageLayout.data[i].dpath)
+				}
+
+				let index = this.bannerData.ImageLayout.data.findIndex(function(current){
+					return current.dpath == curr.dpath;
+				});
+                var params = JSON.parse(JSON.stringify(this.bannerData.ImageLayout.urlparam));
+                params['ispage'] = this.bannerData.ImageLayout.returnParam['ismore'];
+                params['moreurl'] = 'index.php?mod=banner&op=information&do=getfilelist';
+                this.ImageDataIframe = window.open('index.php?mod=details#path='+curr.dpath,'details');
+                this.ImageDataIframe.sessionStorage.setItem('imgparam',JSON.stringify(params));
+                this.ImageDataIframe.sessionStorage.setItem('imgs',arr.join(','));
+                this.ImageDataIframe.sessionStorage.setItem('selectindex',index);
+			},
+		},
+		mounted(){
+            const self = this;
+            this.scrollref = self.$refs.scrollref
+		}
+	});
+	
+    dzzoffice.use(ImageLayoutlimit);
+    dzzoffice.use(ImageLayout);
+    dzzoffice.use(DzzCollectdialog);
+	dzzoffice.component('comavatar', comavatar);
+    dzzoffice.component('menuitem', menuitem);
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+    
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

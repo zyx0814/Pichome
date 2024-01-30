@@ -25,12 +25,16 @@ define('UNIQUEID','');//应用目录名
 require ROOT_PATH.'./core/core_version.php';
 require ROOT_PATH.'./install/include/install_var.php';
 $versions=array(
-    'Home'=>'个人版',
+    'Enterprise'=>'企业版',
+    'Custom'=>'定制版',
     'Team'=>'团队版',
+    'Home'=>'个人版',
 );
-$arr=explode('.',CORE_VERSION);
-array_shift($arr);
-$version=implode('.',$arr);
+
+$version=CORE_VERSION;
+$versioncode = explode('.',$version);
+unset($versioncode[0]);
+$version = implode('.',$versioncode);
 $version_name=$versions[CORE_VERSION_LEVEL];
 if(function_exists('mysqli_connect')) {
 	require ROOT_PATH.'./install/include/install_mysqli.php';
@@ -289,9 +293,10 @@ elseif($method == 'db_init') {
 		if(is_dir(ROOT_PATH.'data/backup_'.$backupdir)) {
 			$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('backupdir', '$backupdir')");
 		}
-
+        $machinecode =createmachinecode();
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('authkey', '$authkey')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('siteuniqueid', '$siteuniqueid')");
+		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('machinecode', '$machinecode')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('adminemail', '$adminemail')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('backupdir', '".$backupdir."')");
 		$db->query("REPLACE INTO {$tablepre}setting (skey, svalue) VALUES ('verhash', '".random(3)."')");
@@ -308,7 +313,7 @@ elseif($method == 'db_init') {
 			$db->query("INSERT INTO {$tablepre}organization_user (`orgid`, `uid`,`jobid`, `dateline`) VALUES(1, 1, 0, '$timestamp')");
 			
 		}
-		upgradeinformation($company);
+		upgradeinformation($company,$machinecode);
 		$db->query("UPDATE {$tablepre}cron SET lastrun='0', nextrun='".($timestamp + 3600)."'");
 		for($i=0; $i<5;$i++){
 			showjsmessage(lang('set_system1'));
@@ -321,8 +326,14 @@ elseif($method == 'db_init') {
 
 		dir_clear(ROOT_PATH.'./data/template');
 		dir_clear(ROOT_PATH.'./data/cache');
-		
-
+        $routefile = ROOT_PATH.'./data/cache/'. 'route.php';
+        if(!is_file($routefile)){
+            @file_put_contents($routefile,"<?php \t\n return array();");
+        }
+        $defalutmodfile = DZZ_ROOT.'data/cache/default_mod.php';
+        $defalutmodarr = array();
+        $defalutmodarr['default_mod' ]='banner';
+        @file_put_contents($defalutmodfile,"<?php \t\n return ".var_export($defalutmodarr,true).";");
 		foreach($serialize_sql_setting as $k => $v) {
 			$v = addslashes(serialize($v));
 			$db->query("REPLACE INTO {$tablepre}setting VALUES ('$k', '$v')");

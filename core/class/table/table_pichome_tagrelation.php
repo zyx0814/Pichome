@@ -14,13 +14,32 @@
             parent::__construct();
         }
         public function insert($setarr){
+
             if($id = DB::fetch_first("select id from %t  where cid = %s and tid = %d",array($this->_table,$setarr['cid'],$setarr['tid']))){
                 return $id;
             }else{
                 //同一库下一个标签只能归属于一个分类
-                $this->delete_by_tpid($setarr['tid'],$setarr['appid']);
+                //$this->delete_by_tpid($setarr['tid'],$setarr['appid']);
                return parent::insert($setarr);
             }
+        }
+        public function movetag_togroup($tid,$appid,$cid){
+            $ids = [];
+            foreach(DB::fetch_all("select id from %t where tid = %d and appid =%s and cid !=%s ",array($this->_table,$tid,$appid,$cid)) as $v){
+                $ids[] = $v['id'];
+            }
+
+            //$id = DB::result_first("select id from %t where tid = %d and appid =%s",array($this->_table,$tid,$appid));
+            if(!empty($ids))parent::delete($ids);
+            $setarr = [
+                'appid'=>$appid,
+                'tid'=>$tid,
+                'cid'=>$cid
+            ];
+           return  $this->insert($setarr);
+        }
+        public function delete_by_tid($tid){
+            return DB::delete($this->_table,['tid'=>$tid]);
         }
         public function delete_by_tpid($tid,$appid){
             //兼容以修复已经出现错误的数据
@@ -28,6 +47,7 @@
             foreach(DB::fetch_all("select id from %t where tid = %d and appid =%s",array($this->_table,$tid,$appid)) as $v){
                 $ids[] = $v['id'];
             }
+
             //$id = DB::result_first("select id from %t where tid = %d and appid =%s",array($this->_table,$tid,$appid));
             if(!empty($ids))return parent::delete($ids);
             return true;
@@ -38,6 +58,7 @@
             foreach(DB::fetch_all("select id from %t where cid in(%n)",array($this->_table,$cids)) as $v){
                 $ids[] = $v['id'];
             }
+
             parent::delete($ids);
         }
         public function delete_by_appid($appid)

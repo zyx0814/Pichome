@@ -1,0 +1,173 @@
+<el-scrollbar>
+	<div style="padding: 8px 18px;">
+		<div class="top-image " :class="{'top-images':RightActiveRid.length>1}">
+			<template v-for="img in RightData.img">
+				<el-image :src="img">
+					<template #error><div class="el-image__placeholder"></div></template>
+				</el-image>
+			</template>
+		</div>
+		<template v-if="RightActiveRid.length == 1">
+			<!--{template librarylist/pc/components/right/file/color/temp}-->
+			<div class="marginTop">
+				<el-input
+					v-model="RightData.title"
+					type="textarea"
+					:disabled="DocumentVapp.type != 3"
+					@change="RightFileNameChange"
+					:autosize="{  maxRows: 8 }"
+					placeholder="文件名称"></el-input>
+			</div>
+		</template>
+		<div 
+			v-if="RightActiveRid.length>1" 
+			class="marginTop" 
+			style="text-align: center;font-size: 12px;color: var(--el-text-color-regular);">
+			{{RightActiveRid.length}}个文件已选
+		</div>
+		<template v-for="(item,key) in RightData.filedsData">
+			<template v-if="item.flag == 'tag'">
+				<div class="marginTop">
+					<!--{template librarylist/pc/components/right/file/tag/temp}-->
+				</div>
+			</template>
+			<template v-else-if="item.flag == 'level'">
+				<div class="marginTop">
+					<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);">{{item.name}}</p>
+					<div class="marginTop">
+						<el-dropdown  
+							@command="RightFileLevelChange">
+							<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+parseInt(RightData.level)+'.png'" fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							<template #dropdown>
+								<el-dropdown-menu>
+									<el-dropdown-item v-for="(item,key) in 6" :command="key">
+										<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+parseInt(key)+'.png'" fit="contain">
+											<template #error><div class="el-image__placeholder"></div></template>
+										</el-image>
+									</el-dropdown-item>
+								</el-dropdown-menu>
+							</template>
+						</el-dropdown>
+					</div>
+				</div>
+			</template>
+			<template v-else-if="item.flag == 'grade'">
+				
+				<div class="marginTop">
+					<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);">{{item.name}}</p>
+					<template v-if="DocumentVapp.type == 0 || DocumentVapp.type == 2">
+						<div class="el-rate">
+							<span class="el-rate__item" v-for="s in parseInt(RightData.grade)" style="cursor: default;">
+								<el-icon class="el-rate__icon is-active"><Star-Filled></Star-Filled></el-icon>
+							</span>
+							<span class="el-rate__item" v-for="s in 5-parseInt(RightData.grade)" style="cursor: default;">
+								<el-icon class="el-rate__icon"><Star></Star></el-icon>
+							</span>
+						</div>
+					</template>	
+					<template v-else>
+						<el-rate 
+							v-model="RightData.grade" 
+							@change="RightFileGradeChange"
+							clearable></el-rate>
+					</template>
+				</div>
+			</template>
+			<template v-else-if="item.flag == 'desc'">
+				<div class="marginTop">
+					<el-input
+						v-model="item.value"
+						@change="RightFileDescChange"
+						:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+						type="textarea"
+						:autosize="{  maxRows: 8 }"
+						:placeholder="item.name"></el-input>
+				</div>
+			</template>
+			<template v-else-if="item.flag == 'fid'">
+				<div class="ascription-file marginTop">
+					<!--{template librarylist/pc/components/right/file/folder/temp}-->
+				</div>
+			</template>
+			<template v-else-if="item.flag == 'link'">
+				<div class="marginTop">
+					<el-input
+						class=""
+						v-model="item.value"
+						@change="RightFileLinkChange"
+						:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+						:placeholder="item.name">
+							<template #suffix>
+								<el-icon style="cursor: pointer;" v-if="textarea1" class="el-input__icon"><Connection /></el-icon>
+							</template>
+						</el-input>
+				</div>
+			</template>
+			<template v-else-if="item.flag.indexOf('tabgroup')>-1">
+				<!--{template librarylist/pc/components/right/file/tab/temp}-->
+			</template>
+			<!-- <template v-else-if="item.flag == 'level'">
+				<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">密级</p>
+				<div class="marginTop">
+					<div class="tag-box" style="min-height: 31px;">
+						<template v-if="DocumentVapp.type == 0 || DocumentVapp.type == 2">
+							<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+item.value+'.png'" fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+						</template>
+						<template v-else>
+							<el-dropdown  
+								@command="RightFileLevelChange">
+								<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+item.value+'.png'" fit="contain">
+									<template #error><div class="el-image__placeholder"></div></template>
+								</el-image>
+								<template #dropdown>
+									<el-dropdown-menu>
+										<el-dropdown-item v-for="(item,key) in 6" :command="key">
+											<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+key+'.png'" fit="contain">
+												<template #error><div class="el-image__placeholder"></div></template>
+											</el-image>
+										</el-dropdown-item>
+									</el-dropdown-menu>
+								</template>
+							</el-dropdown>
+						</template>
+						
+					</div>
+				</div>
+			</template> -->
+		</template>
+
+		<div class="basic-file marginTop">
+			<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+			<div class="marginTop">
+				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+					<el-col :span="8">格式</el-col>
+					<el-col :span="16" class="message">{{RightData.format}}</el-col>
+				</el-row>
+				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+					<el-col :span="8">尺寸</el-col>
+					<el-col :span="16" class="message">{{RightData.size}}</el-col>
+				</el-row>
+				<el-row class="single" :gutter="12">
+					<el-col :span="8">文件大小</el-col>
+					<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+				</el-row>
+				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+					<el-col :span="8">添加日期</el-col>
+					<el-col :span="16" class="message">{{RightData.btime}}</el-col>
+				</el-row>
+				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+					<el-col :span="8">创建时间</el-col>
+					<el-col :span="16" class="message">{{RightData.mtime}}</el-col>
+				</el-row>
+				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+					<el-col :span="8">修改时间</el-col>
+					<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
+				</el-row>
+			</div>
+		</div>
+	</div>
+</el-scrollbar>	

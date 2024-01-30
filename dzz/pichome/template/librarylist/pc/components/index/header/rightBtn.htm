@@ -1,0 +1,146 @@
+
+<el-tooltip content="切换页面配色" placement="bottom">
+    <el-button 
+		text 
+		:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+		style="font-size: var(--el-font-size-extra-large);" 
+		circle  
+		size="large"
+		@click="DocumentThemeChange">
+	</el-button>
+</el-tooltip>
+<!--{if $_GET['do'] != 'tags'}-->
+<el-tooltip :content="HeaderRightBtnScreen.active?'隐藏筛选':'显示筛选'" placement="bottom">
+	<el-button 
+		text 
+		icon="Filter" 
+		style="font-size: var(--el-font-size-extra-large);" 
+		circle  
+		size="large"
+		@click="HeaderRightBtnScreenClick(HeaderRightBtnScreen.active>0?0:1)"
+		:bg="!HeaderRightBtnScreen.active">
+	</el-button>
+</el-tooltip>
+<el-popover
+	placement="bottom"
+	trigger="click"
+	popper-class="isdropdown header-dropdown-menu"
+	@show="screenvisible(true)"
+    @hide="screenvisible(false)">
+	<comsort
+		isrightcolumn
+		isleftcolumn
+		:defaultval="HeaderRightBtnShow"
+		issort
+		@change.self="HeaderShowChange">
+	</comsort>
+	<template #reference>
+		<div style="margin-left: 12px;">
+			<el-tooltip content="偏好设置" placement="bottom">
+				<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+			</el-tooltip>
+		</div>
+	</template>
+</el-popover>
+<!--{/if}-->
+
+
+
+
+
+<script type="text/javascript">
+	var HeaderRightBtnMixin = {
+		data(){
+			return {
+				HeaderRightBtnScreen:{
+					active:1,
+					show:true
+				},
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					column:['left','right'],//侧边栏
+					layout:'waterFall'//图片布局方式
+				},
+			}
+		},
+		methods:{
+			async HeaderShowChange(data){
+				const self = this;
+				this.HeaderRightBtnShow[data.type] = data.value;
+				switch(data.type){
+					case 'display':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							self.ImageProps.ShowMessage.other = '';
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							self.ImageProps.ShowMessage.other = this.HeaderRightBtnShow.other; 
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+						self.ImageProps.ShowMessage.display = display;
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+						self.ImageProps.ShowMessage.other = data.value;
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.HeaderRightBtnSubmit();
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						this.ImageProps.layout = data.value;
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+			},
+
+			HeaderRightBtnScreenClick(val){//设置筛选显示或隐藏
+				var self = this;
+				if(this.HeaderRightBtnScreen.active == val){
+					return false;
+				}
+				sessionStorage.setItem('showscreen',val);
+				this.HeaderRightBtnScreen.active = val;
+				if(val){
+					this.Screenshow = true;
+				}else{
+					this.Screenshow = false;
+				}
+			},
+
+
+			HeaderRightBtnGetParam(){
+				var param = {
+					order:this.HeaderRightBtnShow.order,
+					asc:this.HeaderRightBtnShow.sort,
+				};
+				return param;
+			},
+			HeaderRightBtnSubmit(){
+				this.CommonGetImageData();
+			},
+			HeaderRightBtnCreate(){
+				
+			},
+			HeaderRightBtnRefreshHash(){
+				
+			}
+		}
+	}
+</script>

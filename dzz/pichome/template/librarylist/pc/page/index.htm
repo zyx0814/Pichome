@@ -1,0 +1,314 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="dzz/pichome/template/librarylist/assets/js/common.js?{VERHASH}"></script>
+<!-- spark-md5.js 库-->
+<script type="text/javascript" src="dzz/pichome/template/librarylist/assets/js/spark-md5.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+<!-- 对象存储上传sdk及上传js-->
+{hook cloudupload}
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageFile/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/index.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/files.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<style>
+	.ImageRightMenu{
+		z-index: 9000 !important;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" id="top_header" height="60px">
+			<!--{template librarylist/pc/components/index/header/index}-->
+		</el-header>
+		<el-container>
+			<el-aside class="page-left" :width="LeftWidth+'px'" v-show="HeaderRightBtnShow.column.indexOf('left')>-1">
+				<!--{template librarylist/pc/components/left/index}-->
+			</el-aside>
+			<el-container>
+				<el-header v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;">
+					<dzz-screen
+						ref="ScreenBoxRef"
+						:resize="DocumentResize"
+						:props="ScreenProps"
+						:headerkeyword="HeaderKeyword"
+						:defaultparam="ScreenParam"
+						@submit="CommonGetImageData"
+						@visible="screenvisible"
+						:appid="DocumentAppid">
+					</dzz-screen>
+				</el-header>
+				<el-main 
+					class="dzz-container" 
+					style="overflow: hidden;padding: 0;position: relative;" 
+					ref="onloadCon">
+					<el-scrollbar id="main_scrollbar" ref="MainscrollbarRef" @scroll="HandleElScrollbar"  v-loading="main_scrollbar_loading">
+						<div 
+							v-show="DocumentDropActive"
+							class="drag-upload el-upload-dragger is-dragover"
+							style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;display: flex;justify-content: center;align-items: center;z-index: 7000;background: rgb(64,158,255,0.4);">
+							<div class="el-upload__text" style="color: #FFFFFF;font-size: 26px;">将文件拖到此处</div>
+						</div>
+						<!--{template librarylist/pc/components/index/file}-->
+						<!--{template librarylist/pc/components/index/image}-->
+						<div class="right-toolbar">
+							<!--{template librarylist/pc/components/index/upload}-->
+							<el-backtop target="#main_scrollbar>.el-scrollbar__wrap" style="position: unset;margin-top: 10px;"></el-backtop>
+						</div>
+						
+					</el-scrollbar>
+				</el-main>
+			</el-container>
+			<el-aside class="mainRight" :width="RightWidth+'px'"  v-show="HeaderRightBtnShow.column.indexOf('right')>-1">
+				<!--{template librarylist/pc/components/right/index}-->
+			</el-aside>
+			
+		</el-container>
+		
+	</el-container>
+	
+	<!--{template librarylist/pc/components/left/Jsindex}-->
+	<!--{template librarylist/pc/components/right/Jsindex}-->
+	<!--{template librarylist/pc/components/index/screen/Jsindex}-->
+	<!--{template librarylist/pc/components/index/common}-->
+	<!--{template librarylist/pc/components/index/contextmenu}-->
+	<!--{if $_G['setting']['defaultspacesetting']['bz']=='dzz'}-->
+	<!--{template librarylist/pc/components/index/uploaddzz}-->
+	<!--{elseif $_G['setting']['defaultspacesetting']['bz']=='QCOS'}-->
+	<!--{template librarylist/pc/components/index/uploadQCOS}-->
+	<!--{/if}-->
+</div>
+<script>
+	function tabgroup_callback(data,flag){
+		dzzoffice.WindowThis.RightTabGroup(data,flag)
+	}
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	var dzzoffice = createApp({
+		data(){
+			return {
+				fMOD_URL:MOD_URL,
+				DocumentResize:0,
+				DocumentAppid:'',
+				DocumentCtrl:false,
+				DocumentDropActive:false,
+				DocumentDropActive1:false,
+				OpenDetailType:'new',
+				scrollref:null,
+				DocumentThemeColor:'',//dark
+				DocumentVapp:{appname:'',type:0},
+				ispc:true,
+				main_scrollbar_loading:false
+			}
+		},
+		watch: {
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created(){
+			this.handleIsPc();
+			<!--{if $_GET['do'] == 'tags' ||  $_GET['do'] == 'user'}-->
+			this.DocumentAppid = '$appid';
+			<!--{else}-->
+			this.DocumentAppid = this.CommonGetHashParam('appid');
+			if(this.DocumentAppid){
+				this.ScreenParam.appid = this.DocumentAppid;
+				var ShowScreen = sessionStorage.getItem('showscreen')? sessionStorage.getItem('showscreen'):1;
+				if(parseInt(ShowScreen)){
+					this.Screenshow = true;
+				}else{
+					this.Screenshow = false;
+				}
+			}
+			<!--{/if}-->
+		},
+		
+		mixins:[leftMixins,HeaderMixins,ScreenMixin,CommonMixin,MixinImage,UploaderMinxins,RightMixin,MainMixins,FileMixins,Upload{$_G['setting']['defaultspacesetting']['bz']}Minxins],
+		
+		methods:{
+			DocumentPageContentNotChecked(){
+				if(this.RightType == 'folder'){
+					if(this.RightActivefid[0] != this.LeftTree.Currentkey){
+						this.RightParamClean();
+						this.RightType = 'folder';
+						this.RightActivefid = [this.LeftTree.Currentkey];
+						this.RightGetData();
+					}
+				}else if(this.RightType == 'file'){
+					this.RightParamClean();
+					if(this.LeftCurrenType == 'filelist'){
+						this.RightType = 'folder';
+						this.RightActivefid = [this.LeftTree.Currentkey];
+						
+					}else{
+						this.RightType = JSON.parse(JSON.stringify(this.LeftCurrenType));
+					}
+					this.RightGetData();
+				}
+			},
+			async ImageUploadDropEvent(e) {
+				const self = this;
+				if(this.LeftCurrenType == 'recycle' || this.DocumentVapp.type != 3){
+					return false;
+				}
+				e.preventDefault();
+				const dataTransfer = e.dataTransfer;
+				if(dataTransfer.items && dataTransfer.items.length){
+					
+					for (let index = 0; index < dataTransfer.items.length; index++) {
+						const element = dataTransfer.items[index];
+						const folder = element.webkitGetAsEntry();
+						if (folder.isDirectory) {
+							readFolder(folder).then(files=>{
+								this.UploadFileChange(files,'drop');
+							});
+						}else{
+							this.UploadChange([element.getAsFile()],'drop');
+						}
+					}
+				}
+			
+				this.DocumentDropActive = false;
+				async function readFolder(folder) {
+					const files = [];
+					const reader = folder.createReader();
+					while(true) {
+						const entries = await new Promise(resolve => {
+							reader.readEntries(resolve); 
+						});
+						
+						if(!entries.length) break;
+						const promises = entries.map(async item => {
+							if(item.isFile) {
+								let entry = await doSomethingAsync(item);
+								files.push(entry); // 获取文件对象
+							} else if(item.isDirectory) {
+								files.push(...await readFolder(item)); // 递归读取子文件夹
+							}
+						});
+
+						// 并发执行所有promise
+						await Promise.all(promises);
+					}
+					
+					return files;
+				}
+				async function doSomethingAsync(entry) {
+					let data = '';
+					let promises = await new Promise(resolve => {
+						entry.file(file => {
+							let rawurl = entry.fullPath;
+							rawurl = rawurl.substr(rawurl.indexOf('/') + 1);
+							file['fullPath'] = rawurl;
+							// 获取文件成功  
+							resolve(file)
+						}, error => {
+						// 获取文件失败
+							console.log('获取文件失败');
+						});
+					});
+					return promises;
+				}
+			},
+			HandleElScrollbar(){
+				var self = this;
+				self.$refs.RefImageLayout.HandleElScrollbar();
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			DocumentHideAllPop(){
+				const self = this;
+				//左侧树隐藏
+				self.LeftTreePopover.show = false;
+				//筛选隐藏
+				self.$refs.ScreenBoxRef.hidePopover();
+				//文件隐藏
+				self.fileMunu.show = false;
+				//图片隐藏
+				self.ImageMenu.show = false;
+				
+			},
+			handleIsPc(){
+                let innerWidth = window.innerWidth;
+                if(innerWidth > 768){
+                    this.ispc = true;
+                }else{
+                    this.ispc = false;
+                }
+            },
+		},
+		components: {
+		},
+		mounted(){
+			var self = this;
+			<!--{if $_GET['do'] == 'tags' ||  $_GET['do'] == 'user'}-->
+			<!--{else}-->
+			if(this.DocumentAppid){
+				this.HeaderRightBtnCreate()
+				// this.CommonGetImageData();
+				this.CommonInit();
+			}
+			<!--{/if}-->
+						// 
+			this.scrollref = self.$refs.MainscrollbarRef;
+			window.onresize = function(){
+				self.DocumentResize += 1;
+			};
+
+			const dropArea = document.querySelector('.dzz-container');
+			dropArea.addEventListener("drop", self.ImageUploadDropEvent, false);
+			dropArea.addEventListener("dragover", function(e){
+				if(self.LeftCurrenType == 'recycle' || self.DocumentVapp.type != 3){
+					return false;
+				}
+				// e.dataTransfer.dropEffect = 'copy';
+				e.stopPropagation();
+				e.preventDefault();
+				self.DocumentDropActive = true;
+			}, false);
+			document.addEventListener("dragleave", function(e){
+				if(self.LeftCurrenType == 'recycle' || self.DocumentVapp.type != 3){
+					return false;
+				}
+				e.stopPropagation()
+				e.preventDefault()
+				var dropbox = e.target.closest('.dzz-container');
+				if(!dropbox){
+					self.DocumentDropActive = false;
+				}
+			}, false);
+			dzzoffice.WindowThis = this;
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.use(DzzScreen);
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(DzzCollectdialog);
+	dzzoffice.use(ImageFile);
+	dzzoffice.component('comsort', comsort);
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

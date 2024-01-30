@@ -30,22 +30,25 @@ if (!function_exists('sys_get_temp_dir')) {
         return null;
     }
 }
-if(!function_exists("array_column"))
-{
-    function array_column($array,$column_name)
+if (!function_exists("array_column")) {
+    function array_column($array, $column_name)
     {
-        return array_map(function($element) use($column_name){return $element[$column_name];}, $array);
+        return array_map(function ($element) use ($column_name) {
+            return $element[$column_name];
+        }, $array);
     }
 }
-    function process_waiting($processname,$ttl=1,$usleep=600000){
-        static $i=0;
-        if (dzz_process::islocked($processname, $ttl)) {
-            $i++;
-            usleep($usleep);
-            if($i<100) process_waiting($processname);
-            else $i=0;
-        }
+function process_waiting($processname, $ttl = 1, $usleep = 600000)
+{
+    static $i = 0;
+    if (dzz_process::islocked($processname, $ttl)) {
+        $i++;
+        usleep($usleep);
+        if ($i < 100) process_waiting($processname);
+        else $i = 0;
     }
+}
+
 function getfileinfo($icoid)
 {
     if (preg_match('/^dzz:[gu]id_\d+:.+?/i', $icoid)) {
@@ -119,7 +122,7 @@ function getOauthRedirect($url)
     $wx = new qyWechat(array('appid' => getglobal('setting/CorpID'), 'appsecret' => getglobal('setting/CorpSecret')));
     return $wx->getOauthRedirect(getglobal('siteurl') . 'index.php?mod=system&op=wxredirect&url=' . dzzencode($url));
 }
- 
+
 function fix_integer_overflow($size)
 { //处理整数溢出
     if ($size < 0) {
@@ -146,11 +149,11 @@ function url_implode($gets)
 {
     $arr = array();
     foreach ($gets as $key => $value) {
-		if(is_array($value)){
-			foreach($value as $value1){
-				 $arr[] = $key . '[]=' . urlencode($value1);
-			}
-		}elseif ($value) {
+        if (is_array($value)) {
+            foreach ($value as $value1) {
+                $arr[] = $key . '[]=' . urlencode($value1);
+            }
+        } elseif ($value) {
             $arr[] = $key . '=' . urlencode($value);
         }
     }
@@ -329,13 +332,13 @@ function getuserbyuid($uid, $fetch_archive = 0)
 
 function chk_submitroule($type)
 {
-	
+
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_GET['formhash']) && $_GET['formhash'] == formhash() && empty($_SERVER['HTTP_X_FLASH_VERSION']) && (empty($_SERVER['HTTP_REFERER']) ||
-			preg_replace("/https?:\/\/([^\:\/]+).*/i", "\\1", $_SERVER['HTTP_REFERER']) == preg_replace("/([^\:]+).*/", "\\1", $_SERVER['HTTP_HOST']))) {
-		
-    }else{
-		showTips(array('error' => '提交方式不合法', 'error_code' => 403), $type, 'common/illegal_operation');
-	}
+            preg_replace("/https?:\/\/([^\:\/]+).*/i", "\\1", $_SERVER['HTTP_REFERER']) == preg_replace("/([^\:]+).*/", "\\1", $_SERVER['HTTP_HOST']))) {
+
+    } else {
+        showTips(array('error' => '提交方式不合法', 'error_code' => 403), $type, 'common/illegal_operation');
+    }
 }
 
 function daddslashes($string, $force = 1)
@@ -401,14 +404,17 @@ function authcode($string, $operation = 'DECODE', $key = '', $expiry = 0, $ckey_
         return $keyc . str_replace(array('/', '+'), array('_', '-'), str_replace('=', '', base64_encode($result)));
     }
 }
-function urlsafe_b64encode($string) {
+
+function urlsafe_b64encode($string)
+{
     $data = base64_encode($string);
-    $data = str_replace(array('+','/','='),array('-','_',''),$data);
+    $data = str_replace(array('+', '/', '='), array('-', '_', ''), $data);
     return $data;
 }
 
-function urlsafe_b64decode($string) {
-    $data = str_replace(array('-','_'),array('+','/'),$string);
+function urlsafe_b64decode($string)
+{
+    $data = str_replace(array('-', '_'), array('+', '/'), $string);
     $mod4 = strlen($data) % 4;
     if ($mod4) {
         $data .= substr('====', $mod4);
@@ -416,28 +422,30 @@ function urlsafe_b64decode($string) {
     return base64_decode($data);
 }
 
-function checkUserLimit(){
-	if(!defined('LICENSE_LIMIT')){
-		return false;
-	}
-    if(defined('NOLIMITUSER')){
+function checkUserLimit()
+{
+    if (!defined('LICENSE_LIMIT')) {
+        return false;
+    }
+    if (defined('NOLIMITUSER')) {
         return true;
-    } else{
-		return (CURRTENT_UNUM < LICENSE_LIMIT);
-	}
-	return false;
+    } else {
+        return (CURRTENT_UNUM < LICENSE_LIMIT);
+    }
+    return false;
 }
+
 //key的格式以|隔开，参数支持全局函数，如地址为 index.php?mod=io&op=getStream&path=***&key=uid|setting/authkey|username
 //这种格式，加密时，需要把|分割的每个参数都带上，dzzencode($string,'1|'.getglobal('setting/authkey').'|管理员',$expiry);
 //如果解密时，|隔开的部分使用getglobal函数获取不到值，将会使用原值，如index.php?mod=io&op=getStream&path=***&key=xxxxx|ppppp
 //解密时的key会使用原值 xxxxx|ppppp ;
-function dzzencode($string, $key = '', $expiry = 86400, $ckey_length = 4)
+function dzzencode($string, $key = '', $expiry = 86400, $ckey_length = 0)
 {
     $key = md5($key != '' ? $key : getglobal('setting/authkey'));
     return urlsafe_b64encode(authcode($string, 'ENCODE', $key, $expiry, $ckey_length));
 }
 
-function dzzdecode($string, $key = '', $ckey_length = 4)
+function dzzdecode($string, $key = '', $ckey_length = 0)
 {
     if ($key) {
         $tarr = explode('|', $key);
@@ -450,9 +458,10 @@ function dzzdecode($string, $key = '', $ckey_length = 4)
     if (!$ret = authcode(urlsafe_b64decode($string), 'DECODE', $key, 0, $ckey_length)) {
         $ret = authcode(urlsafe_b64decode($string), 'DECODE', $key, 0, 4);
     }
-	
+
     return $ret;
 }
+
 //带参数的编码函数
 /*典型的参数
 	array(
@@ -463,16 +472,18 @@ function dzzdecode($string, $key = '', $ckey_length = 4)
 	);
 返回加密字符串
 */
-function Pencode($params=array(),$expiry=0,$key=''){
-	$arr=array();
-	foreach($params as $k => $v){
-		$arr[]=$k.':'.$v;
-	}
-	if($arr){
-		return dzzencode(implode('|',$arr),$key,$expiry);
-	}
-	return '';
+function Pencode($params = array(), $expiry = 0, $key = '')
+{
+    $arr = array();
+    foreach ($params as $k => $v) {
+        $arr[] = $k . ':' . $v;
+    }
+    if ($arr) {
+        return dzzencode(implode('|', $arr), $key, $expiry);
+    }
+    return '';
 }
+
 /*解密函数，返回数组，例如：
 	array(
 		'path'=>'2e596485cd1424579be04802a7b84f73',//rid或dzzpath
@@ -482,19 +493,20 @@ function Pencode($params=array(),$expiry=0,$key=''){
 	);
 
 */
-function Pdecode($string, $key = ''){
-	if(!$str=dzzdecode($string,$key)) return array();
-	$ret=array();
-	if(strpos($str,'|')!==false){
-		$arr=explode('|',$str);
-		foreach($arr as $key => $value){
-			$arr1=explode(':',$value);
-			$ret[$arr1[0]]=$arr1[1];
-		}
-	}else{
-		$ret['path']=$str;
-	}
-	return $ret;
+function Pdecode($string, $key = '')
+{
+    if (!$str = dzzdecode($string, $key)) return array();
+    $ret = array();
+    if (strpos($str, '|') !== false) {
+        $arr = explode('|', $str);
+        foreach ($arr as $key => $value) {
+            $arr1 = explode(':', $value);
+            $ret[$arr1[0]] = $arr1[1];
+        }
+    } else {
+        $ret['path'] = $str;
+    }
+    return $ret;
 }
 
 /*
@@ -502,38 +514,40 @@ function Pdecode($string, $key = ''){
 	$ret:Pdecode函数返回的数组
 	$action:需要判断的权限
  */
-function Cdecode($ret=array(),$action='read'){
-	global $_G;
-	$powerarr=\perm_binPerm::getPowerArr();
-	if($ret['perm']){
-		$perm=intval($ret['perm']);
-		 $action2=array();
-		 if(in_array($action,array('read','delete','edit','download','copy'))){
-			$actions[]=$action.'2';
-			if($_G['uid']==$ret['uid']) $actions[]=$action.'1';
-		 }else{
-			 $actions[]=$action;
-		 }
-		foreach($actions as $a){
-			if($perm & intval($powerarr[$a])){
-				return $ret['path'];
-			}
-		}
-		return false;
-	}elseif($ret['path']){
-		$meta=IO::getMeta($ret['path']);
-		if(perm_check::checkperm($action, $meta)){
-			return $ret['path'];
-		}else{
-			return false;
-		}
-	}
-	return $ret['path'];
+function Cdecode($ret = array(), $action = 'read')
+{
+    global $_G;
+    $powerarr = \perm_binPerm::getPowerArr();
+    if ($ret['perm']) {
+        $perm = intval($ret['perm']);
+        $action2 = array();
+        if (in_array($action, array('read', 'delete', 'edit', 'download', 'copy'))) {
+            $actions[] = $action . '2';
+            if ($_G['uid'] == $ret['uid']) $actions[] = $action . '1';
+        } else {
+            $actions[] = $action;
+        }
+        foreach ($actions as $a) {
+            if ($perm & intval($powerarr[$a])) {
+                return $ret['path'];
+            }
+        }
+        return false;
+    } elseif ($ret['path']) {
+        $meta = IO::getMeta($ret['path']);
+        if (perm_check::checkperm($action, $meta)) {
+            return $ret['path'];
+        } else {
+            return false;
+        }
+    }
+    return $ret['path'];
 }
 
 //综合以上两个函数的简便用法
-function Decode($string, $action='read'){
-	return Cdecode(Pdecode($string),$action);
+function Decode($string, $action = 'read')
+{
+    return Cdecode(Pdecode($string), $action);
 }
 
 function fsocketopen($hostname, $port = 80, &$errno, &$errstr, $timeout = 15)
@@ -549,9 +563,10 @@ function fsocketopen($hostname, $port = 80, &$errno, &$errstr, $timeout = 15)
     return $fp;
 }
 
-function dfsockopen($url, $limit = 0, $post = '', $cookie = '', $bysocket = FALSE, $ip = '', $timeout = 15, $block = TRUE, $encodetype  = 'URLENCODE', $allowcurl = TRUE, $position = 0, $files = array()) {
-	require_once libfile('function/filesock');
-	return _dfsockopen($url, $limit, $post, $cookie, $bysocket, $ip, $timeout, $block, $encodetype, $allowcurl, $position, $files);
+function dfsockopen($url, $limit = 0, $post = '', $cookie = '', $bysocket = FALSE, $ip = '', $timeout = 15, $block = TRUE, $encodetype = 'URLENCODE', $allowcurl = TRUE, $position = 0, $files = array())
+{
+    require_once libfile('function/filesock');
+    return _dfsockopen($url, $limit, $post, $cookie, $bysocket, $ip, $timeout, $block, $encodetype, $allowcurl, $position, $files);
 }
 
 function dhtmlspecialchars($string, $flags = null)
@@ -733,6 +748,7 @@ function isemail($email)
 {
     return strlen($email) > 6 && strlen($email) <= 60 && preg_match("/^([A-Za-z0-9\-_.+]+)@([A-Za-z0-9\-]+[.][A-Za-z0-9\-.]+)$/", $email);
 }
+
 function isphone($phone)
 {
     return preg_match("/^1[3456789]\d{9,10}$/", $phone);
@@ -755,7 +771,7 @@ function random($length, $numeric = 0)
     }
     $max = strlen($seed) - 1;
     for ($i = 0; $i < $length; $i++) {
-        $hash .= $seed{mt_rand(0, $max)};
+        $hash .= $seed{random_int(0, $max)};
     }
     return $hash;
 }
@@ -792,127 +808,133 @@ function avatar($uid, $size = 'middle', $returnsrc = FALSE, $real = FALSE, $stat
  * param:$uid    		需要生成的用户UID;
  * param:$headercolors  传递的用户头像信息数组格式为array('1'=>'#e9308d','2'=>'#e74856'),键为UID，值为颜色值
  */
-function avatar_block($uid=0,$headercolors=array(),$class="Topcarousel"){
-	static $colors=array('#6b69d6','#a966ef','#e9308d','#e74856','#f35b42','#00cc6a','#0078d7','#5290f3','#00b7c3','#0099bc','#018574','#c77c52','#ff8c00','#68768a','#7083cb','#26a255');
-   
-	if(!$uid){
-		$uid=getglobal('uid');
-	}
-	if($uid){
-		$user=getuserbyuid($uid);
-	}else{
-		$user=array('uid' => 0, 'username' => 'guest', 'avatarstatus' => 0 ,'adminid' => 0, 'groupid' => 7, 'credits' => 0, 'timeoffset' => 9999);
-	}
-	if(empty($user)) return '';
-	if($user['avatarstatus']){//用户已经上传头像
-		return '<img src="avatar.php?uid='.$user['uid'].'&random='.VERHASH.'" class="img-circle special_avatar_class" title="'.$user['username'].'">';
-	}else{//没有上传头像，使用背景+首字母
-		if($uid){
-			if($headercolors[$uid]) $headerColor=$headercolors[$uid];
-			else $headerColor = C::t('user_setting')->fetch_by_skey('headerColor',$user['uid']);
-			if(empty($headerColor)){//没有设置时，创建头像背景色，并且入库
-				$colorkey = rand(1,15);
-    			$headerColor = $colors[$colorkey];
-				C::t('user_setting')->insert_by_skey('headerColor',$headerColor,$user['uid']);
-			}
-		}else{//游客默认使用第一个值；
-			$headerColor = $colors[0];
-		}
-		return '<span class="'.$class.'" style="background:'.$headerColor.'" title="'.$user['username'].'">'. new_strsubstr(ucfirst($user['username']),1,'').'</span>';
-	}
+function avatar_block($uid = 0, $headercolors = array(), $class = "Topcarousel")
+{
+    static $colors = array('#6b69d6', '#a966ef', '#e9308d', '#e74856', '#f35b42', '#00cc6a', '#0078d7', '#5290f3', '#00b7c3', '#0099bc', '#018574', '#c77c52', '#ff8c00', '#68768a', '#7083cb', '#26a255');
+
+    if (!$uid) {
+        $uid = getglobal('uid');
+    }
+    if ($uid) {
+        $user = getuserbyuid($uid);
+    } else {
+        $user = array('uid' => 0, 'username' => 'guest', 'avatarstatus' => 0, 'adminid' => 0, 'groupid' => 7, 'credits' => 0, 'timeoffset' => 9999);
+    }
+    if (empty($user)) return '';
+    if ($user['avatarstatus']) {//用户已经上传头像
+        return '<img src="avatar.php?uid=' . $user['uid'] . '&random=' . VERHASH . '" class="img-circle special_avatar_class" title="' . $user['username'] . '">';
+    } else {//没有上传头像，使用背景+首字母
+        if ($uid) {
+            if ($headercolors[$uid]) $headerColor = $headercolors[$uid];
+            else $headerColor = C::t('user_setting')->fetch_by_skey('headerColor', $user['uid']);
+            if (empty($headerColor)) {//没有设置时，创建头像背景色，并且入库
+                $colorkey = rand(1, 15);
+                $headerColor = $colors[$colorkey];
+                C::t('user_setting')->insert_by_skey('headerColor', $headerColor, $user['uid']);
+            }
+        } else {//游客默认使用第一个值；
+            $headerColor = $colors[0];
+        }
+        return '<span class="' . $class . '" style="background:' . $headerColor . '" title="' . $user['username'] . '">' . new_strsubstr(ucfirst($user['username']), 1, '') . '</span>';
+    }
 }
+
 /*获取群组机构头像模板，如果没有会生成背景+首字母的头像
  * param:$gid    		需要生成的群组机构的gid;
  * param:$groupcolors  传递的群组机构(organization表的记录；array('1'=>array('aid'=>'#e9308d','orgname'=>'机构群组名称'),键为gid，值为organization表的记录(最少包含aid和orgname字段)；
  */
-function avatar_group($gid,$groupcolors=array(),$class='iconFirstWord'){
-    static $colors=array('#6b69d6','#a966ef','#e9308d','#e74856','#f35b42','#00cc6a','#0078d7','#5290f3','#00b7c3','#0099bc','#018574','#c77c52','#ff8c00','#68768a','#7083cb','#26a255');
+function avatar_group($gid, $groupcolors = array(), $class = 'iconFirstWord')
+{
+    static $colors = array('#6b69d6', '#a966ef', '#e9308d', '#e74856', '#f35b42', '#00cc6a', '#0078d7', '#5290f3', '#00b7c3', '#0099bc', '#018574', '#c77c52', '#ff8c00', '#68768a', '#7083cb', '#26a255');
     $gid = intval($gid);
-	if($groupcolors[$gid]){
-		if($groupcolor = $groupcolors[$gid]['aid']){
-			if(preg_match('/^\#.+/',$groupcolor)){
-				return '<span class="iconFirstWord" style="background:'.$groupcolor.';" title="'.$groupcolors[$gid]['orgname'].'">'.strtoupper(new_strsubstr($groupcolors[$gid]['orgname'],1,'')).'</span>';
-			}elseif(preg_match('/^\d+$/',$groupcolor) && $groupcolors > 0){
-				return '<img src="index.php?mod=io&op=thumbnail&width=24&height=24&path='. dzzencode('attach::' . $groupcolor).'" class="img-circle" title="'.$groupcolors[$gid]['orgname'].'">';
-			}
-		}else{
-			$colorkey = rand(1,15);
-			$groupcolor = $colors[$colorkey];
-			C::t('organization')->update($gid,array('aid'=>$groupcolor));
-			return '<span class="iconFirstWord" style="background:'.$groupcolor.';"  title="'.$groupcolors[$gid]['orgname'].'">'.strtoupper(new_strsubstr($groupcolors[$gid]['orgname'],1,'')).'</span>';
-		} 
-	}else{
-		 if(!$groupinfo = C::t('organization')->fetch($gid)){
-			return '<span class="dzz dzz-group"></span>';
-		}
-		if($groupinfo['aid']){
-			if(preg_match('/^\#.+/',$groupinfo['aid'])){
-				return '<span class="iconFirstWord" style="background:'.$groupinfo['aid'].';" title="'.$groupinfo['orgname'].'">'.strtoupper(new_strsubstr($groupinfo['orgname'],1,'')).'</span>';
-			}elseif(preg_match('/^\d+$/',$groupinfo['aid']) && $groupinfo['aid'] > 0){
-				return '<img src="index.php?mod=io&op=thumbnail&width=24&height=24&path='. dzzencode('attach::' . $groupinfo['aid']).'" class="img-circle" title="'.$groupinfo['orgname'].'">';
-			}
-		}else{
+    if ($groupcolors[$gid]) {
+        if ($groupcolor = $groupcolors[$gid]['aid']) {
+            if (preg_match('/^\#.+/', $groupcolor)) {
+                return '<span class="iconFirstWord" style="background:' . $groupcolor . ';" title="' . $groupcolors[$gid]['orgname'] . '">' . strtoupper(new_strsubstr($groupcolors[$gid]['orgname'], 1, '')) . '</span>';
+            } elseif (preg_match('/^\d+$/', $groupcolor) && $groupcolors > 0) {
+                return '<img src="index.php?mod=io&op=thumbnail&width=24&height=24&path=' . dzzencode('attach::' . $groupcolor) . '" class="img-circle" title="' . $groupcolors[$gid]['orgname'] . '">';
+            }
+        } else {
+            $colorkey = rand(1, 15);
+            $groupcolor = $colors[$colorkey];
+            C::t('organization')->update($gid, array('aid' => $groupcolor));
+            return '<span class="iconFirstWord" style="background:' . $groupcolor . ';"  title="' . $groupcolors[$gid]['orgname'] . '">' . strtoupper(new_strsubstr($groupcolors[$gid]['orgname'], 1, '')) . '</span>';
+        }
+    } else {
+        if (!$groupinfo = C::t('organization')->fetch($gid)) {
+            return '<span class="dzz dzz-group"></span>';
+        }
+        if ($groupinfo['aid']) {
+            if (preg_match('/^\#.+/', $groupinfo['aid'])) {
+                return '<span class="iconFirstWord" style="background:' . $groupinfo['aid'] . ';" title="' . $groupinfo['orgname'] . '">' . strtoupper(new_strsubstr($groupinfo['orgname'], 1, '')) . '</span>';
+            } elseif (preg_match('/^\d+$/', $groupinfo['aid']) && $groupinfo['aid'] > 0) {
+                return '<img src="index.php?mod=io&op=thumbnail&width=24&height=24&path=' . dzzencode('attach::' . $groupinfo['aid']) . '" class="img-circle" title="' . $groupinfo['orgname'] . '">';
+            }
+        } else {
 
-			$colorkey = rand(1,15);
-			$groupcolor = $colors[$colorkey];
-			C::t('organization')->update($gid,array('aid'=>$groupcolor));
-			return '<span class="iconFirstWord" style="background:'.$groupcolor.';" title="'.$groupinfo['orgname'].'">'.strtoupper(new_strsubstr($groupinfo['orgname'],1,'')).'</span>';
-		} 
-	}
+            $colorkey = rand(1, 15);
+            $groupcolor = $colors[$colorkey];
+            C::t('organization')->update($gid, array('aid' => $groupcolor));
+            return '<span class="iconFirstWord" style="background:' . $groupcolor . ';" title="' . $groupinfo['orgname'] . '">' . strtoupper(new_strsubstr($groupinfo['orgname'], 1, '')) . '</span>';
+        }
+    }
 }
-function getResourceByLang($flag){
-	$langset=getglobal('language');
-	if(empty($langset)) return '';
-	switch($flag){
-		case 'select2':
-			$t="static/select2/select2_locale_{lang}.js";
-			$src=str_replace('{lang}',$langset,$t);
-			if(file_exists($src)){
-				return $src;
-			}else{
-				return '';
-			}
-			break;
-		case 'datepicker':
-			$t="static/datepicker/i18n/datepicker-{lang}.js";
-			$src=str_replace('{lang}',$langset,$t);
-			
-			if(file_exists($src)){
-				return $src;
-			}else{
-				return '';
-			}
-			break;
-		case 'bootstrap_datepicker':
-			$t="static/js/bootstrap_datepicker/locales/bootstrap-datepicker.{lang}.min.js";
-			$src=str_replace('{lang}',$langset,$t);
-			if(file_exists($src)){
-				return $src;
-			}else{
-				return '';
-			}
-			break;
-		case 'timepicker':
-			$t="static/datepicker/timepicker/i18n/jquery-ui-timepicker-{lang}.js";
-			$src=str_replace('{lang}',$langset,$t);
-			if(file_exists($src)){
-				return $src;
-			}else{
-				return '';
-			}
-			break;
-		case 'ueditor':
-			$t="dzz/system/ueditor/lang/{lang}/{lang}.js";
-			$src=str_replace('{lang}',strtolower($langset),$t);
-			if(file_exists($src)){
-				return $src;
-			}else{
-				return '';
-			}
-			break;
-				
-	}
+
+function getResourceByLang($flag)
+{
+    $langset = getglobal('language');
+    if (empty($langset)) return '';
+    switch ($flag) {
+        case 'select2':
+            $t = "static/select2/select2_locale_{lang}.js";
+            $src = str_replace('{lang}', $langset, $t);
+            if (file_exists($src)) {
+                return $src;
+            } else {
+                return '';
+            }
+            break;
+        case 'datepicker':
+            $t = "static/datepicker/i18n/datepicker-{lang}.js";
+            $src = str_replace('{lang}', $langset, $t);
+
+            if (file_exists($src)) {
+                return $src;
+            } else {
+                return '';
+            }
+            break;
+        case 'bootstrap_datepicker':
+            $t = "static/js/bootstrap_datepicker/locales/bootstrap-datepicker.{lang}.min.js";
+            $src = str_replace('{lang}', $langset, $t);
+            if (file_exists($src)) {
+                return $src;
+            } else {
+                return '';
+            }
+            break;
+        case 'timepicker':
+            $t = "static/datepicker/timepicker/i18n/jquery-ui-timepicker-{lang}.js";
+            $src = str_replace('{lang}', $langset, $t);
+            if (file_exists($src)) {
+                return $src;
+            } else {
+                return '';
+            }
+            break;
+        case 'ueditor':
+            $t = "dzz/system/ueditor/lang/{lang}/{lang}.js";
+            $src = str_replace('{lang}', strtolower($langset), $t);
+            if (file_exists($src)) {
+                return $src;
+            } else {
+                return '';
+            }
+            break;
+
+    }
 }
+
 function checkLanguage()
 {
     global $_G;
@@ -920,20 +942,20 @@ function checkLanguage()
     $langList = $_G['config']['output']['language_list'];
     $langSet = '';
 
-    if($_G['cookie']['language']) $langSet=$_G['cookie']['language'];
-	else{
-		if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {// 自动侦测浏览器语言
-			preg_match('/^([a-z\d\-]+)/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $matches);
-			$langSet = strtolower($matches[1]);
-			if ($langSet == 'zh-hans-cn' || $langSet == 'zh-cn') {
-				$langSet = 'zh-CN';
-			} elseif ($langSet == 'zh-tw') {
-				$langSet = 'zh-TW';
-			} else {
-				$langSet = $matches[1];
-			}
-		}
-	}
+    if ($_G['cookie']['language']) $langSet = $_G['cookie']['language'];
+    else {
+        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {// 自动侦测浏览器语言
+            preg_match('/^([a-z\d\-]+)/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $matches);
+            $langSet = strtolower($matches[1]);
+            if ($langSet == 'zh-hans-cn' || $langSet == 'zh-cn') {
+                $langSet = 'zh-CN';
+            } elseif ($langSet == 'zh-tw') {
+                $langSet = 'zh-TW';
+            } else {
+                $langSet = $matches[1];
+            }
+        }
+    }
     if (!in_array($langSet, array_keys($langList))) { // 非法语言参数
         $langSet = $_G['config']['output']['language'];
     }
@@ -946,12 +968,12 @@ function lang($langvar = null, $vars = array(), $default = null, $curpath = '')
     global $_G;
     $checkLanguage = $_G['language'];
     if ($curpath) {
-        if(file_exists(DZZ_ROOT . './' . $curpath . '/language/' . $checkLanguage . '/' . 'lang.php')){
-			include DZZ_ROOT . './' . $curpath . '/language/' . $checkLanguage . '/' . 'lang.php';
-		}else{
-			include DZZ_ROOT . './' . $curpath . '/language/zh-CN/' . 'lang.php';
-		}
-		
+        if (file_exists(DZZ_ROOT . './' . $curpath . '/language/' . $checkLanguage . '/' . 'lang.php')) {
+            include DZZ_ROOT . './' . $curpath . '/language/' . $checkLanguage . '/' . 'lang.php';
+        } else {
+            include DZZ_ROOT . './' . $curpath . '/language/zh-CN/' . 'lang.php';
+        }
+
         $_G['lang']['template'] = $lang;
     } else {
         if (defined('CURSCRIPT')) {
@@ -967,10 +989,10 @@ function lang($langvar = null, $vars = array(), $default = null, $curpath = '')
             if (file_exists(DZZ_ROOT . './core/language/' . $checkLanguage . '/' . 'lang.php')) {
                 include DZZ_ROOT . './core/language/' . $checkLanguage . '/' . 'lang.php';
                 $_G['lang']['template'] = $lang;
-            }else{
-				 include DZZ_ROOT . './core/language/zh-CN/' . 'lang.php';
+            } else {
+                include DZZ_ROOT . './core/language/zh-CN/' . 'lang.php';
                 $_G['lang']['template'] = $lang;
-			}
+            }
         }
 
         if (isset($key1) && !isset($_G['lang'][$key1])) {
@@ -978,8 +1000,8 @@ function lang($langvar = null, $vars = array(), $default = null, $curpath = '')
                 include DZZ_ROOT . './' . CURSCRIPT . '/language/' . $checkLanguage . '/' . 'lang.php';
                 $_G['lang']['template'] = array_merge($_G['lang']['template'], $lang);
 
-            }else{
-				include DZZ_ROOT . './' . CURSCRIPT . '/language/zh-CN/' . 'lang.php';
+            } else {
+                include DZZ_ROOT . './' . CURSCRIPT . '/language/zh-CN/' . 'lang.php';
                 $_G['lang']['template'] = array_merge($_G['lang']['template'], $lang);
 
             }
@@ -990,10 +1012,10 @@ function lang($langvar = null, $vars = array(), $default = null, $curpath = '')
 
                 include DZZ_ROOT . './' . CURSCRIPT . '/' . CURMODULE . '/language/' . $checkLanguage . '/' . 'lang.php';
                 $_G['lang']['template'] = array_merge($_G['lang']['template'], $lang);
-            }else{
-				 include DZZ_ROOT . './' . CURSCRIPT . '/' . CURMODULE . '/language/zh-CN/' . 'lang.php';
+            } else {
+                include DZZ_ROOT . './' . CURSCRIPT . '/' . CURMODULE . '/language/zh-CN/' . 'lang.php';
                 $_G['lang']['template'] = array_merge($_G['lang']['template'], $lang);
-			}
+            }
         }
 
     }
@@ -1319,7 +1341,7 @@ function cutstr($string, $length, $dot = ' ...')
         for ($i = 0; $i < $length; $i++) {
             if (ord($string[$i]) <= 127) {
                 $strcut .= $string[$i];
-            } else if ($i < $_length) {
+            } elseif ($i < $_length) {
                 $strcut .= $string[$i] . $string[++$i];
             }
         }
@@ -1363,6 +1385,7 @@ function output()
     } else {
         define('DZZ_OUTPUTED', 1);
     }
+
     if ($_G['config']['rewritestatus']) {
         $content = ob_get_contents();
         $content = output_replace($content);
@@ -1376,7 +1399,7 @@ function output()
 }
 
 
-function outputurl( $url="" )
+function outputurl($url = "")
 {
     global $_G;
     if ($_G['config']['rewritestatus']) {
@@ -1390,57 +1413,57 @@ function output_replace($content)
     global $_G;
     if (defined('IN_ADMINCP')) return $content;
     if (!empty($_G['setting']['output']['str']['search'])) {
-        
+
         $content = str_replace($_G['setting']['rewrite']['str']['search'], $_G['setting']['rewrite']['str']['replace'], $content);
     }
     if (!empty($_G['config']['rewrite']['preg']['search'])) {
-        
+
         //处理js中 app_url,mod_url
-        $string1 = "APP_URL='".MOD_URL."'";//",APP_URL='".MOD_URL."',MOD_URL = '".MOD_URL."'";
-        $string2 = "MOD_URL='".MOD_URL."'";
-        $string=array($string1,$string2);
-        $md5[]=md5($string1);
-        $md5[]=md5($string2); 
+        $string1 = "APP_URL='" . MOD_URL . "'";//",APP_URL='".MOD_URL."',MOD_URL = '".MOD_URL."'";
+        $string2 = "MOD_URL='" . MOD_URL . "'";
+        $string = array($string1, $string2);
+        $md5[] = md5($string1);
+        $md5[] = md5($string2);
         //end
-        
+
         //处理非本地连接
-        $reg = "/(https?|ftp|news):[\/]{2}([\w+\d+]+[.]{1})?[\w+\d]+[.]{1}[\w+\d]*+([^(\s|\"|\')]+)/"; 
-        preg_match_all($reg,$content,$links);
-        if( isset($links[0]) && $links[0]){
-            $siteurl =  $_G["siteurl"];
+        $reg = "/(https?|ftp|news):[\/]{2}([\w+\d+]+[.]{1})?[\w+\d]+[.]{1}[\w+\d]*+([^(\s|\"|\')]+)/";
+        preg_match_all($reg, $content, $links);
+        if (isset($links[0]) && $links[0]) {
+            $siteurl = $_G["siteurl"];
             //echo $siteurl."******";
-            foreach($links[0] as $k=>$v){
+            foreach ($links[0] as $k => $v) {
                 //echo $v."------------";
-                if( strpos($v,$siteurl)!==false){
+                if (strpos($v, $siteurl) !== false) {
                     //echo $v."----------<br/>";
-                }else{
-                     $string[]=$v;
-                     $md5[]=md5($v);
+                } else {
+                    $string[] = $v;
+                    $md5[] = md5($v);
                 }
             }
         }
-		//end
+        //end
 
-        $content=str_replace($string,$md5,$content);
-        
-        $search_arr =  $_G['config']['rewrite']['preg']['search'];
+        $content = str_replace($string, $md5, $content);
+
+        $search_arr = $_G['config']['rewrite']['preg']['search'];
         $replace_arr = $_G['config']['rewrite']['preg']['replace'];
-        $search_new=array();
-        $replace_new=array();
-        foreach($search_arr as $k=>$v ){
-            $s=$v; 
-            $v2 = substr_replace($v, '\&amp;/i',-2,2);
-            array_push($search_new,$v2); 
-            $v = substr_replace($v, '\&/i',-2,2);
-            array_push($search_new,$v);
-            array_push($search_new,$s);
-            array_push($replace_new,$replace_arr[$k]."?");
-            array_push($replace_new,$replace_arr[$k]."?");
-            array_push($replace_new,$replace_arr[$k]);  
+        $search_new = array();
+        $replace_new = array();
+        foreach ($search_arr as $k => $v) {
+            $s = $v;
+            $v2 = substr_replace($v, '\&amp;/i', -2, 2);
+            array_push($search_new, $v2);
+            $v = substr_replace($v, '\&/i', -2, 2);
+            array_push($search_new, $v);
+            array_push($search_new, $s);
+            array_push($replace_new, $replace_arr[$k] . "?");
+            array_push($replace_new, $replace_arr[$k] . "?");
+            array_push($replace_new, $replace_arr[$k]);
         }
         $content = preg_replace($search_new, $replace_new, $content);
-        
-        $content=str_replace($md5,$string,$content); 
+
+        $content = str_replace($md5, $string, $content);
     }
 
     return $content;
@@ -1702,6 +1725,7 @@ function setstatus($position, $value, $baseon = null)
 
 function memory($cmd, $key = '', $value = '', $ttl = 0, $prefix = '')
 {
+
     if ($cmd == 'check') {
         return C::memory()->enable ? C::memory()->type : '';
     } elseif (C::memory()->enable && in_array($cmd, array('set', 'get', 'rm', 'inc', 'dec'))) {
@@ -1842,7 +1866,7 @@ function strhash($string, $operation = 'DECODE', $key = '')
 
 function dunserialize($data)
 {
-	if(!is_serialized($data)) return $data;
+    if (!is_serialized($data)) return $data;
     if (($ret = unserialize($data)) === false) {
         $ret = unserialize(stripslashes($data));
     }
@@ -1898,109 +1922,127 @@ $unRunExts = array('htm', 'html', 'js', 'php', 'jsp', 'asp', 'aspx', 'xml', 'htc
 $docexts = array('DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX', 'ODT', 'ODS', 'ODG', 'RTF', 'ET', 'DPX', 'WPS');
 //echo strtolower(implode(',',$docexts));
 $imageexts = array('JPG', 'JPEG', 'GIF', 'PNG', 'BMP');
-global $Types ;
-$Types= array(
-	
-	'image'=>array('jpg', 'png', 'gif', 'jpeg', 'bmp', 'aai','art','arw','avs','bpg','bmp','bmp2','bmp3','brf','cals','cals','cgm','cin','cip','cmyk','cmyka','cr2','crw','cube','cur','cut','dcm','dcr','dcx','dds','dib','djvu','dng','dot','dpx','emf','epdf','epi','eps','eps2','eps3','epsf','epsi','ept','exr','fax','fig','fits','fpx','gplt','gray','graya','hdr','heic','hpgl','hrz','ico','info','isobrl','isobrl6','jbig','jng','jp2','jpt','j2c','j2k','jxr','json','man','mat','miff','mono','mng','m2v','mpc','mpr','mrwmmsl','mtv','mvg','nef','orf','otb','p7','palm','pam','clipboard','pbm','pcd','pcds','pcl','pcx','pdb','pef','pes','pfa','pfb','pfm','pgm','picon','pict','pix','png8','png00','png24','png32','png48','png64','pnm','ppm','ps','ps2','ps3','psb','psd','ptif','pwp','rad','raf','rgb','rgb565','rgba','rgf','rla','rle','sfw','sgi','shtml','sid','mrsid','sum','svg','text','tga','tif','tiff','tim','ttf','ubrl','ubrl6','uil','uyvy','vicar','viff','wbmp','wpg','webp','wmf','wpg','x','xbm','xcf','xpm','xwd','x3f','YCbCr','YCbCrA','yuv','sr2','srf','srw','rw2','nrw','mrw','kdc','erf','canvas','caption','clip','clipboard','fractal','gradient','hald','histogram','inline','map','mask','matte','null','pango','plasma','preview','print','scan','radial_gradient','scanx','screenshot','stegano','tile','unique','vid','win','xc','granite','logo','netscpe','rose','wizard','bricks','checkerboard','circles','crosshatch','crosshatch30','crosshatch45','fishscales','gray0','gray5','gray10','gray15','gray20','gray25','gray30','gray35','gray40','gray45','gray50','gray55','gray60','gray65','gray70','gray75','gray80','gray85','gray90','gray95','gray100','hexagons','horizontal','horizontal2','horizontal3','horizontalsaw','hs_bdiagonal','hs_cross','hs_diagcross','hs_fdiagonal','hs_vertical','left30','left45','leftshingle','octagons','right30','right45','rightshingle','smallfishcales','vertical','vertical2','vertical3','verticalfishingle','vericalrightshingle','verticalleftshingle','verticalsaw','fff','3fr','ai','iiq','cdr'),
-	
-	'document'=>array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odg', 'rtf', 'et', 'dpx', 'wps','dzzdoc', 'htm', 'html', 'shtm', 'shtml', 'hta', 'htc', 'xhtml', 'stm', 'ssi', 'js', 'js', 'as', 'asc', 'asr', 'xml', 'xsl', 'xsd', 'dtd', 'xslt', 'rss', 'rdf', 'lbi', 'dwt', 'asp', 'asa', 'aspx', 'ascx', 'asmx', 'config', 'cs', 'css', 'cfm', 'cfml', 'cfc', 'tld', 'txt', 'php', 'php3', 'php4', 'php5', 'php-dist', 'phtml', 'jsp', 'wml', 'tpl', 'lasso', 'jsf', 'vb', 'vbs', 'vtm', 'vtml', 'inc', 'sql', 'java', 'edml', 'master', 'info', 'install', 'theme', 'config', 'module', 'profile', 'engine'),
-	
-	'video'=>array('avi','rm','rmvb','mkv','mov','wmv','asf','mpg','mpe','mpeg','mp4','m4v','mpeg','f4v','vob','ogv','mts','m2ts','3gp','webm','flv'),
-	
-	'audio'=>array('wav','mp3','m4a','ogg','midi','wma','vqf','ra','aac','flac','ape','amr','aiff','au')
-);
-function getTypeByExt($ext){
-  global $Types;
-  foreach($Types as $key => $exts){
-	  if(in_array(strtolower($ext),$exts)){
-		  return $key;
-	  }
-  }
-  return '';
-}
-function get_os()
-{
-    $agent = $_SERVER['HTTP_USER_AGENT'];
-    $os = false;
+global $Types;
+/*$Types = array(
 
-    if (eregi('win', $agent) && eregi('nt 5.1', $agent)) {
-        $os = 'Windows XP';
-    } else if (eregi('win', $agent) && eregi('nt 5.0', $agent)) {
-        $os = 'Windows 2000';
-    } else if (eregi('win', $agent) && eregi('nt 5.2', $agent)) {
-        $os = 'Windows 2003';
-    } else if (eregi('win', $agent) && eregi('nt 6.0', $agent)) {
-        $os = 'Windows 2008';
-    } else if (eregi('win', $agent) && eregi('6.0', $agent)) {
-        $os = 'Windows vista';
-    } else if (eregi('win', $agent) && eregi('6.1', $agent)) {
+    'image' => array('jpg', 'png', 'gif', 'jpeg', 'bmp', 'aai', 'art', 'arw', 'avs', 'bpg', 'bmp', 'bmp2', 'bmp3', 'brf', 'cals', 'cals', 'cgm', 'cin', 'cip', 'cmyk', 'cmyka', 'cr2', 'crw', 'cube', 'cur', 'cut', 'dcm', 'dcr', 'dcx', 'dds', 'dib', 'djvu', 'dng', 'dot', 'dpx', 'emf', 'epdf', 'epi', 'eps', 'eps2', 'eps3', 'epsf', 'epsi', 'ept', 'exr', 'fax', 'fig', 'fits', 'fpx', 'gplt', 'gray', 'graya', 'hdr', 'heic', 'hpgl', 'hrz', 'ico', 'info', 'isobrl', 'isobrl6', 'jbig', 'jng', 'jp2', 'jpt', 'j2c', 'j2k', 'jxr', 'json', 'man', 'mat', 'miff', 'mono', 'mng', 'm2v', 'mpc', 'mpr', 'mrwmmsl', 'mtv', 'mvg', 'nef', 'orf', 'otb', 'p7', 'palm', 'pam', 'clipboard', 'pbm', 'pcd', 'pcds', 'pcl', 'pcx', 'pdb', 'pef', 'pes', 'pfa', 'pfb', 'pfm', 'pgm', 'picon', 'pict', 'pix', 'png8', 'png00', 'png24', 'png32', 'png48', 'png64', 'pnm', 'ppm', 'ps', 'ps2', 'ps3', 'psb', 'psd', 'ptif', 'pwp', 'rad', 'raf', 'rgb', 'rgb565', 'rgba', 'rgf', 'rla', 'rle', 'sfw', 'sgi', 'shtml', 'sid', 'mrsid', 'sum', 'svg', 'text', 'tga', 'tif', 'tiff', 'tim', 'ttf', 'ubrl', 'ubrl6', 'uil', 'uyvy', 'vicar', 'viff', 'wbmp', 'wpg', 'webp', 'wmf', 'wpg', 'x', 'xbm', 'xcf', 'xpm', 'xwd', 'x3f', 'YCbCr', 'YCbCrA', 'yuv', 'sr2', 'srf', 'srw', 'rw2', 'nrw', 'mrw', 'kdc', 'erf', 'canvas', 'caption', 'clip', 'clipboard', 'fractal', 'gradient', 'hald', 'histogram', 'inline', 'map', 'mask', 'matte', 'null', 'pango', 'plasma', 'preview', 'print', 'scan', 'radial_gradient', 'scanx', 'screenshot', 'stegano', 'tile', 'unique', 'vid', 'win', 'xc', 'granite', 'logo', 'netscpe', 'rose', 'wizard', 'bricks', 'checkerboard', 'circles', 'crosshatch', 'crosshatch30', 'crosshatch45', 'fishscales', 'gray0', 'gray5', 'gray10', 'gray15', 'gray20', 'gray25', 'gray30', 'gray35', 'gray40', 'gray45', 'gray50', 'gray55', 'gray60', 'gray65', 'gray70', 'gray75', 'gray80', 'gray85', 'gray90', 'gray95', 'gray100', 'hexagons', 'horizontal', 'horizontal2', 'horizontal3', 'horizontalsaw', 'hs_bdiagonal', 'hs_cross', 'hs_diagcross', 'hs_fdiagonal', 'hs_vertical', 'left30', 'left45', 'leftshingle', 'octagons', 'right30', 'right45', 'rightshingle', 'smallfishcales', 'vertical', 'vertical2', 'vertical3', 'verticalfishingle', 'vericalrightshingle', 'verticalleftshingle', 'verticalsaw', 'fff', '3fr', 'ai', 'iiq', 'cdr'),
+
+    'document' => array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odg', 'rtf', 'et', 'dpx', 'wps', 'dzzdoc', 'htm', 'html', 'shtm', 'shtml', 'hta', 'htc', 'xhtml', 'stm', 'ssi', 'js', 'js', 'as', 'asc', 'asr', 'xml', 'xsl', 'xsd', 'dtd', 'xslt', 'rss', 'rdf', 'lbi', 'dwt', 'asp', 'asa', 'aspx', 'ascx', 'asmx', 'config', 'cs', 'css', 'cfm', 'cfml', 'cfc', 'tld', 'txt', 'php', 'php3', 'php4', 'php5', 'php-dist', 'phtml', 'jsp', 'wml', 'tpl', 'lasso', 'jsf', 'vb', 'vbs', 'vtm', 'vtml', 'inc', 'sql', 'java', 'edml', 'master', 'info', 'install', 'theme', 'config', 'module', 'profile', 'engine'),
+
+    'video' => array('avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts', '3gp', 'webm', 'flv'),
+
+    'audio' => array('wav', 'mp3', 'm4a', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au')
+);*/
+//格式分类
+$Types = array(
+
+    'commonimage' => ['jpg', 'png', 'gif', 'jpeg', 'webp'],
+    'image' => ['bmp', 'aai', 'art', 'arw', 'avs', 'bpg', 'bmp',
+        'bmp2', 'bmp3', 'brf', 'cals', 'cals', 'cgm', 'cin', 'cip', 'cmyk', 'cmyka', 'cr2', 'crw', 'cube', 'cur', 'cut', 'dcm', 'dcr', 'dcx', 'dds',
+        'dib', 'djvu', 'dng', 'dot', 'dpx', 'emf', 'epdf', 'epi', 'eps', 'eps2', 'eps3', 'epsf', 'epsi', 'ept', 'exr', 'fax', 'fig', 'fits', 'fpx', 'gplt',
+        'gray', 'graya', 'hdr', 'heic', 'hpgl', 'hrz', 'ico', 'info', 'isobrl', 'isobrl6', 'jbig', 'jng', 'jp2', 'jpt', 'j2c', 'j2k', 'jxr', 'json', 'man',
+        'mat', 'miff', 'mono', 'mng', 'm2v', 'mpc', 'mpr', 'mrwmmsl', 'mtv', 'mvg', 'nef', 'orf', 'otb', 'p7', 'palm', 'pam', 'clipboard', 'pbm',
+        'pcd', 'pcds', 'pcl', 'pcx', 'pdb', 'pef', 'pes', 'pfa', 'pfb', 'pfm', 'pgm', 'picon', 'pict', 'pix', 'png8', 'png00', 'png24', 'png32', 'png48',
+        'png64', 'pnm', 'ppm', 'ps', 'ps2', 'ps3', 'psb', 'psd', 'ptif', 'pwp', 'rad', 'raf', 'rgb', 'rgb565', 'rgba', 'rgf', 'rla', 'rle', 'sfw', 'sgi', 'shtml'
+        , 'sid', 'mrsid', 'sum', 'svg', 'text', 'tga', 'tif', 'tiff', 'tim', 'ubrl', 'ubrl6', 'uil', 'uyvy', 'vicar', 'viff', 'wbmp', 'wpg', 'wmf', 'wpg', 'x', 'xbm', 'xcf',
+        'xpm', 'xwd', 'x3f', 'YCbCr', 'YCbCrA', 'yuv', 'sr2', 'srf', 'srw', 'rw2', 'nrw', 'mrw', 'kdc', 'erf', 'canvas', 'caption', 'clip', 'clipboard', 'fractal', 'gradient',
+        'hald', 'histogram', 'inline', 'map', 'mask', 'matte', 'null', 'pango', 'plasma', 'preview', 'print', 'scan', 'radial_gradient', 'scanx', 'screenshot',
+        'stegano', 'tile', 'unique', 'vid', 'win', 'xc', 'granite', 'logo', 'netscpe', 'rose', 'wizard', 'bricks', 'checkerboard', 'circles', 'crosshatch',
+        'crosshatch30', 'crosshatch45', 'fishscales', 'gray0', 'gray5', 'gray10', 'gray15', 'gray20', 'gray25', 'gray30', 'gray35', 'gray40', 'gray45',
+        'gray50', 'gray55', 'gray60', 'gray65', 'gray70', 'gray75', 'gray80', 'gray85', 'gray90', 'gray95', 'gray100', 'hexagons', 'horizontal', 'horizontal2',
+        'horizontal3', 'horizontalsaw', 'hs_bdiagonal', 'hs_cross', 'hs_diagcross', 'hs_fdiagonal', 'hs_vertical', 'left30', 'left45', 'leftshingle', 'octagons', 'right30', 'right45'
+        , 'rightshingle', 'smallfishcales', 'vertical', 'vertical2', 'vertical3', 'verticalfishingle', 'vericalrightshingle', 'verticalleftshingle', 'verticalsaw', 'fff', '3fr', 'ai', 'iiq', 'cdr'],
+
+    'document' => ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'odt', 'ods', 'odg', 'rtf', 'et', 'dpx', 'wps', 'dzzdoc', 'htm', 'html', 'shtm', 'shtml', 'hta', 'htc', 'xhtml', 'stm',
+        'ssi', 'js', 'js', 'as', 'asc', 'asr', 'xml', 'xsl', 'xsd', 'dtd', 'xslt', 'rss', 'rdf', 'lbi', 'dwt', 'asp', 'asa', 'aspx', 'ascx', 'asmx', 'config', 'cs', 'css', 'cfm', 'cfml', 'cfc', 'tld', 'txt',
+        'php', 'php3', 'php4', 'php5', 'php-dist', 'phtml', 'jsp', 'wml', 'tpl', 'lasso', 'jsf', 'vb', 'vbs', 'vtm', 'vtml', 'inc', 'sql', 'java', 'edml', 'master', 'info', 'install', 'theme',
+        'config', 'module', 'profile', 'engine'],
+
+    'video' => ['avi', 'rm', 'rmvb', 'mkv', 'mov', 'wmv', 'asf', 'mpg', 'mpe', 'mpeg', 'mp4', 'm4v', 'mpeg', 'f4v', 'vob', 'ogv', 'mts', 'm2ts', '3gp', 'webm', 'flv'],
+
+    'audio' => ['wav', 'mp3', 'm4a', 'ogg', 'midi', 'wma', 'vqf', 'ra', 'aac', 'flac', 'ape', 'amr', 'aiff', 'au'],
+    'font' => ['ttf', 'ttc', 'otf']
+);
+
+function getTypeByExt($ext)
+{
+    global $Types;
+    foreach ($Types as $key => $exts) {
+        if (in_array(strtolower($ext), $exts)) {
+            return $key;
+        }
+    }
+    return '';
+}
+
+function get_os($agent = '')
+{
+    if (!$agent) $agent = $_SERVER['HTTP_USER_AGENT'];
+    $os = 'unknow';
+    if (stristr($agent, 'iPad')) {
+        $os = "iPad";
+    } elseif (preg_match('/Android (([0-9_.]{1,3})+)/i', $agent, $version)) {
+        $os = "Android " . $version[1];
+    } elseif (preg_match('/iPhone OS (([0-9_.]{1,3})+)/i', $agent, $version)) {
+        $os = "iPhone " . $version[1];
+    } elseif (preg_match('/win/i', $agent) && strpos($agent, '95')) {
+        $os = 'Windows 95';
+    } elseif (preg_match('/win 9x/i', $agent) && strpos($agent, '4.90')) {
+        $os = 'Windows ME';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/98/i', $agent)) {
+        $os = 'Windows 98';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 6.0/i', $agent)) {
+        $os = 'Windows Vista';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 6.1/i', $agent)) {
         $os = 'Windows 7';
-    } else if (eregi('win', $agent) && eregi('6.2', $agent)) {
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 6.2/i', $agent)) {
         $os = 'Windows 8';
-    } else if (eregi('win', $agent) && eregi('nt', $agent)) {
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 10.0/i', $agent)) {
+        $os = 'Windows 10';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 5.1/i', $agent)) {
+        $os = 'Windows XP';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt 5/i', $agent)) {
+        $os = 'Windows 2000';
+    } elseif (preg_match('/win/i', $agent) && preg_match('/nt/i', $agent)) {
         $os = 'Windows NT';
-    } else if (eregi('win', $agent) && ereg('32', $agent)) {
+    } elseif (preg_match('/win/i', $agent) && preg_match('/32/i', $agent)) {
         $os = 'Windows 32';
-    } else if (eregi('linux', $agent) && ereg('Android', $agent)) {
-        $os = 'Android';
-    } else if (eregi('linux', $agent)) {
+    } elseif (preg_match('/linux/i', $agent)) {
         $os = 'Linux';
-    } else if (eregi('unix', $agent)) {
+    } elseif (preg_match('/unix/i', $agent)) {
         $os = 'Unix';
-    } else if (eregi('sun', $agent) && eregi('os', $agent)) {
+    } elseif (preg_match('/sun/i', $agent) && preg_match('/os/i', $agent)) {
         $os = 'SunOS';
-    } else if (eregi('ibm', $agent) && eregi('os', $agent)) {
+    } elseif (preg_match('/ibm/i', $agent) && preg_match('/os/i', $agent)) {
         $os = 'IBM OS/2';
-    } else if (eregi('Mac', $agent) && eregi('Macintosh', $agent)) {
+    } elseif (preg_match('/Mac/i', $agent) && preg_match('/PC/i', $agent)) {
         $os = 'Macintosh';
-    } else if (eregi('PowerPC', $agent)) {
+    } elseif (preg_match('/PowerPC/i', $agent)) {
         $os = 'PowerPC';
-    } /* else if (eregi('AIX', $agent))
-     {
-       $os = 'AIX';
-     }
-     else if (eregi('HPUX', $agent))
-     {
-       $os = 'HPUX';
-     }
-     else if (eregi('NetBSD', $agent))
-     {
-       $os = 'NetBSD';
-     }
-     else if (eregi('BSD', $agent))
-     {
-       $os = 'BSD';
-     }
-     else if (ereg('OSF1', $agent))
-     {
-       $os = 'OSF1';
-     }
-     else if (ereg('IRIX', $agent))
-     {
-       $os = 'IRIX';
-     }
-     else if (eregi('FreeBSD', $agent))
-     {
-       $os = 'FreeBSD';
-     }
-     else if (eregi('teleport', $agent))
-     {
-       $os = 'teleport';
-     }
-     else if (eregi('flashget', $agent))
-     {
-       $os = 'flashget';
-     }
-     else if (eregi('webzip', $agent))
-     {
-       $os = 'webzip';
-     }
-     else if (eregi('offline', $agent))
-     {
-       $os = 'offline';
-     }*/
-    else {
-        $os = 'Unknown';
+    } elseif (preg_match('/AIX/i', $agent)) {
+        $os = 'AIX';
+    } elseif (preg_match('/HPUX/i', $agent)) {
+        $os = 'HPUX';
+    } elseif (preg_match('/NetBSD/i', $agent)) {
+        $os = 'NetBSD';
+    } elseif (preg_match('/BSD/i', $agent)) {
+        $os = 'BSD';
+    } elseif (preg_match('/OSF1/i', $agent)) {
+        $os = 'OSF1';
+    } elseif (preg_match('/IRIX/i', $agent)) {
+        $os = 'IRIX';
+    } elseif (preg_match('/FreeBSD/i', $agent)) {
+        $os = 'FreeBSD';
+    } elseif (preg_match('/teleport/i', $agent)) {
+        $os = 'teleport';
+    } elseif (preg_match('/flashget/i', $agent)) {
+        $os = 'flashget';
+    } elseif (preg_match('/webzip/i', $agent)) {
+        $os = 'webzip';
+    } elseif (preg_match('/offline/i', $agent)) {
+        $os = 'offline';
+    } else {
+        $os = 'unkonow';
     }
     return $os;
 }
@@ -2162,7 +2204,7 @@ function topshowmessage($msg)
     exit();
 }
 
-function SpaceSize($size, $gid=0, $isupdate = 0, $uid=0)
+function SpaceSize($size, $gid = 0, $isupdate = 0, $uid = 0)
 {
     //size: 增加的话为正值，减少的话为负值；
     //gid : 大于零位群组空间，否则为$_G['uid']的空间，
@@ -2245,7 +2287,6 @@ function getPathByPfid($pfid, $arr = array(), $count = 0)
     return $arr;
 
 }
-
 
 
 //返回自己和上级目录fid数组；
@@ -2417,7 +2458,7 @@ function getFileTypeName($type, $ext)
         case 'music':
             $typename = lang('typename_music');
             break;
-		case 'audio':
+        case 'audio':
             $typename = lang('typename_music');
             break;
         case 'attach':
@@ -2462,7 +2503,6 @@ function getFileTypeName($type, $ext)
 }
 
 
-
 function dzzgetspace($uid)
 {
     global $_G;
@@ -2488,66 +2528,66 @@ function dzzgetspace($uid)
         $config['attachextensions'] = ($config['attachextensions'] < 0) ? $usergroup['attachextensions'] : $config['attachextensions'];
         $config['maxattachsize'] = ($config['maxattachsize'] < 0) ? $usergroup['maxattachsize'] * 1024 * 1024 : $config['maxattachsize'] * 1024 * 1024;
 
-       /* //如果用户存储功能未开启,用户空间大小为-1
-        if (isset($setting['usermemoryOn']) && !$setting['usermemoryOn']) {
+        /* //如果用户存储功能未开启,用户空间大小为-1
+         if (isset($setting['usermemoryOn']) && !$setting['usermemoryOn']) {
 
-            $config['maxspacesize'] = -1;
+             $config['maxspacesize'] = -1;
 
-        } else {*/
-            //判断是否有用户独享空间设置
-            if ($config['userspace'] > 0 || $config['userspace'] == -1) {
-                $config['maxspacesize'] = ($config['userspace'] > 0) ? $config['userspace'] * 1024 * 1024 : $config['userspace'];
+         } else {*/
+        //判断是否有用户独享空间设置
+        if ($config['userspace'] > 0 || $config['userspace'] == -1) {
+            $config['maxspacesize'] = ($config['userspace'] > 0) ? $config['userspace'] * 1024 * 1024 : $config['userspace'];
 
-            } elseif ($config['userspace'] == 0) {//如果未设置用户空间
+        } elseif ($config['userspace'] == 0) {//如果未设置用户空间
 
-               /* //判断是否为指定用户开启用户存储
-                $spaceon = isset($setting['mermoryusersetting']) ? $setting['mermoryusersetting'] : '';
-                $memorySpace = isset($setting['memorySpace']) ? $setting['memorySpace'] : '';
+            /* //判断是否为指定用户开启用户存储
+             $spaceon = isset($setting['mermoryusersetting']) ? $setting['mermoryusersetting'] : '';
+             $memorySpace = isset($setting['memorySpace']) ? $setting['memorySpace'] : '';
 
-                //指定用户时,并指定用户空间
-                if ($spaceon == 'appoint' && $memorySpace != 0) {
+             //指定用户时,并指定用户空间
+             if ($spaceon == 'appoint' && $memorySpace != 0) {
 
-                    $usersarr = explode(',', $setting['memoryorgusers']);
-                    $uesrs = array();
-                    foreach ($usersarr as $v) {
-                        //群组id
-                        if (preg_match('/\d+/', $v)) {
-                            foreach (C::t('organization_user')->fetch_user_byorgid($v) as $val) {
-                                $users[] = $val['uid'];
-                            }
-                        } elseif ($v == 'other') {
-                            foreach (C::t('user')->fetch_uid_by_groupid(9) as $val) {
-                                $users[] = $val['uid'];
-                            }
-                        } elseif (preg_match('/uid_\d+/', $v)) {
-                            $users[] = preg_replace('/uid_/', '');
-                        }
+                 $usersarr = explode(',', $setting['memoryorgusers']);
+                 $uesrs = array();
+                 foreach ($usersarr as $v) {
+                     //群组id
+                     if (preg_match('/\d+/', $v)) {
+                         foreach (C::t('organization_user')->fetch_user_byorgid($v) as $val) {
+                             $users[] = $val['uid'];
+                         }
+                     } elseif ($v == 'other') {
+                         foreach (C::t('user')->fetch_uid_by_groupid(9) as $val) {
+                             $users[] = $val['uid'];
+                         }
+                     } elseif (preg_match('/uid_\d+/', $v)) {
+                         $users[] = preg_replace('/uid_/', '');
+                     }
 
-                    }
-                    $users = array_unique($users);
-                    //判断用户是否在指定用户中
-                    if (in_array($uid, $users)) {
-                        $config['maxspacesize'] = ($memorySpace > 0) ? $memorySpace * 1024 * 1024 : $memorySpace;
-                    }else{
-                        $config['maxspacesize'] = -1;
-                    }
-                } else {*///如果未指定开启存储用户或设置指定用户空间为0
-                    //用户组空间(去掉额外空间和购买空间)
-                    if ($usergroup['maxspacesize'] == 0) {
-                        $config['maxspacesize'] = 0;
-                    } elseif ($usergroup['maxspacesize'] < 0) {
-                        /*if(($config['addsize']+$config['buysize'])>0){
-                                $config['maxspacesize']=($config['addsize']+$config['buysize'])*1024*1024;
-                            }else{*/
-                        $config['maxspacesize'] = -1;
-                        //}
-                    } else {
-                        //$config['maxspacesize']=($usergroup['maxspacesize']+$config['addsize']+$config['buysize'])*1024*1024;
-                        $config['maxspacesize'] = $usergroup['maxspacesize'] * 1024 * 1024;
-                    }
-               // }
+                 }
+                 $users = array_unique($users);
+                 //判断用户是否在指定用户中
+                 if (in_array($uid, $users)) {
+                     $config['maxspacesize'] = ($memorySpace > 0) ? $memorySpace * 1024 * 1024 : $memorySpace;
+                 }else{
+                     $config['maxspacesize'] = -1;
+                 }
+             } else {*///如果未指定开启存储用户或设置指定用户空间为0
+            //用户组空间(去掉额外空间和购买空间)
+            if ($usergroup['maxspacesize'] == 0) {
+                $config['maxspacesize'] = 0;
+            } elseif ($usergroup['maxspacesize'] < 0) {
+                /*if(($config['addsize']+$config['buysize'])>0){
+                        $config['maxspacesize']=($config['addsize']+$config['buysize'])*1024*1024;
+                    }else{*/
+                $config['maxspacesize'] = -1;
+                //}
+            } else {
+                //$config['maxspacesize']=($usergroup['maxspacesize']+$config['addsize']+$config['buysize'])*1024*1024;
+                $config['maxspacesize'] = $usergroup['maxspacesize'] * 1024 * 1024;
             }
-       // }
+            // }
+        }
+        // }
         $space = array_merge($space, $config);
     }
     $space['fusesize'] = formatsize($space['usesize']);
@@ -2618,7 +2658,7 @@ function curl_exec_redir($ch)
     curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $data = curl_exec($ch);
-	$data=str_replace("\r\n","\n",$data);
+    $data = str_replace("\r\n", "\n", $data);
     list($header, $data) = explode("\n\n", $data, 2);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($http_code == 301 || $http_code == 302) {
@@ -2630,14 +2670,14 @@ function curl_exec_redir($ch)
             $curl_loops = 0;
             return $data;
         }
-       /* $last_url = parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
-		if (!$url['scheme'])
-			$url['scheme'] = $last_url['scheme'];
-		if (!$url['host'])
-			$url['host'] = $last_url['host'];
-		if (!$url['path'])
-			$url['path'] = $last_url['path'];
-		*/
+        /* $last_url = parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
+         if (!$url['scheme'])
+             $url['scheme'] = $last_url['scheme'];
+         if (!$url['host'])
+             $url['host'] = $last_url['host'];
+         if (!$url['path'])
+             $url['path'] = $last_url['path'];
+         */
         $new_url = $url['scheme'] . '://' . $url['host'] . $url['path'] . ($url['query'] ? '?' . $url['query'] : '');
         curl_setopt($ch, CURLOPT_URL, $new_url);
         //    debug('Redirecting to', $new_url);
@@ -2982,7 +3022,7 @@ function getDzzPath($attach)
     return $url;
 }
 
-function geticonfromext($ext, $type='')
+function geticonfromext($ext, $type = '')
 {
     global $_G;
     $img = 'dzz/images/extimg/' . strtolower($ext) . '.png';
@@ -3193,7 +3233,7 @@ function uploadtolocal($upload, $dir = 'appimg', $target = '', $exts = array('jp
     }
 }
 
-function upload_to_icon($upload, $target, $domain='')
+function upload_to_icon($upload, $target, $domain = '')
 {
     global $_G;
     $source = $upload['tmp_name'];
@@ -3247,7 +3287,7 @@ function dzz_app_pic_save($FILE, $dir = 'appimg')
 
 function get_permsarray()
 {
-    $perms = array_merge_recursive(perm_binPerm::getPowerTitle(), perm_binPerm::getPowerArr(),perm_binPerm::getPowerIcos());//获取所有权限
+    $perms = array_merge_recursive(perm_binPerm::getPowerTitle(), perm_binPerm::getPowerArr(), perm_binPerm::getPowerIcos());//获取所有权限
     unset($perms['flag']);
     unset($perms['special']);
     return $perms;
@@ -3301,9 +3341,9 @@ function get_resources_some_setting()
         'fileVersionNumber' => 0,
         'userallowonperm' => array(),
         'left_topcontent' => true,
-        'allownewgroup'=>false,
-        'allownewcat'=>false,
-        'finallydelete'=>false
+        'allownewgroup' => false,
+        'allownewcat' => false,
+        'finallydelete' => false
     );
     if (!isset($setting['explorer_usermemoryOn'])) {
         $data['useronperm'] = true;
@@ -3325,7 +3365,7 @@ function get_resources_some_setting()
                             $users[] = $val['uid'];
                         }
                     } elseif (preg_match('/^uid_\d+$/', $v)) {
-                        $users[] = preg_replace('/uid_/', '',$v);
+                        $users[] = preg_replace('/uid_/', '', $v);
                     }
 
                 }
@@ -3361,9 +3401,9 @@ function get_resources_some_setting()
     if (!$data['grouponperm'] && !$data['useronperm'] && !$data['orgonperm']) {
         $data['left_topcontent'] = false;
     }
-    if(!isset($setting['explorer_groupcreate'])){
+    if (!isset($setting['explorer_groupcreate'])) {
         $data['allownewgroup'] = true;
-    }else{
+    } else {
         if ($setting['explorer_groupcreate'] == 1) {
             $groupcreateon = isset($setting['explorer_mermorygroupsetting']) ? $setting['explorer_mermorygroupsetting'] : '';
             if ($groupcreateon == 'appoint') {//指定用户时
@@ -3380,7 +3420,7 @@ function get_resources_some_setting()
                             $users[] = $val['uid'];
                         }
                     } elseif (preg_match('/^uid_\d+$/', $v)) {
-                        $users[] = preg_replace('/uid_/', '',$v);
+                        $users[] = preg_replace('/uid_/', '', $v);
                     }
 
                 }
@@ -3395,50 +3435,41 @@ function get_resources_some_setting()
             }
         }
     }
-    if(!isset($setting['explorer_catcreate'])){
+    if (!isset($setting['explorer_catcreate'])) {
         $data['allownewcat'] = true;
-    }else{
-        $data['allownewcat'] =  ($setting['explorer_catcreate'] == 1) ? true:false;
+    } else {
+        $data['allownewcat'] = ($setting['explorer_catcreate'] == 1) ? true : false;
     }
-    if(!isset($setting['explorer_finallydelete']) || $setting['explorer_finallydelete'] < 0){
+    if (!isset($setting['explorer_finallydelete']) || $setting['explorer_finallydelete'] < 0) {
         $data['finallydelete'] = false;
-    }else{
+    } else {
         $data['finallydelete'] = intval($setting['explorer_finallydelete']);
     }
     return $data;
 }
 
 //增加字符串截取函数
-function new_strsubstr($string,$length=1,$dot ='...')
+function new_strsubstr($string, $length = 1, $dot = '...')
 {
-    if(strlen($string) <= $length )
-    {
+    if (strlen($string) <= $length) {
         return $string;
-    }
-    else
-    {
+    } else {
         $i = 0;
-        while ($i < $length)
-        {
-            $stringTMP = substr($string,$i,1);
-            if ( ord($stringTMP) >=224 )
-            {
-                $stringTMP = substr($string,$i,3);
+        while ($i < $length) {
+            $stringTMP = substr($string, $i, 1);
+            if (ord($stringTMP) >= 224) {
+                $stringTMP = substr($string, $i, 3);
                 $i = $i + 3;
-            }
-            elseif( ord($stringTMP) >=192 )
-            {
-                $stringTMP = substr($string,$i,2);
+            } elseif (ord($stringTMP) >= 192) {
+                $stringTMP = substr($string, $i, 2);
                 $i = $i + 2;
-            }
-            else
-            {
+            } else {
                 $i = $i + 1;
             }
             $stringLast[] = $stringTMP;
         }
-        $stringLast = implode("",$stringLast);
-        return $stringLast.$dot;
+        $stringLast = implode("", $stringLast);
+        return $stringLast . $dot;
     }
 }
 
@@ -3451,151 +3482,158 @@ function get_update_app_num()
     $map = array();
     $map["upgrade_version"] = array("neq", "");
     $map["available"] = array("gt", "0");
-    $num = DB::result_first("select COUNT(*) from %t where `available`>0 and upgrade_version!=''",array('app_market'));// C::tp_t('app_market')->where($map)->count("*");
+    $num = DB::result_first("select COUNT(*) from %t where `available`>0 and upgrade_version!=''", array('app_market'));// C::tp_t('app_market')->where($map)->count("*");
     return $num;
 }
 
-function getimportdata($name = '', $addslashes = 0, $ignoreerror = 0,$data='') {
-	global $_G;
+function getimportdata($name = '', $addslashes = 0, $ignoreerror = 0, $data = '')
+{
+    global $_G;
 
-	if(empty($data)){
-		if($_GET['importtype'] == 'file') {
-			$data = @implode('', file($_FILES['importfile']['tmp_name']));
-			@unlink($_FILES['importfile']['tmp_name']);
-		} else {
-			if(!empty($_GET['importtxt'])) {
-				$data = $_GET['importtxt'];
-			} else {
-				$data = $GLOBALS['importtxt'];
+    if (empty($data)) {
+        if ($_GET['importtype'] == 'file') {
+            $data = @implode('', file($_FILES['importfile']['tmp_name']));
+            @unlink($_FILES['importfile']['tmp_name']);
+        } else {
+            if (!empty($_GET['importtxt'])) {
+                $data = $_GET['importtxt'];
+            } else {
+                $data = $GLOBALS['importtxt'];
 
-			}
-		}
-	}
-	require_once libfile('class/xml');
+            }
+        }
+    }
+    require_once libfile('class/xml');
 
-	$xmldata = xml2array($data);
-    $_attributes=xmlattribute($data); //item 属性获取 
-	if(!is_array($xmldata) || !$xmldata) {
-		if(!$ignoreerror) {
-			showmessage('data_import_error', dreferer());
-		} else {
-			return array();
-		}
-	} else {
-		if($name && $name != $xmldata['Title']) {
-			if(!$ignoreerror) {
-				showmessage('function_admin_error');
-			} else {
-				return array();
-			}
-		}
-		$data = exportarray($xmldata['Data'], 0);
-	}
-	if($addslashes) {
-		$data = daddslashes($data, 1);
-	}
-    if($data && $_attributes) $data["_attributes"]=$_attributes["Data"];
-	return $data;
+    $xmldata = xml2array($data);
+    $_attributes = xmlattribute($data); //item 属性获取
+    if (!is_array($xmldata) || !$xmldata) {
+        if (!$ignoreerror) {
+            showmessage('data_import_error', dreferer());
+        } else {
+            return array();
+        }
+    } else {
+        if ($name && $name != $xmldata['Title']) {
+            if (!$ignoreerror) {
+                showmessage('function_admin_error');
+            } else {
+                return array();
+            }
+        }
+        $data = exportarray($xmldata['Data'], 0);
+    }
+    if ($addslashes) {
+        $data = daddslashes($data, 1);
+    }
+    if ($data && $_attributes) $data["_attributes"] = $_attributes["Data"];
+    return $data;
 }
 
-function exportarray($array, $method='') {
-	$tmp = $array;
-	if($method) {
-		foreach($array as $k => $v) {
-			if(is_array($v)) {
-				$tmp[$k] = exportarray($v, 1);
-			} else {
-				$uv = unserialize($v);
-				if($uv && is_array($uv)) {
-					$tmp['__'.$k] = exportarray($uv, 1);
-					unset($tmp[$k]);
-				} else {
-					$tmp[$k] = $v;
-				}
-			}
-		}
-	} else {
-		foreach($array as $k => $v) {
-			if(is_array($v)) {
-				if(substr($k, 0, 2) == '__') {
-					$tmp[substr($k, 2)] = serialize(exportarray($v, 0));
-					unset($tmp[$k]);
-				} else {
-					$tmp[$k] = exportarray($v, 0);
-				}
-			} else {
-				$tmp[$k] = $v;
-			}
-		}
-	}
-	return $tmp;
+function exportarray($array, $method = '')
+{
+    $tmp = $array;
+    if ($method) {
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                $tmp[$k] = exportarray($v, 1);
+            } else {
+                $uv = unserialize($v);
+                if ($uv && is_array($uv)) {
+                    $tmp['__' . $k] = exportarray($uv, 1);
+                    unset($tmp[$k]);
+                } else {
+                    $tmp[$k] = $v;
+                }
+            }
+        }
+    } else {
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                if (substr($k, 0, 2) == '__') {
+                    $tmp[substr($k, 2)] = serialize(exportarray($v, 0));
+                    unset($tmp[$k]);
+                } else {
+                    $tmp[$k] = exportarray($v, 0);
+                }
+            } else {
+                $tmp[$k] = $v;
+            }
+        }
+    }
+    return $tmp;
 }
-function set_space_progress($usespace,$totalspace = 0){
-    if($usespace == 0 && $totalspace >= 0){
+
+function set_space_progress($usespace, $totalspace = 0)
+{
+    if ($usespace == 0 && $totalspace >= 0) {
         return 0;
-    }elseif($totalspace < 0){
+    } elseif ($totalspace < 0) {
         return -1;
-    }elseif($usespace > 0 && $totalspace == 0){
+    } elseif ($usespace > 0 && $totalspace == 0) {
         $k = 10;
         $p = 1;
         $totalspace = 1024;
         $num = floor(log10($usespace));
-        if($usespace < 1024){
+        if ($usespace < 1024) {
             $k = 1000;
-        }else{
+        } else {
             $p = floor(log($usespace) / log(2) / 10);
-            if($num == 6) $k=0.9;
-            elseif($num == 7) $k=8;
-            elseif($num == 8) $k=50;
-            elseif($num == 9) $k=2;
-            for($i = 0; $i < $p;$i++){
+            if ($num == 6) $k = 0.9;
+            elseif ($num == 7) $k = 8;
+            elseif ($num == 8) $k = 50;
+            elseif ($num == 9) $k = 2;
+            for ($i = 0; $i < $p; $i++) {
                 $totalspace *= 200;
             }
         }
 
-        if($p <= 0) $p =1;
-        $percent = round(($usespace/$totalspace)*$p,5)*100/$k;
-        if($percent > 100) $percent = 90;
-    }else{
-        $percent=  round(($usespace/$totalspace),2)*100;
-        if($percent > 100) $percent = 100;
+        if ($p <= 0) $p = 1;
+        $percent = round(($usespace / $totalspace) * $p, 5) * 100 / $k;
+        if ($percent > 100) $percent = 90;
+    } else {
+        $percent = round(($usespace / $totalspace), 2) * 100;
+        if ($percent > 100) $percent = 100;
     }
     return $percent;
 
 }
 
 //ajax返回成功信息数据
-function success($info="",$data=array(),$ajax=true){
-	$return= array(
-		'status' => 1, 
-		'info' => $info ? $info : lang('do_success'),
-		'data' =>$data
-	);
-	if( $ajax ){
-		// 返回JSON数据格式到客户端 包含状态信息
-		header('Content-Type:application/json; charset=utf-8');
-		exit(json_encode($return));
-	}else{
-		return $return;
-	}
-	
+function success($info = "", $data = array(), $ajax = true)
+{
+    $return = array(
+        'status' => 1,
+        'info' => $info ? $info : lang('do_success'),
+        'data' => $data
+    );
+    if ($ajax) {
+        // 返回JSON数据格式到客户端 包含状态信息
+        header('Content-Type:application/json; charset=utf-8');
+        exit(json_encode($return));
+    } else {
+        return $return;
+    }
+
 }
 
 //ajax返回错误信息数据
-function error($info="",$data=array(),$ajax=true){
-	$return= array(
-		'status' => 0, 
-		'info' => $info ? $info : lang('do_failed'),
-		'data' =>$data
-	);
-	if( $ajax ){
-		// 返回JSON数据格式到客户端 包含状态信息
-		header('Content-Type:application/json; charset=utf-8');
-		exit(json_encode($return));
-	}else{
-		return $return;
-	}
+function error($info = "", $data = array(), $ajax = true)
+{
+    $return = array(
+        'status' => 0,
+        'info' => $info ? $info : lang('do_failed'),
+        'data' => $data
+    );
+    if ($ajax) {
+        // 返回JSON数据格式到客户端 包含状态信息
+        header('Content-Type:application/json; charset=utf-8');
+        exit(json_encode($return));
+    } else {
+        return $return;
+    }
 }
+
 function dzz_userconfig_init($hasnoavailable = false)
 {  //初始化用户信息
     global $_G;
@@ -3614,10 +3652,10 @@ function dzz_userconfig_init($hasnoavailable = false)
         'iconposition' => intval($_G['setting']['desktop_default']['iconposition']),
         'direction' => intval($_G['setting']['desktop_default']['direction']),
     );
-   
+
 
     //处理理默认应用;
-    $apps = C::t('app_market')->fetch_all_by_default($_G['uid'],$hasnoavailable);
+    $apps = C::t('app_market')->fetch_all_by_default($_G['uid'], $hasnoavailable);
 
     foreach ($apps as $appid => $app) {
 
@@ -3656,118 +3694,2302 @@ function dzz_userconfig_init($hasnoavailable = false)
     $userconfig['applist'] = $userconfig['applist'] ? implode(',', $userconfig['applist']) : '';
     $userconfig['screenlist'] = $userconfig['screenlist'] ? implode(',', $userconfig['screenlist']) : '';
     $userconfig['docklist'] = $userconfig['docklist'] ? implode(',', $userconfig['docklist']) : '';
-	
-	if(C::t('user_field')->fetch($_G['uid'])){
-         C::t('user_field')->update($_G['uid'],$userconfig);
-   }else{
-       C::t('user_field')->insert($userconfig);  
-   }
-	if ($userconfig['applist']) C::t('app_user')->insert_by_uid($_G['uid'], $userconfig['applist'], 1);
-	return C::t('user_field')->fetch($_G['uid']);
+
+    if (C::t('user_field')->fetch($_G['uid'])) {
+        C::t('user_field')->update($_G['uid'], $userconfig);
+    } else {
+        C::t('user_field')->insert($userconfig);
+    }
+    if ($userconfig['applist']) C::t('app_user')->insert_by_uid($_G['uid'], $userconfig['applist'], 1);
+    return C::t('user_field')->fetch($_G['uid']);
 }
+
 /*判断字符串是否是序列化后的数据*/
-/* @param string $data   Value to check to see if was serialized.
- * @param bool   $strict Optional. Whether to be strict about the end of the string. Default true.
+/* @param string $data Value to check to see if was serialized.
+ * @param bool $strict Optional. Whether to be strict about the end of the string. Default true.
  * @return bool False if not serialized and true if it was.
  */
- function is_serialized( $data, $strict = true ) {
-		// if it isn't a string, it isn't serialized.
-		if ( ! is_string( $data ) ) {
-				return false;
-		}
-		$data = trim( $data );
-		if ( 'N;' == $data ) {
-				return true;
-		}
-		if ( strlen( $data ) < 4 ) {
-				return false;
-		}
-		if ( ':' !== $data[1] ) {
-				return false;
-		}
-		if ( $strict ) {
-				$lastc = substr( $data, -1 );
-				if ( ';' !== $lastc && '}' !== $lastc ) {
-						return false;
-				}
-		} else {
-				$semicolon = strpos( $data, ';' );
-				$brace     = strpos( $data, '}' );
-				// Either ; or } must exist.
-				if ( false === $semicolon && false === $brace )
-						return false;
-				// But neither must be in the first X characters.
-				if ( false !== $semicolon && $semicolon < 3 )
-						return false;
-				if ( false !== $brace && $brace < 4 )
-						return false;
-		}
-		$token = $data[0];
-		switch ( $token ) {
-				case 's' :
-						if ( $strict ) {
-								if ( '"' !== substr( $data, -2, 1 ) ) {
-										return false;
-								}
-						} elseif ( false === strpos( $data, '"' ) ) {
-								return false;
-						}
-				case 'a' :
-				case 'O' :
-						return (bool) preg_match( "/^{$token}:[0-9]+:/s", $data );
-				case 'b' :
-				case 'i' :
-				case 'd' :
-						$end = $strict ? '$' : '';
-						return (bool) preg_match( "/^{$token}:[0-9.E-]+;$end/", $data );
-		}
-		return false;
- }
- /**
-  * 短信发送函数
-  * @$param $tplsign string 模板标识
-  * @$param $to number 短信接收手机号
-  * @$param $params  array 拓展参数 expire 过期时间 codelength 验证码长度 gateways指定网关
-  * @return 如果发送成功则返回 验证码发送时间 验证码 过期时间,如果失败返回错误信息
-  * */
- function sms($tplsign,$to,$params=array('expire'=>15,'codelength'=>6)){
-     $params['tplsign'] = $tplsign;
-     $params['to'] = $to;
-    $result = Hook::listen('sms',$params);
-     return $result[0];
+function is_serialized($data, $strict = true)
+{
+    // if it isn't a string, it isn't serialized.
+    if (!is_string($data)) {
+        return false;
+    }
+    $data = trim($data);
+    if ('N;' == $data) {
+        return true;
+    }
+    if (strlen($data) < 4) {
+        return false;
+    }
+    if (':' !== $data[1]) {
+        return false;
+    }
+    if ($strict) {
+        $lastc = substr($data, -1);
+        if (';' !== $lastc && '}' !== $lastc) {
+            return false;
+        }
+    } else {
+        $semicolon = strpos($data, ';');
+        $brace = strpos($data, '}');
+        // Either ; or } must exist.
+        if (false === $semicolon && false === $brace)
+            return false;
+        // But neither must be in the first X characters.
+        if (false !== $semicolon && $semicolon < 3)
+            return false;
+        if (false !== $brace && $brace < 4)
+            return false;
+    }
+    $token = $data[0];
+    switch ($token) {
+        case 's' :
+            if ($strict) {
+                if ('"' !== substr($data, -2, 1)) {
+                    return false;
+                }
+            } elseif (false === strpos($data, '"')) {
+                return false;
+            }
+        case 'a' :
+        case 'O' :
+            return (bool)preg_match("/^{$token}:[0-9]+:/s", $data);
+        case 'b' :
+        case 'i' :
+        case 'd' :
+            $end = $strict ? '$' : '';
+            return (bool)preg_match("/^{$token}:[0-9.E-]+;$end/", $data);
+    }
+    return false;
+}
 
- }
-function get_flag_by_pfid($pfid){
-     $flag = 'explorer';
-     //获取缓存数据
-     $cachekey = 'vappgidlistcache';
-     if($vlistcache = memory('get',$cachekey)){
-         $vappdata = unserialize($vlistcache);
-     }else{
-        $vappdata =  C::t('#vapp#vapp')->fetch_all_identify();
-         $vlistcache = serialize($vappdata);
-         memory('set',$cachekey,$vlistcache,3600);
-     }
-     $pathdata = C::t('resources_path')->fetch_pathby_pfid($pfid,true);
-     $pathkey = str_replace('_','',$pathdata['pathkey']);
-     $pathkey = explode('-',$pathkey);
-     $rootfid = $pathkey[0];
-     if($orgid = DB::result_first("select orgid from %t where fid = %d",array('organization',$rootfid))){
-         $flag = isset($vappdata[$orgid]) ? 'v_'.$vappdata[$orgid]:'explorer';
-     }else{
-         $flag = 'explorer';
-     }
+/**
+ * 短信发送函数
+ * @$param $tplsign string 模板标识
+ * @$param $to number 短信接收手机号
+ * @$param $params  array 拓展参数 expire 过期时间 codelength 验证码长度 gateways指定网关
+ * @return 如果发送成功则返回 验证码发送时间 验证码 过期时间,如果失败返回错误信息
+ * */
+function sms($tplsign, $to, $params = array('expire' => 15, 'codelength' => 6))
+{
+    $params['tplsign'] = $tplsign;
+    $params['to'] = $to;
+    $result = Hook::listen('sms', $params);
+    return $result[0];
+
+}
+
+function get_flag_by_pfid($pfid)
+{
+    $flag = 'explorer';
+    //获取缓存数据
+    $cachekey = 'vappgidlistcache';
+    if ($vlistcache = memory('get', $cachekey)) {
+        $vappdata = unserialize($vlistcache);
+    } else {
+        $vappdata = C::t('#vapp#vapp')->fetch_all_identify();
+        $vlistcache = serialize($vappdata);
+        memory('set', $cachekey, $vlistcache, 3600);
+    }
+    $pathdata = C::t('resources_path')->fetch_pathby_pfid($pfid, true);
+    $pathkey = str_replace('_', '', $pathdata['pathkey']);
+    $pathkey = explode('-', $pathkey);
+    $rootfid = $pathkey[0];
+    if ($orgid = DB::result_first("select orgid from %t where fid = %d", array('organization', $rootfid))) {
+        $flag = isset($vappdata[$orgid]) ? 'v_' . $vappdata[$orgid] : 'explorer';
+    } else {
+        $flag = 'explorer';
+    }
     return $flag;
 
 }
-   function getThumburl($path,$size,$thumbtype=1,$create = 0,$original = 0,$extparams=array(),$width = 0,$height = 0){
+
+function getThumburl($path, $size, $thumbtype = 1, $create = 0, $original = 0, $extparams = array(), $width = 0, $height = 0)
+{
     global $_G;
-    $size=trim($size);
-    $size=in_array($size,array_keys($_G['setting']['thumbsize']))?$size:'large';
-    if(!$width) $width=$_G['setting']['thumbsize'][$size]['width'];
-    if(!$height) $height=$_G['setting']['thumbsize'][$size]['height'];
+    $size = trim($size);
+    $size = in_array($size, array_keys($_G['setting']['thumbsize'])) ? $size : 'large';
+    if (!$width) $width = $_G['setting']['thumbsize'][$size]['width'];
+    if (!$height) $height = $_G['setting']['thumbsize'][$size]['height'];
     //如果缩略图未生成只进入队列，不生成
-    return IO::getThumb($path,$width,$height,$original,true,$create,$thumbtype,$extparams);
+    return IO::getThumb($path, $width, $height, $original, true, $create, $thumbtype, $extparams);
 }
 
+global $Opentype;
+//支持打开的格式
+$Opentype = array(
+    'video' => ['mp3', 'mp4', 'webm', 'ogv', 'ogg', 'wav', 'm3u8', 'hls', 'mpg', 'mpeg', 'flv', 'm4v', 'mov', 'mkv'],
+    'text' => ['txt', 'php', 'js', 'jsp', 'htm', 'html', 'jsp', 'asp', 'aspx'],
+    'pdf' => ['pdf'],
+    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
+    'office' => ['doc', 'docx', 'xsl', 'xsls', 'ppt', 'pptx', 'pps', 'ppsx', 'ods', 'scv', 'dot', 'rtf']
+);
+function getOpentype($ext)
+{
+    global $Opentype;
+    $opentype = 'other';
+    foreach ($Opentype as $k => $v) {
+        if (in_array($ext, $v)) {
+            $opentype = $k;
+            break;
+        }
+    }
+    return $opentype;
+}
+
+//获取主题
+function getthemedata($themeid)
+{
+    global $_G;
+    $singlepage = [];
+    $themedata = $_G['setting']['pichomethemedata'][$themeid];
+    $singletpldata = unserialize($themedata['templates']);
+    $singletpltagdata = unserialize($themedata['themetag']);
+    foreach ($singletpldata as $k => $v) {
+        if (isset($singletpltagdata[$k])) {
+            $singlepage[] = ['name' => $v['name'] . lang('setting'), 'flag' => $k];
+        }
+    }
+    return ['singlepage' => $singlepage, 'themebanner' => $themedata['themebanner']];
+
+
+}
+
+global $folderFilters, $fileFilters;
+//智能数据文件组筛选字段
+$folderFilters = array(
+    'foldername' =>
+        array(
+            'flag' => 'foldername',
+            'labelname' => '分类名称',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '2',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'ffolder',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'folder' =>
+        array(
+            'flag' => 'folder',
+            'labelname' => '分类',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '2',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'folder',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'tag' =>
+        array(
+            'flag' => 'tag',
+            'labelname' => '标签名称',
+            'type' => 'tag',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '2',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'tag',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'ttag' =>
+        array(
+            'flag' => 'ttag',
+            'labelname' => '标签',
+            'type' => 'tag',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'ttag',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+);
+//智能数据文件筛选字段列表
+$fileFilters = array(
+    'name' =>
+        array(
+            'flag' => 'name',
+            'labelname' => '文件名称',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'string',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'mtime' =>
+        array(
+            'flag' => 'mtime',
+            'labelname' => '创建日期',
+            'type' => 'date',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'date',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'btime' =>
+        array(
+            'flag' => 'btime',
+            'labelname' => '添加时间',
+            'type' => 'date',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'date',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'dateline' =>
+        array(
+            'flag' => 'dateline',
+            'labelname' => '修改日期',
+            'type' => 'date',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'date',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'size' =>
+        array(
+            'flag' => 'size',
+            'labelname' => '文件大小',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' =>
+                array(
+                    'units' =>
+                        array(
+                            'b' => 'B',
+                            'k' => 'KB',
+                            'm' => 'MB',
+                            't' => 'TB',
+                        ),
+                ),
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'int',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+            'units' =>
+                array(
+                    'b' => 'B',
+                    'kb' => 'KB',
+                    'mb' => 'MB',
+                    'tb' => 'TB',
+                ),
+        ),
+    'width' =>
+        array(
+            'flag' => 'width',
+            'labelname' => '宽度',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'int',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'height' =>
+        array(
+            'flag' => 'height',
+            'labelname' => '高度',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'int',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'color' =>
+        array(
+            'flag' => 'color',
+            'labelname' => '颜色',
+            'type' => 'color',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'color',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'grade' =>
+        array(
+            'flag' => 'grade',
+            'labelname' => '评分',
+            'type' => 'grade',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'grade',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+            'options' =>
+                array(
+                    0 => '未评分',
+                    1 => '*',
+                    2 => '**',
+                    3 => '***',
+                    4 => '****',
+                    5 => '*****')
+        ),
+    'foldername' =>
+        array(
+            'flag' => 'foldername',
+            'labelname' => '分类名称',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'ffolder',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'ttag' =>
+        array(
+            'flag' => 'ttag',
+            'labelname' => '标签',
+            'type' => 'ttag',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'ttag',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'tag' =>
+        array(
+            'flag' => 'tag',
+            'labelname' => '标签名称',
+            'type' => 'tag',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'tag',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'desc' =>
+        array(
+            'flag' => 'desc',
+            'labelname' => '注释',
+            'type' => 'textarea',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'string',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+
+    'link' =>
+        array(
+            'flag' => 'link',
+            'labelname' => '链接',
+            'type' => 'link',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'string',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'shape' =>
+        array(
+            'flag' => 'shape',
+            'labelname' => '形状',
+            'type' => 'shape',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' =>
+                array(
+                    0 => '横图',
+                    1 => '竖图',
+                    2 => '方图',
+                    3 => '细长横图',
+                    4 => '细长竖图',
+                    5 => ['name' => '自定义', 'option' => [
+                        'width' => ['name' => '宽度', 'type' => 'input', 'val' => 'int'],
+                        'height' => ['name' => '高度', 'type' => 'input', 'val' => 'int'],
+                    ]]
+
+                ),
+            'required' => '0',
+            'extraoptions' => array(
+                'range' =>
+                    array(
+                        'width' =>
+                            array(
+                                'name' => '宽度',
+                                'type' => 'input',
+                                'val' => 'number',
+                            ),
+                        'height' =>
+                            array(
+                                'name' => '高度',
+                                'type' => 'input',
+                                'val' => 'number',
+                            ),
+                    ),
+            ),
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'shape',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'duration' =>
+        array(
+            'flag' => 'duration',
+            'labelname' => '时长',
+            'type' => 'duration',
+            'length' => '0',
+            'regex' => '',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' =>
+                array(
+                    'units' =>
+                        array(
+                            's' => '秒',
+                            'm' => '分',
+                            'h' => '时',
+                        ),
+                ),
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'int',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+            'units' =>
+                array(
+                    's' => '秒',
+                    'm' => '分',
+                    'h' => '时',
+                ),
+        ),
+    'level' =>
+        array(
+            'flag' => 'level',
+            'labelname' => '密级',
+            'type' => 'level',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' =>
+                array(
+                    0 => '1',
+                    1 => '2',
+                    2 => '3',
+                    3 => '4',
+                    4 => '5',
+                ),
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '1',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'level',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'folder' =>
+        array(
+            'flag' => 'folder',
+            'labelname' => '分类',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '2',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'folder',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+    'ext' =>
+        array(
+            'flag' => 'ext',
+            'labelname' => '文件类型',
+            'type' => 'input',
+            'length' => '0',
+            'regex' => ' ',
+            'multiple' => '0',
+            'options' => false,
+            'required' => '0',
+            'extra' => false,
+            'disp' => '0',
+            'system' => '2',
+            'incard' => '0',
+            'catid' => '0',
+            'filedtype' => 'ext',
+            'appid' => '0',
+            'isdefault' => '0',
+            'allowsearch' => '1',
+        ),
+);
+function getallfilterdata($isfolder = 0)
+{
+
+    if ($isfolder) {
+        global $folderFilters;
+        $returnfileds = [];
+        foreach ($folderFilters as $flag => $v) {
+            switch ($v['filedtype']) {
+                case 'ttag':
+                    $v['filtertype'] = [
+                        'or' => ['filtername' => '任意一项包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'and' => ['filtername' => '全部包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                    ];
+                    break;
+                case 'tag':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'start' => ['filtername' => '开头为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'end' => ['filtername' => '结尾为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag&isfolder=1',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]]],
+                    ];
+                    break;
+                case 'folder':
+                    $v['filtertype'] = [
+                        'or' => ['filtername' => '任意一项包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                    ];
+                    break;
+                case 'ffolder':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'start' => ['filtername' => '开头为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'end' => ['filtername' => '结尾为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]]],
+                    ];
+                    break;
+            }
+            $returnfileds[$flag] = $v;
+        }
+
+
+    }
+    else {
+        global $fileFilters;
+        $returnfileds = [];
+        foreach ($fileFilters as $flag => $v) {
+            switch ($v['filedtype']) {
+                case 'string':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'string'
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'string'
+                        ]],
+                        'start' => ['filtername' => '开头为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'string'
+                        ]],
+                        'end' => ['filtername' => '结尾为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'string'
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'string'
+                        ]],
+                        'empty' => ['filtername' => '没有内容', 'valtype' => false],
+                        'nempty' => ['filtername' => '有内容', 'valtype' => false],
+                        'preg' => ['filtername' => '正则表达式', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'regx'
+                        ]],
+                    ];
+                    break;
+                case 'ext':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ext',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ext',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ext',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+
+                        ]],
+                    ];
+                    break;
+                case 'ttag':
+                    $v['filtertype'] = [
+                        'or' => ['filtername' => '任意一项包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ttag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'and' => ['filtername' => '全部包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ttag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ttag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ttag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'int'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                    ];
+                    break;
+                case 'tag':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'start' => ['filtername' => '开头为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'end' => ['filtername' => '结尾为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=tag',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]]],
+                    ];
+                    break;
+                case 'folder':
+                    $v['filtertype'] = [
+                        'or' => ['filtername' => '任意一项包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'and' => ['filtername' => '全部包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'muiltselectlink',
+                            'val' => 'int',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=folder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                    ];
+                    break;
+                case 'ffolder':
+                case 'ffolder':
+                    $v['filtertype'] = [
+                        'cn' => ['filtername' => '包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'ncn' => ['filtername' => '不包含', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'start' => ['filtername' => '开头为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'end' => ['filtername' => '结尾为', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]
+                        ]],
+                        'eq' => ['filtername' => '相等', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'inputlink',
+                            'val' => 'string',
+                            'vallink' => getglobal('siteurl') . 'index.php?mod=sources&op=sourcesinterface&do=getfileddata&valtype=ffolder',
+                            'linkparams' => [
+                                'appid' => [
+                                    'require' => true,
+                                    'type' => 'string'
+                                ],
+                                'keyword' => [
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'ids'=>[
+                                    'require' => false,
+                                    'type' => 'string'
+                                ],
+                                'perpage' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 30
+                                ],
+                                'page' => [
+                                    'require' => true,
+                                    'type' => 'int',
+                                    'default' => 1
+                                ],
+                            ]]],
+                    ];
+                    break;
+                    break;
+                case 'color':
+                    $v['filtertype'] = [
+                        'similar' => ['filtername' => '相似', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'color',
+                        ]],
+                        'same' => ['filtername' => '几乎一样', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'color',
+                        ]],
+                        'isgray' => ['filtername' => '黑白', 'valtype' => 'int', 'val' => 1],
+                    ];
+                    break;
+                case 'date':
+                    $v['filtertype'] = [
+                        'before' => ['filtername' => '早于', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'date',
+                            'val' => 'date'
+                        ]
+                        ],
+                        'after' => ['filtername' => '晚于', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'date',
+                            'val' => 'date'
+                        ]
+                        ],
+                        'range' => ['filtername' => '在日期范围内', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'daterange', 'val' => 'date'
+                        ]],
+                        'eq' => ['filtername' => '等于', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'date',
+                            'val' => 'date'
+                        ]],
+                        '-x' => ['filtername' => '在过去', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'input',
+                            'val' => 'int',
+                            'predesc' => '',
+                            'afterdesc' => '天内'
+
+                        ]]
+
+                    ];
+                    break;
+                case 'int':
+                    /* if ($v['units']) {
+                         $units = [];
+                         foreach ($v['filtertype'] as $fk => $fv) {
+                             $fv['units'] = $v['units'];
+                             $filtertypes[$fk] = $fv;
+                         }
+                         $v['filtertype'] = $filtertypes;
+                     }*/
+                    if ($v['units']) {
+                        $v['filtertype'] = [
+                            'gt' => ['filtername' => '大于', 'valtype' => 'nextgroup', 'val' => [
+                                ['valtype' => 'input', 'val' => 'int'],
+                                ['valtype' => 'options', 'val' => 'options', 'options' => $v['units']]
+                            ]],
+                            'ge' => ['filtername' => '大于等于', 'valtype' => 'nextgroup', 'val' => [
+                                ['valtype' => 'input', 'val' => 'int'],
+                                ['valtype' => 'options', 'val' => 'options', 'options' => $v['units']]
+                            ]],
+                            'lt' => ['filtername' => '小于', 'valtype' => 'nextgroup', 'val' => [
+                                ['valtype' => 'input', 'val' => 'int'],
+                                ['valtype' => 'options', 'val' => 'options', 'options' => $v['units']]
+                            ]],
+                            'le' => ['filtername' => '小于等于', 'valtype' => 'nextgroup', 'val' => [
+                                ['valtype' => 'input', 'val' => 'int'],
+                                ['valtype' => 'options', 'val' => 'options', 'options' => $v['units']]
+                            ]],
+                            'range' => ['filtername' => '范围', 'valtype' => 'nextgroup', 'val' => [
+                                [
+                                    'valtype' => 'input', 'val' => 'int',
+                                ],
+                                [
+                                    'valtype' => 'input', 'val' => 'int',
+                                ],
+                                ['valtype' => 'options', 'val' => 'options', 'options' => $v['units']]
+
+                            ]],
+                        ];
+                    } else {
+                        $v['filtertype'] = [
+                            'gt' => ['filtername' => '大于', 'valtype' => 'next', 'val' => [
+                                'valtype' => 'input',
+                                'val' => 'int',
+                            ]],
+                            'ge' => ['filtername' => '大于等于', 'valtype' => 'next', 'val' => [
+                                'valtype' => 'input',
+                                'val' => 'int',
+                            ]],
+                            'lt' => ['filtername' => '小于', 'valtype' => 'next', 'val' => [
+                                'valtype' => 'input',
+                                'val' => 'int',
+                            ]],
+                            'le' => ['filtername' => '小于等于', 'valtype' => 'next', 'val' => [
+                                'valtype' => 'input',
+                                'val' => 'int',
+                            ]],
+                            'range' => ['filtername' => '范围', 'valtype' => 'nextgroup', 'val' => [
+                                [
+                                    'valtype' => 'input', 'val' => 'int',
+                                ],
+                                [
+                                    'valtype' => 'input', 'val' => 'int',
+                                ]
+
+                            ]],
+                        ];
+                    }
+
+
+                    break;
+                case 'shape':
+                    $optionsarr = [];
+                    foreach ($v['options'] as $okey => $oval) {
+                        if (is_array($oval)) {
+                            $optionsarr[] = ['name' => $oval['name'], 'valtype' => 'nextgroup', 'val' => $oval['option']];
+                        } else $optionsarr[] = ['name' => $oval, 'valtype' => 'int', 'val' => $okey];
+                    }
+
+                    $v['filtertype'] = [
+                        'is' => ['filtername' => '是', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr,
+                        ]],
+                        'no' => ['filtername' => '不是', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr,
+                        ]]
+                    ];
+
+                    break;
+                case 'level':
+                case 'grade':
+                    $optionsarr = [];
+                    foreach ($v['options'] as $okey => $oval) {
+                        if (is_array($oval)) {
+                            $optionsarr[] = ['name' => $oval['name'], 'valtype' => 'set', 'val' => $oval['option']];
+                        } else $optionsarr[] = ['name' => $oval, 'valtype' => 'int', 'val' => $okey];
+                    }
+                    $v['filtertype'] = [
+                        'is' => ['filtername' => '是', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr
+                        ]],
+                        'no' => ['filtername' => '不是', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr
+                        ]],
+                        'cn' => ['filtername' => '包含及以下', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr
+                        ]],
+                        'cng' => ['filtername' => '包含及以上', 'valtype' => 'next', 'val' => [
+                            'valtype' => 'options',
+                            'val' => 'options',
+                            'options' => $optionsarr
+                        ]],
+                    ];
+                    break;
+            }
+            $returnfileds[$flag] = $v;
+        }
+    }
+
+    return $returnfileds;
+}
+
+function parae_unitsval($val, $units)
+{
+    $timeunits = ['s', 'm', 'h'];
+    $sizeunits = ['b', 'kb', 'mb', 'tb'];
+    if (in_array($units, $timeunits)) {
+        switch ($units) {
+            case 's':
+                $val = intval($val);
+                break;
+            case 'm':
+                $val = intval($val) * 60;
+                break;
+            case 'h':
+                $val = intval($val) * 60 * 60;
+                break;
+        }
+    } elseif (in_array($units, $sizeunits)) {
+        switch ($units) {
+            case 'b':
+                $val = intval($val);
+                break;
+            case 'kb':
+                $val = intval($val) * 1024;
+                break;
+            case 'mb':
+                $val = intval($val) * 1024 * 1024;
+                break;
+            case 'tb':
+                $val = intval($val) * 1024 * 1024 * 1024;
+                break;
+        }
+    }
+    return $val;
+}
+
+ function getPaletteNumber($colors, $palette = array())
+{
+
+    if (empty($palette)) $palette = [
+        0xfff8e1,0xf57c00,0xffd740,0xb3e5fc,0x607d8b,0xd7ccc8,
+        0xff80ab,0x4e342e,0x9e9e9e,0x66bb6a,0xaed581,0x18ffff,
+        0xffe0b2,0xc2185b,0x00bfa5,0x00e676,0x0277bd,0x26c6da,
+        0x7c4dff,0xea80fc,0x512da8,0x7986cb,0x00e5ff,0x0288d1,
+        0x69f0ae,0x3949ab,0x8e24aa,0x40c4ff,0xdd2c00,0x283593,
+        0xaeea00,0xffa726,0xd84315,0x82b1ff,0xab47bc,0xd4e157,
+        0xb71c1c,0x880e4f,0x00897b,0x689f38,0x212121,0xffff00,
+        0x827717,0x8bc34a,0xe0f7fa,0x304ffe,0xd500f9,0xec407a,
+        0x6200ea,0xffab00,0xafb42b,0x6a1b9a,0x616161,0x8d6e63,
+        0x80cbc4,0x8c9eff,0xffeb3b,0xffe57f,0xfff59d,0xff7043,
+        0x1976d2,0x5c6bc0,0x64dd17,0xffd600
+    ];
+    $arr = array();
+
+    if (is_array($colors)) {
+        $isarray = 1;
+    } else {
+        $colors = (array)$colors;
+        $isarray = 0;
+    }
+
+    foreach ($colors as $color) {
+        $bestColor = 0x000000;
+        $bestDiff = PHP_INT_MAX;
+
+        $color = new Color($color);
+        foreach ($palette as $key => $wlColor) {
+            // calculate difference (don't sqrt)
+            $diff = $color->getDiff($wlColor);
+            // see if we got a new best
+            if ($diff < $bestDiff) {
+                $bestDiff = $diff;
+                $bestColor = $wlColor;
+            }
+        }
+        unset($color);
+        $arr[] = array_search($bestColor, $palette);
+    }
+    return $isarray ? $arr : $arr[0];
+}
+
+function hex2rgb($hexColor)
+{
+    $color = str_replace('#', '', $hexColor);
+    if (strlen($color) > 3) {
+        $rgb = array(
+            'r' => hexdec(substr($color, 0, 2)),
+            'g' => hexdec(substr($color, 2, 2)),
+            'b' => hexdec(substr($color, 4, 2))
+        );
+    } else {
+        $r = substr($color, 0, 1) . substr($color, 0, 1);
+        $g = substr($color, 1, 1) . substr($color, 1, 1);
+        $b = substr($color, 2, 1) . substr($color, 2, 1);
+        $rgb = array(
+            'r' => hexdec($r),
+            'g' => hexdec($g),
+            'b' => hexdec($b)
+        );
+    }
+    return $rgb;
+}
+global $shapedataarr;
+//尺寸筛选
+$shapedataarr = array(
+    1 => array(
+        'start' => 'round((4 / 3) * 100)',
+        'end' => '',
+        'val' => 1,
+        'lablename' => '4:3'
+    ),
+    2 => array(
+        'start' => 'round((3 / 4) * 100)',
+        'end' => '',
+        'val' => 2,
+        'lablename' => '3:4'
+    ),
+    3 => array(
+        'start' => 'round((16 / 9) * 100)',
+        'end' => '',
+        'val' => 3,
+        'lablename' => '16:9'
+    ),
+    4 => array(
+        'start' => 'round((9 / 16) * 100)',
+        'end' => '',
+        'val' => 4,
+        'lablename' => '9:16'
+    ),
+    5 => array(
+        'start' => 250,
+        'end' => '',
+        'val' => 5,
+        'lablename' => '细长横图'
+    ),
+    6 => array(
+        'start' => 0,
+        'end' => 40,
+        'val' => 6,
+        'lablename' => '细长竖图'
+    ),
+    7 => array(
+        'start' => 100,
+        'end' => '',
+        'val' => 7,
+        'lablename' => '方图'
+    ),
+    8 => array(
+        'start' => 100,
+        'end' => 250,
+        'val' => 8,
+        'lablename' => '横图'
+    ),
+    9 => array(
+        'start' => 40,
+        'end' => 100,
+        'val' => 9,
+        'lablename' => '竖图'
+    )
+
+);
+
+function GetThemeColor()
+{
+    global $_G;
+    $themedata = C::t('setting')->fetch('pichomepagesetting', 1);
+    if ($themedata) {
+        $theme = $themedata['theme'];
+    } elseif ($_G['setting']['pichomepagesetting']['theme']) {
+        $theme = $_G['setting']['pichomepagesetting']['theme'];
+    } else {
+        $theme = 'white';
+    }
+    return $theme;
+}
+/**增加统计数据函数
+ * @param
+ *  $statsdata参数必须为数组形式 包含以下参数 statstype idtype
+ * statstype 1,浏览或文件下载统计，2关键词统计
+ * 当statstype为1时,由idtype确定统计方式
+ * idtype为0为文件浏览统计 idval为文件rid name参数为文件名
+ * 当idtype为1，为文件下载统计，idval为文件rid name参数为文件名
+ * 当idtype为2,为专题浏览统计idval为专辑id name专题名称
+ * 当statstype为2时,由idtype确定统计方式
+ * idtype为0为库关键词统计 idval为库id
+ * idtype为1为专辑关键词统计 idval为专辑id
+ * idtype为2为项目关键词统计 idval为项目id
+ * idtype为3为全站关键词统计 idval没有值
+ * @return bool
+ * */
+function addStatsdata($statsdata){
+    if(!$statsdata) return true;
+    $result = Hook::listen('addstatsdata',$statsdata);
+    return isset($result[0]) ? $result[0]:false;
+}
+/**文件浏览统计函数
+ * @param
+ * $rid string 文件id must
+ * @return bool
+ */
+function addFileviewStats($rid,$isadmin=0){
+    if(!$rid) return false;
+    $filename = DB::result_first("select name from %t where rid = %s",array('pichome_resources',$rid));
+    if(!$filename) return false;
+    $statsdata=['statstype'=>1,'idtype'=>0,'idval'=>$rid,'name'=>$filename,'isadmin'=>$isadmin];
+    return addStatsdata($statsdata);
+}
+/**文件下载统计函数
+ * @param
+ * $rid string 文件id must
+ * @return bool
+ */
+function addFiledownloadStats($rid,$isadmin=0){
+    if(!$rid) return false;
+    $filename = DB::result_first("select name from %t where rid = %s",array('pichome_resources',$rid));
+    if(!$filename) return false;
+    $statsdata=['statstype'=>1,'idtype'=>1,'idval'=>$rid,'name'=>$filename,'isadmin'=>$isadmin];
+    return addStatsdata($statsdata);
+}
+
+/**项目浏览统计函数
+ * @param
+ * $tid int 项目id must
+ * @return bool
+ */
+function addTabviewStats($tid,$isadmin=0){
+    if(!$tid) return false;
+    //获取tab数据
+    $tabstatus = 0;
+    Hook::listen('checktab', $tabstatus);
+    if(!$tabstatus) return false;
+    $tids = [$tid];
+    Hook::listen('gettab',$tids);
+    if(!$tids) return false;
+    $statsdata=['statstype'=>1,'idtype'=>2,'idval'=>$tid,'name'=>$tids[$tid]['tabname'],'isadmin'=>$isadmin];
+    return addStatsdata($statsdata);
+}
+/**库关键词统计函数
+ * @param
+ * $keyword string关键词 must
+ * $appid string 库id must
+ * @return bool
+ */
+function addVappkeywordStats($keyword,$appid){
+    if(!$keyword || !$appid) return false;
+    //限定最大长度为20个中文字符
+    $keyword = getstr($keyword,20);
+    $statsdata=['statstype'=>2,'idtype'=>0,'idval'=>$appid,'keyword'=>$keyword];
+    return addStatsdata($statsdata);
+}
+
+/**专题关键词统计函数
+ * @param
+ * $keyword string关键词 must
+ * $gid int 专题id must
+ * @return bool
+ */
+function addTabgroupkeywordStats($keyword,$gid){
+    if(!$keyword || !$gid) return false;
+    //限定最大长度为20个中文字符
+    $keyword = getstr($keyword,20);
+    $statsdata=['statstype'=>2,'idtype'=>1,'idval'=>$gid,'keyword'=>$keyword];
+    return addStatsdata($statsdata);
+}
+
+/**项目关键词统计函数
+ * @param
+ * $keyword string关键词 must
+ * $tid int 项目id must
+ * @return bool
+ */
+function addTabkeywordStats($keyword,$tid){
+    if(!$keyword || !$tid) return false;
+    //限定最大长度为20个中文字符
+    $keyword = getstr($keyword,20);
+    $statsdata=['statstype'=>2,'idtype'=>2,'idval'=>$tid,'keyword'=>$keyword];
+    return addStatsdata($statsdata);
+}
+
+/**全站关键词统计函数
+ * @param
+ * $keyword string关键词 must
+ * @return bool
+ */
+function addKeywordStats($keyword){
+    if(!$keyword) return false;
+    //限定最大长度为20个中文字符
+    $keyword = getstr($keyword,20);
+    $statsdata=['statstype'=>2,'idtype'=>3,'keyword'=>$keyword];
+    return addStatsdata($statsdata);
+}
 

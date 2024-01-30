@@ -8,21 +8,13 @@ class thumb{
 
     private $video = null;
 	public function run($meta){
-        if(strpos($meta['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $meta['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
+	    global $_G;
 
-        }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-        if(!$meta['ext'] || $bz != 'QCOS'){
+        if(!$meta['ext'] || strpos($meta['bz'],'QCOS') === false){
             return '';
         }
-        $connectdata = C::t('connect_storage')->fetch($did);
+
+        $connectdata = C::t('connect_storage')->fetch($meta['remoteid']);
         $hostarr = explode(':',$connectdata['hostname']);
         $config = [
             'secretId' => trim($connectdata['access_id']),
@@ -34,32 +26,66 @@ class thumb{
 
         include_once DZZ_ROOT.'dzz'.BS.'qcos'.BS.'class'.BS.'class_video.php';
         $this->video = new \video($config);
-        $videoexts =  getglobal('config/qcosmedia') ? explode(',', getglobal('config/qcosmedia')):array('3gp','avi','flv','mp4','m3u8','mpg','asf','wmv','mkv','mov','ts','webm','mxf');
+       // $videoexts =  getglobal('config/qcosmedia') ? explode(',', getglobal('config/qcosmedia')):array('f4v','3gp','avi','flv','mp4','m3u8','mpg','asf','wmv','mkv','mov','ts','webm','mxf');
+        $videoexts = array('f4v','3gp','avi','flv','mp4','m3u8','mpg','asf','wmv','mkv','mov','ts','webm','mxf');
         $officeexts = getglobal('config/qcosoffice') ? explode(',',getglobal('config/qcosoffice')):array('pptx','ppt','pot','potx','pps','ppsx','dps','dpt','pptm','potm','ppsm','doc','dot','wps','wpt','docx','dotx','docm','dotm','xls','xlt','et','ett','xlsx','xltx','csv','xlsb','xlsm','xltm','ets','pdf','lrc','c','cpp','h','asm','s','java','asp','bat','bas','prg','cmd','rtf','txt','log','xml','htm','html');
         $officestatus = $connectdata['docstatus'];
-        $videostatus = $connectdata['mediastatus'];
+        //$videostatus = $connectdata['mediastatus'];
+        $extraparams = $meta['extraparams'];
+        $watermd5 = '';
+        if($extraparams['watermarkstatus']){
+            $watermd5 = !$extraparams['watermarktext'] ? $_G['setting']['watermd5']:($extraparams['watermarktext'] ? $extraparams['watermarktext']:$_G['setting']['watermarktext']);
+        }
 
         //获取视频缩略图
-        if($videostatus && in_array($meta['ext'],$videoexts)){
+        if(in_array($meta['ext'],$videoexts)){
+
             if($meta['duration']){
                 $start=ceil($meta['duration']/5);
             }else{
                 $start = 1;
             }
+            $extraflag = '';
 
-            $outputpath = 'tmppichomethumb/'.$meta['appid'].'/'.md5($meta['realpath'].$meta['thumbsign']).'.jpg';
-            $fpatharr = explode('/',$meta['realpath']);
+            if ($_G['setting']['watermarkstatus'] || $extraparams['position_text'] || $extraparams['position']) {
+                $extraflag .= '_w';
+            }
+            if ($extraparams['watermarktype']) {
+                $extraflag .= '_' . $extraparams['watermarktype'];
+            }
+            if ($extraparams['watermarktype']['watermarktext']) {
+                $extraflag .= '_' . $extraparams['watermarktext'];
+            }
+
+
+            $thumbpath = $this->getthumbpath('pichomethumb');
+
+            if($meta['aid']) $thumbname = md5($meta['aid'].$extraflag).'.webp';
+            else $thumbname = md5($meta['rid'].$extraflag).'.webp';
+            $thumbpath = $thumbpath.$thumbname;
+            $defaultspace = $_G['setting']['defaultspacesetting'];
+            $fpatharr = explode(':',$meta['path']);
             unset($fpatharr[0]);
-            $ofpath = implode('/',$fpatharr);
-            $object = str_replace(BS,'/',$ofpath);
-            $result = $this->video->get_Snapshot($object, $start,$outputpath);
+            //$ofpath = implode('/',$fpatharr);
+            $object =$fpatharr[2];
+            $result = $this->video->get_Snapshot($object, $start,$thumbpath);
             //如果获取到缩略图
             if ($result['success']) {
-                return array($bz.':'.$did.':/'.$result['success']);
+                if($defaultspace['bz'].':'.$defaultspace['did'].':' != $meta['bz']){
+                    $thumbpath = $meta['bz'].':'.$meta['remoteid'].':'.$result['success'];
+                    $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':' .$thumbpath;
+                    $return = IO::moveThumbFile($cloudpath,$thumbpath);
+                    if(isset($return['error'])){
+                        return false;
+                    }
+                }else{
+                    $cloudpath = $result['success'];
+                }
+                return array($cloudpath);
             }else{
                 return '';
             }
-        }elseif($officestatus && in_array($meta['ext'],$officeexts)){//获取文档缩略图
+        }elseif(in_array($meta['ext'],$officeexts)){//获取文档缩略图
 
             $result = $this->video->getDocthumb($meta);
             if ($result['success']) {
@@ -70,4 +96,14 @@ class thumb{
         }
 
 	}
+
+    public function getthumbpath($dir = 'dzz'){
+        $subdir = $subdir1 = $subdir2 = '';
+        $subdir1 = date('Ym');
+        $subdir2 = date('d');
+        $subdir = $subdir1 . '/' . $subdir2 . '/';
+        // $target1 = $dir . '/' . $subdir . 'index.html';
+        $target = $dir . '/' . $subdir;
+        return $target;
+    }
 }

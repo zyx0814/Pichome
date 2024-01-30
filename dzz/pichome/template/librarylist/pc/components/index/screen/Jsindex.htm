@@ -1,0 +1,29 @@
+<script type="text/javascript">
+	var ScreenMixin = {
+		data(){
+			return {
+				Screenshow:true,
+				ScreenParam:{
+					hassub:0,
+					appid:'',
+					fids:'',
+					pfids:''
+				},
+				ScreenProps:{
+					optionload:'index.php?mod=pichome&op=library&do=ajax&operation=getscreen',
+					contentload:'index.php?mod=pichome&op=library&do=ajax&operation=searchmenu_num',
+					classifyload:'index.php?mod=pichome&op=library&do=ajax&operation=getsearchfolder',//分类url
+					tagload:'index.php?mod=pichome&op=library&do=ajax&operation=search_menu',
+					isclassify:true,//分类是否显示
+				}
+			}
+		},
+		methods:{
+			screenvisible(status,text){
+				this.DocumentOverlay = status;
+			}
+		}
+	};
+
+
+</script>

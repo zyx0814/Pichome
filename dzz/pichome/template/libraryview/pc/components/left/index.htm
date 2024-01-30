@@ -1,0 +1,78 @@
+<div class="left-main" style="height: calc(100% - 40px);">
+	<el-scrollbar>
+		<el-menu style="border:0;" :default-active="LeftCurrenType">
+			<el-menu-item index="" @click="LeftClick('')">
+				<el-text>全部</el-text>
+			</el-menu-item>
+			<el-menu-item index="notclassify" @click="LeftClick('notclassify')">
+				<el-text>未分类</el-text>
+			</el-menu-item>
+			<!-- <el-menu-item index="nottag" @click="LeftClick('nottag')">
+				<el-text>未标签</el-text>
+			</el-menu-item> -->
+		</el-menu>
+
+		<!-- <div class="tree-tip">
+			<el-button text  @click="LeftTree.Visible=!LeftTree.Visible">
+				分类
+				<el-icon class="el-icon--right">
+					<template v-if="LeftTree.Visible">
+						<Caret-Bottom></Caret-Bottom>
+					</template>
+					<template v-else>
+						<Caret-Right></Caret-Right>
+					</template>
+				</el-icon>
+			</el-button>
+		</div> -->
+		<div v-show="LeftTree.Visible" v-loading="LeftTree.loading" style="padding-right: 10px;">
+			<el-tree
+				v-if="LeftTree.show"
+				ref="LeftTreeRef"
+				lazy
+				node-key="fid"
+				@node-click="LeftTreeClick"
+				:load="LeftTreeGetFolder"
+				:current-node-key="LeftTree.Currentkey"
+				:expand-on-click-node="false"
+				:default-expanded-keys="LeftTree.defaultOpenkeys"
+				highlight-current
+				icon="ArrowRight"
+				:props="{label:'fname',children: 'children',isLeaf:'leaf'}">
+				<template #default="{ node, data }">
+				    <div class="custom-tree-node">
+						<template v-if="node.data.isRename">
+							<el-input 
+								v-model.trim="data.fname" 
+								size="small"
+								maxlength="20" 
+								placeholder="请输入" />
+						</template>
+						<template v-else>
+							<div class="name" :ref="'treename'+data.fid" v-cloak v-html="node.label"></div>
+							<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
+							<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
+						</template>
+				    	
+				    </div>
+			  </template>
+				
+			</el-tree>
+		</div>
+	</el-scrollbar>
+</div>
+
+<div class="left-search">
+	<el-input
+		v-model="LeftTree.filterText" 
+		placeholder="搜索分类"
+		prefix-icon="Search"
+		clearable
+		@input="LeftClassifyFilterInput">
+	</el-input>
+</div>
+<div 
+	@mousedown.prevent="LeftdragControllerDiv"
+	:style="{position: 'fixed',height: '100%',width: '4px',top: '0',left: LeftWidth-2+'px',cursor: 'col-resize','z-index': 100}" 
+	ref="leftResize" 
+	id="leftResize"></div>

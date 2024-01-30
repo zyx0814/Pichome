@@ -1,0 +1,308 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="user/my/template/pc/assets/index.css?{VERHASH}">
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<style>
+    .filter-item:not(.is-checked) {
+        background-color: var(--el-bg-color);
+    }
+    .el-image__placeholder{
+        border-radius: 8px;
+    }
+    .image .el-image__inner{
+        border-radius: 8px;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+    }
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+		<el-main style="padding: 0">
+            <el-scrollbar ref="scrollbar" style="padding: var(--el-main-padding);">
+                <div class="container">
+                    <!--{template common/container/pc/ucenter_header}-->
+                    <div class="notification">
+                        <div style="padding-bottom: 20px;border-bottom: var(--el-border); display: flex;justify-content: space-between;">
+                            <div> 
+                                <template  v-for="item in actionData">
+                                    <el-check-tag style="margin-right: 6px;"  class="filter-item" :checked="dataActive==item.key"  @change="filterChange(item.key)" >{{item.name}}</el-check-tag>
+                                </template>
+                            </div>
+                            <div> 
+                                <el-input
+                                    style="width: 260px;"
+                                    v-model="keyword"
+                                    placeholder="{lang search}"
+                                    class="input-search"
+                                    clearable
+                                    @change="searchSubmit">
+                                    <template #suffix>
+                                        <el-icon @click="searchSubmit" style="cursor: pointer;"><Search /></el-icon>
+                                    </template>
+                                </el-input>
+                            </div>
+                        </div>
+                        <el-table :data="tableData" style="width: 100%">
+                            <el-table-column prop="name" label="文件" show-overflow-tooltip>
+                                <template #default="scope">
+                                    <el-link :underline="false"> <el-image 
+                                        class="image" 
+                                        style="width: 140px; height: 100px;vertical-align: middle;margin-right: 10px;display: inline-flex;justify-content: center;align-items: center;" 
+                                        :src="scope.row.icondata" 
+                                        fit="contain"
+                                        @click="ImageClick(scope.row)">
+                                        <template #error>
+                                            <div class="el-image__placeholder"></div>
+                                        </template>
+                                    </el-image></el-link>
+                                    <span> <el-link :underline="false" @click="ImageClick(scope.row)">{{ scope.row.name }}</el-link></span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="fdate" label="下载时间" width="180" align="center"></el-table-column>
+                            <el-table-column label="操作" width="160" align="center">
+                                <template #default="scope">
+                                    <el-popconfirm title="该操作无法恢复，确定删除？" @confirm="handleDelete(scope.row.id)">
+                                        <template #reference>
+                                            <el-button type="danger">{lang delete}</el-button>
+                                        </template>
+                                    </el-popconfirm>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div style="padding-top: 20px;">
+                            <el-pagination 
+                            v-model:current-page="paramData.page" 
+                            background 
+                            v-model:page-size="paramData.perpage"
+                            :page-sizes="[50, 100, 150, 200]"
+                            layout="total, sizes, prev, pager, next, jumper" 
+                            style="justify-content: center;" 
+                            :total="paramData.total"
+                            @size-change="pageSizeChange"
+                            @current-change="getData"></el-pagination>
+                            <!-- hide-on-single-page -->
+                        </div>
+                    </div>
+                </div>
+            </el-scrollbar>
+
+		</el-main>
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+				DocumentThemeColor:'',
+				UcenterHeaderMenuIndex:'downloads',
+                tableData:[],
+                paramData:{
+                    page:1,
+                    perpage:50,
+                    total:0
+                },
+                actionData:{eval echo json_encode(array_values($actionData))},
+                keyword:'',
+                dataActive:'',
+                PostParam:''
+			}
+		},
+        mixins:[UcenterHeader],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+			
+			
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+            this.getData();
+            //this.setTime()
+		},
+		methods: {
+            searchSubmit(){
+                this.paramData.page = 1;
+                this.getData();
+            },
+            filterChange(key){
+                if(this.dataActive == key)return false;
+                this.dataActive = key;
+                this.paramData.page = 1;
+                this.getData();
+            },
+            pageSizeChange(){
+                this.paramData.page = 1;
+                this.getData();
+            },
+            ImageClick(data){
+				if(data.isdelete>0) return;
+                sessionStorage.removeItem('href');
+                var arr = [];
+				
+                for(var i in this.tableData){
+					arr.push(this.tableData[i].dpath)
+				}
+                if(!data){
+                    sessionStorage.setItem('imgs',arr.join(','));
+                    return false;
+                }
+                let curr = this.tableData.find(function(current){
+					return current.id == data.id;
+				});
+				let index = this.tableData.findIndex(function(current){
+					return current.id == data.id;
+				});
+                sessionStorage.setItem('imgs',arr.join(','));
+                let div = document.createElement("div");
+                div.className = 'Details-Iframe';
+                let iframe = document.createElement("iframe");
+                div.append(iframe);  
+                sessionStorage.setItem('selectindex',index);  
+                iframe.src =  'index.php?mod=details&opentype=current#path='+curr.dpath;
+                console.log(1111111);
+                document.body.appendChild(div); 
+            },
+            getData(){ 
+                let self = this;
+                let param = {
+                    page:this.paramData.page,
+                    perpage:this.paramData.perpage,
+                };
+                if(this.dataActive != 'all'){
+                    param['date'] = this.dataActive;
+                }
+                if(this.keyword){
+                    param['keyword'] = this.keyword;
+                }
+
+                if(this.PostParam){
+					this.PostParam();
+				}
+                let CancelToken = axios.CancelToken;
+                axios.post('{MOD_URL}&op=downloads&do=filelist',param,{
+					cancelToken: new CancelToken(function executor(c) {
+					    self.PostParam = c;
+					})
+				}).then(function ({data:res}) {
+					if(res.success){
+                        self.tableData = res.data.data || [];
+                        self.paramData.total = parseInt(res.data.total);
+                    }else{
+                        self.$message.error(res.msg || '数据获取失败');
+                    }
+				}).catch(function (error) {
+				    console.log(error);
+				});
+
+
+
+
+
+            },
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				let self=this;
+				self.$message({
+					message: 'this is a message.',
+					type: 'success',
+				  });
+			},
+			GetDateVal(type){//根据文字获取时间
+                var str = '';
+                var start = new Date();
+                var end = new Date();
+                switch(type){
+                    case 3:
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 2);
+                    break;
+                    case 7:
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 6);
+                    break;
+                    case 30:
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 29);
+                    break;
+                    case 365:
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 364);
+                    break;
+                }
+                str = start.getFullYear()+'-'+(start.getMonth()+1)+'-'+start.getDate()+'_'+end.getFullYear()+'-'+(end.getMonth()+1)+'-'+end.getDate();
+                return str;
+            },
+			setTime(){//设置时间
+                let date = '$date';
+                if(!date)return false;
+                date = date.split('_');
+                // 获取当前时间
+                var now = new Date(date[1]);
+
+                // 获取目标时间
+                var target = new Date(date[0]);
+
+                // 计算时间间隔（毫秒）
+                var interval = now - target;
+                // 将毫秒转换为其他时间单位
+                this.dataActive = Math.floor(interval / (1000 * 60 * 60 * 24)) + 1;
+            },
+			handleDelete(id){
+				let self=this;
+				axios.post('{MOD_URL}&op=downloads&do=delete', {
+					id:id
+				}).then(function(res){
+					//window.location.reload();
+					if(res.data.success){
+						let index=self.tableData.findIndex((item)=>{
+							if(item.id==id) return true;
+						});
+						if(index>-1) self.tableData.splice(index,1);
+						if(self.tableData.length<1) window.location.reload();
+					}else{
+						self.$message({
+							message: res.data.msg,
+							type: 'error',
+						  });
+					}
+				}).catch(function (error) {
+					console.log(error);
+				});
+					
+				  
+			}
+		},
+		mounted() {}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

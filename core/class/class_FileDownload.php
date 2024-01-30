@@ -44,6 +44,7 @@ class FileDownload{ // class start
         if (preg_match("/Firefox/", $_SERVER["HTTP_USER_AGENT"])) {
             $attachment = 'attachment; filename*='.$charset.'\'\'' . $name;
         } elseif (!preg_match("/Chrome/", $_SERVER["HTTP_USER_AGENT"]) && preg_match("/Safari/", $_SERVER["HTTP_USER_AGENT"])) {
+            $name = trim($name,'"');
             $filename = rawurlencode($name); // 注意：rawurlencode与urlencode的区别
             $attachment = 'attachment; filename*='.$charset.'\'\'' . $filename;
         } else{

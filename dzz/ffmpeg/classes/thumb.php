@@ -6,50 +6,47 @@ use \core as C;
 use \fmpeg as fmpeg;
 use \IO as IO;
 use \DB as DB;
+
 class thumb
 {
 
     public function run(&$data)
     {
-        if(strpos($data['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $data['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
 
-        }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-        $exts = explode(',',getglobal('config/pichomeffmpeggetthumbext'));
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $extra = unserialize($app['extra']);
 
-        if(!$data['ext'] || $bz != 'dzz' || !in_array($data['ext'],$exts)){
+
+        if (!$extra['status']) {
             return '';
         }
+        $exts = $extra['exts_thumb'] ? explode(',', $extra['exts_thumb']) : array();
 
-        $videostatus = DB::result_first('select mediastatus from %t where bz = %s',array('connect_storage',$bz));
-        if(!$videostatus) return '';
+        //如果类型不符合则停止执行
+        if (!in_array($data['ext'], $exts)) return '';
+
         require_once DZZ_ROOT . './dzz/ffmpeg/class/class_fmpeg.php';
         $fm = new fmpeg();
         if ($data['Duration']) {
             $start = ceil($data['duration'] / 5);
         } else {
-            $start = 1;
+            $start = 0;
         }
+        //执行获取缩略图
         if ($target = $fm->getThumb($data, $start)) {
-            if ($imginfo = getimagesize($target)) {
+            $fileuri = IO::getStream($target);
+            if ($imginfo = getimagesize($fileuri)) {
+                //将缩略图宽高视为文件宽高
                 $resourcesarr = [
-                    'width' => $imginfo[0] ? $imginfo[0]:0,
-                    'height' =>$imginfo[1] ? $imginfo[1]:0
+                    'width' => $imginfo[0] ? $imginfo[0] : 0,
+                    'height' => $imginfo[1] ? $imginfo[1] : 0
                 ];
-                C::t('pichome_resources')->update($data['rid'],$resourcesarr);
-                C::t('pichome_resources')->update($data['rid'], array('hasthumb' => 1));
+                C::t('pichome_resources')->update($data['rid'], $resourcesarr);
                 return array($target);
-            }else{
+            } else {
                 return '';
             }
-        }else{
+        } else {
             return '';
         }
 

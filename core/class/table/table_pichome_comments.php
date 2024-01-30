@@ -33,7 +33,14 @@
             }
             return $ids;
         }
-        
+        //查询标注文字数据
+        public function fetch_annotation_by_rid($rid){
+            $annotation = [];
+            foreach(DB::fetch_all("select annotation from %t where rid = %s",array($this->_table,$rid)) as $v){
+                $annotation[] = $v['annotation'];
+            }
+            return $annotation;
+        }
         //根据appid删除数据
         public function delete_by_appid($appid)
         {

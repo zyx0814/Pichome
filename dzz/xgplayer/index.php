@@ -20,54 +20,80 @@ if($_GET['operation']=='progress'){
     }
     global $_G;
     $rid = dzzdecode($_GET['path'],'',0);
-    $resourcesdata = C::t('pichome_resources')->fetch($rid);
-    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    if(strpos($appdata['path'],':') === false){
-        $bz = 'dzz';
-    }else{
-        $patharr = explode(':', $appdata['path']);
-        $bz = $patharr[0];
-        $did = $patharr[1];
+    if(strpos($rid, 'attach::') === 0){
+        $resourcesdata = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
 
-    }
-    if(!is_numeric($did) || $did < 2){
-        $bz = 'dzz';
-    }
-    if($bz == 'dzz'){
-        $videostatus = DB::result_first('select mediastatus from %t where bz = %s',array('connect_storage',$bz));
     }else{
-        $videostatus = DB::result_first('select mediastatus from %t where id = %d',array('connect_storage',$did));
+        $resourcesdata = C::t('pichome_resources')->fetch_data_by_rid($rid);
     }
+
+
     $_GET['ext'] = strtolower($resourcesdata['ext']);
-    $pexts=  getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')):array('mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
-    if(!in_array($resourcesdata['ext'],$pexts)){
+    $videosatus = 0;
+    $cloudvideostatus = 0;
+    //获取音视频转换开启状态
+    if($resourcesdata['remoteid'] && $resourcesdata['remoteid']!=1){
+        $clouddata = DB::fetch_first("select * from %t where id = %d",array('connect_storage',$resourcesdata['remoteid']));
+        $videostatus = $cloudvideostatus = $clouddata['mediastatus'];
+    }
+    if(!$videostatus){
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
+        $appextra = unserialize($app['extra']);
+        $videostatus = $appextra['status'];
+    }
+    if(!$videostatus){
+        $msg = '该媒体文件不能直接播放，且当前未安装支持转码应用或未开启转码支持';
+        include template('progress');
+        exit();
+    }
+    $pexts=  getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')):array('mov','mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
+    
+    if(!in_array($resourcesdata['ext'],$pexts) && strpos($rid, 'attach::') !== 0){
         $ff=C::t('video_record')->fetch_by_rid($rid);
+        //如果没有转码记录生成记录
         if(!$ff){
-            $msg = '该媒体文件不能直接播放，且当前存储位置不支持当前格式文件转码';
-            include template('progress');
-            exit();
+            $setarr = ['rid' => $resourcesdata['rid'], 'dateline' => TIMESTAMP,'format'=>$ext,'videoquality'=>0];
+            $setarr['aid']= $resourcesdata['aid'] ? $resourcesdata['aid']:0;
+            //如果是云存储状态，当前默认腾讯云
+            if($cloudvideostatus){
+                $setarr['ctype'] = 2;
+                $ff = C::t('video_record')->insert_data($setarr);
+                if($ff['status'] == 0){
+                    dfsockopen($_G['localurl'] . 'index.php?mod=qcos&op=convert&id='.$ff['id'], 0, '', '', false, '', 1);
+                }
+
+            }else{
+                $setarr['ctype'] = 1;
+                $ff = C::t('video_record')->insert_data($setarr);
+                if($ff['status'] == 0){
+                    dfsockopen($_G['localurl'] . 'index.php?mod=ffmpeg&op=convert&id='.$ff['id'], 0, '', '', false, '', 1);
+                }
+            }
         }
         switch($ff['status']){
             case 2:
                 $_GET['ext']=$ff['format'];
-                $src=IO::getStream($ff['path']);
+                $bz = io_remote::getBzByRemoteid($ff['remoteid']);
+                $src=IO::getFileuri($bz.$ff['path']);
                 break;
             case 0:
                 if($videostatus) {
-                    if($ff['ctype'] == 0){
+                    if($ff['ctype'] == 1){
                         dfsockopen($_G['localurl'] . 'index.php?mod=ffmpeg&op=convert&id='.$ff['id'], 0, '', '', false, '', 1);
                     }elseif($ff['ctype'] == 2){
                         dfsockopen($_G['localurl'] . 'index.php?mod=qcos&op=convert&id='.$ff['id'], 0, '', '', false, '', 1);
+                    }else{
+                        dfsockopen($_G['localurl'] . 'misc.php?mod=convert&id='.$ff['id'], 0, '', '', false, '', 1);
                     }
                     $ff['status'] = 1;
                 }
-                else $msg = '该媒体文件不能直接播放，当前存储位置媒体处理未开启，如需播放请联系管理员开启媒体处理';
+                else $msg = '该媒体文件不能直接播放，且当前未安装支持转码应用或未开启转码支持，如需播放请联系管理员安装或开启对应应用';
                 include template('progress');
                 exit();
                 break;
             case 1:
                 if($videostatus) {
-                    if($ff['ctype'] == 0){
+                    if($ff['ctype'] == 1){
                         dfsockopen($_G['localurl'] . 'index.php?mod=ffmpeg&op=convert&id='.$ff['id'], 0, '', '', false, '', 1);
                     }elseif($ff['ctype'] == 2){
                         dfsockopen($_G['localurl'] . 'index.php?mod=pichome&op=getConvertStatus', 0, '', '', false, '', 1);

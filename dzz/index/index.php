@@ -17,9 +17,9 @@
     $configfile = DZZ_ROOT.'data/cache/default_mod.php';
     $configarr = array();
     //$vapp=DB::fetch_first("select * from %t where 1",array('vapp'));
-    $configarr['default_mod' ]='pichome';
+    $configarr['default_mod' ]='banner';
     @file_put_contents($configfile,"<?php \t\n return ".var_export($configarr,true).";");
-    C::t('setting')->update('default_mod','pichome');
+    C::t('setting')->update('default_mod','banner');
     include_once libfile('function/cache');
     updatecache('setting');
     /*//修改地址
@@ -28,7 +28,7 @@
     $content=file_get_contents($file);
     $content=str_replace('http://127.0.0.2',rtrim($_G['siteurl'],'/'),$content);
     file_put_contents($file1,$content);*/
-    dheader("location: ".$_G['siteurl'].'index.php?mod=pichome');
+   // dheader("location: ".$_G['siteurl'].'index.php?mod=pichome');
     exit();
-    Hook::listen("adminlogin");
+    //Hook::listen("adminlogin");
     // <!-- require_once('vue/dist/index.html'); -->

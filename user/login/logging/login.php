@@ -113,11 +113,11 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
 			$referer = (isset($_GET['referer'])) ? htmlspecialchars($_GET['referer']):dreferer();
 			showTips(array('error'=>'redirect','url'=>'user.php?mod=login&op=logging&action=sms_auth&uid='.$member['uid'].'&referer='.urlencode($referer)),$type);
 		}
-        if($_G['versionsign'] == 'personversion' && !C::t('user')->checkfounder($result['member'])){
+		if(!defined('PICHOME_LIENCE') && !C::t('user')->checkfounder($result['member'])){
             showTips(array('error'=>lang('personversion_no_create_unablelogin')),$type);
         }
         //设置登录
-        setloginstatus($result['member'], $_GET['cookietime'] ? 2592000 : 0);
+        setloginstatus($result['member'], $_GET['cookietime'] ?  2592000:0 );
 
         if($_G['member']['lastip'] && $_G['member']['lastvisit']) {
 
@@ -147,12 +147,12 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
 
         $messageText = lang($loginmessage, $param);
         writelog('loginlog', lang('login_success'));
-        showTips(array('success'=>array('message'=>$messageText,'url_forward'=>$href)),$type);
+        showTips(array('success'=>array('message'=>$messageText,'url_forward'=>$href,'formhash'=>formhash())),$type);
 
 
     } else {//登录失败记录日志 
         //写入日志
-        $errorlog=lang('user').($result['ucresult']['email'] ? $result['ucresult']['email'] : $_GET['email']).lang('try_log')."[".$password."]".lang('error');
+        $errorlog=lang('user').($result['ucresult']['email'] ? $result['ucresult']['email'] : $_GET['email']).lang('try_log')."[".$_GET['password']."]"."\t".lang('error');
         writelog('loginlog', $errorlog);
 
         loginfailed($_GET['email']);//更新登录失败记录

@@ -6,9 +6,16 @@ class dzz_process
 {
 	public static function islocked($process, $ttl = 0) {
 		$ttl = $ttl < 1 ? 600 : intval($ttl);
-		return dzz_process::_cmd('get', $name) || dzz_process::_find($process, $ttl);
+		return dzz_process::_cmd('get', $process,$ttl) || dzz_process::_find($process, $ttl);
 	}
 
+	public static function addlock($process, $ttl = 0){
+       return  dzz_process::_cmd('set', $process, $ttl);
+    }
+
+    public static function getlocked($process){
+	    return dzz_process::_cmd('get', $process);
+    }
 	public static function unlock($process) {
 		//dzz_process::_status('rm', $process);
 		dzz_process::_cmd('rm', $process);
@@ -46,7 +53,8 @@ class dzz_process
 		if($allowmem) {
 			return dzz_process::_process_cmd_memory($cmd, $name, $ttl);
 		} else {
-			return dzz_process::_process_cmd_db($cmd, $name, $ttl);
+			//return dzz_process::_process_cmd_db($cmd, $name, $ttl);
+			return dzz_process::_process_cmd_file($cmd, $name, $ttl);
 		}
 	}
 
@@ -64,7 +72,46 @@ class dzz_process
 		}
 		return $ret;
 	}
-
+    private static function _process_cmd_file($cmd, $name, $ttl = 0) {
+        $lockfile = DZZ_ROOT.'data/lock/'.$name.'.lock';
+        $lockdir = dirname($lockfile);
+        dmkdir($lockdir);
+        $ret = '';
+        switch ($cmd) {
+            case 'set':
+                if(is_file($lockfile)){
+                    $time = file_get_contents($lockfile);
+                    //如果锁过期重新生成锁
+                    if(TIMESTAMP - $time > $ttl){
+                        file_put_contents($lockfile,TIMESTAMP);
+                        $ret = false;
+                    }else{
+                        $ret = true;
+                    }
+                }else{
+                    file_put_contents($lockfile,TIMESTAMP);
+                    $ret = false;
+                }
+                break;
+            case 'get':
+                if(is_file($lockfile)){
+                    $time = file_get_contents($lockfile);
+                    //如果锁过期重新生成锁
+                    if(TIMESTAMP - $time > $ttl){
+                        $ret = false;
+                    }else{
+                        $ret = true;
+                    }
+                }else{
+                    $ret = false;
+                }
+                break;
+            case 'rm':
+                $ret = @unlink($lockfile);
+                break;
+        }
+        return $ret;
+    }
 	private static function _process_cmd_db($cmd, $name, $ttl = 0) {
 		$ret = '';
 		switch ($cmd) {

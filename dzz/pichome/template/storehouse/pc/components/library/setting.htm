@@ -1,0 +1,262 @@
+<el-dialog 
+    :title="SettingDialog.title" 
+    v-model="SettingDialog.Visible" 
+    :close-on-click-modal="false" 
+    :show-close="SettingForm.loading?false:true">
+	<el-form :model="SettingForm" label-width="140px">
+		<el-form-item label="库名称：">
+			<el-input v-model="SettingForm.appname"></el-input>
+		  </el-form-item>
+		<el-form-item label="库位置：">
+			<el-input v-model="SettingForm.path" readonly style="border: 0;">
+				<i slot="suffix" style="cursor: pointer;" class="el-input__icon el-icon-edit" @click="SettingFormPathClick"></i>
+			</el-input>
+		</el-form-item>
+		<el-form-item label="开放分享：">
+			<el-switch v-model="SettingForm.share" active-value="1" inactive-value="0"></el-switch>
+		</el-form-item>
+		<el-form-item label="开放下载：">
+			  <el-switch v-model="SettingForm.download" active-value="1" inactive-value="0"></el-switch>
+		</el-form-item>
+
+		
+	</el-form>
+    <template #footer>
+        <div class="dialog-footer">
+            <el-button @click="SettingDialog.Visible = false" :disabled="SettingForm.loading">取 消</el-button>
+            <el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading">确 定</el-button>
+        </div>
+    </template>
+	
+</el-dialog>
+<script type="text/javascript">
+	var SettingMixin = {
+		data(){
+			return{
+				SettingForm:{
+					appname:'',
+					loading:false,
+					appid:'',
+					path:'',
+					getinfo:'0',
+					share:'0',
+					download:'0',
+					eagle:0,
+					allowext:'',
+					notallowext:'',
+					charset:'',
+					
+				},
+				SettingDialog:{
+					title:'',
+					Visible:false,
+					pathinfo:0,
+				},
+				SettingFormvisit:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormshare:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormdownload:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+			}
+		},
+		methods:{
+			async SettingGetData(appid,title){
+				var self = this;
+				this.SettingDialog.title = '设置'+title+'库';
+				
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',{appid:appid});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				
+				if(data.success){
+					var ditem = data.data;
+					var showVal = ditem.convertpath.replace(/\\/g,"/");
+					self.SettingDialog.Visible = true;
+
+					self.SettingForm = {
+						appid:appid,
+						appname:data.data.appname,
+						path:showVal,
+						getinfo:data.data.getinfo,
+						charset:data.data.charset,
+						eagle:parseInt(data.data.type),
+						share:data.data.share,
+						download:data.data.download,
+						allowext:data.data.allowext,
+						notallowext:data.data.notallowext,
+						loading:false
+					};
+
+					self.SettingDialog.pathinfo = data.data.pathinfo?parseInt(data.data.pathinfo):0;
+				}else{
+					self.$message.error('数据获取失败');
+				}
+			},
+			SettingFormPathClick(){
+				this.Catalogue.dialogtype = 'setting';
+				this.Catalogue.type = this.SettingForm.type;
+				this.Catalogue.appid = this.SettingForm.appid;
+				var showVal = this.SettingForm.path;
+				showVal = showVal.split('/');
+				showVal.pop();
+				var newshowVal = showVal.join('/');
+				this.Catalogue.showVal = '';
+				this.Catalogue.search = newshowVal;
+				this.Catalogue.defaultsearch = newshowVal;
+				this.Catalogue.searchStatus = true;
+				this.Catalogue.charset = this.SettingForm.charset;
+				this.SettingDialog.Visible = false;
+				this.Catalogue.dialogVisible = true;
+			},
+			async SettingSubmit(){
+				var self = this;
+				self.SettingForm.loading = true;
+				var visit = {};
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appid:self.SettingForm.appid,
+					appname:self.SettingForm.appname,
+					getinfo:self.SettingForm.getinfo,
+					share:self.SettingForm.share,
+					download:self.SettingForm.download,
+					allowext:self.SettingForm.allowext,
+					notallowext:self.SettingForm.notallowext,
+				};
+				
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				
+				self.SettingDialog.Visible = false;
+				if(data.success){
+					for(var x in self.Table.data){
+						if(self.Table.data[x].appid == self.SettingForm.appid){
+							self.Table.data[x].getinfo = self.SettingForm.getinfo;
+							self.Table.data[x].appname = self.SettingForm.appname;
+							
+						}
+					}
+					self.TableDataForEach();
+					self.$message({
+						type:'success',
+						message:'设置成功'
+					});
+				}else{
+					self.$message.error('设置失败');
+				}
+				self.SettingForm.loading = false;
+			},
+			SettingTreeVisitChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormvisit = str;
+				}else{
+					str.status = 1;
+					this.SettingFormvisit = str;
+				}
+			},
+			SettingTreeDownChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormdownload = str;
+				}else{
+					str.status = 1;
+					this.SettingFormdownload = str;
+				}
+			},
+			SettingTreeShareChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormshare = str;
+				}else{
+					str.status = 1;
+					this.SettingFormshare = str;
+				}
+			},
+		}
+	};
+</script>

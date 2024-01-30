@@ -1,0 +1,166 @@
+.mainRight {
+  border-left: 1px solid var(--el-border-color);
+  --el-input-hover-border-color: var(--el-border-color-hover);
+  --el-input-focus-border-color: var(--el-color-primary);
+  background: var(--el-bg-color);
+}
+.mainRight .top-image {
+  height: 160px;
+  width: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  position: relative;
+}
+.mainRight .top-image .el-image {
+  width: 100%;
+  height: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+.mainRight .top-image .el-image .el-image__inner {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  border: var(--el-border);
+}
+.mainRight .top-image.top-images .el-image {
+  position: absolute;
+  left: 10%;
+  top: 0;
+  width: 80%;
+}
+.mainRight .top-image.top-images .el-image:nth-child(even) {
+  -webkit-transform: rotate(-10deg);
+          transform: rotate(-10deg);
+}
+.mainRight .top-image.top-images .el-image:nth-child(odd) {
+  -webkit-transform: rotate(-5deg);
+          transform: rotate(-5deg);
+}
+.mainRight .top-image.top-images .el-image:first-child {
+  -webkit-transform: rotate(0);
+          transform: rotate(0);
+}
+.mainRight .marginTop {
+  padding-top: 12px;
+}
+.mainRight .color-sequence {
+  margin-top: 20px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+.mainRight .color-sequence .el-col {
+  height: 14px;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  border: 1px solid transparent;
+  max-width: none;
+}
+.mainRight .color-sequence .el-col .color-item {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.mainRight .color-sequence .el-col:first-child .color-item {
+  border-top-left-radius: var(--el-border-radius-base);
+  border-bottom-left-radius: var(--el-border-radius-base);
+}
+.mainRight .color-sequence .el-col:last-child .color-item {
+  border-top-right-radius: var(--el-border-radius-base);
+  border-bottom-right-radius: var(--el-border-radius-base);
+}
+.mainRight .el-textarea__inner {
+  resize: none;
+}
+.mainRight .tag-box.active {
+  border: 1px solid var(--el-input-focus-border-color);
+}
+.mainRight .tag-box .el-tag {
+  margin-right: 8px;
+  margin-bottom: 6px;
+  white-space: normal;
+  line-height: 16px;
+  padding: 5px;
+  height: auto;
+}
+.mainRight .basic-file .single {
+  font-size: var(--el-font-size-extra-small);
+  color: var(--el-text-color-regular);
+}
+.mainRight .basic-file .single .el-col {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  height: 28px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.mainRight .basic-file .single .message {
+  color: var(--el-color-info);
+}
+.mainRight .basic-file .single .message .grade {
+  font-size: var(--el-font-size-large);
+  vertical-align: text-top;
+  cursor: pointer;
+}
+.mainRight .basic-file .single .message:hover .grade {
+  color: var(--el-text-color-regular);
+}
+
+.right-tag-tabs .el-tabs__content {
+  width: 260px;
+}
+.right-tag-tabs .el-tabs__content .el-check-tag {
+  margin-bottom: 6px;
+  margin-right: 6px;
+  font-weight: 500;
+  font-size: var(--el-font-size-extra-small);
+  -webkit-transition: none;
+  transition: none;
+}
+.right-tag-tabs .el-tabs__nav .el-tabs__item {
+  width: 120px;
+  padding: 0;
+  padding-right: var(--el-popover-padding);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.right-tag-tabs.el-tabs--left .el-tabs__header.is-left {
+  margin-right: 12px;
+}
+
+#files_box .file-headers {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-bottom: 10px;
+}

@@ -1,0 +1,17 @@
+{
+  "name": "cos-js-sdk-v5",
+  "description": "cos js sdk v5",
+  "main": "dist/cos-js-sdk-v5.min.js",
+  "authors": [
+    "carsonxu"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/tencentyun/cos-js-sdk-v5",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

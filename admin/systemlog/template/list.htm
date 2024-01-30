@@ -1,110 +1,184 @@
-<!--{template common/header_simple_start}-->
-<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
-<link href="static/select2/select2.css?{VERHASH}" rel="stylesheet" media="all">
-<link href="static/select2/select2-bootstrap.css?{VERHASH}" rel="stylesheet" media="all">
-<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
-<style>
-	input[type="text"] {
-		margin: 0;
+<!--{template common/container/pc/header_start}-->
+<style type="text/css">
+	:root{
+		--el-color-primary: #1c3676; 
+	}
+	body {
+		background: transparent;
+	}
+	.page-left .el-menu-item.is-active{
+		background-color: #e8ebf1;
+	}
+	.el-page-header__left {
+		margin-right: 8px;
+		color: #FFFFFF;
+	}
+	.el-page-header__content {
+		color: #fff;
 	}
 </style>
-<!--{template common/header_simple_end}-->
-<!--{template common/commer_header}-->
-<div class="bs-container clearfix">
-	<div class="bs-left-container  clearfix">
-		<!--{template left}--> 
-	</div>
-	<div class="left-drager">
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px" style="--el-header-padding: 0 8px;background: var(--el-color-primary);">
+			<!--{template header/index}-->
+		</el-header>
+		<el-container>
+			<el-aside width="300px" class="page-left">
+				<!--{template left}-->
+			</el-aside>
+			<el-container>
+			    <el-header height="56px" style="--el-header-padding: 0;border-bottom: var(--el-border);">
+					<el-menu :default-active="contentTop.activeIndex" class="list-menu" mode="horizontal" @select="contentTopSelect" style="height: 100%;border: 0;">
+						<el-menu-item style="height: 100%;line-height: 56px;" v-for="item in contentTop.data"  :index="item.active">{{item.text}}</el-menu-item>
+					</el-menu>
+				</el-header>
+			    <el-main style="padding: 0;">
+					<el-scrollbar style="height: 100%;">
+						<div style="padding: 20px;">
+							<el-table
+								:data="contentCenter.tableData"
+								style="width: 100%">
+								<el-table-column
+							        prop="operator"
+							        label="{lang operator}"
+							        width="100">
+								</el-table-column>
+								<el-table-column
+								    prop="usergroup"
+								    label="{lang usergroup}"
+								    width="100">
+								</el-table-column>
+								<el-table-column
+								    prop="ip"
+								    label="{lang ip}"
+								    width="120">
+								</el-table-column>
+								<el-table-column
+								    prop="time"
+								    label="{lang time}"
+								    width="120">
+								</el-table-column>
+								<el-table-column
+								    prop="os"
+								    label="{lang os}">
+								</el-table-column>
+								<!--{if $operation != 'cplog'}-->
+								<el-table-column
+								    prop="info"
+								    label="{lang info}">
+								</el-table-column>
+								<!--{/if}-->
+							</el-table>
+							<div style="text-align: center;padding: 20px 0;">
+								<el-pagination
+									background
+									@size-change="handleSizeChange"
+									@current-change="handleCurrentChange"
+									:current-page.sync="currentPage2"
+									:page-sizes="[15,20, 40, 80]"
+									:page-size="currentPage"
+									layout="total,sizes, prev, pager, next"
+									:total="$count">
+								</el-pagination>
+							</div>
+						</div>
+						
+					</el-scrollbar>
+					
+				</el-main>
+				
+			  </el-container>
+		</el-container>
+	</el-container>
+	<script type="text/javascript">
+		const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+		const dzzoffice = createApp({
+			data() {
+				return {
+					contentTop:{
+						activeIndex:null,
+						data:[]
+					},
+					contentCenter:{
+						tableData:[]
+					},
+					currentPage:{$lpp},
+					currentPage2:{$page}
+				};
+			},
+			mixins:[LeftMixin],
+			watch:{
 		
-	</div>
-
-	<div class="bs-main-container  clearfix">
-
-		<div class="main-header clearfix" style="border-bottom:1px solid #e1e1e1;padding-top: 15px;">
-			
-			<ul class="nav nav-pills  nav-pills-bottomguide">
-				 
-				<!--{loop $systemlog_setting $mark $info}-->
+			},
+			computed:{
+				
+			},
+			created() {
+				var self = this;
+				this.handleForEachTop();
+				this.handleForEachCenter();
+			},
+			methods: {
+				handleSizeChange(val){
+					window.location.href = MOD_URL+'&type=list&operation=$operation&lpp='+val+'&page='+this.currentPage2;
+				},
+				handleCurrentChange(val){
+					window.location.href = MOD_URL+'&type=list&operation=$operation&lpp='+this.currentPage+'&page='+val;
+				},
+				handleForEachCenter(){
+					<!--{loop $list $key $log}-->
+						this.contentCenter.tableData.push({
+							operator:'$log[2]',
+							usergroup:'$log[3]',
+							ip:'$log[4]',
+							time:'$log[1]',
+							os:'$log[5]',
+							<!--{if $operation != 'cplog'}-->
+							info:'$log[6]',
+							<!--{/if}-->
+						});
+					<!--{/loop}-->
+				},
+				handleForEachTop(){
+					<!--{loop $systemlog_setting $mark $info}-->
 					<!--{if $info[is_open]==1 }-->
-					<li <!--{if $operation==$mark }-->class="active"<!--{/if}-->>
-						<a hidefocus="true" href="{BASESCRIPT}?mod=systemlog&type=list&operation=$mark">{$info['title']}</a>
-					</li>
+					<!--{if $operation==$mark }-->
+					this.contentTop.activeIndex = '$mark';
 					<!--{/if}-->
-				<!--{/loop}-->  
-			</ul>
-		</div>
-		  
-		<div class="main-content" style="border-top:1px solid #FFF"> 
-			 
-			<form id="cpform" action="{BASESCRIPT}?mod=systemlog&type=list&operation=$operation" class="form-horizontal form-horizontal-left" method="post" name="cpform">
-				<input type="hidden" value="{FORMHASH}" name="formhash">
-				<input type="hidden" name="lpp" value="20">
-				<table class="table">
-					<thead>
-						<th width="80">{lang operator}</th>
-						<th width="80">{lang usergroup}</th>
-						<th width="120">{lang ip}</th>
-						<th width="120">{lang time}</th>
-						<th>{lang info}</th>
-					</thead>
-					<!--{if $list}-->
-						<!--{loop $list $key $log}-->
-						<tr>
-							<td>$log[2]</td>
-							<td>$log[3]</td>
-							<td>$log[4]</td>
-							<td>$log[1]</td>
-							<td>
-								<a href="javascript:;" onclick="togglecplog('{$key}')">{eval echo cutstr($log[5], 200)}</a>
-							</td>
-						</tr>
-						<thead id="cplog_{$key}" style="display:none">
-							<td colspan="10">
-								{lang loginfo}: $log[5]
-								<br/>{lang visit}: $log[6]
-								<br/>{lang from}: $log[7]</td>
-						</thead>
-						<!--{/loop}-->
-						<tr>
-							<td colspan="15">
-								<div class="pull-left input-group" style="width:100px;">
-									<span class="input-group-addon">{lang logs_lpp}</span>
-									<select class="input-sm form-control" style="margin:0;width:60px;" onchange="if(this.options[this.selectedIndex].value != '') {this.form.lpp.value = this.options[this.selectedIndex].value;this.form.submit(); }">
-										<option value="20" $checklpp[20]> 20 </option>
-										<option value="40" $checklpp[40]> 40 </option>
-										<option value="80" $checklpp[80]> 80 </option>
-									</select>
-								</div>
-								<div class="pull-left input-group" style="width:128px;">
-									<input type="text" class="input-sm form-control" style="width:90px;border-left:0" name="keyword" value="$_GET[keyword]">
-									<a href="javascript:;" class="input-group-addon" onclick="document.getElementById('cpform').submit();return false"><i class="glyphicon glyphicon-search"></i></a>
-								</div>
-								$multipage
-							</td>
-						</tr>
-					<!--{else}-->
-						<tr>
-							<td colspan="5">{lang there_no_such_results}</td>
-						</tr>
-					<!--{/if}--> 
-				</table>
-			</form>
-
-			<script type="text/javascript">
-				function togglecplog(k) {
-					var cplogobj = document.getElementById('cplog_' + k);
-					if(cplogobj.style.display == 'none') {
-						cplogobj.style.display = '';
-					} else {
-						cplogobj.style.display = 'none';
-					}
+					this.contentTop.data.push({
+						text:"$info['title']",
+						route:'{BASESCRIPT}?mod=systemlog&type=list&operation=$mark',
+						active:'$mark'
+					})
+					<!--{/if}-->
+					<!--{/loop}--> 
+				},
+				contentTopSelect(key) {
+					var data = this.contentTop.data.find(function(item){
+						return item.active == key;
+					});
+					window.location.href = data.route;
 				}
-			</script> 
-		</div>
-	</div>
+			},
+			mounted() {
+				var self = this;
+			},
+			components:{
+				comavatar,
+			}
+		})
+		dzzoffice.use(ElementPlus, {
+			locale: ElementPlusLocaleZhCn,
+		});
+		for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+			dzzoffice.component(key, component)
+		}
+		// 屏蔽警告信息
+		dzzoffice.config.warnHandler = function(){return null};
+		dzzoffice.mount('#dzzoffice');
+	</script>
 </div>
-<script type="text/javascript">
-	jQuery('.left-drager').leftDrager_layout();
-</script>
-<script src="static/bootstrap/js/bootstrap.min.js?{VERHASH}"></script>
-<!--{template common/footer_simple}-->
+
+
+<!--{template common/container/pc/footer}-->

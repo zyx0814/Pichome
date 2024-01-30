@@ -158,7 +158,7 @@ class ImagePalette implements IteratorAggregate
 		foreach($this->whiteList as $key => $v){
 			$total+=intval($v);
 		}
-		//print_r($this->whiteList);exit('ddd');
+
 		$arr=array();
 		$arr1=array();
 		foreach($this->whiteList1 as $key =>$val){
@@ -222,6 +222,9 @@ class ImagePalette implements IteratorAggregate
 
           case 'image/gif':
                 $this->loadedImage = imagecreatefromgif($this->file);
+                break; 
+			case 'image/webp':
+                $this->loadedImage = imagecreatefromwebp($this->file);
                 break;
 			default:
                 throw new Exception("The file type .$extension is not supported.");
@@ -293,7 +296,6 @@ class ImagePalette implements IteratorAggregate
             {
                 
                 $color = $this->getPixelColor($x, $y);
-                
                 // transparent pixels don't really have a color
                 if ($color->isTransparent())
                     continue 1;
@@ -313,18 +315,17 @@ class ImagePalette implements IteratorAggregate
     protected function getClosestColor(Color $color)
     {
         $cint=$color->toInt();
-		
         $bestDiff = PHP_INT_MAX;
-        
+
         // default to black so hhvm won't cry
         $bestColor = 0x000000;
 		$rgbarr=array();
         foreach ($this->whiteList as $wlColor => $hits)
         {
-			
+			//echo $wlColor;
             // calculate difference (don't sqrt)
+
             $diff = $color->getDiff($wlColor);
-            
             // see if we got a new best
             if ($diff < $bestDiff)
             {
@@ -332,8 +333,7 @@ class ImagePalette implements IteratorAggregate
                 $bestColor = $wlColor;
             }
         }
-		
-		
+
 		if(!isset( $this->whiteList1[$bestColor][$cint]))  $this->whiteList1[$bestColor][$cint]=1;
         else {
 			$this->whiteList1[$bestColor][$cint]++;

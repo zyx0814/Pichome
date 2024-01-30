@@ -1,0 +1,1361 @@
+<el-drawer 
+	ref="rightdrawer"
+    v-model="SettingDialog.Visible" 
+    direction="rtl"
+    :show-close="false"
+    size="66%"
+    :append-to-body="true"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
+    destroy-on-close
+    @open="SettingGetData"
+	@closed="SettingEightClosed">
+    <template #header>
+		<el-text class="title" tag="b" truncated size="large">设置{{SettingForm.appname}}</el-text>
+		<div style="flex: 1 1 auto;width: 100%;overflow: hidden;">
+			<el-tabs v-model="SettingDialog.active">
+				<el-tab-pane label="基本信息" name="basic"></el-tab-pane>
+				<el-tab-pane label="偏好设置" name="preference"></el-tab-pane>
+				<el-tab-pane label="信息栏设置" name="information"></el-tab-pane>
+				<el-tab-pane label="筛选器设置" name="screen"></el-tab-pane>
+			</el-tabs>
+		</div>
+		<div style="min-width: 160px;max-width: 160px;text-align: right;">
+			<el-button @click="SettingEightClosed" :disabled="SettingForm.loading">关闭</el-button>
+			<el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">保存</el-button>
+		</div>
+    </template>
+    <template #default>
+		<template v-if="SettingDialog.active == 'basic'">
+			<el-form 
+				:model="SettingForm" 
+				label-width="140px" 
+				label-suffix="：">
+				<el-form-item label="库名称">
+					<el-input v-model="SettingForm.appname" @input="SettingEditStatus"></el-input>
+				</el-form-item>
+				<el-form-item label="访问地址" style="flex-wrap: unset;">
+					<div style="display: flex;flex: 1;">
+						<el-input 
+							v-model="SettingForm.address"
+							:disabled="parseFloat(SettingDialog.pathinfo)?false:true"
+							@input="SettingEditStatus">
+							<template #prepend>{$_G['siteurl']}</template>
+						</el-input>
+						<div style="white-space: nowrap;margin-left: 12px;">
+							<el-button icon="CopyDocument" @click="RightCopyUrl(SettingForm.address)" plain>复制链接</el-button>
+							<el-popover
+								placement="top"
+								popper-class="qrcode-box"
+								:width="224"
+								:teleported="false"
+								@before-enter="TableGeturlqrcode(SettingForm.appid,true)"
+								trigger="hover">
+								<div v-loading="!SettingQrcode.isqrcode" style="width: 200px;font-size: 0;">
+									<el-image draggable="false" v-if="SettingQrcode.qrcodeurl" style="width: 200px; height: 200px" :src="SettingQrcode.qrcodeurl" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+									<el-text tag="p" style="text-align: center;padding-top: 12px;">手机扫码 查看网站</el-text>
+									<div v-if="SettingQrcode.qrcodeurl" class="download" @click="TableDownQrcodeurl(SettingQrcode.qrcodeurl)">
+										<div style="text-align: center;">
+											<el-icon style="font-size: 22px;"><Download /></el-icon>
+											<el-text tag="p" style="width: 100%;">下载二维码</el-text>
+										</div>
+									</div>
+								</div>
+								<template #reference>
+									<el-button plain>
+										<template #icon>
+											<el-icon>
+												<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" ><path d="M384 64l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2c0 51.2 41.6 89.6 89.6 89.6l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2C473.6 105.6 435.2 64 384 64zM428.8 380.8c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8l0-227.2c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8L428.8 380.8z"></path><path d="M192 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M377.6 544l-243.2 0c-48 0-86.4 38.4-86.4 89.6l0 220.8c0 48 38.4 89.6 86.4 89.6l243.2 0c48 0 86.4-38.4 86.4-89.6l0-220.8C467.2 582.4 425.6 544 377.6 544zM422.4 851.2c0 25.6-19.2 44.8-44.8 44.8l-243.2 0c-25.6 0-44.8-19.2-44.8-44.8l0-220.8c0-25.6 19.2-44.8 44.8-44.8l243.2 0c25.6 0 44.8 19.2 44.8 44.8L422.4 851.2z" ></path><path d="M192 668.8l131.2 0 0 131.2-131.2 0 0-131.2Z"></path><path d="M633.6 470.4l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2c0-51.2-41.6-89.6-89.6-89.6l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2C544 432 585.6 470.4 633.6 470.4zM588.8 153.6c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8l0 227.2c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8L588.8 153.6z"></path><path d="M700.8 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M572.8 716.8l137.6 0c12.8 0 22.4-9.6 22.4-22.4l0-137.6c0-12.8-9.6-22.4-22.4-22.4l-137.6 0c-12.8 0-22.4 9.6-22.4 22.4l0 137.6C550.4 707.2 560 716.8 572.8 716.8z"></path><path d="M886.4 563.2l0 38.4c0 12.8 12.8 25.6 25.6 25.6l38.4 0c12.8 0 25.6-12.8 25.6-25.6l0-38.4c0-12.8-12.8-25.6-25.6-25.6l-38.4 0C899.2 537.6 886.4 547.2 886.4 563.2z"></path><path d="M582.4 944l48 0c12.8 0 22.4-9.6 22.4-22.4l0-48c0-12.8-9.6-22.4-22.4-22.4l-48 0c-12.8 0-22.4 9.6-22.4 22.4l0 48C560 934.4 569.6 944 582.4 944z"></path><path d="M944 704l-99.2 0c-16 0-28.8 12.8-28.8 28.8l0 44.8-48 0c-19.2 0-32 12.8-32 32l0 99.2c0 16 12.8 28.8 28.8 28.8l179.2 3.2c16 0 28.8-12.8 28.8-28.8l0-179.2C972.8 716.8 960 704 944 704z" ></path></svg>
+											</el-icon>
+										</template>
+										获取二维码
+									</el-button>
+								</template>
+							</el-popover>
+							
+						</div>
+					</div>
+				</el-form-item>
+				<el-form-item label="库位置" v-if="SettingDialog.type != 3">
+					<el-input 
+						v-model="SettingForm.path" 
+						readonly 
+						style="border: 0;"
+						@input="SettingEditStatus">
+						<i slot="suffix" style="cursor: pointer;" class="el-input__icon el-icon-edit" @click="SettingFormPathClick"></i>
+					</el-input>
+				</el-form-item>
+				<el-form-item label="访问权限">
+					<orguser-select 
+						v-if="SettingDialog.loading" 
+						:defaulttype="'view_'+SettingForm.appid" 
+						@change="SettingTreeVisitChange" 
+						:defaultheckeds="SettingFormvisit.checked" 
+						:defaultexpanded="SettingFormvisit.expanded" 
+						:defaultdata="SettingFormvisit.data"></orguser-select>
+					<el-text tag="p" type="info" size="small" truncated>没有访问权限的人在库列表中看不到本库</el-text>
+				</el-form-item>
+				<el-form-item label="下载权限">
+					<orguser-select 
+						v-if="SettingDialog.loading" 
+						:defaulttype="'down_'+SettingForm.appid" 
+						@change="SettingTreeDownChange" 
+						:defaultheckeds="SettingFormdownload.checked"
+						:defaultexpanded="SettingFormdownload.expanded" 
+						:defaultdata="SettingFormdownload.data"></orguser-select>
+					<el-text tag="p" type="info" size="small" truncated>没有下载权限的人同时无法查看原图，浏览时仅能查看缩略图，也无法下载文件</el-text>
+				</el-form-item>
+				<el-form-item label="分享权限">
+					<orguser-select 
+						v-if="SettingDialog.loading" 
+						:defaulttype="'share_'+SettingForm.appid" 
+						@change="SettingTreeShareChange" 
+						:defaultheckeds="SettingFormshare.checked" 
+						:defaultexpanded="SettingFormshare.expanded" 
+						:defaultdata="SettingFormshare.data"></orguser-select>
+					<el-text tag="p" type="info" size="small" truncated>没有分享权限的人员无法使用分享功能</el-text>
+				</el-form-item>
+				<el-form-item label="管理权限">
+					<orguser-select 
+						v-if="SettingDialog.loading" 
+						:defaulttype="'manage_'+SettingForm.appid" 
+						@change="SettingTreeManageChange" 
+						:defaultheckeds="SettingFormmanage.checked" 
+						:defaultexpanded="SettingFormmanage.expanded" 
+						:defaultdata="SettingFormmanage.data"
+						:isunlimit="false"
+						:defaultcheckedtype="['user']"></orguser-select>
+					<el-text tag="p" type="info" size="small" truncated>没有管理权限的人员无法使用库编辑功能</el-text>
+				</el-form-item>
+				<template v-if="parseFloat(SettingForm.eagle)==1">
+					<el-form-item label="允许导入文件">
+						<el-input type="textarea" v-model="SettingForm.allowext" @input="SettingEditStatus"></el-input>
+						<el-text tag="p" type="info" size="small" truncated>多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</el-text>
+					</el-form-item>
+					<el-form-item label="禁止导入文件">
+						<el-input type="textarea" v-model="SettingForm.notallowext"> @input="SettingEditStatus"</el-input>
+						<el-text tag="p" type="info" size="small" truncated>多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</el-text>
+					</el-form-item>
+				</template>
+				<el-form-item label="计划任务"  v-if="SettingDialog.type != 3">
+					<el-radio-group v-model="SettingForm.cron" @change="SettingEditStatus">
+						<el-radio :label="0" border>关闭</el-radio>
+						<el-radio :label="1" border>开启</el-radio>
+					</el-radio-group>
+					<el-text 
+						tag="p" 
+						type="info" 
+						size="small" 
+						style="line-height: 18px;margin-top: 5px;width: 100%;">计划任务用于定时更新库，如果库不经常更新建议关闭，偶尔有更新时手动进行更新。计划任务更新会比较消耗服务器资源，如果开启可以查看
+						<el-link 
+							type="primary" 
+							:underline="false" 
+							target="_blank" 
+							style="vertical-align: top;">开启教程</el-link>
+					</el-text>
+				</el-form-item>
+				<template v-if="SettingDialog.type != 3 && SettingForm.cron > 0">
+					<el-form-item label="执行时间">
+						<el-select v-model="SettingForm.crontype" style="width: 115px"  @change="SettingCrontypeChange">
+							<el-option label="每天" :value="0"></el-option>
+							<el-option label="运行频率" :value="1"></el-option>
+						</el-select>
+						<template v-if="SettingForm.crontype == 0">
+							<el-select v-model="SettingForm.crontime" style="margin-left: 12px;" multiple @change="SettingEditStatus">
+								<el-option v-for="key in 24" :label="key+'点'" :value="key"></el-option>
+							</el-select>
+						</template>
+						<template v-else>
+							<el-select v-model="SettingForm.crontime" style="margin-left: 12px;" @change="SettingEditStatus">
+								<el-option label="每30分钟" :value="0.5"></el-option>
+								<el-option label="每1小时" :value="1"></el-option>
+								<el-option label="每24小时" :value="24"></el-option>
+							</el-select>
+						</template>
+					</el-form-item>
+				</template>
+				
+			</el-form>
+		</template>
+		<template v-else-if="SettingDialog.active=='information'">
+			<el-table ref="righttable" :data="SettingForm.fileds" style="width: 100%" row-key="flag">
+				<el-table-column label="排序" width="60" >
+					<el-icon class="dzz-move"><Rank /></el-icon>
+				</el-table-column>
+				<el-table-column  prop="name" label="名称"></el-table-column>
+				<el-table-column label="状态" width="100" >
+					<template #default="scope">
+						<el-switch @input="SettingEditStatus" v-model="scope.row.checked" :active-value="1" :inactive-value="0">
+						</el-switch>
+					</template>
+				</el-table-column>
+			</el-table>
+		</template>
+		<template v-else-if="SettingDialog.active=='preference'">
+			<el-form 
+				:model="SettingForm" 
+				label-width="140px" 
+				label-suffix="：">
+				<el-form-item label="默认布局">
+					<el-radio-group v-model="SettingForm.layout" @change="SettingEditStatus">
+						<el-radio label="waterFall" style="margin-bottom: 6px;" border>瀑布流</el-radio>
+						<el-radio label="rowGrid" style="margin-bottom: 6px;" border>自适应</el-radio>
+						<el-radio label="imageList" style="margin-bottom: 6px;" border>网格</el-radio>
+						<el-radio label="tabodd" style="margin-bottom: 6px;" border>列表单列</el-radio>
+						<el-radio label="tabeven" style="margin-bottom: 6px;" border>列表双列</el-radio>
+						<el-radio label="details" style="margin-bottom: 6px;" border>详情</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="默认显示信息">
+					<el-checkbox-group v-model="SettingForm.display" @change="SettingEditStatus">
+						<el-checkbox border style="margin-bottom: 6px;" label="name" name="type">文件名</el-checkbox>
+						<!-- <el-checkbox border style="margin-bottom: 6px;" label="tagging" name="type">标注数</el-checkbox> -->
+						<el-checkbox border style="margin-bottom: 6px;" label="extension" name="type">扩展名</el-checkbox>
+						<el-checkbox border style="margin-bottom: 6px;" label="other" name="type">其它信息</el-checkbox>
+					</el-checkbox-group>
+				</el-form-item>
+				<el-form-item v-if="SettingForm.display.indexOf('other')>-1" label="其它信息">
+					<el-radio-group v-model="SettingForm.other" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="size">尺寸</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="filesize">文件大小</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="tag">标签</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="grade">评分</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="btime">添加时间</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="dateline">修改时间</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="mtime">创建日期</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="默认排序方式">
+					<el-radio-group v-model="SettingForm.sort" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="btime">添加日期</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="dateline">修改日期</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="mtime">创建日期</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="name">标题</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="filesize">文件大小</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="whsize">尺寸</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="grade">评分</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="duration">时长</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="默认排序">
+					<el-radio-group v-model="SettingForm.desc" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="desc">降序</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="asc">升序</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="打开文件窗口方式">
+					<el-radio-group v-model="SettingForm.opentype" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="current">当前窗口</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="new">新窗口</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="筛选器样式">
+					<el-radio-group v-model="SettingForm.filterstyle" @change="SettingEditStatus">
+						<el-radio border :label="0">下拉菜单</el-radio>
+						<el-radio border :label="1">平铺列表</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="侧边显示分类栏">
+					<el-radio-group v-model="SettingForm.aside" @change="SettingEditStatus">
+						<el-radio border :label="1">开启</el-radio>
+						<el-radio border :label="0">关闭</el-radio>
+					</el-radio-group>
+				</el-form-item>
+			</el-form>
+		</template>
+		<template v-else-if="SettingDialog.active=='screen'">
+			<el-row v-if="SettingScreens.show" class="drawer-screen-box" :gutter="20">
+				<el-col :span="8">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								可选筛选项
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<el-tree
+										ref="SettingTreeRef"
+										style="padding: 10px;"
+										:data="SettingScreens.data"
+										show-checkbox
+										default-expand-all
+										check-strictly
+										node-key="key"
+										:expand-on-click-node="false"
+										check-on-click-node
+										@check="SettingTreeChange"
+										:default-checked-keys="SettingScreens.defaultKeys"
+										:props="{
+											children: 'children',
+											label: 'label',
+											isLeaf:'isLeaf'
+										}"
+									></el-tree>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="8" v-if="SettingScreens.checkedVals.length">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								已选筛选项
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<div class="el-checkbox-group checkedkeys-checkbox-group">
+										<label 
+											class="el-checkbox" 
+											v-for="item in SettingScreens.checkedVals"
+											:class="{checked:item.key == 'tag' || item.group,'is-active':SettingScreens.tagvaldata.active == item.key}"
+											:key="item.key"
+											@click.stop="SettingTagVal(item)">
+											<span class="el-checkbox__label">{{item.label}}</span>
+											<el-icon class="move move-handle"><Rank></Rank></el-icon>
+										</label>
+									</div>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="8" v-if="SettingScreens.tagvaldata.active">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								{{SettingScreens.tagvaldata.title}}设置
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<el-radio-group 
+										@change="SettingDialog.edit = true"
+										v-model="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].auto" 
+										style="padding:10px;">
+										<el-radio label="0">自动标签</el-radio>
+										<el-radio label="1">自定义标签</el-radio>
+									</el-radio-group>
+									<el-divider style="margin:0;"></el-divider>
+									<template v-if="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].auto == '0'">
+										<el-radio-group 
+											@change="SettingDialog.edit = true"
+											v-model="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].sort"
+											style="padding:10px;">
+											<el-radio label="hot">热度排序</el-radio>
+											<el-radio label="name">名称排序</el-radio>
+										</el-radio-group>
+									</template>
+									<template v-else>
+										<div class="el-checkbox-group">
+											<el-autocomplete
+												v-model="SettingScreens.tagvaldata.keyword"
+												style="width: 100%;"
+												:fetch-suggestions="SettingTagGet"
+												@select="SettingTagAdd">
+												<template #default="{ item }">
+													<div 
+													class="value"
+													:class="{active:item.checked}">
+														{{ item.tagname }}
+														<el-icon v-if="item.checked" class="Check"><Check ></Check></el-icon>
+													</div>
+													
+												</template>
+											</el-autocomplete>
+											<div class="tag-checkbox-group">
+												<label 
+												class="el-checkbox" 
+												v-for="item in SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].data"
+												:key="item.tid">
+												<span class="el-checkbox__label">{{item.tagname}}</span>
+												<el-icon class="delete" @click="SettingDeleteTag(item)"><Close></Close></el-icon>
+												<el-icon class="move move-handle"><Rank></Rank></el-icon>
+											</label>
+											</div>
+										</div>
+									</template>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+			</el-row>
+		</template>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button @click="SettingEightClosed" :disabled="SettingForm.loading">关闭</el-button>
+        <el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">保存</el-button>
+      </div>
+    </template>
+</el-drawer>
+<script>
+    const RightMixin = {
+        data(){
+            return {
+				SettingForm:{
+					appname:'',
+					loading:false,
+					address:'',
+					appid:'',
+					path:'',
+					getinfo:'0',
+					eagle:0,
+					allowext:'',
+					notallowext:'',
+					cron:0,
+					crontype:0,
+					crontime:[1],
+					charset:'',
+                    layout: 'waterFall',
+                    display: [],
+                    other:'btime',
+                    sort: 'btime',
+                    desc: 'desc',
+                    opentype:'current',
+					fileds:[],
+					aside:0,
+					filterstyle:0
+				},
+				SettingDialog:{
+					Visible:false,
+                    loading:false,
+					edit:false,
+					active:'basic',
+					type:'',
+					pathinfo:parseFloat('{$_G['setting']['pathinfo']}'),
+				},
+				SettingFormvisit:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormshare:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormdownload:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormmanage:{
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+				},
+				SettingScreens:{
+					defaultKeys:[],
+					data:[],
+					tagchilds:[],
+					checkedVals:[],
+					tagvaldata:{
+						data:{},
+						title:'',
+						active:'',
+						keyword:''
+					},
+					show:false
+				},
+				SettingScreensHeight:'0px',
+				SettingQrcode:{
+					isqrcode:false,
+					qrcodeurl:''
+				}
+            }
+        },
+		watch:{
+			'SettingDialog.active':{
+				handler(val){
+					let self = this;
+					if(val == 'screen'){
+						this.TreeloadNode();
+					}else if(val == 'information'){
+						self.$nextTick(function(){
+							self.RightTableSortable();
+						})
+						
+					}
+				},
+				deep:true
+			}
+		},
+        methods:{
+			//删除标签
+			SettingDeleteTag(data){
+				let index = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+					return parseFloat(data.tid) == parseFloat(current.tid);
+				});
+				if(index>-1){
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.splice(index,1);
+				}
+				this.SettingDialog.edit = true;
+			},
+			RightCopyUrl(url){
+				const self = this;
+				var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+				input.setAttribute('value', '{$_G['siteurl']}'+url);
+				document.getElementsByTagName('body')[0].appendChild(input);
+				document.getElementById('copyInput').select();
+				document.execCommand('copy')
+				self.$message({
+					message: '成功复制到剪切板',
+					type: 'success'
+				});
+				document.getElementById('copyInput').remove();
+			},
+			async SettingTagGet(keyword,cd){
+				if(!keyword){
+					cd([]);
+					return false;
+				}
+				let param = {
+					appid:this.SettingForm.appid,
+					keyword:keyword,
+				}
+				if(this.SettingScreens.tagvaldata.active != 'tag'){
+					param['cid'] = this.SettingScreens.tagvaldata.active;
+				}
+				var {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=gettag',param);
+				if(res){
+					let data = [];
+					for (let index = 0; index < res.tag.length; index++) {
+						const item = res.tag[index];
+						let ind = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+							return parseFloat(item.tid) == parseFloat(current.tid);
+						});
+						if(ind < 0){
+							item['checked'] = false;
+						}else{
+							item['checked'] = true;
+						}
+						data.push(item)
+					}
+					cd(data);
+				}else{
+					cd([]);
+				}
+			},
+			SettingTagAdd(data){
+				let index = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+					return parseFloat(data.tid) == parseFloat(current.tid);
+				})
+				if(index<0){
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.push(data);
+				}else{
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.splice(index,1);
+				}
+				this.SettingDialog.edit = true;
+			},
+			SettingTagVal(data){
+				const self = this;
+				this.SettingScreens.tagvaldata.title = '';
+				this.SettingScreens.tagvaldata.active = '';
+				this.SettingScreens.tagvaldata.keyword = '';
+				if(data.key != 'tag' && !data.group){
+					return false;
+				}
+				this.SettingScreens.tagvaldata.title = data.label;
+				this.SettingScreens.tagvaldata.active = data.key;
+				self.$nextTick(function(){
+					self.SettingScrrenThreeSortable();
+				})
+			},
+			
+			//筛选项change
+			SettingTreeChange(data,checkedNodes){
+				const self = this;
+				if(data.group && checkedNodes.checkedKeys.indexOf(data.key) > -1){
+					self.$refs.SettingTreeRef.setChecked('tag',false);
+					this.SettingTreeVal({key:'tag'},false);
+				}else if(data.key == 'tag' && checkedNodes.checkedKeys.indexOf(data.key) > -1){
+					for (let index = 0; index < this.SettingScreens.tagchilds.length; index++) {
+						const item = this.SettingScreens.tagchilds[index];
+						if(checkedNodes.checkedKeys.indexOf(item.key) > -1){
+							self.$refs.SettingTreeRef.setChecked(item.key,false);
+							this.SettingTreeVal({key:item.key},false);
+						}
+					}
+				}
+				this.SettingTreeVal(data,checkedNodes.checkedKeys.indexOf(data.key)>-1);
+			},
+			//处理筛选的值
+			SettingTreeVal(data,status){
+				if(status){
+					let obj = {
+						key:data.key,
+						label:data.label?data.label:data.text,
+					}
+					if(data.group || data.key == 'tag'){
+						obj['group'] = data.group || false;
+						obj['data'] = data.data || [];
+						obj['auto'] = data.auto || '0';
+						obj['sort'] = data.sort || 'hot';
+						this.SettingScreens.tagvaldata.data[data.key] = obj;
+					}
+					this.SettingScreens.checkedVals.push(obj);
+				}else{
+					let index = this.SettingScreens.checkedVals.findIndex(function(current){
+						return current.key == data.key;
+					});
+					if(index > -1){
+						this.SettingScreens.checkedVals.splice(index,1);
+						if(data.group || data.key == 'tag'){
+							delete this.SettingScreens.tagvaldata.data[data.key];
+							if(this.SettingScreens.tagvaldata.active == data.key){
+								this.SettingScreens.tagvaldata.active = '';
+								this.SettingScreens.tagvaldata.title = '';
+								this.SettingScreens.tagvaldata.keyword = '';
+							}
+						}
+					}
+				}
+				this.SettingDialog.edit = true;
+			},
+			//筛选项加载
+			async TreeloadNode(node,resolve){
+				var self = this;
+				/*this.SettingScreens.data = [
+					{key:'classify',label:'分类'},
+					{key:'tag',label:'标签',children:[]},
+					{key:'color',label:'颜色'},
+					{key:'link',label:'链接'},
+					{key:'desc',label:'注释'},
+					{key:'duration',label:'时长'},
+					{key:'size',label:'尺寸'},
+					{key:'ext',label:'类型'},
+					{key:'shape',label:'形状'},
+					{key:'grade',label:'评分'},
+					{key:'level',label:'密级'},
+					{key:'btime',label:'添加时间'},
+					{key:'dateline',label:'修改日期'},
+					{key:'mtime',label:'创建日期'},
+				]*/
+				let param = {
+					appid:this.SettingForm.appid
+				}
+				var {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=gettagcat',param);
+				let data = [];
+				if(res.success){
+					for(let i in res.data){
+						data.push({
+							key:i,
+							label:res.data[i],
+							group:true,
+						});
+					}
+					
+				}
+				if(data.length){
+				
+					let tagIndex=this.SettingScreens.data.findIndex((item)=>{
+						return item.key=='tag';
+					});
+					if(tagIndex>-1) this.SettingScreens.data[tagIndex].children = data;
+				}
+				this.SettingScreens.tagchilds = data;
+				self.SettingScreens.show = true;
+				self.$nextTick(function(){
+					self.SettingScrrenTwoSortable();
+				});
+			},
+			async SettingGetData(){
+				var self = this;
+				self.SettingScreensHeight = self.$refs.rightdrawer.drawerRef.querySelector('.el-drawer__body').offsetHeight - 80 +'px';
+                self.SettingDialog.loading = false;
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',{
+                    appid:this.SettingForm.appid
+                });
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.success){
+					var ditem = data.data;
+					var showVal = ditem.convertpath.replace(/\\/g,"/");
+					var view = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					var download = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					var share = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					var manage = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					if(ditem.view){
+						if(parseFloat(ditem.view) == 1){
+							view.groups.push('unlimit');
+							view.checked.push('unlimit');
+							view.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.view.expanded){
+								for(let v in ditem.view.expanded){
+									view.expanded.push(parseFloat(ditem.view.expanded[v]));
+								}
+							}
+							if(ditem.view.groups && ditem.view.groups.length){
+								for (let index = 0; index < ditem.view.groups.length; index++) {
+									const element = ditem.view.groups[index];
+									view.data.push({
+										id:element.orgid=='other'?'other':parseFloat(element.orgid),
+										text:element.text,
+										type: 'organization'
+									});
+									view.checked.push(element.orgid=='other'?'other':parseFloat(element.orgid));
+									view.groups.push(parseFloat(element.orgid=='other'?'other':parseFloat(element.orgid)))
+								}
+							}
+							if(ditem.view.uids && ditem.view.uids.length){
+								for (let index = 0; index < ditem.view.uids.length; index++) {
+									const element = ditem.view.uids[index];
+									view.data.push({
+										id:parseFloat(element.uid),
+										text:element.text,
+										type: "user"
+									});
+									// view.checked.push('uid_'+element.uid);
+									view.uids.push(parseFloat(element.uid));
+								}
+							}
+						}
+						
+					}else{
+						view.status = 1;
+					}
+					if(ditem.download){
+						if(parseFloat(ditem.download) == 1){
+							download.groups.push('unlimit');
+							download.checked.push('unlimit');
+							download.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.download.expanded){
+								for(let v in ditem.download.expanded){
+									download.expanded.push(parseFloat(ditem.download.expanded[v]));
+								}
+							}
+							if(ditem.download.groups && ditem.download.groups.length){
+								for (let index = 0; index < ditem.download.groups.length; index++) {
+									const element = ditem.download.groups[index];
+									download.data.push({
+										id:element.orgid=='other'?'other':parseFloat(element.orgid),
+										text:element.text,
+										type: 'organization'
+									});
+									download.checked.push(element.orgid=='other'?'other':parseFloat(element.orgid));
+									download.groups.push(element.orgid=='other'?'other':parseFloat(element.orgid))
+								}
+							}
+							if(ditem.download.uids && ditem.download.uids.length){
+								for (let index = 0; index < ditem.download.uids.length; index++) {
+									const element = ditem.download.uids[index];
+									download.data.push({
+										id:parseFloat(element.uid),
+										text:element.text,
+										type: "user"
+									});
+									// download.checked.push('uid_'+element.uid);
+									download.uids.push(parseFloat(element.uid));
+								}
+							}
+						}
+						
+					}else{
+						download.status = 1;
+					}
+					
+					if(ditem.share){
+						
+						if(parseFloat(ditem.share) == 1){
+							share.groups.push('unlimit');
+							share.checked.push('unlimit');
+							share.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.share.expanded){
+								for(let v in ditem.share.expanded){
+									share.expanded.push(parseFloat(ditem.share.expanded[v]));
+								}
+							}
+							if(ditem.share.groups && ditem.share.groups.length){
+								for (let index = 0; index < ditem.share.groups.length; index++) {
+									const element = ditem.share.groups[index];
+									share.data.push({
+										id:element.orgid=='other'?'other':parseFloat(element.orgid),
+										text:element.text,
+										type: 'organization'
+									});
+									share.checked.push(parseFloat(element.orgid=='other'?'other':parseFloat(element.orgid)));
+									share.groups.push(parseFloat(element.orgid=='other'?'other':parseFloat(element.orgid)))
+								}
+							}
+							if(ditem.share.uids && ditem.share.uids.length){
+								for (let index = 0; index < ditem.share.uids.length; index++) {
+									const element = ditem.share.uids[index];
+									share.data.push({
+										id:parseFloat(element.uid),
+										text:element.text,
+										type: "user"
+									});
+									// share.checked.push('uid_'+element.uid);
+									share.uids.push(parseFloat(element.uid));
+								}
+							}
+						}
+						
+					}else{
+						share.status = 1;
+					}
+					if(ditem.manage){
+						if(parseFloat(ditem.manage) == 1){
+							manage.groups.push('unlimit');
+							manage.checked.push('unlimit');
+							manage.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.manage.expanded){
+								for(let v in ditem.manage.expanded){
+									manage.expanded.push(parseFloat(ditem.manage.expanded[v]));
+								}
+							}
+							if(ditem.manage.groups && ditem.manage.groups.length){
+								for (let index = 0; index < ditem.manage.groups.length; index++) {
+									const element = ditem.manage.groups[index];
+									manage.data.push({
+										id:element.orgid=='other'?'other':parseFloat(element.orgid),
+										text:element.text,
+										type: 'organization'
+									});
+									manage.checked.push(element.orgid=='other'?'other':parseFloat(element.orgid));
+									manage.groups.push(element.orgid=='other'?'other':parseFloat(element.orgid))
+								}
+							}
+							if(ditem.manage.uids && ditem.manage.uids.length){
+								for (let index = 0; index < ditem.manage.uids.length; index++) {
+									const element = ditem.manage.uids[index];
+									manage.data.push({
+										id:parseFloat(element.uid),
+										text:element.text,
+										type: "user"
+									});
+									// manage.checked.push('uid_'+element.uid);
+									manage.uids.push(parseFloat(element.uid));
+								}
+							}
+						}
+						
+					}else{
+						manage.status = 1;
+					}
+					let layout = 'waterFall';
+					let display = [];
+					let other = 'btime';
+					let sort = 'btime';
+					let desc = 'desc';
+					let opentype = 'current';
+					let aside = 0;
+					let filterstyle = 0;
+					if(ditem.pagesetting){
+						layout = ditem.pagesetting.layout || 'waterFall';
+						display = ditem.pagesetting.display || [];
+						other = ditem.pagesetting.other || 'btime';
+						sort = ditem.pagesetting.sort || 'btime';
+						desc = ditem.pagesetting.desc || 'desc';
+						opentype = ditem.pagesetting.opentype || 'current';
+						aside = parseInt(ditem.pagesetting.aside) || 0;
+						filterstyle = parseInt(ditem.pagesetting.filterstyle) || 0;
+					}
+					if(ditem.filter && ditem.filter.length){
+						self.SettingScreens.data=ditem.filter;
+					}
+					self.SettingScreens.defaultKeys = [];
+					if(ditem.screen && ditem.screen.length){
+						for (let index = 0; index < ditem.screen.length; index++) {
+							const fitem = ditem.screen[index];
+							self.SettingScreens.defaultKeys.push(fitem.key);
+							self.SettingTreeVal(fitem,true);
+						}
+					}else{
+						for (let index = 0; index < ditem.filter.length; index++) {
+							const fitem = ditem.filter[index];
+							if(fitem.checked){
+								self.SettingScreens.defaultKeys.push(fitem.key);
+								self.SettingTreeVal(fitem,true);
+							}
+						}
+					}
+					self.SettingDialog.type = parseFloat(data.data.type);
+					let crontype = parseFloat(data.data.crontype);
+					let crontime = [1];
+					if(crontype == 0){
+						if(data.data.crontime){
+							let fcrontime = data.data.crontime.split(',');
+							crontime = [];
+							for (let index = 0; index < fcrontime.length; index++) {
+								const element = fcrontime[index];
+								crontime.push(parseFloat(element))
+							}
+						}
+					}else{
+						crontime = parseFloat(data.data.crontime);
+					}
+					
+					let fileds = [];
+					if(data.data.fileds){
+						for (const key in data.data.fileds) {
+							fileds.push(data.data.fileds[key]);
+						}
+					}
+					self.SettingForm = {
+						appid:this.SettingForm.appid,
+						appname:data.data.appname,
+						path:showVal,
+						address:data.data.url?data.data.url:'',
+						getinfo:data.data.getinfo,
+						charset:data.data.charset,
+						eagle:parseFloat(data.data.type),
+						allowext:data.data.allowext,
+						notallowext:data.data.notallowext,
+						cron:data.data.cron?parseFloat(data.data.cron):0,
+						crontype:crontype,
+						crontime:crontime,
+						loading:false,
+                        layout: layout,
+                        display: display,
+                        other:other,
+                        sort: sort,
+                        desc: desc,
+                        opentype:opentype,
+						fileds:fileds,
+						aside:aside,
+						filterstyle:filterstyle,
+					};
+					self.SettingFormvisit = view;
+					self.SettingFormshare = share;
+					self.SettingFormdownload = download;
+					self.SettingFormmanage = manage;
+                    self.SettingDialog.loading = true;
+					self.SettingDialog.edit = false;
+					self.SettingDialog.active = 'basic';
+					
+				}else{
+					self.$message.error('数据获取失败');
+				}
+			},
+			//执行时间修改
+			SettingCrontypeChange(value){
+				if(value == 1){
+					this.SettingForm.crontime = 0.5;
+				}else{
+					this.SettingForm.crontime = [1];
+				}
+				this.SettingEditStatus();
+			},
+			SettingScreenChange(value){
+				for (let index = 0; index < this.SettingScreens.length; index++) {
+					const item = this.SettingScreens[index];
+					if(value.indexOf(item.key)<0){
+						item.checked = 0;
+					}else{
+						item.checked = 1;
+					}
+				}
+			},
+			SettingScrrenThreeSortable(){//标签设置排序
+				var _this = this;
+				var tbody = document.querySelector('.tag-checkbox-group');
+				Sortable.create(tbody, {
+                    animation: 150,
+					draggable: ".el-checkbox",
+					handle: ".move",
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var val = _this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data[oldIndex];
+						_this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data.splice(oldIndex, 1);
+						_this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data.splice(newIndex, 0, val);
+						_this.SettingDialog.edit = true;
+					}
+				});
+			},
+            SettingScrrenTwoSortable(){//已选筛选排序
+				var _this = this;
+				var tbody = document.querySelector('.checkedkeys-checkbox-group');
+				Sortable.create(tbody, {
+                    animation: 150,
+					draggable: ".el-checkbox",
+					handle: ".move",
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var val = _this.SettingScreens.checkedVals[oldIndex];
+						_this.SettingScreens.checkedVals.splice(oldIndex, 1);
+						_this.SettingScreens.checkedVals.splice(newIndex, 0, val);
+						_this.SettingDialog.edit = true;
+					}
+				});
+			},
+			SettingFormPathClick(){
+				this.Catalogue.dialogtype = 'setting';
+				this.Catalogue.type = this.SettingForm.type;
+				this.Catalogue.appid = this.SettingForm.appid;
+				var showVal = this.SettingForm.path;
+				showVal = showVal.split('/');
+				showVal.pop();
+				var newshowVal = showVal.join('/');
+				this.Catalogue.showVal = '';
+				this.Catalogue.search = newshowVal;
+				this.Catalogue.defaultsearch = newshowVal;
+				this.Catalogue.searchStatus = true;
+				this.Catalogue.charset = this.SettingForm.charset;
+				this.SettingDialog.Visible = false;
+				this.Catalogue.dialogVisible = true;
+			},
+			async SettingSubmit(){
+				var self = this;
+				self.SettingForm.loading = true;
+				var visit = {};
+				var share = {};
+				var download = {};
+				var manage = {};
+				if(parseFloat(self.SettingFormvisit.status)){
+					visit = 0;
+				}else if(self.SettingFormvisit.groups && self.SettingFormvisit.groups.length && self.SettingFormvisit.groups.indexOf('unlimit')>-1){
+					visit = 1;
+				}else{
+					if(self.SettingFormvisit.groups && self.SettingFormvisit.groups.length){
+						visit['groups'] = self.SettingFormvisit.groups;
+					}
+					if(self.SettingFormvisit.uids && self.SettingFormvisit.uids.length){
+						visit['uids'] = self.SettingFormvisit.uids;
+					}
+				}
+				
+				if(parseFloat(self.SettingFormshare.status)){
+					share = 0;
+				}else if(self.SettingFormshare.groups && self.SettingFormshare.groups.length && self.SettingFormshare.groups.indexOf('unlimit')>-1){
+					share = 1;
+				}else{
+					if(self.SettingFormshare.groups && self.SettingFormshare.groups.length){
+						share['groups'] = self.SettingFormshare.groups;
+					}
+					if(self.SettingFormshare.uids && self.SettingFormshare.uids.length){
+						share['uids'] = self.SettingFormshare.uids;
+					}
+				}
+			
+				if(parseFloat(self.SettingFormdownload.status)){
+					download = 0;
+				}else if(self.SettingFormdownload.groups && self.SettingFormdownload.groups.length && self.SettingFormdownload.groups.indexOf('unlimit')>-1){
+					download = 1;
+				}else{
+					if(self.SettingFormdownload.groups && self.SettingFormdownload.groups.length){
+						download['groups'] = self.SettingFormdownload.groups;
+					}
+					if(self.SettingFormdownload.uids && self.SettingFormdownload.uids.length){
+						download['uids'] = self.SettingFormdownload.uids;
+					}
+				}
+
+
+
+		
+				if(self.SettingFormmanage.uids && self.SettingFormmanage.uids.length){
+					manage['uids'] = self.SettingFormmanage.uids;
+				}
+
+
+				let screen = [];
+				for (let s = 0; s < this.SettingScreens.checkedVals.length; s++) {
+					const item = JSON.parse(JSON.stringify(this.SettingScreens.checkedVals[s]));
+					if(item.group || item.key == 'tag'){
+						if(this.SettingScreens.tagvaldata.data[item.key]){
+							let fitem = this.SettingScreens.tagvaldata.data[item.key];
+							item['group'] = fitem.group ? true : '';
+							item['sort'] = fitem.sort;
+							item['auto'] = fitem.auto;
+							item['data'] = fitem.data || [];
+						}
+					}
+					screen.push(item)
+				}
+				let crontime = self.SettingForm.crontime;
+				let crontype = parseFloat(self.SettingForm.crontype)
+				if(crontype == 0){
+					crontime = self.SettingForm.crontime.join(',');
+				}
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appid:self.SettingForm.appid,
+					appname:self.SettingForm.appname,
+					getinfo:self.SettingForm.getinfo,
+					address:self.SettingForm.address,
+					share:share,
+					download:download,
+					manage:manage,
+					cron:self.SettingForm.cron,
+					crontype:crontype,
+					crontime:crontime,
+					visit:visit,
+					allowext:self.SettingForm.allowext,
+					notallowext:self.SettingForm.notallowext,
+					pagesetting:{
+						layout:self.SettingForm.layout,
+						display:self.SettingForm.display,
+						other:self.SettingForm.other,
+						sort:self.SettingForm.sort,
+						desc:self.SettingForm.desc,
+						opentype:self.SettingForm.opentype,
+						aside:self.SettingForm.aside,
+						filterstyle:self.SettingForm.filterstyle,
+					},
+					screen:screen,
+					fileds:self.SettingForm.fileds,
+				};
+				
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				// self.SettingDialog.Visible = false;
+				if(data.success){
+					for(var x in self.Table.data){
+						if(self.Table.data[x].appid == self.SettingForm.appid){
+							self.Table.data[x].getinfo = self.SettingForm.getinfo;
+							self.Table.data[x].appname = self.SettingForm.appname;
+							self.Table.data[x].url = self.SettingForm.address;
+						}
+					}
+					self.TableDataForEach();
+					self.$message({
+						type:'success',
+						message:'保存成功'
+					});
+					self.SettingDialog.edit = false;
+				}else{
+					self.$message.error('设置失败');
+				}
+				self.SettingForm.loading = false;
+			},
+			RightTableSortable(){//排序
+				let self = this;
+				if(!self.$refs.righttable){
+					return false;
+				}
+				let tbody = self.$refs.righttable.scrollBarRef.wrapRef.querySelector('tbody');
+				Sortable.create(tbody, {
+					handle: ".dzz-move",
+					animation: 150, // ms, number 单位：ms，定义排序动画的时间
+					onUpdate: function(/**Event*/evt) {
+						const currentRow = self.SettingForm.fileds.splice(evt.oldIndex, 1)[0];
+						self.SettingForm.fileds.splice(evt.newIndex, 0, currentRow);
+						self.SettingEditStatus();
+					}
+				})
+			},
+			SettingTreeVisitChange(data){
+				this.SettingEditStatus();
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormvisit = str;
+				}else{
+					str.status = 1;
+					this.SettingFormvisit = str;
+				}
+			},
+			SettingTreeDownChange(data){
+				this.SettingEditStatus();
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormdownload = str;
+				}else{
+					str.status = 1;
+					this.SettingFormdownload = str;
+				}
+			},
+			SettingTreeShareChange(data){
+				this.SettingEditStatus();
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormshare = str;
+				}else{
+					str.status = 1;
+					this.SettingFormshare = str;
+				}
+			},
+			SettingTreeManageChange(data){
+				this.SettingEditStatus();
+				var str = {
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormmanage = str;
+				}else{
+					str.status = 1;
+					this.SettingFormmanage = str;
+				}
+			},
+			SettingEditStatus(){
+				this.SettingDialog.edit = true;
+			},
+			SettingEightClosed(){
+				const self = this;
+				if(this.SettingDialog.edit){
+					self.$messageBox.confirm(
+						'有未保存的数据,是否保存后在关闭？',
+						'提示',
+						{
+							confirmButtonText: '确定保存',
+							cancelButtonText: '取消保存',
+							type: 'warning',
+						}
+					).then(() => {
+						self.SettingSubmit();
+						this.SettingDialog.Visible = false;
+					}).catch(() => {
+						this.SettingEmptyData();
+						this.SettingDialog.Visible = false;
+					})
+				}else{
+					this.SettingEmptyData();
+					this.SettingDialog.Visible = false;
+				}
+				
+			},
+			SettingEmptyData(){
+				
+				this.SettingDialog.edit = false;
+				this.SettingScreens = {
+					defaultKeys:[],
+					data:[],
+					tagchilds:[],
+					checkedVals:[],
+					tagvaldata:{
+						data:{},
+						title:'',
+						active:'',
+						keyword:''
+					},
+					show:false
+				};
+			}
+		}
+    }
+</script>

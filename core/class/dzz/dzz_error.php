@@ -348,6 +348,9 @@ EOT;
 	}
 
 	public static function clear($message) {
+	    if(is_object($message)){
+	        $message = json_decode($message,true);
+        }
 		return str_replace(array("\t", "\r", "\n"), " ", $message);
 	}
 

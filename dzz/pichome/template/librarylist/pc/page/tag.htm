@@ -1,0 +1,128 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script src="static/js/sortable.min.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/tag.css?{VERHASH}"/>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" id="top_header" height="60px">
+			<!--{template librarylist/pc/components/index/header/index}-->
+		</el-header>
+		<el-container>
+		    <el-aside class="page-left" :width="LeftWidth+'px'">
+				<!--{template librarylist/pc/components/left/index}-->
+		    </el-aside>
+			<el-aside class="page-left" width="200px">
+				<!--{template librarylist/pc/components/tag/left}-->
+			</el-aside>
+			<el-main style="overflow: hidden;padding: 0;">
+				<el-scrollbar id="container_scroll" ref="scrollbar" @scroll="DocumentHideAllPop">
+					<div class="page-content">
+						<!--{template librarylist/pc/components/tag/content}-->
+					</div>
+				</el-scrollbar>
+				<div class="right-toolbar">
+					<el-button type="primary" style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;" circle icon="Plus" size="large" @click="TagContextAddTag"></el-button>
+				</div>
+			</el-main>
+		</el-container>
+	   
+	</el-container>
+	<!--{template librarylist/pc/components/left/Jsindex}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+				DocumentResize:0,
+				DocumentAppid:'$_GET[appid]',
+				DocumentThemeColor:'',//dark
+				DocumentVapp:{appname:'',type:0}
+			}
+		},
+		mixins:[leftMixins,HeaderMixins,TagLeftMixin,TagContentMixin],
+		created(){
+			var self = this;
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			this.LeftTree.show = true;
+			this.CommonInit()
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods:{
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			DocumentHideAllPop(){
+				const self = this;
+				//左侧树隐藏
+				self.LeftTreePopover.show = false;
+				//标签隐藏
+				this.tagContextMenu.show = false;
+				//标签群组隐藏
+				this.tagLeftMenu.show = false;
+			},
+			screenvisible(status,text){
+				this.DocumentOverlay = status;
+			},
+			async CommonInit(){
+				const {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getpagesetting',{
+					appid:this.DocumentAppid,
+					fids:this.LeftTree.Currentkey || ''
+				});
+				this.DocumentVapp = res.vappdata?res.vappdata:{appname:0,type:0};
+
+			},
+		},
+		components: {
+		},
+		mounted(){
+			var self = this;
+			
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

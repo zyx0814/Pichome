@@ -1,0 +1,306 @@
+<!--{template librarylist/pc/components/right/file/js}-->
+<script>
+	let RightMixin = {
+		data(){
+			return {
+				RightWidth:260,
+				RightType:'',
+				RightActiveRid:[],
+				RightActivefid:[],
+				RightData:{
+					img:[],
+					color:[],
+					title:'',
+					message:'',
+					link:'',
+					level:0,
+					format:'',
+					size:'',
+					foldersize:'',
+					foldenum:'',
+					grade:0,
+					btime:'',
+					mtime:'',
+					dateline:'',
+					fileds:[],
+					filedsData:[],
+					folder:[],
+				},
+				
+			}
+		},
+		mixins:[RightFileMixin],
+		methods:{
+			async RightGetData(){
+				let url = '';
+				let param = {
+					appid:this.DocumentAppid,
+					hassub:this.ImageDataIsExpanded
+				};
+				if(this.RightType == 'file'){
+					url = MOD_URL+'&op=library&do=rightdata&operation=getfiledata';
+				}else{
+					url = MOD_URL+'&op=library&do=rightdata&operation=getfolderdata';
+				}
+				if(this.RightType == 'file'){
+					param['rids'] = this.RightActiveRid.join(',');
+				}else if(this.RightType == 'notclassify'){
+					param['nofolder'] = 1;
+				}else if(this.RightType == 'nottag'){
+					param['notag'] = 1;
+				}else if(this.RightType == 'folder'){
+					param['fid'] = this.RightActivefid.join(',');
+				}else if(this.RightType == 'recycle'){
+					param['isrecycle'] = 1;
+				}
+
+				let {data :res} = await axios.post(url,param);
+				if(this.RightType == 'file'){
+					if(res){
+						this.RightData.fileds = res.fileds || [];
+						this.RightData.filedsData = [];
+						if(this.RightData.fileds.length){
+							for (let index = 0; index < this.RightData.fileds.length; index++) {
+								const element = this.RightData.fileds[index];
+								if(parseInt(element.checked) == 0 || !element.flag)continue;
+								if(element.type == "tabgroup"){
+									let tval = [];
+									let tdata = [];
+									for (const key in res[element.flag]) {
+										const felement = res[element.flag][key];
+										tval.push(felement.tid);
+										tdata.push(felement);
+									}
+									this.RightData.filedsData.push({
+										value:tval,
+										flag:element.flag,
+										id:element.flag.replace('tabgroup_',''),
+										name:element.name,
+										iframe:'',
+										data:tdata
+									})
+								
+								}else if(element.flag == "fid"){
+									let data = [];
+									for(let f in res.foldernames){
+										data.push({
+											fid:f,
+											fname:res.foldernames[f]['fname'],
+											pathkey:res.foldernames[f]['pathkey'],
+										});
+									}
+									this.RightData.filedsData.push({
+										value:data,
+										flag:element.flag,
+										name:element.name,
+									});
+									this.RightData.folder=data;
+								}else if(element.flag == "tag"){
+									let data = [];
+									let val = [];
+									if(res[element.flag]){
+										for (const key in res[element.flag]) {
+											if (Object.hasOwnProperty.call(res[element.flag], key)) {
+												const helement = res[element.flag][key];
+												data.push({
+													tid:key,
+													tagname:helement
+												});
+												val.push(key)
+											}
+										}
+
+									}
+									this.RightData.filedsData.push({
+										value:val,
+										flag:element.flag,
+										name:element.name,
+										data:data
+									})
+								}else if(element.flag == "multiselect"){
+									this.RightData.filedsData.push({
+										value:res[element.flag] || [],
+										flag:element.flag,
+										name:element.name,
+									});
+								}else{
+									this.RightData.filedsData.push({
+										value:res[element.flag] || '',
+										flag:element.flag,
+										name:element.name,
+										data:[]
+									})
+								}
+
+								}
+						}
+						if(this.RightActiveRid.length>1){
+							this.RightData.img = [];
+							for(var t in res.icondata){
+								if(t>=6){
+									continue;
+								}
+								this.RightData.img.push(res.icondata[t]);
+							}
+							this.RightData.level = res.level?parseInt(res.level):0;
+							this.RightData.foldersize = res.size;
+							this.RightData.link = res.link;
+							this.RightData.message = res.desc;
+						}else{
+							this.RightData.img = [res.icondata];
+							this.RightData.color = [];
+							for(var i in res.colors){
+								this.RightData.color.push('#'+res.colors[i]);
+							}
+							this.RightData.title = res.name;
+							this.RightData.message = res.desc;
+							this.RightData.link = res.link;
+							this.RightData.format = res.ext;
+							this.RightData.size = res.width+'×'+res.height;
+							this.RightData.foldersize = res.fsize;
+							this.RightData.grade = parseInt(res.grade);
+							this.RightData.level = res.level?parseInt(res.level):0;
+							this.RightData.btime = res.btime;
+							this.RightData.mtime = res.mtime;
+							this.RightData.dateline = res.dateline;
+						}
+
+					}
+				}else if(this.RightType == 'folder'){
+					if(res){
+						if(res.num){
+							this.RightData.foldenum = res.num;
+						}
+						if(res.size){
+							this.RightData.foldersize = res.size;
+						}
+						if(res.dateline){
+							this.RightData.dateline = res.dateline;
+						}
+						this.RightData.title = res.fname;
+						this.RightData.message = res.desc;
+						let data = [];
+						let val = [];
+						if(res['tagdata']){
+							for (const key in res['tagdata']) {
+								const helement = res['tagdata'][key];
+								data.push({
+									tid:key,
+									tagname:helement
+								});
+								val.push(key)
+							}
+		
+						}
+						this.RightData.filedsData.push({
+							value:val,
+							flag:'tag',
+							name:'标签',
+							data:data
+						})
+					}
+				}else{
+					if(res){
+						if(res.num){
+							this.RightData.foldenum = res.num;
+						}else{
+							this.RightData.foldenum = 0;
+						}
+						if(res.size){
+							this.RightData.foldersize = res.size;
+						}else{
+							this.RightData.foldersize = 0;
+						}
+					}
+				}
+			},
+			async RightFolderNameChange(val){
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&do=folder&operation=rename',{
+					fid: this.RightActivefid[0],
+					name:val
+				});
+				var curr = this.fileParam.data.find(function(current){
+					return current.fid == self.RightActivefid[0];
+				});
+				if(curr){
+					curr.pfname = val;
+					curr.fname = val;
+				}
+				var node = self.$refs.LeftTreeRef.getNode(this.RightActivefid[0]);
+				if(node){
+					node.data.fname = val;
+					node.data.pfname = val;
+				}
+			},
+			RightParamClean(type){
+				if(type){
+					this.RightData = {
+						img:[],
+						color:[],
+						title:'',
+						message:'',
+						link:'',
+						format:'',
+						size:'',
+						foldersize:'',
+						foldenum:'',
+						grade:0,
+						btime:'',
+						mtime:'',
+						dateline:'',
+					}
+					return false;
+				}
+				this.RightType = '';
+				this.RightActiveRid = [];
+				this.RightActivefid = [];
+				this.RightData = {
+					img:[],
+					color:[],
+					title:'',
+					message:'',
+					link:'',
+					folder:[],
+					
+					format:'',
+					size:'',
+					foldersize:'',
+					foldenum:'',
+					grade:0,
+					btime:'',
+					mtime:'',
+					dateline:'',
+					fileds:[],
+					filedsData:[],
+				}
+			},
+			RightdragControllerDiv(){
+				var self = this;
+				var boxw = document.body.clientWidth;
+				var fboxw = parseInt(boxw/3);
+				// 鼠标按下事件
+				document.onmousemove = function(e) {
+					var DocumentLeftWidth = e.clientX+1;
+					DocumentLeftWidth = boxw-DocumentLeftWidth;
+					if(DocumentLeftWidth>fboxw){
+						DocumentLeftWidth = fboxw;
+					}else if(DocumentLeftWidth<260){
+						DocumentLeftWidth = 260;
+					}
+					self.RightWidth = DocumentLeftWidth;
+					return false;
+				};
+				document.onmouseup = function() {
+					document.onmousemove = null;
+					document.onmouseup = null;
+					if(self.LeftCurrenType != 'tags' && self.LeftCurrenType != 'member'){
+						self.$refs.RefImageLayout.updateImageData();
+					}
+					return false;
+				};
+				return false;
+			}
+		}
+	};
+</script>

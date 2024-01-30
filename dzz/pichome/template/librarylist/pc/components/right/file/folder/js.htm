@@ -1,0 +1,135 @@
+<script type="text/javascript">
+	let RightFolderMixin = {
+		data(){
+			return {
+				RightFolderPopverParam:{
+					loading:true,
+					CheckedKeys:[],
+					ExpandedKeys:[],
+					activeNodes:[]
+				}
+			}
+		},
+		methods:{
+			async RightFolderPopverTreeLoad(node,resolve){
+				
+				var self = this;
+				var level = node.level;
+				var param = {
+					appid:this.DocumentAppid
+				};
+				if(level>0){
+					param['pfids'] = node.data.fid;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfolder',param);
+				var new_data = res.data.folderdatanum;
+				var arr = [];
+				for(var i in new_data){
+					var item = new_data[i];
+					arr.push(item);
+				}
+				resolve(arr);
+			},
+			RightFolderPopverTreeChange(data,CheckedKeys){
+				var arr = [];
+				var checkedNodes = CheckedKeys.checkedNodes;
+				for(var i in checkedNodes){
+					arr.push({
+						fid:checkedNodes[i].fid,
+						fname:checkedNodes[i].fname,
+						pathkey:checkedNodes[i].pathkey,
+					});
+				}
+				this.RightFolderPopverParam.activeNodes = arr;
+				
+			},
+			async RightFolderDelete(fid){
+				var self = this;
+				var old = JSON.parse(JSON.stringify(this.RightData.folder));
+				var vals = [];
+				for(var x in old){
+					vals.push(old[x].fid);
+				}
+				var index = vals.indexOf(fid);
+				vals.splice(index,1);
+				var res = await axios.post(MOD_URL+'&op=library&do=lable&operation=save',{
+					flag:'fid',
+					val:vals.join(','),
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid
+				});
+				if(res.data.success){
+					var currIndex = this.RightData.folder.findIndex(function(current){
+						return current.fid == fid;
+					});
+					this.RightData.folder.splice(currIndex,1);
+					if(this.LeftCurrenType == 'filelist' && this.LeftTree.Currentkey == fid){
+						self.$refs.RefImageLayout.DeleteData(self.RightActiveRid);
+					}
+				}else{
+					self.$message.error(res.data.msg || '保存失败');
+				}
+
+			},
+			async RightFolderPopverHide(){
+				var self = this;
+				this.DocumentOverlay = false;
+				var fnew = JSON.parse(JSON.stringify(this.RightFolderPopverParam.activeNodes));
+				var old = JSON.parse(JSON.stringify(this.RightData.folder));
+				if(JSON.stringify(fnew) != JSON.stringify(old)){
+					var vals = [];
+					for(var x in fnew){
+						vals.push(fnew[x].fid);
+					}
+					var res = await axios.post(MOD_URL+'&op=library&do=lable&operation=save',{
+						flag:'fid',
+						val:vals.join(','),
+						rid:this.RightActiveRid.join(','),
+						appid:this.DocumentAppid
+					});
+					if(res.data.success){
+						this.RightData.folder = fnew;
+						if(this.LeftCurrenType == 'filelist' && vals.indexOf(this.LeftTree.Currentkey)<0){
+							self.$refs.RefImageLayout.DeleteData(self.RightActiveRid);
+						}
+						
+					}else{
+						self.$message.error(res.data.msg || '保存失败');
+					}
+				}
+				this.RightFolderPopverParam.loading = true;
+			},
+			RightFolderPopverShow(){
+				var expanded = [];
+				var checked = [];
+				this.RightFolderPopverParam.loading = true;
+				this.DocumentOverlay = true;
+
+				if(this.RightData.folder.length){
+					for(var i in this.RightData.folder){
+						var item = this.RightData.folder[i];
+						checked.push(item.fid);
+						var path = item.pathkey.split(this.DocumentAppid).filter(function(item){
+							return item != '';
+						});
+						if(path.length>1){
+							path.splice(path.length-1,1);
+							for(var p in path){
+								var key = path[p]+this.DocumentAppid;
+								if(expanded.indexOf(key)<0){
+									expanded.push(key);
+								}
+							}
+						}
+					}
+				}
+				
+				this.RightFolderPopverParam.CheckedKeys = checked;
+				this.RightFolderPopverParam.ExpandedKeys = expanded;
+				this.RightFolderPopverParam.activeNodes = JSON.parse(JSON.stringify(this.RightData.folder));
+				this.RightFolderPopverParam.loading = false;
+			}
+			
+		}
+	}
+</script>

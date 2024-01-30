@@ -1,0 +1,79 @@
+<el-aside class="left-aside" width="260px">
+    <el-page-header @back="RightgoBack">
+        <template #icon>
+            <el-icon style="color: var(--el-text-color-primary);font-size: 24px;"><Back /></el-icon>
+        </template>
+        <template #title>
+            <el-text tag="b" size="large" truncated style="color: var(--el-text-color-primary)">返回</el-text>
+        </template>
+        <template #content>
+            <el-text tag="b" size="large" truncated style="color: var(--el-text-color-primary);vertical-align: bottom;">编辑{{rightTitle}}</el-text>
+        </template>
+    </el-page-header>
+    <el-scrollbar style="padding: 10px;">
+        <el-text style="margin-bottom: 10px;display: block;color: var(--el-text-color-primary);" tag="b">选择模板</el-text>
+        <ul class="right-type-box">
+            <li 
+            draggable="true" 
+            v-for="item in rightData" 
+            class="right-type-li"
+            :class="{'right-type-li-disabled':rightdb_idsStatus && item.flag == 'db_ids'}">
+                <el-text><el-icon><Circle-Plus /></el-icon>{{item.name}}</el-text>
+            </li>
+        </ul>
+    </el-scrollbar>
+</el-aside>
+<script>
+    const RightMixin = {
+        data(){
+            return {
+                rightTitle:'',
+                rightData:[
+                    {name:'幻灯片',flag:'slide'},
+                    {name:'富文本',flag:'rich_text'},
+                    {name:'链接',flag:'link'},
+                    // {name:'联系方式',flag:'contact'},
+                    {name:'常见问题',flag:'question'},
+                    {name:'手动推荐',flag:'manual_rec'},
+                    {name:'文件推荐',flag:'file_rec'},
+                    // {name:'图组推荐',flag:'picture_rec'},
+                    // {name:'矩行推荐',flag:'rectangle_rec'},
+                    {name:'横幅广告',flag:'banner'},
+                    {name:'库',flag:'db_ids'},
+                    /*{name:'专辑推荐',flag:'tab_rec'},*/
+                ],
+                rightdb_idsStatus:false
+            }
+        },
+        methods:{
+            RightgoBack(){
+                window.location.href = 'index.php?mod=alonepage';
+            },
+            rightSortable(){
+                const self = this;
+                var tbody = document.querySelector('.right-type-box');
+                new Sortable(tbody, {
+                    draggable: ".right-type-li",
+                    filter: ".right-type-li-disabled",
+                    group: {
+                        name: 'shared',
+                        pull:'clone'
+                    },
+                    sort: false,
+                    animation: 150,
+                    // 元素被选中
+                    onChoose: function (/**Event*/evt) {
+                        self.mainvisible = false;
+                    },
+                    // 元素未被选中的时候（从选中到未选中）
+                    onUnchoose: function (/**Event*/evt) {
+                        self.mainvisible = true;
+                    },
+                });
+            }
+        },
+        mounted(){
+            this.rightSortable();
+        }
+    }
+</script>

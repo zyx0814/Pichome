@@ -30,7 +30,7 @@ class memory_driver_memcached
 	}
 
 	public function getMulti($keys) {
-		return $this->obj->get($keys);
+		return $this->obj->getMulti($keys);
 	}
 	public function set($key, $value, $ttl = 0) {
 		return $this->obj->set($key, $value, $ttl);

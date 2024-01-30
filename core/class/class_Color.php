@@ -71,6 +71,7 @@ class Color {
 	}
     public function __construct($color = 0x000000, $short = false)
     {
+
         if (is_numeric($color)) {
             
             if ($short) {
@@ -86,9 +87,7 @@ class Color {
             }
             
         } elseif (is_array($color)) {
-            
             list($this->r, $this->g, $this->b) = $color;
-            
             if (count($color) > 3)
                 $this->a = $color[3];
         }

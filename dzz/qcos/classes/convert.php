@@ -12,23 +12,14 @@ class convert
     public function run($data, $force = false)
     {
 
-        if(strpos($data['realpath'],':') === false){
-            $bz = 'dzz';
-        }else{
-            $patharr = explode(':', $data['realpath']);
-            $bz = $patharr[0];
-            $did = $patharr[1];
-
+        global $_G;
+        //如果是普通目录
+        if(!$data['ext'] || strpos($data['bz'],'QCOS') === false){
+            return '';
         }
-        if(!is_numeric($did) || $did < 2){
-            $bz = 'dzz';
-        }
-        if($bz != 'QCOS' || !$data['ext'])return '';
-        $videodata = DB::fetch_first('select mediastatus,videoquality from %t where id = %d',array('connect_storage',$did));
-
-        if(!$videodata['mediastatus']) return '';
-
-        $videoexts = getglobal('config/qcosmedia') ? explode(',', getglobal('config/qcosmedia')):array('3gp','avi','flv','m3u8','mpg','asf','wmv','mkv','mov','ts','webm','mxf');
+        $videodata = DB::fetch_first('select mediastatus,videoquality from %t where id = %d',array('connect_storage',$data['remoteid']));
+        if(!$videodata['mediastatus']) return true;
+        $videoexts = array('3gp','asf','avi','dv','flv','f4v','m3u8','m4v','mkv','mov','mp4','mpg','mpeg','mts','ogg','rm','rmvb','swf','vob','wmv','webm','mp3','aac','flac','amr','awb','m4a','wma','wav');
         $pexts=  getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')):array('mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
         if (in_array($data['ext'],$pexts) || !in_array($data['ext'],$videoexts)) {
             return '';
@@ -38,15 +29,16 @@ class convert
             } else {
                 $ext = 'mp4';
             }
-            $setarr = ['rid' => $data['rid'], 'dateline' => TIMESTAMP, 'ctype' => 2,'format'=>$ext,'videoquality'=>$videodata['videoquality']];
+            $setarr = ['rid' => $data['rid'], 'dateline' => TIMESTAMP, 'ctype' => 2,'format'=>$ext,'videoquality'=>0];
+            $setarr['aid']= $data['aid'] ? $data['aid']:0;
 
-            if ($id = C::t('video_record')->insert($setarr, 1)) {
+            if ($ff = C::t('video_record')->insert_data($setarr)) {
                 //if ($force) dfsockopen(getglobal('localurl') . 'index.php?mod=qcosvideo&op=convert&id=' . $id, 0, '', '', false, '', 0.1);
                 return false;
             }
 
         }
-
+        
 
     }
 }

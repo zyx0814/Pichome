@@ -222,7 +222,7 @@ if ($operation == 'patch' || $operation == 'cross') {
 			exit(json_encode(array('updateMysql'=>true,'url'=>$linkurl)));
 
         }
-        exit(json_encode(array('nextStep'=>true)));
+		exit(json_encode(array('nextStep'=>true)));
 
     } elseif ($step == 5) {
         $file = DZZ_ROOT . './data/update/pichome' . $version . '/updatelist.tmp';
@@ -243,11 +243,7 @@ if ($operation == 'patch' || $operation == 'cross') {
         $dzz_upgrade -> rmdirs(DZZ_ROOT . $old_update_dir);
         $dzz_upgrade -> rmdirs(DZZ_ROOT . $old_back_dir);
 		upgradeinformation(0);
-		$versionname = CORE_VERSION_LEVEL;
-		$versionnumarr = explode('.',CORE_VERSION);
-		unset($versionnumarr[0]);
-		$vsersion = $versionname.implode('.',$versionnumarr);
-		exit(json_encode(array('version' => $vsersion,'dir'=>$new_update_dir,'backdir'=>$new_back_dir)));
+		exit(json_encode(array('version' => $version,'dir'=>$new_update_dir,'backdir'=>$new_back_dir)));
         // $msg = lang('upgrade_successful', array('version' => $version, 'save_update_dir' => $new_update_dir, 'save_back_dir' => $new_back_dir, 'upgradeurl' => upgradeinformation(0)));
 
     }

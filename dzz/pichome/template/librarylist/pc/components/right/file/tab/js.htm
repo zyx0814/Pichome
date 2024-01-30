@@ -1,0 +1,69 @@
+<script type="text/javascript">
+	let RightTabMixin = {
+		data(){
+			return {
+
+			}
+		},
+		methods:{
+			async RightTabGroup(data,flag){
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == flag;
+				});
+				if(!curr)return false;
+				let val = [];
+				for (let index = 0; index < data.length; index++) {
+					const element = data[index];
+					val.push(element.tid);
+				}
+				curr.value = val;
+				curr.data = data;
+				var self = this;
+				await axios.post('{MOD_URL}&op=library&do=lable&operation=save',{
+					val:val.join(','),
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid,
+					flag:flag
+				});
+			},
+			async RightTabDelete(id,flag){
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == flag;
+				});
+				if(!curr || !curr.data.length)return false;
+
+				let index = curr.data.findIndex(function(current){
+					return parseInt(current.tid) == parseInt(id);
+				});
+				curr.data.splice(index,1);
+				let findex = curr.data.findIndex(function(current){
+					return parseInt(current) == parseInt(id);
+				});
+				curr.value.splice(findex,1);
+				await axios.post('{MOD_URL}&op=library&do=lable&operation=save',{
+					val:curr.value.join(','),
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid,
+					flag:flag
+				});
+			},
+			RightTabPopverShow(flag){
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == flag;
+				});
+				if(!curr)return false;
+				curr.iframe = 'index.php?mod=tab&op=OutPopover&isall=1&gid='+curr.id+'&ids='+curr.value.join(',')+'&callback=tabgroup_callback&cacheflag='+curr.flag;
+				this.DocumentOverlay = true;
+			},
+			RightTabPopverHide(flag){
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == flag;
+				});
+				if(!curr)return false;
+				curr.iframe = '';
+				this.DocumentOverlay = false;
+			},
+			
+		}
+	}
+</script>

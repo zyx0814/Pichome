@@ -1,0 +1,186 @@
+<script type="text/javascript">
+	const CommonMixin = {
+		data(){
+			return {
+			}
+		},
+		methods:{
+			async CommonGetImageData(type){
+				var self = this;
+				self.CommonSetHash();//设置hash
+				self.ImageProps.urlparam = self.CommonSetParam();//获取提交参数
+				self.$nextTick(function(){
+					self.$refs.RefImageLayout.restart()
+				});
+			},
+			CommonSetHash(){
+				var self = this;
+				var ScreenParam = self.$refs.ScreenBoxRef.GetParam('hash');
+				var Params = {}
+				if(self.DocumentAppid){
+					Params['appid'] = self.DocumentAppid;
+				}
+				if(self.HeaderKeyword){
+					Params['keyword'] = self.HeaderKeyword;
+				}
+
+				Params = {...Params,...ScreenParam};
+				var arr = [];
+				for(var key in Params){
+					arr.push(key+'='+Params[key]);
+				}
+				var hash = arr.join('&');
+				location.hash=hash;
+			},
+			CommonSetParam(){
+				var self = this;
+				var Params = {};
+				var ScreenParam = self.$refs.ScreenBoxRef.GetParam();
+				var OrderParam = {
+					order:self.HeaderRightBtnShow.order,
+					asc:self.HeaderRightBtnShow.sort,
+				};
+				if(self.DocumentAppid){
+					Params['appid'] = self.DocumentAppid;
+				}
+				if(self.HeaderKeyword){
+					Params['keyword'] = self.HeaderKeyword;
+				}
+				if(ScreenParam && ScreenParam.classify){
+					this.ScreenParam.fids = ScreenParam.classify
+				}
+	
+				Params['hassub'] = self.ImageDataIsExpanded;
+				return {...Params,...ScreenParam,...OrderParam};
+			},
+			CommonGetHashParam(name,url){
+				let hash=location.hash;
+				if(url){
+					url=hash.replace(/&.+$/i,'').replace('#','');
+				}else{
+					url=location.hash;
+				}
+				if (!name) {
+					return '';
+				}
+				var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+				if (!url) {
+					return '';
+				}
+				var r = url.match(reg);
+				if (r !== null) {
+					return decodeURIComponent(r[2]);
+				}
+			},
+			CommonDeleteAll(){
+				const self = this;
+				this.HeaderKeyword = '';
+				self.$refs.ScreenBoxRef.DeleteAll();
+				this.CommonGetImageData();
+				
+			},
+			async CommonInit(){
+				const self = this;
+				//主题颜色
+				let theme = localStorage.getItem('theme');
+				if(theme){
+					this.DocumentThemeColor=theme;
+				}else{
+					this.DocumentThemeColor = 'light'
+				}
+				const {data: res} = await axios.post('index.php?mod=banner&op=appajax&do=getpagesetting',{
+					appid:this.DocumentAppid,
+				});
+				if(res.data){
+					var getpagesetting = res.data;
+				}
+				this.DocumentVapp = res.vappdata?res.vappdata:{appname:'',type:0};
+				this.DocumentVapp = res.vappdata?res.vappdata:{appname:'',type:0};
+				this.ScreenProps.isclassify = true;
+				this.screenType.show = true;
+	
+				<!--{if $_G[setting][sitename]}-->
+				document.title = this.DocumentVapp.appname+'-$_G[setting][sitename]';
+				<!--{else}-->
+				document.title = this.DocumentVapp.appname;
+				<!--{/if}-->
+		
+	
+
+				//布局方式
+				let layout = sessionStorage.getItem('layout');
+				if(layout){
+					this.HeaderRightBtnShow.layout = layout;
+					this.ImageProps.layout = layout;
+				}else{
+					this.HeaderRightBtnShow.layout = getpagesetting && getpagesetting.layout || 'waterFall';
+					this.ImageProps.layout = getpagesetting && getpagesetting.layout || 'waterFall';
+				}
+				//其它信息
+				let other = sessionStorage.getItem('other');
+				if(other){
+					this.HeaderRightBtnShow.other = other;
+					this.ImageProps.ShowMessage.other = other;
+				}else{
+					if(getpagesetting && getpagesetting.display && getpagesetting.display.indexOf('other') > -1){
+						this.HeaderRightBtnShow.other = getpagesetting && getpagesetting.other || '';
+						this.ImageProps.ShowMessage.other = getpagesetting && getpagesetting.other || '';
+					}else{
+						this.ImageProps.ShowMessage.other = '';
+					}
+				}
+				//显示信息
+				let display = sessionStorage.getItem('display');
+				if(display && display != 'empty'){
+					display = display.split(',');
+					this.HeaderShowChange({
+						type:'display',
+						value:display
+					});
+				}else{
+					this.HeaderRightBtnShow.display = getpagesetting && getpagesetting.display || [];
+					this.ImageProps.ShowMessage.display = getpagesetting && getpagesetting.display || [];
+				}
+				//排序方式
+				let sort = sessionStorage.getItem('sort');
+				if(sort){
+					this.HeaderRightBtnShow.sort = sort;
+				}else{
+					this.HeaderRightBtnShow.sort = getpagesetting && getpagesetting.desc || 'desc';
+				}
+				let order = sessionStorage.getItem('order');
+				if(order){
+					this.HeaderRightBtnShow.order = order;
+				}else{
+					this.HeaderRightBtnShow.order = getpagesetting && getpagesetting.sort || 'btime';
+				}
+	
+				self.$nextTick(function(){
+					self.CommonGetImageData();
+				})
+			},
+			CommonHighlight(text,words){
+				// 默认的标签，如果没有指定，使用span
+				var i, len = words.length,
+				re;
+				//匹配每一个特殊字符 ，进行转义
+				var specialStr = ["*", ".", "?", "+", "$", "^", "[", "]", "{", "}", "|", "\\", "(", ")", "/", "%"]; 
+				for (let index = 0; index < specialStr.length; index++) {
+					const item = specialStr[index];
+					if(words.indexOf(item) != -1) {
+						words = words.replace(new RegExp("\\" + item, 'g'), "\\" + item);
+					}
+				}
+				// $.each(specialStr, function(i, item) {
+					
+				// });
+				//匹配整个关键词
+				re = new RegExp(words, 'g');
+				if(re.test(text)) {
+					text = text.replace(re, '<span class="highlight">$&</span>');
+				}
+				return text;
+			},
+		}
+	}
+</script>
