@@ -43,17 +43,17 @@ if ($appdata['type'] == 0) {//eagle缩略图
             $tmppath = str_replace(strrchr($patharr['path'], "."), "", $patharr['path']);
             $thumbpath = $thumbdir . BS . $tmppath . '_thumbnail.png';
             //如果小图也不存在,使用图标代替大图
-            if (!IO::checkfileexists($thumbpath))$thumbpath = 'static/dzzthumb/preview/b.gif';
+            if (!$patharr['hasthumb'])$thumbpath = 'static/dzzthumb/preview/b.gif';
         }
     }else{//小图时
         $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
         $tmppath = str_replace(strrchr($patharr['path'], "."), "", $patharr['path']);
         $thumbpath = ($iscloud) ? IO::getFileUri($thumbdir . BS . $tmppath . '_thumbnail.png'):$thumbdir . BS . $tmppath . '_thumbnail.png';
         //如果小图不存在
-        if (!IO::checkfileexists($thumbpath)){
+        if (!$patharr['hasthumb']){
             //如果有下载权限，并且当前图片支持预览返回原图地址，否则使用图标替代
             if( in_array($ext, explode(',', getglobal('config/pichomecommimageext'))))$thumbpath =($iscloud) ? IO::getFileUri($thumbdir . BS . $patharr['path']):$thumbdir . BS . $patharr['path'];
-            else $thumbpath = false;
+            else $thumbpath =  'static/dzzthumb/preview/b.gif';
         }
     }
 
@@ -88,7 +88,7 @@ elseif($appdata['type'] == 2) {//billfish缩略图
             $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
             $thumbpath= ($iscloud) ? \IO::getFileuri($appdata['path'] . '/.bf/.preview/' . $thumbdir . '/' . $bid . '.small.webp') : $appdata['path'] . BS . '.bf' . BS . '.preview' . BS . $thumbdir . BS . $bid . '.small.webp';
             //不存在小图使用图标
-            if(!IO::checkfileexists($thumbpath)){
+            if(!$patharr['hasthumb']){
                 if(in_array($ext, explode(',', getglobal('config/pichomecommimageext'))))$thumbpath = $appdata['path'] . BS . $patharr['path'];
                 else $thumbpath = 'static/dzzthumb/preview/b.gif';
             }
@@ -110,7 +110,7 @@ elseif($appdata['type'] == 2) {//billfish缩略图
             array_pop($thumbpatharr);
             $thumbpathdir = implode(BS, $thumbpatharr);
             $thumbpath = $iscloud ? \IO::getFileuri($pathdir . '/' . $thumbpathdir . '/' . $thumbid . '.webp') : $pathdir . BS . $thumbpathdir . BS . $thumbid . '.webp';
-            if(!IO::checkfileexists($thumbpath)){
+            if(!$patharr['hasthumb']){
                 $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
                 if (in_array($ext, explode(',', getglobal('config/pichomecommimageext')))) $thumbpath = $appdata['path'] . BS . $patharr['path'];
                 else $thumbpath =  'static/dzzthumb/preview/b.gif';

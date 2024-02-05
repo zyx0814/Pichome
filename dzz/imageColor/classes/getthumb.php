@@ -23,21 +23,7 @@ class getthumb{
             else $prefix='';
 
             if($target=self::getThumb($meta,$prefix)){
-                /*echo $target;die;
-                if($imginfo=getimagesize(IO::getStream($target))){
-                    if (is_numeric($meta['path'])) {
-                        $cachearr = [
-                            'aid' => $meta['path'],
-                            'path' => $target,
-                            'width'=>$imginfo[0],
-                            'height'=>$imginfo[1],
-                        ];
-                        C::t('thumb_cache')->insert_data($cachearr,1);
-                    }*/
                     return array($target);
-               /* }else{
-                    return '';
-                }*/
             }
 
         }
@@ -107,13 +93,11 @@ class getthumb{
                         $filepath = IO::moveThumbFile($cloudpath, $jpg);
                         if (!isset($filepath['error'])) {
                             @unlink($jpg);
-                            $jpg = $cloudpath;
                         } else {
                             runlog('imagick', 'uneable move  file to target:' . $jpg . $cloudpath);
                             return '';
                         }
                     }
-                   // C::t('pichome_resources')->update_by_rids($meta['appid'], $meta['rid'], array('width' => $owidth, 'height' => $oheight));
                     return $target;
                 }else{
                     return $target;

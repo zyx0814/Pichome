@@ -40,7 +40,7 @@
 						</el-button>
 					</el-header>
 					<el-main style="padding: 0 10px;">
-						<el-table :data="UploaderData.data" style="width: 100%;" height="350"  empty-text="暂无上传数据">
+						<el-table :data="UploaderData.fdata" style="width: 100%;" height="350"  empty-text="暂无上传数据">
 							<el-table-column fixed  show-overflow-tooltip prop="fileName" label="文件(夹)名" ></el-table-column>
 							<el-table-column show-overflow-tooltip label="大小" width="80">
 								<template #default="scope">
@@ -101,12 +101,18 @@
 		data() {
 			return {
 				UploaderData:{
-					queuenumber:1,//控制上传个数
+					queuenumber:5,//控制上传个数
+					listnumber:100,//控制列表个数
 					Total:0,//总上传文件树
 					fTotal:0,//总上传文件树
+					
 					TotalSize: 0,//总上传文件大小
+					
 					Already:0,//已经上传文件树
 					AlreadySize:0,//已经上传进度
+					
+					Error:0,//上传错误数量
+					
 					FileType:1,//遇到重复文件的处理方式；
 					data:[],//储存上传数据
 					fdata:[],//储存上传数据
@@ -196,10 +202,13 @@
 					item['md5'] = spark.end();*/
 					//分片数据
 					//item['burst'] = this.UploadBurst(item.raw);//文件分片
-					this.UploaderData.data.push(item);
-					this.UploaderData.Total += 1;
 					
-					this.UploaderData.fqueue.push(item.id)
+					this.UploaderData.data[item.id]=item;
+					this.UploaderData.Total += 1;
+					this.UploaderData.fqueue.push(item.id);
+					if(this.UploaderData.fdata.length-this.UploaderData.Error<this.UploaderData.listnumber){
+						this.UploaderData.fdata.push(item);
+					}
 					self.UploadQueuenids();
 				}
 				
@@ -240,36 +249,59 @@
 					item['FileData'] = '';
 					
 					
-					this.UploaderData.data.push(item);
+				
+					this.UploaderData.data[item.id]=item;
+					
 					this.UploaderData.Total += 1;
+					if(this.UploaderData.fdata.length-this.UploaderData.Error<this.UploaderData.listnumber){
+						this.UploaderData.fdata.push(item);
+					}
 					this.UploaderData.fqueue.push(item.id);
 					this.UploadQueuenids();
 				}
 				
+			},
+			UploadList(){
+				let num=this.UploaderData.listnumber-(this.UploaderData.fdata.length-this.UploaderData.Error);
+				let p=0;
+				for(let i=0;i<this.UploaderData.fqueue.length;i++){
+					if(p>=num) break;
+					let findex = this.UploaderData.fdata.findIndex((current) => {
+						return current.id == this.UploaderData.fqueue[i];
+					});
+					if(findex<0){
+						this.UploaderData.fdata.push(this.UploaderData.data[this.UploaderData.fqueue[i]]);
+						p++;
+					}
+				}
 			},
 			UploadQueuenids(index){
 				let self=this;
 				if(!this.UploaderData.fqueue.length){
 					return false;
 				}
+				this.UploadList();
 				if(this.UploaderData.queue.length < this.UploaderData.queuenumber){
 					for(let i=0;i<this.UploaderData.queuenumber-this.UploaderData.queue.length;i++){
 						if(this.UploaderData.fqueue.length){
-							index = this.UploaderData.fqueue.shift();
-							this.UploaderData.queue.push(index);
-							self.UploadCarryOut(index)
-							//window.setTimeout(()=>{self.UploadCarryOut(index)});
+							let id = this.UploaderData.fqueue.shift();
+							this.UploaderData.queue.push(id);
+							let findex = this.UploaderData.fdata.findIndex((current) => {
+								return current.id == id;
+							});
+							if(findex<0){
+								this.UploaderData.fdata.push(this.UploaderData.data[id]);
+							}
+							self.UploadCarryOut(id);
 						}
 					}
-					
 				}
 			},
 			async UploadCarryOut(key,item){
 				let self = this;
-				item = this.UploaderData.data.find((current) => {
+				item = this.UploaderData.fdata.find((current) => {
 					return current.id == key;
 				});
-				
 				if(item){
 					if(!item['md5']){
 						let buffer = await this.fileToBuffer(item.raw)
@@ -371,6 +403,7 @@
 						this.UploaderData.Already += 1;
 						item.percentage = item.size;
 					}else{
+						this.UploaderData.Error += 1;
 						item.percentage = item.size;
 					}
 					//this.UploaderData.Already += 1;
@@ -489,7 +522,7 @@
 						
 					}
 					if(item.fileStatus != 4){
-						this.UploadCompleteDelete(item.md5);
+						this.UploadCompleteDelete(item.id);
 					}
 					this.UploadQueuenids();
 				}
@@ -591,14 +624,14 @@
 					}
 				//}
 			},
-			UploadCompleteDelete(md5,time=1000){//删除
+			UploadCompleteDelete(key,time=1000){//删除
 				let self=this;
 				
 				 setTimeout(() => {
-				 	let findex = self.UploaderData.data.findIndex((current) => {
-				 		return current.md5 == md5;
+				 	let findex = self.UploaderData.fdata.findIndex((current) => {
+				 		return current.id == key;
 				 	});
-					 if(findex>-1)	self.UploaderData.data.splice(findex,1);
+					 if(findex>-1)	self.UploaderData.fdata.splice(findex,1);
 				 },time);
 			},
 			fileToBuffer(file) {
@@ -617,15 +650,15 @@
 				let self=this;
 				switch(action){
 					case 'delete':
-						let findex = this.UploaderData.data.findIndex((current) => {
-							return current.md5 == item.md5;
+						let findex = this.UploaderData.fdata.findIndex((current) => {
+							return current.id == item.id;
 						});
 						if(findex>-1){
-							item=self.UploaderData.data[findex];
+							
 							let findex1 = self.UploaderData.fqueue.findIndex((id) => {
 								return id == item.id;
 							});
-							self.UploaderData.data.splice(findex,1);
+							self.UploaderData.fdata.splice(findex,1);
 							self.UploaderData.Total--;
 							if(findex1>-1) self.UploaderData.fqueue.splice(findex1,1); 
 						}
@@ -647,11 +680,15 @@
 						if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
 						break;
 					case 'cancelall':
-						this.UploaderData.data.forEach((item,index)=>{
+						this.UploaderData.fdata.forEach((item,index)=>{
 							if(item.fileStatus>0) return;
 							item.fileStatus=5;
 							let findex=self.UploaderData.fqueue.indexOf(item.id);
 							if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+						});
+						this.UploaderData.data.forEach((item,index)=>{
+							if(item.fileStatus>0) return;
+							item.fileStatus=5;
 						});
 						break;
 				}

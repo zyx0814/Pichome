@@ -34,20 +34,19 @@ if($rid){
         'swatercontent'=>$wcontent,
     ];
     C::t('thumb_record')->insert($thumbrecorddata);
-    $videoexts =  array('3gp','asf','avi','dv','flv','f4v','m3u8','m4v','mkv','mov','mp4','mpg','mpeg','mts','ogg','rm','rmvb','swf','vob','wmv','webm','mp3','aac','flac','amr','awb','m4a','wma','wav');
+    $exts = explode(',',$_G['config']['pichomeffmpegconvertext']);
     //如果类型不符合则停止执行
-    if ($exts && !in_array($data['ext'], $videoexts)) exit();
+    if ($exts && !in_array($resourcedata['ext'], $exts)) exit();
     $pexts = getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')) : array('mp3', 'mp4', 'webm', 'ogv', 'ogg', 'wav', 'm3u8', 'hls', 'mpg', 'mpeg');
-    if (in_array($data['ext'], $pexts)) {
+    if (in_array($resourcedata['ext'], $pexts)) {
        exit();
     } else {
-
-        if ('audio' == getTypeByExt($data['ext'])) {
+        if ('audio' == getTypeByExt($resourcedata['ext'])) {
             $ext = 'mp3';
         } else {
-            $ext = 'webm';
+            $ext = 'mp4';
         }
-        $setarr = ['rid' =>$rid, 'dateline' => TIMESTAMP, 'ctype' => 0,'format'=>$ext,'videoquality'=>0];
+        $setarr = ['rid' =>$rid, 'dateline' => TIMESTAMP, 'ctype' => 0,'format'=>$ext,'videoquality'=>getglobal('config/defaultvideoquality')];
         $setarr['aid']= $resourcedata['aid'] ? $resourcedata['aid']:0;
         $ff = C::t('video_record')->insert_data($setarr);
     }

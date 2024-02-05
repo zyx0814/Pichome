@@ -41,7 +41,7 @@ if($do == 'addbanner'){//新建栏目
                 $url = 'index.php?mod=banner&op=index#id='.$setarr['bdata'];
             }
 
-            $shorturl = C::t('pichome_route')->update_path_by_url($url,$address);
+            if($setarr['btype'] != 3)$shorturl = C::t('pichome_route')->update_path_by_url($url,$address);
             if($setting['pathinfo'] && $shorturl) $setarr['url']=$shorturl;
             else $setarr['url']=$url;
         }
@@ -108,7 +108,7 @@ if($do == 'addbanner'){//新建栏目
             }else{
                 $url = 'index.php?mod=banner&op=index#id='.$setarr['bdata'];
             }
-            if($setting['pathinfo']){
+            if($setting['pathinfo'] && $setarr['btype'] != 3){
                 $setarr['url'] = C::t('pichome_route')->update_path_by_url($url,$address);
             }else{
                 $setarr['url']=$url;
@@ -123,7 +123,7 @@ if($do == 'addbanner'){//新建栏目
         }else{
             $url = 'index.php?mod=banner&op=index#id='.$data['bdata'];
         }
-        if($setting['pathinfo']) $path = C::t('pichome_route')->feth_path_by_url($url);
+        if($setting['pathinfo'] && $setarr['btype'] != 3) $path = C::t('pichome_route')->feth_path_by_url($url);
         else $path = '';
         if($path){
             $data['url'] = $path;
@@ -182,13 +182,16 @@ if($do == 'addbanner'){//新建栏目
     $bdata = C::t('pichome_banner')->fetch($id);
     if($bdata['btype'] == 3){
         $url = $bdata['bdata'];
+        $sid = 'link_'.md5($url);
     }elseif($bdata['btype'] == 4){
         $url = 'index.php?mod=banner&op=index#id=tb_'.$bdata['bdata'];
+        $sid = 'tb_'.$bdata['bdata'];
     }else{
         $url = 'index.php?mod=banner&op=index#id='.$bdata['bdata'];
+        $sid = 'b_'.$bdata['bdata'];
     }
     //$url = 'index.php?mod=banner&op=index#id='.$id;
-    $qrcode = C::t('pichome_route')->getQRcodeBySid($url,$id);
+    $qrcode = C::t('pichome_route')->getQRcodeBySid($url,$sid);
     exit(json_encode(['success'=>true,'qrcode'=>$qrcode]));
 }elseif($do == 'gettabdata'){//获取标签组
     $tabgroupdata = [];

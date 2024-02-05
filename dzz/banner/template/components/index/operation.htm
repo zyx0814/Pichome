@@ -39,14 +39,15 @@
         <el-form-item label="名称" prop="bannername">
             <el-input style="width: 50%;" v-model="DialogData.bannername"  ></el-input>
         </el-form-item>
-        <template v-if="DialogData.types!='add'">
+        <template v-if="DialogData.types!='add' && DialogData.type != 3">
             <el-form-item label="访问地址">
                 <div style="display: flex;flex: 1;">
                     <el-input 
                         style="max-width: 50%;"
                         v-model="DialogData.address"
                         :disabled="parseFloat(DialogData.pathinfo)?false:true"
-                        @input="SettingEditStatus">
+                        @input="SettingAddressInput"
+                        maxlength="30">
                         <template #prepend>{$_G['siteurl']}</template>
                     </el-input>
                     <div style="white-space: nowrap;margin-left: 12px;">
@@ -95,12 +96,12 @@
                 <!-- <el-radio :label="1" size="large">智能数据</el-radio> -->
                 <el-radio :label="2" size="large">单页</el-radio>
                 <el-radio :label="3" size="large">链接</el-radio>
-                <!--<el-radio :label="4" size="large">专辑</el-radio>-->
+                <el-radio :label="4" size="large">专辑</el-radio>
             </el-radio-group>
         </el-form-item>
         <el-form-item label="数据来源" prop="value" v-if="DialogData.type != 5">
             <template v-if="DialogData.type == 3">
-                <el-input style="width: 50%;" v-model="DialogData.value" ></el-input>
+                <el-input style="width: 50%;" v-model="DialogData.value" maxlength="30" @input="SettingLinkInput"></el-input>
             </template>
             <template v-else>
                 <el-select style="width: 50%;" v-model="DialogData.value" @change="OperationValue" :disabled="DialogData.notallowedit">
@@ -183,10 +184,26 @@
                 SettingQrcode:{
 					isqrcode:false,
 					qrcodeurl:''
-				}
+				},
+                SettingAddressOld:'',
             }
         },
         methods:{
+            SettingAddressInput(value){
+                const regex = /^[a-zA-Z_0-9]+$/;
+                if (!regex.test(value)) {
+                    this.DialogData.address = this.SettingAddressOld;
+                }else{
+                    this.SettingAddressOld = value;
+                }
+            },
+            SettingLinkInput(value){
+                let re = /[\u4e00-\u9fa5]/g;  // 匹配任何中文字符
+                if (re.test(value)) {
+                    // 如果输入中包含中文字符，将其值设置为上一个有效的值
+                    this.DialogData.value = this.DialogData.value.replace(re, '');
+                }
+            },
             OperationAddNew(type){
                 this.DialogData.direction = type;
                 this.DialogData.visible=true;
@@ -299,6 +316,7 @@
                     self.DialogData.type = parseInt(res.data.btype);
                     self.DialogData.isshow = parseInt(res.data.isshow);
                     self.DialogData.address = res.data.url;
+                    self.SettingAddressOld = res.data.url;
                     self.DialogData.value = res.data.bdata;
                     self.DialogData.notallowedit = parseFloat(res.data.notallowedit);
                     self.OperationGetTypes();

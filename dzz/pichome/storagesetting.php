@@ -17,11 +17,13 @@ if($do == 'addspace'){
 	exit(json_encode($spacelist));
 }elseif($do == 'deletespace'){
     $id = isset($_GET['id']) ? intval($_GET['id']):0;
-    if(!$id) exit(json_encode(array('error'=>true,'msg'=>'参数非法')));
+    if(!$id) exit(json_encode(array('success'=>false,'msg'=>'参数非法')));
     $connectdata = C::t('connect_storage')->fetch($id);
     $bzpath = $connectdata['bz'].':'.$id.':';
     if(DB::result_first("select count(appid) from %t where `path` like %s and isdelete < 1",array('pichome_vapp',$bzpath.'%'))){
-        exit(json_encode(array('error'=>true,'msg'=>'有使用此存储位置的库，请先删除库后再执行此操作')));
+        exit(json_encode(array('success'=>false,'msg'=>'有使用此存储位置的库，请先删除库后再执行此操作')));
+    }elseif(DB::result_first("select count(aid) from %t where remote = %d",array('attachment',$id))){
+        exit(json_encode(array('success'=>false,'msg'=>'站点有文件在当前存储位置，请删除后再执行此操作')));
     }else{
         C::t('connect_storage')->delete($id);
         exit(json_encode(array('success'=>true)));
@@ -60,6 +62,9 @@ if($do == 'addspace'){
         if($connectdata['docstatus']){
             $app=C::t('app_market')->fetch_by_identifier('onlyoffice_view','dzz');
             $connectdata['officedata']= unserialize($app['extra']);
+        }
+        if($connectdata['imagestatus']){
+            $connectdata['imagelib'] =  getglobal('setting/imagelib') ? 'imagick':'gd';
         }
 		
     }elseif($connectdata['bz'] == 'QCOS'){
@@ -178,7 +183,7 @@ if($do == 'addspace'){
     $setarr['imagestatus'] = intval($_GET['imagestatus']);
     $connectdata = C::t('connect_storage')->fetch($id);
     if($connectdata['bz'] == 'dzz'){
-        $settingnew['imagelib'] = trim($_GET['imagelib']);
+        $settingnew['imagelib'] = (trim($_GET['imagelib']) == 'gd') ? 0:1;
         updatesetting($setting, $settingnew);
         updateThumbStatus('dzz::',$setarr['imagestatus']);
     }else{

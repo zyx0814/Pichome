@@ -1,3 +1,15 @@
+<div style="padding: 0 8px;" v-if="classifyType && LeftCurrenType =='filelist'">
+    <div class="file-headers">
+		<div></div>
+        <div @click.stop class="cannot-select">
+            <el-checkbox 
+                v-model="ImageDataIsExpanded" 
+                :true-label="1" 
+                :false-label="0" 
+                label="显示子文件夹内容"></el-checkbox>
+        </div>
+    </div>
+</div>
 <Image-Layout 
 	ref="RefImageLayout"
 	:layout="ImageProps.layout"
@@ -9,7 +21,8 @@
 	@returnparam="Imagereturnparam"
 	:scrollref="scrollref"
 	:screenshow="Screenshow"
-	:ischecked="false">
+	:ischecked="false"
+	:hassub="ImageDataIsExpanded">
 	<template v-slot:operation="{ data }">
 		<template v-if="data.share || data.down">
 			<template v-if="ImageProps.layout=='rowGrid' || ImageProps.layout=='imageList' || ImageProps.layout=='waterFall'">
@@ -67,7 +80,7 @@
 	var MixinImage = {
 		data(){
 			return {
-				ImageDataIsExpanded:0,
+				ImageDataIsExpanded:1,
 				ImageProps:{
 					layout:'rowGrid',//rowGrid,imageList,waterFall
 					ShowMessage:{

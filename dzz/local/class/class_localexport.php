@@ -598,11 +598,11 @@ left join %t o on o.rid = ra.rid where ra.appid = %s and ((ra.isget = 0 and ISNU
             C::t('pichome_vapp')->update($this->appid,array('filenum'=>$total,'nosubfilenum'=>$nosubfilenum,'getinfonum'=>0,'dateline'=>time()));
 
             //执行缩略图转换
-            dfsockopen(getglobal('localurl') . 'misc.php?mod=getthumb', 0, '', '', false, '',0.01);
+            dfsockopen(getglobal('localurl') . 'misc.php?mod=getthumb', 0, '', '', false, '',1);
             //获取文件信息
-            dfsockopen(getglobal('localurl') . 'misc.php?mod=getinfo', 0, '', '', false, '',0.01);
+            dfsockopen(getglobal('localurl') . 'misc.php?mod=getinfo', 0, '', '', false, '',1);
             //执行音视频转换
-            dfsockopen(getglobal('localurl') . 'misc.php?mod=convert', 0, '', '', false, '',0.01);
+            dfsockopen(getglobal('localurl') . 'misc.php?mod=convert', 0, '', '', false, '',1);
             return true;
         }
 

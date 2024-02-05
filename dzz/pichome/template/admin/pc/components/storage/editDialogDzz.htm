@@ -128,7 +128,7 @@
 					id:0,
 					
 					imagestatus:0,
-					imageval:'$setting[imagelib]',
+					imageval:'0',
 					gdstatus:0,
 					imagickstatus:0,
 					
@@ -279,6 +279,7 @@
 				self.EditDialogDzz.imagestatus = parseInt(json.imagestatus);
 				self.EditDialogDzz.gdstatus = parseInt(json.gdstatus);
 				self.EditDialogDzz.imagickstatus = parseInt(json.imagickstatus);
+				self.EditDialogDzz.imageval = (json.imagelib);
 				
 				if(!self.EditDialogDzz.imagestatus){
 					self.EditDialogDzz.imageval = '0';

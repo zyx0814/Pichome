@@ -46,7 +46,7 @@ const comavatar = {
                 <template #dropdown>
                     <el-dropdown-menu slot="dropdown" style="width: 165px;">
                         <el-dropdown-item command="personal">个人中心</el-dropdown-item>
-                        <el-dropdown-item command="systeminfo">系统管理</el-dropdown-item>
+                        <el-dropdown-item command="systeminfo" v-if="adminid==1">系统管理</el-dropdown-item>
                         <el-divider class="adjust-divider"></el-divider>
 						<el-dropdown-item command="about">关于Pichome</el-dropdown-item>
                         <el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>

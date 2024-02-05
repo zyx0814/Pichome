@@ -528,7 +528,7 @@ class io_dzz extends io_api
             $data = C::t('pichome_resources')->fetch_data_by_rid($path);
             return $data;
         } else {
-            $path = $this->parsePath($path);
+           // $path = $this->parsePath($path);
             global $Types;
             $pathinfo = pathinfo($path);
             $ext = strtolower($pathinfo['extension']);
@@ -667,13 +667,7 @@ class io_dzz extends io_api
             $path = str_replace('dzz::','',$path);
             return getglobal('setting/attachurl') . $path;
         }else{
-            $path = $this->parsePath($path);
-            $localpath = BS . $path;
-            if(is_file($localpath)){
-                return  $localpath;
-            }else{
-                return $path;
-            }
+            return $path;
         }
 
     }
@@ -698,16 +692,8 @@ class io_dzz extends io_api
             $resources = C::t('resources')->fetch_data_by_rid($path);
             return IO::getStream($resources['path']);
         }else{
-            $path = $this->parsePath($path);
-            $localpath = BS . $path;
-            if(is_file(getglobal('setting/attachdir') . $path)){
-                return getglobal('setting/attachdir') . $path;
-            }
-            elseif(is_file($localpath)){
-                return  $localpath;
-            }else{
-                return $path;
-            }
+            return $path;
+
         }
     }
 

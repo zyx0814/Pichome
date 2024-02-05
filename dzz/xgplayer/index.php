@@ -19,7 +19,7 @@ if($_GET['operation']=='progress'){
         exit('Access Denied');
     }
     global $_G;
-    $rid = dzzdecode($_GET['path'],'',0);
+    //$rid = dzzdecode($_GET['path'],'',0);
     if(strpos($rid, 'attach::') === 0){
         $resourcesdata = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
 
@@ -41,18 +41,26 @@ if($_GET['operation']=='progress'){
         $appextra = unserialize($app['extra']);
         $videostatus = $appextra['status'];
     }
-    if(!$videostatus){
+    $pexts=  getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')):array('mov','mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
+    if(!$videostatus && !in_array($resourcesdata['ext'],$pexts)){
         $msg = '该媒体文件不能直接播放，且当前未安装支持转码应用或未开启转码支持';
         include template('progress');
         exit();
     }
-    $pexts=  getglobal('config/pichomeplayermediaext') ? explode(',', getglobal('config/pichomeplayermediaext')):array('mov','mp3','mp4','webm','ogv','ogg','wav','m3u8','hls','mpg','mpeg');
-    
-    if(!in_array($resourcesdata['ext'],$pexts) && strpos($rid, 'attach::') !== 0){
-        $ff=C::t('video_record')->fetch_by_rid($rid);
+    if(!in_array($resourcesdata['ext'],$pexts)){
+        if($resourcesdata['rid']){
+            $ff=C::t('video_record')->fetch_by_rid($resourcesdata['rid']);
+        }else{
+            $ff=C::t('video_record')->fetch_by_aid($resourcesdata['aid']);
+        }
         //如果没有转码记录生成记录
         if(!$ff){
-            $setarr = ['rid' => $resourcesdata['rid'], 'dateline' => TIMESTAMP,'format'=>$ext,'videoquality'=>0];
+            if ('audio' == getTypeByExt($resourcesdata['ext'])) {
+                $ext = 'mp3';
+            } else {
+                $ext = 'mp4';
+            }
+            $setarr = ['rid' => $resourcesdata['rid'], 'dateline' => TIMESTAMP,'format'=>$ext,'videoquality'=>1];
             $setarr['aid']= $resourcesdata['aid'] ? $resourcesdata['aid']:0;
             //如果是云存储状态，当前默认腾讯云
             if($cloudvideostatus){
@@ -111,7 +119,7 @@ if($_GET['operation']=='progress'){
         }
 
     }else{
-        $src  = getglobal('siteurl') . 'index.php?mod=io&op=getStream&path=' . dzzencode($rid.'_3', '', 14400, 0);
+        $src=IO::getFileuri($resourcesdata['path']);
     }
 
 

@@ -1,13 +1,19 @@
 <!--{template common/container/pc/header_start}-->
-<link rel="stylesheet" href="{MOD_PATH}/template/red/assets/css/root_red.css?{VERHASH}">
-<!-- <link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}"> -->
-<link rel="stylesheet" href="{MOD_PATH}/template/red/assets/css/index.css?{VERHASH}">
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
 <link rel="stylesheet" href="{MOD_PATH}/template/asstes/css/information.css?{VERHASH}">
-<script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/fashion/pc/assets/js/menu.js?{VERHASH}"></script>
 <script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
-<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
-<script type="text/javascript" src="{MOD_PATH}/template/red/assets/js/menu.js?{VERHASH}"></script>
 <link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+
+<script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
+<link rel="stylesheet" href="{MOD_PATH}/template/fashion/pc/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<style>
+    body{
+        background: transparent;
+    }
+</style>
 <script>
     function debounce(fun, delay) {
 		var time;
@@ -51,64 +57,13 @@
     }
 </style>
 <!--{template common/container/pc/header_end}-->
-<div id="dzzoffice" class="dzz-container">
-    <el-scrollbar class="affix-container" id="main_scrollbar" ref="scrollref">
-        <el-backtop target="#main_scrollbar>.el-scrollbar__wrap" :right="20" :bottom="20"></el-backtop>
-        <el-container style="height: auto;">
-            <el-header height="200px" style="background: var(--dzz-background);padding:0;">
-                <!--{template red/components/header/index}-->
-            </el-header>
-            <el-header v-if="bannerData.ChildData.length" style="height: 60px;background: var(--el-color-primary);padding: 0;">
-                <div class="page-header w1440" style="margin-top: 0;padding: 0;">
-                    <el-menu
-                        class="dzz-menu dzz-default-menu"
-                        :default-active="bannerData.ChildActive"
-                        mode="horizontal"
-                        style="border:0;height: 100%;width: 100%;"
-                        @select="handleSelect">
-                        <template v-for="item in bannerData.ChildData">
-                            <template v-if="item.children && item.children.length">
-                                <el-sub-menu 
-                                :index="item.id" 
-                                :class="{'is-active':bannerData.ChildActive==item.id}"
-                                popper-class="dzz-sub-menu">
-                                    <template #title>
-                                        <div class="title">{{item.bannername}}</div>
-                                        <div class="title-text" @click.stop="handleSelect(item)"></div>
-                                    </template>
-                                    <menuitem 
-                                        :datalist="item.children" 
-                                        @handleselect="handleSelect"
-                                        :active="bannerData.ChildActive"></menuitem>
-                                </el-sub-menu>
-                            </template>
-                            <template v-else>
-                                <el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3">
-                                    <template #title>
-                                        <div class="title">{{item.bannername}}</div>
-                                        <div class="title-text" @click.stop="handleSelect(item)"></div>
-                                    </template>
-                                </el-menu-item>
-                            </template>
-                        </template>
-                    </el-menu>
-                </div>
-            </el-header>
-            <el-container class="is-vertical">
-                <div class="w1440" style="display: flex;align-items: center;">
-					<el-icon><Location /></el-icon>
-					<el-text tag="b" style="margin-left: 6px;">您得位置：</el-text>
-					<el-breadcrumb separator-icon="Arrow-Right">
-						<el-breadcrumb-item v-for="(item,key) in breadcrumb">
-							<template v-if="breadcrumb.length - 1 == key">
-								{{ item.bannername }}
-							</template>
-							<template v-else>
-								<a :href="item.url?item.url:item.realurl">{{ item.bannername }}</a>
-							</template>
-						</el-breadcrumb-item>
-					</el-breadcrumb>
-				</div>
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px">
+            <!--{template components/information/header}-->
+        </el-header>
+        <el-container class="page-main is-vertical dzz-container">
+            <el-scrollbar  id="main_scrollbar" ref="scrollref">
                 <!--{template components/information/message}-->
                 <div style="background: #EBEBEB;border-top: 2px solid var(--el-color-primary);">
                     <div class="page-footer">
@@ -121,9 +76,9 @@
                             <template v-for="item in headeralldata.data">
                                 <template v-if="item.children && item.children.length">
                                     <el-sub-menu 
-                                    :index="item.realurl" 
-                                    :class="{'is-active':active==item.realurl}"
-                                    popper-class="dzz-sub-menu">
+                                        :index="item.realurl" 
+                                        :class="{'is-active':active==item.realurl}"
+                                        popper-class="dzz-sub-menu">
                                         <template #title>
                                             {{item.bannername}}
                                             <div class="title-text" @click.stop="handleSelect(item)"></div>
@@ -151,10 +106,10 @@
                         </el-text>
                     </div>
                 </div>
-            </el-container>
+            </el-scrollbar>
+            
         </el-container>
-    </el-scrollbar>
-    
+	</el-container>
 </div>
 <script>
 	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
@@ -215,13 +170,20 @@
                 ImageDataIframe:'',
                 template:3,
                 tyttvalue:[],
-                tyttvalue1:''
+                tyttvalue1:'',
+                DocumentThemeColor:'',
 			}
 		},
 		mixins:[HeaderMixins],
 		created(){
             let self = this;
-            document.querySelector('html').className = 'red';
+            //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
             let keyword = this.GetUrlParam('keyword');
             let tid = this.GetUrlParam('tid');
             let ftype = this.GetUrlParam('type');
@@ -281,7 +243,13 @@
             }
 		},
 		watch:{
-			
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval;
+				},
+				deep:true,
+				// immediate:true
+			}
 		},
 		methods:{
             async GetData(){

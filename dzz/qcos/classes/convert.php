@@ -29,7 +29,7 @@ class convert
             } else {
                 $ext = 'mp4';
             }
-            $setarr = ['rid' => $data['rid'], 'dateline' => TIMESTAMP, 'ctype' => 2,'format'=>$ext,'videoquality'=>0];
+            $setarr = ['rid' => $data['rid'], 'dateline' => TIMESTAMP, 'ctype' => 2,'format'=>$ext,'videoquality'=>1];
             $setarr['aid']= $data['aid'] ? $data['aid']:0;
 
             if ($ff = C::t('video_record')->insert_data($setarr)) {

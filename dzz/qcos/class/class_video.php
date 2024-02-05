@@ -198,7 +198,7 @@ EOF;
             case 1://标清
                 $templatename = 'pichomeconvert-mp4-960-540-900-mp3';
                 $width = 960;
-                $height = 510;
+                $height = 540;
                 $bitrate = 900;
                 break;
             case 2://高清

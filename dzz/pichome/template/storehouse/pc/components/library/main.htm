@@ -417,7 +417,7 @@
 						param['force'] = 1;
 					}
 					data.state = 1;//准备中...
-					const {data: res} = await axios.post(MOD_URL+'&op=initexport',param);
+					const {data: res} = await axios.post('misc.php?mod=initexport',param);
                     if(res.success){
                         data.percent = 0;//加载数量
 						if(self.Table.GetFetachAppids.indexOf(data.appid)<0){

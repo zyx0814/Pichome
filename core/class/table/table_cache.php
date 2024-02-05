@@ -45,7 +45,7 @@ class table_cache extends dzz_table
     public function fetch_cachedata_by_cachename($cachename, $expiretime = 600)
     {
         if (memory('check')) {
-            $data = ($data = memory('get', $cachename)) === false ? array() : unserialize($data['cachevalue']);
+            $data = ($data = memory('get', $cachename)) === false ? array() : (unserialize($data['cachevalue']) ? unserialize($data['cachevalue']):$data['cachevalue']);
         } else {
 
             $cachedata = parent::fetch($cachename);

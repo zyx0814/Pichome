@@ -131,10 +131,9 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
                 }
             }
             if (!empty($rids)) {
-                //if ($tagval['ftype']) $data = C::t('pichome_resources')->smartdata_getdatasbyrids_sid($smid, $rids);
-                //else
                 $data = C::t('pichome_resources')->getdatasbyrids($rids);
             }
+
             $next = true;
             //获取已查询总数
             if (count($rids) >= $perpage) {

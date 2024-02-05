@@ -13,8 +13,8 @@ $width = $_GET['width'] ? intval($_GET['width']):0;
 $height = $_GET['height'] ? intval($_GET['height']):0;
 $size=in_array($size,array_keys($_G['setting']['thumbsize']))?$size:'large';
 $original=intval($_GET['original']);
-if(!$width) $width=$_G['setting']['thumbsize'][$size]['width'];
-if(!$height) $height=$_G['setting']['thumbsize'][$size]['height'];
+/*if(!$width) $width=$_G['setting']['thumbsize'][$size]['width'];
+if(!$height) $height=$_G['setting']['thumbsize'][$size]['height'];*/
 $returnurl  = $_GET['returnurl'] ? intval($_GET['returnurl']):0;
 $thumbtype  = $_GET['thumbtype'] ? intval($_GET['thumbtype']):1;
-IO::getThumb($path, $width,$height,$returnurl, $thumbtype);
+IO::getThumb($path,$size,0,$returnurl, 1,$thumbtype);

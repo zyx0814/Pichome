@@ -3,6 +3,7 @@ ignore_user_abort(true);
 if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
+
 //runlog('aaaauploadafter',time());
 //
 //error_reporting(E_ALL);
@@ -19,7 +20,7 @@ for($i=0;$i<$processnum;$i++){
         break;
     }
 }
-$limit = 1;
+$limit = 100;
 $start=$i*$limit;
 //dzz_process::unlock($processname);
 if ($locked) {
@@ -81,7 +82,7 @@ order by r.dateline desc,mintimes asc limit $start,$limit",array('thumb_record',
 if($datas){
     foreach($datas as $v){
         $processname1 = 'PICHOMEGETTHUMB_'.$v['rid'];
-       // dzz_process::unlock($processname1);
+        //dzz_process::unlock($processname1);
         //如果当前数据是锁定状态则跳过
         if (dzz_process::islocked($processname1, 60*5)) {
             continue;

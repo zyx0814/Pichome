@@ -1,11 +1,16 @@
-	<div class="h-left" style="justify-content: start;width: 240px;
+	<a href="{$_G[siteurl]}" class="h-left" style="justify-content: start;width: 240px;
     padding-right: 20px;">
-	<!--{if $_GET['do'] == 'tags'}-->
-	{$appdata['appname']}
-	<!--{else}-->
-		{{ DocumentVapp.appname }}
-	<!--{/if}-->
-	</div>
+		<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+			<template #error><div class="el-image__placeholder"></div></template>
+		</el-image>
+		<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">
+			<!--{if $_GET['do'] == 'tags'}-->
+			{$appdata['appname']}
+			<!--{else}-->
+				{{ DocumentVapp.appname }}
+			<!--{/if}-->
+		</el-text>
+	</a>
 	<div class="h-center" style="padding-left: 0px;">
 		<!--{if $_GET['do'] != 'tags'}-->
 		<el-input

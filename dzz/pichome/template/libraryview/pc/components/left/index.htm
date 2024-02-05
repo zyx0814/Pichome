@@ -3,9 +3,11 @@
 		<el-menu style="border:0;" :default-active="LeftCurrenType">
 			<el-menu-item index="" @click="LeftClick('')">
 				<el-text>全部</el-text>
+				<span class="num">{{ letnumber.all }}</span>
 			</el-menu-item>
 			<el-menu-item index="notclassify" @click="LeftClick('notclassify')">
 				<el-text>未分类</el-text>
+				<span class="num">{{ letnumber.nocat }}</span>
 			</el-menu-item>
 			<!-- <el-menu-item index="nottag" @click="LeftClick('nottag')">
 				<el-text>未标签</el-text>

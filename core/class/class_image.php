@@ -209,7 +209,7 @@ class image {
 			$this->imagecreatefromfunc = $this->imagefunc = TRUE;
 		}
 
-		if(!$this->libmethod && $this->imginfo['mime'] == 'image/gif') {
+		/*if(!$this->libmethod && $this->imginfo['mime'] == 'image/gif') {
 			if(!$this->imagecreatefromfunc) {
 				return -4;
 			}
@@ -219,7 +219,7 @@ class image {
 			$content = fread($fp, $this->imginfo['size']);
 			fclose($fp);
 			$this->imginfo['animated'] = strpos($content, 'NETSCAPE2.0') === FALSE ? 0 : 1;
-		}
+		}*/
 
 		return $this->imagecreatefromfunc ? 1 : -4;
 	}
@@ -295,6 +295,7 @@ class image {
 	}
 
 	function Thumb_GD() {
+
 		if(!function_exists('imagecreatetruecolor') || !function_exists('imagecopyresampled') || !function_exists('imagejpeg') || !function_exists('imagecopymerge')) {
 			return -4;
 		}
@@ -361,6 +362,7 @@ class image {
 				break;
 		}
 		clearstatcache();
+
 		if($thumb_photo) {
 			if($this->imginfo['mime'] == 'image/jpeg') {
 				@$imagefunc($thumb_photo, $this->target, $this->param['thumbquality']);
@@ -440,9 +442,9 @@ class image {
 					$im->stripImage(); //去除图片信息
 					$im->setIteratorIndex(0);
 					$im->cropImage($cutw, $cuth, $startx, $starty);
-					if($this->imginfo['mime'] == 'image/png') {
+				/*	if($this->imginfo['mime'] == 'image/png') {
 						$prefix='png:';
-					}elseif($this->imginfo['mime'] == 'image/gif') {
+					}else*/if($this->imginfo['mime'] == 'image/gif') {
 						$prefix='png:';
 					}else{
 						$prefix='';
@@ -484,9 +486,9 @@ class image {
 					$im->stripImage(); //去除图片信息
 					$im->setIteratorIndex(0);
 					$im->cropImage($this->param['thumbwidth'], $this->param['thumbheight'], $startx, $starty);
-					if($this->imginfo['mime'] == 'image/png') {
+					/*if($this->imginfo['mime'] == 'image/png') {
 						$prefix='png:';
-					}elseif($this->imginfo['mime'] == 'image/gif') {
+					}else*/if($this->imginfo['mime'] == 'image/gif') {
 						$prefix='png:';
 					}else{
 						$prefix='';

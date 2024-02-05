@@ -21,7 +21,7 @@
 
 <div class="mainContainer" id="main_message">
 	<div class="modal-content">
-		 <div class="brand"> <img src="{eval echo $_G['setting']['sitelogo']?'index.php?mod=io&op=getThumb&size=small&path='.dzzencode('attach::'.$_G['setting']['sitelogo']):'data/attachment/sitelogo/sitelogo.png';}" /> </div>
+		 <div class="brand"> <img src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" /> </div>
 		<!--{if $_G[setting][loginset][title]}-->
 		<div class="main-title">$_G[setting][loginset][title]</div>
 		<!--{/if}--> 

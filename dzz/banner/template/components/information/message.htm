@@ -1,5 +1,5 @@
 <div class="information-box"> 
-    <div class="w1440" style="position: relative;margin-top: 0;">
+    <div class="container" style="position: relative;margin-top: 0;">
         <div class="message-header">
             <div class="img-box">
                 <el-image :class="'image_'+bannerData.icotype" :src="bannerData.icon" fit="cover" >
@@ -56,10 +56,10 @@
             </el-input>
         </div>
     </div>
-    <div class="w1440"  style="position: relative;" v-if="bannerData.banneractive == 'all' || bannerData.banneractive == 'search'">
+    <div class="container"  style="margin-top: 20px;" v-if="bannerData.banneractive == 'all' || bannerData.banneractive == 'search'">
         <div class="tag-box">
             <template v-for="tag in bannerData.tags">
-                <el-check-tag :checked="tagactive == tag.tid" style="margin-left: 12px;font-weight: 500;" disable-transitions @change="tagserach(tag)">
+                <el-check-tag :checked="tagactive == tag.tid" style="margin-right: 12px;font-weight: 500;" disable-transitions @change="tagserach(tag)">
                     {{ tag.tagname }}（{{tag.num}}）
                 </el-check-tag>
             </template>
@@ -67,10 +67,10 @@
         </div>
     </div>
     <template v-if="bannerData.banneractive == 'all'">
-        <div class="w1440" style="position: relative;">
+        <div class="container" style="position: relative;">
             <template v-for="item in bannerData.AllData">
                 <div v-if="item.data.length" class="layout-box">
-                    <div class="top-header">
+                    <div class="top-header" style="margin-top: 20px;">
                         <el-text tag="b" size="large">{{ item.name }}：</el-text>
                         <el-button plain @click="handleBannerSelect(item.flag)">
                             更多<el-icon><Arrow-Right /></el-icon>
@@ -89,7 +89,7 @@
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'image'">
-        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+        <div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
             <el-dropdown @command="handleLayoutType">
                 <el-button text style="outline: none;">
                     <template v-if="bannerData.banner.image.layout=='waterFall'">瀑布流</template>
@@ -130,7 +130,7 @@
                 </template>
             </el-dropdown>
         </div>
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutimage"
                 :props="{click:true}"
@@ -142,12 +142,13 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'video'">
-        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+        <div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
             <el-dropdown @command="handleLayoutType">
                 <el-button text style="outline: none;">
                     <template v-if="bannerData.banner.video.layout=='waterFall'">瀑布流</template>
@@ -189,7 +190,7 @@
             </el-dropdown>
 
         </div>
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutvideo"
                 :props="{click:true}"
@@ -201,12 +202,13 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'audio'">
-        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+        <div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
             <el-dropdown @command="handleLayoutType">
                 <el-button text style="outline: none;">
                     <template v-if="bannerData.banner.audio.layout=='waterFall'">瀑布流</template>
@@ -247,7 +249,7 @@
                 </template>
             </el-dropdown>
         </div>
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutaudio"
                 :props="{click:true}"
@@ -259,12 +261,13 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'document'">
-        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+        <div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
             <el-dropdown @command="handleLayoutType">
                 <el-button text style="outline: none;">
                     <template v-if="bannerData.banner.document.layout=='waterFall'">瀑布流</template>
@@ -306,7 +309,7 @@
             </el-dropdown>
 
         </div>
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutdocument"
                 :props="{click:true}"
@@ -318,12 +321,13 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'other'">
-        <div class="w1440" style="display: flex;justify-content: end;align-items: center;">
+        <div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
             <el-dropdown @command="handleLayoutType">
                 <el-button text style="outline: none;">
                     <template v-if="bannerData.banner.other.layout=='waterFall'">瀑布流</template>
@@ -364,7 +368,7 @@
                 </template>
             </el-dropdown>
         </div>
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutother"
                 :props="{click:true}"
@@ -376,12 +380,13 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>
     <template v-else-if="bannerData.banneractive == 'search'">
-        <div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+        <div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
             <Image-Layout
                 ref="RefImageLayoutsearch"
                 :props="{click:true}"
@@ -393,7 +398,8 @@
                 :showmessage="bannerData.ImageLayout.showmessage"
                 :url="bannerData.ImageLayout.url"
                 :scrollref="scrollref"
-                :parentbox="bannerData.ImageLayout.parentbox">
+                :parentbox="bannerData.ImageLayout.parentbox"
+                :ischecked="false">
             </Image-Layout>
         </div>
     </template>

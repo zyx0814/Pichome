@@ -135,6 +135,7 @@ class table_pichome_vapp extends dzz_table
             $adminperm = 0;
         }
         if ($adminperm) return true;
+
         if ($perm == 'download' && (isset($_G['config']['pichomeclosedownload']) && $_G['config']['pichomeclosedownload'])) {
             return false;
         }
@@ -142,7 +143,6 @@ class table_pichome_vapp extends dzz_table
         if ($perm == 'share' && (isset($_G['config']['pichomecloseshare']) && $_G['config']['pichomecloseshare'])) {
             return false;
         }
-
 
         if (!$permdata) return false;
         if ($permdata === '1') return true;
@@ -194,15 +194,16 @@ class table_pichome_vapp extends dzz_table
         $downshare = array();
         if ($appid) {
             $downshare = DB::fetch_first("select * from %t where isdelete < 1 and appid = %s", array($this->_table, $appid));
-            $downshare['download'] = $this->getpermbypermdata($downshare['download'],$appid, 'download');
-            $downshare['share'] = $this->getpermbypermdata($downshare['share'], $appid,'share');
-            $downshare['view'] = $this->getpermbypermdata($downshare['view'],$appid);
+           /* $downshare['download'] =$downshare['download'];
+            $downshare['share'] =$downshare['share'];
+            $downshare['view'] =$downshare['view'];*/
         } else {
+
             foreach (DB::fetch_all("select * from %t where isdelete < 1", array($this->_table)) as $v) {
 
-                $v['download'] = $this->getpermbypermdata($v['download'],$v['appid'], 'download');
-                $v['share'] = $this->getpermbypermdata($v['share'], $v['appid'],'share');
-                $v['view'] = $this->getpermbypermdata($v['view'],$v['appid']);
+             /*   $v['download'] =$v['download'];
+                $v['share'] = $v['share'];
+                $v['view'] = $v['view'];*/
                 $downshare[$v['appid']] = $v;
             }
         }

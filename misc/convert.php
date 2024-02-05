@@ -19,7 +19,7 @@ for($i=0;$i<$processnum;$i++) {
 
 /*$i = 0;
 $processname = 'DZZ_LOCK_PICHOMEVIDEOCONVERT'.$i;*/
-$limit = 1;
+$limit = 10;
 $start=$i*$limit;
 /*if (!dzz_process::islocked($processname, 60*15)) {
     $locked=false;
@@ -56,11 +56,11 @@ foreach($convertdata as $v){
 if(!$convertsate) exit(json_encode( array('error'=>'转换未开启')));
 if($_GET['id']){
     $datas = DB::fetch_all("select vr.* from %t vr left join %t r on vr.rid=r.rid  left join %t v on v.appid = r.appid where  vr.id = %d and vr.status <= 0 and v.isdelete < 1 
- and (v.type = 1 or v.type = 3)  order by vr.jobnum asc limit $start,1",array('video_record','pichome_resources','pichome_vapp',$_GET['id']));
+   order by vr.jobnum asc limit $start,1",array('video_record','pichome_resources','pichome_vapp',$_GET['id']));
 }else{
     //查询符合执行条件的数据
     $datas = DB::fetch_all("select vr.* from %t vr left join %t r on vr.rid=r.rid  left join %t v on v.appid = r.appid where vr.status <= 0 and v.isdelete < 1 
- and (v.type = 1 or v.type = 3)  order by vr.jobnum asc limit $start,$limit",array('video_record','pichome_resources','pichome_vapp'));
+   order by vr.jobnum asc limit $start,$limit",array('video_record','pichome_resources','pichome_vapp'));
 
 }
 

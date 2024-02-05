@@ -48,43 +48,42 @@ INSERT INTO `dzz_hooks` (`id`, `app_market_id`, `name`, `description`, `type`, `
 (8, 0, 'app_run', '', 1, 0, 'core\\dzz\\apprun', 1, 0),
 (9, 0, 'mod_run', '', 1, 0, 'core\\dzz\\modrun', 1, 0),
 (10, 0, 'adminlogin', '', 1, 0, 'admin\\login\\classes\\adminlogin', 1, 0),
-(12, 0, 'mod_start', '', 1, 0, 'core\\dzz\\modroute', 1, 0),
-(13, 0, 'login_check', '', 1, 0, 'user\\login\\classes\\logincheck|user', 1, 0),
-(14, 0, 'login_valchk', '', 1, 0, 'user\\login\\classes\\loginvalchk|user/login', 1, 0),
-(16, 0, 'email_chk', '', 1, 0, 'user\\profile\\classes\\emailchk|user', 1, 0),
-(17, 0, 'register_before', '', 1, 0, 'user\\register\\classes\\register|user', 1, 0),
-(18, 0, 'check_val', '', 1, 0, 'user\\register\\classes\\checkvalue|user', 1, 0),
-(19, 0, 'register_common', '', 1, 0, 'user\\register\\classes\\regcommon', 1, 0),
-(20, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0),
-(21, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\getcolor', 1, 0),
-(22, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
-(23, 0, 'getpichomethumb', ' ', 1, 0, 'dzz\\billfish\\classes\\getpichomethumb', 1, 0),
-(24, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\billfish\\classes\\pichomevappdelete', 1, 0),
-(25, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\eagle\\classes\\deleteafter', 1, 0),
-(26, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\eagle\\classes\\pichomevappdelete', 1, 0),
-(27, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\billfish\\classes\\delpichomefolderafter', 1, 0),
-(28, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\eagle\\classes\\delpichomefolderafter', 1, 0),
-(29, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\local\\classes\\deleteafter', 1, 0),
-(30, 0, 'dzz_initafter', ' ', 1, 0, 'core\\dzz\\ulimit', 1, 0),
-(31, 0, 'sysreg', ' ', 1, 0, 'core\\dzz\\sysreg', 1, 0),
-(32, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\local\\classes\\pichomevappdelete', 1, 0),
-(33, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\billfish\\classes\\deleteafter', 1, 0),
-(34, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\collection\\classes\\deleteafter', 1, 0),
-(35, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
-(36, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\imageColor', 1, 0),
-(37, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\thumb', 1, 0),
-(38, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\imageColor\\classes\\getthumb', 1, 0),
-(39, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\onlyoffice_view\\classes\\thumb', 1, 0),
-(40, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\qcos\\classes\\thumb', 1, 0),
-(41, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\qcos\\classes\\info', 1, 0),
-(42, 0, 'addfileafter', ' ', 1, 0, 'dzz\\qcos\\classes\\convert', 0, 0),
-(43, 0, 'addfileafter', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\convert', 0, 0),
-(45, 0, 'addvappafter', ' ', 1, 0, 'dzz\\pichome\\classes\\addvappafter', 1, 0),
-(46, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\pichome\\classes\\pichomevappdelete', 1, 0),
-(47, 0, 'addfileafter', ' ', 1, 0, 'dzz\\pichome\\classes\\addfileafter', 1, 0),
-(48, 0, 'addstatsdata', ' ', 1, 0, 'dzz\\stats\\classes\\addstatsdata', 1, 0),
-(49, 0, 'statsviewaddafter', ' ', 1, 0, 'dzz\\banner\\classes\\statsviewaddafter', 1, 0),
-(50, 0, 'statskeywordaddafter', ' ', 1, 0, 'dzz\\banner\\classes\\statskeywordaddafter', 1, 0);
+(11, 0, 'mod_start', '', 1, 0, 'core\\dzz\\modroute', 1, 0),
+(12, 0, 'login_check', '', 1, 0, 'user\\login\\classes\\logincheck|user', 1, 0),
+(13, 0, 'login_valchk', '', 1, 0, 'user\\login\\classes\\loginvalchk|user/login', 1, 0),
+(14, 0, 'email_chk', '', 1, 0, 'user\\profile\\classes\\emailchk|user', 1, 0),
+(15, 0, 'register_before', '', 1, 0, 'user\\register\\classes\\register|user', 1, 0),
+(16, 0, 'check_val', '', 1, 0, 'user\\register\\classes\\checkvalue|user', 1, 0),
+(17, 0, 'register_common', '', 1, 0, 'user\\register\\classes\\regcommon', 1, 0),
+(18, 8, 'systemlog', '', 1, 0, 'admin\\systemlog\\classes\\systemlog', 1, 0),
+(19, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\getcolor', 1, 0),
+(20, 0, 'pichomegetinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
+(21, 0, 'getpichomethumb', ' ', 1, 0, 'dzz\\billfish\\classes\\getpichomethumb', 1, 0),
+(22, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\billfish\\classes\\pichomevappdelete', 1, 0),
+(23, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\eagle\\classes\\deleteafter', 1, 0),
+(24, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\eagle\\classes\\pichomevappdelete', 1, 0),
+(25, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\billfish\\classes\\delpichomefolderafter', 1, 0),
+(26, 0, 'delpichomefolderafter', ' ', 1, 0, 'dzz\\eagle\\classes\\delpichomefolderafter', 1, 0),
+(27, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\local\\classes\\deleteafter', 1, 0),
+(28, 0, 'dzz_initafter', ' ', 1, 0, 'core\\dzz\\ulimit', 1, 0),
+(29, 0, 'sysreg', ' ', 1, 0, 'core\\dzz\\sysreg', 1, 0),
+(30, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\local\\classes\\pichomevappdelete', 1, 0),
+(31, 0, 'pichomedatadeleteafter', ' ', 1, 0, 'dzz\\billfish\\classes\\deleteafter', 1, 0),
+(32, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\info', 1, 0),
+(33, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\imageColor\\classes\\imageColor', 1, 0),
+(34, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\thumb', 1, 0),
+(35, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\imageColor\\classes\\getthumb', 1, 0),
+(36, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\onlyoffice_view\\classes\\thumb', 1, 0),
+(37, 0, 'pichomethumb', ' ', 1, 0, 'dzz\\qcos\\classes\\thumb', 1, 0),
+(38, 0, 'pichomegetfileinfo', ' ', 1, 0, 'dzz\\qcos\\classes\\info', 1, 0),
+(39, 0, 'addfileafter', ' ', 1, 0, 'dzz\\qcos\\classes\\convert', 0, 0),
+(40, 0, 'addfileafter', ' ', 1, 0, 'dzz\\ffmpeg\\classes\\convert', 0, 0),
+(41, 0, 'addvappafter', ' ', 1, 0, 'dzz\\pichome\\classes\\addvappafter', 1, 0),
+(42, 0, 'pichomevappdelete', ' ', 1, 0, 'dzz\\pichome\\classes\\pichomevappdelete', 1, 0),
+(43, 0, 'addfileafter', ' ', 1, 0, 'dzz\\pichome\\classes\\addfileafter', 1, 0),
+(44, 0, 'addstatsdata', ' ', 1, 0, 'dzz\\stats\\classes\\addstatsdata', 1, 0),
+(45, 0, 'statsviewaddafter', ' ', 1, 0, 'dzz\\banner\\classes\\statsviewaddafter', 1, 0),
+(46, 0, 'statskeywordaddafter', ' ', 1, 0, 'dzz\\banner\\classes\\statskeywordaddafter', 1, 0);
 
 
 
@@ -183,7 +182,7 @@ INSERT INTO `dzz_setting` VALUES('smrows', '5');
 INSERT INTO `dzz_setting` VALUES('smthumb', '24');
 
 INSERT INTO `dzz_setting` VALUES('thumb_active', '1');
-INSERT INTO `dzz_setting` VALUES('imagelib', '1');
+INSERT INTO `dzz_setting` VALUES('imagelib', '0');
 
 INSERT INTO `dzz_setting` VALUES('waterimg', 'data/attachment/waterimg/water.png');
 INSERT INTO `dzz_setting` VALUES('IsWatermarkstatus', '0');
@@ -193,7 +192,7 @@ INSERT INTO `dzz_setting` VALUES('watermarkminheight', '512');
 INSERT INTO `dzz_setting` VALUES('watermarktype', 'png');
 
 INSERT INTO `dzz_setting` VALUES('unRunExts', 'a:16:{i:0;s:3:"exe";i:1;s:3:"bat";i:2;s:2:"sh";i:3;s:3:"dll";i:4;s:3:"php";i:5;s:4:"php4";i:6;s:4:"php5";i:7;s:4:"php3";i:8;s:3:"jsp";i:9;s:3:"asp";i:10;s:4:"aspx";i:11;s:2:"vs";i:12;s:2:"js";i:13;s:3:"htm";i:14;s:4:"html";i:15;s:3:"xml";}');
-INSERT INTO `dzz_setting` VALUES('maxChunkSize', '104857600');
+INSERT INTO `dzz_setting` VALUES('maxChunkSize', '2000000');
 INSERT INTO `dzz_setting` VALUES('feed_at_depart_title', '部门');
 INSERT INTO `dzz_setting` VALUES('feed_at_user_title', '同事');
 INSERT INTO `dzz_setting` VALUES('feed_at_range', 'a:3:{i:9;s:1:"1";i:2;s:1:"2";i:1;s:1:"3";}');

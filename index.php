@@ -6,14 +6,14 @@
  * @link        https://www.oaooa.com
  * @author      zyx(zyx@oaooa.com)
  */
-
+error_reporting(0);
 define('APPTYPEID', 1);
 define('CURSCRIPT', 'dzz');
 define('DZZSCRIPT', basename(__FILE__));
 define('BASESCRIPT', basename(__FILE__));
 $routefile = 'data/cache/'. 'route.php';
 $routes = require_once $routefile;
-if($routes['pathinfo']){
+if(isset($routes['pathinfo'])){
     if ((!isset($_SERVER['PATH_INFO']) || !$_SERVER['PATH_INFO'])&& isset($_SERVER['REQUEST_URI'])) {
         $_SERVER['PATH_INFO'] = strstr($_SERVER['REQUEST_URI'], '?', true);
         if ($_SERVER['PATH_INFO'] === false) {

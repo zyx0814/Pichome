@@ -49,8 +49,6 @@
 				if(ScreenParam && ScreenParam.classify){
 					this.ScreenParam.fids = ScreenParam.classify
 				}
-	
-				Params['hassub'] = self.ImageDataIsExpanded;
 				return {...Params,...ScreenParam,...OrderParam};
 			},
 			CommonGetHashParam(name,url){
@@ -133,7 +131,7 @@
 				let display = sessionStorage.getItem('display');
 				if(display && display != 'empty'){
 					display = display.split(',');
-					this.HeaderShowChange({
+					this.headerShowChange({
 						type:'display',
 						value:display
 					});

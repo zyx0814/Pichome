@@ -116,5 +116,6 @@
   -webkit-box-pack: justify;
       -ms-flex-pack: justify;
           justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  margin-top: 20px;
 }

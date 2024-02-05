@@ -10,6 +10,7 @@ class info
 
     public function run($data)
     {
+        global $_G;
         $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
         $extra = unserialize($app['extra']);
 
@@ -18,7 +19,7 @@ class info
             return '';
         }
 
-        $exts = $extra['exts_info'] ? explode(',', $extra['exts_info']) : array();
+        $exts = explode(',',$_G['config']['pichomeffmpeggetvieoinfoext']);//$extra['exts_info'] ? explode(',', $extra['exts_info']) : array();
 
         //如果类型不符合则停止执行
         if (!in_array($data['ext'], $exts)) return '';

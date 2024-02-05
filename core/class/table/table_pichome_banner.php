@@ -43,13 +43,19 @@ class table_pichome_banner extends dzz_table
     }
     //删除栏目
     public function delete_by_id($id){
-        if(!$bdata = parent::fetch($id)) return false;
-        foreach(DB::fetch_all("select id,bdata from %t where pathkey like %s",[$this->_table,str_replace('_','\_',$bdata['pathkey']).'%']) as $v){
-            if(C::t('pichome_route')->delete_by_abid($v['bdata'],1)){
-                parent::delete($v['id']);
-            }
+        if(!$bdata = parent::fetch($id)) return 0;
+		$i=0;
+		//删除上级时同时删除所有下级
+		$i=0;
+        foreach(DB::fetch_all("select id,bdata,btype from %t where pathkey like %s",[$this->_table,str_replace('_','\_',$bdata['pathkey']).'%']) as $v){
+			if( parent::delete($v['id'])){
+				$i++;
+				if(!DB::result_first("select COUNT(*) from %t where bdata=%s and btype = %d",array($this->_table,$bdata['bdata'],$bdata['btype']))){
+					C::t('pichome_route')->delete_by_abid($v['bdata'],1,$bdata['btype']);
+				}
+			}
         }
-        return true;
+        return $i;
     }
     public function fetch_bannerbasic_by_bid($bid){
         if(!$bannerdata = parent::fetch($bid)) return false;

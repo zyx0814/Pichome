@@ -30,7 +30,6 @@ if ($do == 'filelist') {
     }
     $start = ($page - 1) * $perpage;
     $limitsql = "limit $start," . $perpage;
-
     if (!isset($_GET['order'])) {
         //获取用户默认排序方式
         $sortdata = C::t('user_setting')->fetch_by_skey('pichomesortfileds');
@@ -73,18 +72,19 @@ if ($do == 'filelist') {
             elseif($v['btype'] == 4) $gids[] = intval($v['bdata']);
         }
     }
+    if(!is_array($appid)) $appid = $appid ? (array)$appid:[];
+    if($gappid){}
 //库权限判断部分
     foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0", array('pichome_vapp')) as $v) {
+
         if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
             continue;
         }
-
         if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
             $vappids[] = $v['appid'];
         }
 
     }
-
     if(!is_array($appid)) $appid = (array)$appid;
     if($gappid){
         $appid = array_intersect($vappids,$gappid);
@@ -562,7 +562,7 @@ if ($do == 'filelist') {
     $orderarr[] = " r.rid " . $asc;
     $ordersql = implode(',', $orderarr);
     if (!empty($para)) $params = array_merge($params, $para);
-   // $time = microtime(true);
+
     $counttotal = DB::result_first(" select  count(distinct r.rid) as filenum $sql  where $wheresql ", $params);
     if($fids || isset($_GET['color']) || $gids || $order = 9){
         $groupby = ' group by r.rid';
@@ -577,28 +577,10 @@ if ($do == 'filelist') {
         $rids[] = $value['rid'];
     }
 
-   /* //增加统计关键词次数
-    if($rids && $keyword){
-        $statskeywords = array();
-        $arr1 = explode('+', $keyword);
-        foreach($arr1 as $value1){
-            $arr2 = explode(' ', $value1);
-            foreach($arr2 as $kval){
-                if($bannerdata && $bannerdata['btype'] == 5){
-                    addKeywordStats($kval);
-                }else{
-                    addVappkeywordStats($kval,$_GET['appid']);
-                }
 
-            }
-        }
-
-    }*/
-   // $time1 = microtime(true);
-    // echo $time1 - $time;
-    // die;
     $data = array();
     if (!empty($rids)) $data = C::t('pichome_resources')->getdatasbyrids($rids);
+
     // print_r($data);die;
     if (count($rids) >= $perpage) {
        $next = true;

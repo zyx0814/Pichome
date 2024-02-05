@@ -1,4 +1,4 @@
-<div class="w1440" style="position: relative;margin-top: 10px;" ref="parentbox">
+<div class="container" style="position: relative;margin-top: 10px;" ref="parentbox">
     <Image-Layout
         ref="RefImageLayoutsearch"
         :props="{click:true}"
@@ -10,6 +10,7 @@
         :showmessage="bannerData.ImageLayout.showmessage"
         :url="bannerData.ImageLayout.url"
         :scrollref="scrollref"
-        :parentbox="bannerData.ImageLayout.parentbox">
+        :parentbox="bannerData.ImageLayout.parentbox"
+        :ischecked="false">
     </Image-Layout>
 </div>

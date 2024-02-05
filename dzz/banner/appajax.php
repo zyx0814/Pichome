@@ -75,6 +75,14 @@ if ($do == 'addsearch') {//增加关键词搜索次数
         $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
     }
     exit(json_encode(array( 'folderdatanum' => $folderdatanum)));
+}elseif($do == 'getleftnum'){//获取左侧文件数
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $data = ['all'=>0,'nocat'=>0];
+    $data['nocat'] = DB::result_first("select count(rid) as num from %t 
+        where  appid = % and isdelete < 1 and (isnull(fids) or fids='')",array('pichome_resources',$appid));
+    $data['all'] = DB::result_first("select count(rid) as num  from %t 
+        where  appid = % and isdelete < 1",array('pichome_resources',$appid));
+    exit(json_encode(['success'=>true,'data'=>$data]));
 }elseif($do == 'searchfolderbyname'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']):'';

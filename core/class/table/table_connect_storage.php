@@ -110,7 +110,7 @@ class table_connect_storage extends dzz_table
         if (DB::result_first("select COUNT(*) from %t where cloudname=%s ", array($this->_table, $cloudname))) {
             $cloudname = preg_replace("/\(\d+\)/i", '', $cloudname) . '(' . ($i + 1) . ')';
             $i += 1;
-            return self::getFolderName($cloudname);
+            return self::getcloudname($cloudname);
         } else {
             return $cloudname;
         }

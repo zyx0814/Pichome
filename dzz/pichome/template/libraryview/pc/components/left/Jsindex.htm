@@ -18,6 +18,10 @@
 					defaultOpenkeysInit:[],
 					TopLevelNode:null,
 				},
+				letnumber: {
+					all:0,
+					nocat:0
+				}
 			}
 		},
 		watch:{
@@ -38,6 +42,7 @@
 			}else{
 				this.LeftCurrenType = type || '';
 			}
+			
 		},
 		methods:{
 			LeftInit(){//在获取偏好设置后执行
@@ -62,6 +67,16 @@
 					self.screenType.show = true;
 				})
 			},
+			async getleftnum(){
+                let {data: res} = await axios.post('index.php?mod=banner&op=appajax&do=getleftnum',{
+                    appid:this.DocumentAppid
+                });
+                if(res.success){
+                    this.letnumber.all = res.data.all;
+                    this.letnumber.nocat = res.data.nocat;
+                }
+                
+            },
 			LeftTreeClick(node){//左侧树点击
 				var self = this;
 				if(this.LeftCurrenType == 'filelist'){
@@ -127,6 +142,9 @@
 					// this.LeftTree.defaultOpenkeysSearch.push(new_data[i].fid);
 				}
 				resolve(arr);
+				if(level == 0){
+					this.getleftnum();
+				}
 			},
 			LeftClassifyFilterInput:debounce(async function(val){//输入
 				var self = this;
@@ -134,8 +152,9 @@
 				self.LeftTree.show = false;
 				self.LeftTree.defaultOpenkeys = [];
 				// self.LeftTree.defaultOpenkeysSearch = [];
+				self.LeftTree.arrangementLast = [];
 				if(val){
-					var res = await axios.post('index.php?mod=banner&op=appajax&do=searchfolderbynamee', {keyword:val});
+					var res = await axios.post('index.php?mod=banner&op=appajax&do=searchfolderbyname', {keyword:val});
 					var data = res.data;
 					for(var b in data.folderdata){
 						var bitem = data.folderdata[b];

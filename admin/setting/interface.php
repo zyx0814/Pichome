@@ -41,9 +41,9 @@ if ($operation == 'basic') {
             if (Hook::listen('rolecheck', $params, null, true) === false) continue;
             $applist[] = array('appname' => $value['appname'], 'identifier' => 'vapp_' . $value['identify']);
         }
-		if($setting['sitelogo']){
-			$setting['sitelogoPath'] = IO::getFileUri('attach::'.$setting[sitelogo]);
-		}
+
+        $setting['sitelogoPath'] =getglobal('setting/attachurl').'sitelogo/sitelogo.png?'.VERHASH;
+
         exit(json_encode(array('settingdata' => $setting, 'appdata' => $applist,'serverspace'=>$serverspace)));
     } else {
         $settingnew = $_GET['settingnew'];
@@ -99,10 +99,10 @@ if ($operation == 'basic') {
         }
 
 
-        if ($settingnew['sitelogo'] && $settingnew['sitelogo'] != $setting['sitelogo']) {
+      /*  if ($settingnew['sitelogo'] && $settingnew['sitelogo'] != $setting['sitelogo']) {
             if ($setting['sitelogo']) C::t('attachment')->delete_by_aid($setting['sitelogo']);
             C::t('attachment')->addcopy_by_aid($settingnew['sitelogo'], 1);
-        }
+        }*/
         updatesetting($setting,$settingnew);
         exit(json_encode(array('success'=>true)));
     }
@@ -218,7 +218,32 @@ if ($operation == 'basic') {
         updatesetting($setting,$settingnew);
         exit(json_encode(array('success'=>true)));
     }
-}elseif($operation == 'mailcheck'){//邮件检测
+}elseif($operation == 'uploadsitelogo'){
+    global $_G;
+    $files = $_FILES['files'];
+
+    if($files["type"] != 'image/png' || $files['size'] >= 1024*1024*2){
+        exit(json_encode(array('error'=>'file is not invalite')));
+    }
+
+    $logopath = 'sitelogo/sitelogo.png';
+    $logofilepath =$_G['setting']['attachdir'] .$logopath;
+    $logodir = dirname($logofilepath);
+    dmkdir($logodir);
+    //获取md5
+    $logomd5 = md5_file($files["tmp_name"]);
+    $return = move_uploaded_file($files["tmp_name"],$logofilepath);
+    if($return){
+        updatecache('setting');
+        exit(json_encode(array('success'=>true)));
+    }else{
+        exit(json_encode(array('success'=>false)));
+    }
+
+
+}
+elseif($operation == 'mailcheck'){//邮件检测
+    global $_G;
 	if(!submitcheck('settingsubmit')) {
 		$op = $_GET['op']?$_GET['op']:' ';
 		$navtitle=lang('email_send_test');

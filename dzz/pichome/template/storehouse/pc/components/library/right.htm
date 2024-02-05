@@ -39,7 +39,8 @@
 						<el-input 
 							v-model="SettingForm.address"
 							:disabled="parseFloat(SettingDialog.pathinfo)?false:true"
-							@input="SettingEditStatus">
+							@input="SettingAddressInput"
+                        	maxlength="30">
 							<template #prepend>{$_G['siteurl']}</template>
 						</el-input>
 						<div style="white-space: nowrap;margin-left: 12px;">
@@ -474,7 +475,8 @@
 				SettingQrcode:{
 					isqrcode:false,
 					qrcodeurl:''
-				}
+				},
+				SettingAddressOld:''
             }
         },
 		watch:{
@@ -494,6 +496,15 @@
 			}
 		},
         methods:{
+			SettingAddressInput(value){
+                const regex = /^[a-zA-Z_0-9]+$/;
+                if (!regex.test(value)) {
+                    this.SettingForm.address = this.SettingAddressOld;
+                }else{
+                    this.SettingAddressOld = value;
+					this.SettingEditStatus();
+                }
+            },
 			//删除标签
 			SettingDeleteTag(data){
 				let index = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
@@ -955,6 +966,7 @@
 							fileds.push(data.data.fileds[key]);
 						}
 					}
+					this.SettingAddressOld = data.data.url?data.data.url:'';
 					self.SettingForm = {
 						appid:this.SettingForm.appid,
 						appname:data.data.appname,
@@ -1325,6 +1337,7 @@
 							confirmButtonText: '确定保存',
 							cancelButtonText: '取消保存',
 							type: 'warning',
+                            icon:'QuestionFilled'
 						}
 					).then(() => {
 						self.SettingSubmit();

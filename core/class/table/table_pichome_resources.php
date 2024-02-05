@@ -339,10 +339,10 @@ class table_pichome_resources extends dzz_table
         if ($did == 1 || $thumurlmod) {
             //小图参数
             $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
-                'thumbsign' => '0', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid']];
+                'thumbsign' => '0', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
             //大图参数
             $largethumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
-                'thumbsign' => '1', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid']];
+                'thumbsign' => '1', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
             if ($apptype == 3 || $apptype == 1) {
                 $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
                 if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
@@ -376,7 +376,7 @@ class table_pichome_resources extends dzz_table
                     }
 
                     //大图地址
-                    if (in_array($ext, explode(',', getglobal('config/pichomecommimageext')))) {
+                    if (!$resourcesdata['hasthumb'] && in_array($ext, explode(',', getglobal('config/pichomecommimageext')))) {
                         $imgdata['originalimg'] = IO::getFileUri($thumbdir . BS . $resourcesdata['path']);
                     } else {
                         $imgdata['originalimg'] = $imgdata['icondata'];
@@ -409,7 +409,7 @@ class table_pichome_resources extends dzz_table
                     }
                     $originalimg = $thumbdir . '/.bf/.preview/' . $thumbpath . '/' . $bid . '.hd.webp';
                     //大图地址
-                    if (in_array($ext, $pichomespecialimgextarr) && IO::checkfileexists($originalimg)) {
+                    if (!$resourcesdata['hasthumb'] && in_array($ext, $pichomespecialimgextarr) && IO::checkfileexists($originalimg)) {
                         $imgdata['originalimg'] = IO::getFileUri($originalimg);
                     } else {
                         $imgdata['originalimg'] = $imgdata['icondata'];
@@ -528,6 +528,7 @@ class table_pichome_resources extends dzz_table
             if($v['isdelete']){
                 $v['share'] = $v['download'] = $v['collection'] = 0;
             }else{
+
                 $v['share'] = C::t('pichome_vapp')->getpermbypermdata($downshare[$v['appid']]['share'], $v['appid'], 'share');
                 $v['download'] = C::t('pichome_vapp')->getpermbypermdata($downshare[$v['appid']]['download'], $v['appid'], 'download');
                 $v['collection'] = (defined('PICHOME_LIENCE') && ($_G['adminid'] == 1 || ($_G['uid'] && !$_G['config']['pichomeclosecollect']))) ? 1 : 0;

@@ -180,16 +180,11 @@ class fmpeg
         if ($cachefile) @unlink($cachefile);
 
         if (is_file($jpg)) {
-            $filesize = filesize($jpg);
             $defaultspace = $_G['setting']['defaultspacesetting'];
-
             //如果原文件位置不在本地，则将转换完成文件迁移到对应位置
             if ($defaultspace['bz'] != 'dzz') {
                 $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$target;
-                //组合云端保存位置
-                //$cloudpath = $attachment['bz'] . ':' . $did . ':' . '/' . $target;
-                //echo $cloudpath;die;
-                $filepath = \IO::moveThumbFile($cloudpath, 'dzz::'.$target);
+                $filepath = \IO::moveThumbFile($cloudpath, $jpg);
                 if (!isset($filepath['error'])) {
                     @unlink($jpg);
                     return $target;
@@ -203,7 +198,7 @@ class fmpeg
 
     }
 
-    public function getVideoQuality($videoquality = 0)
+    public function getVideoQuality($videoquality = 1)
     {
         $templatename = '';
         switch ($videoquality) {
@@ -216,7 +211,7 @@ class fmpeg
             case 1://标清
                 $templatename = 'pichomeconvert-mp4-960-540-900-mp3';
                 $width = 960;
-                $height = 510;
+                $height = 540;
                 $bitrate = 900;
                 break;
             case 2://高清
@@ -248,7 +243,7 @@ class fmpeg
     }
 
     //转码,windows下大文件可能出现内部错误，X264报错，不知原因
-    public function convert($id, $ext = 'webm', $videoquality = 0, $extra = array())
+    public function convert($id, $ext = 'mp4', $videoquality = 1, $extra = array())
     {
         global $_G;
         //获取附件信息
@@ -260,7 +255,7 @@ class fmpeg
         }else{
             $attachment = IO::getMeta($cron['rid']);
         }
-        list($templatename, $width, $height, $bitrate) = $this->getVideoQuality($videoquality);
+        list($templatename, $fwidth, $fheight, $fbitrate) = $this->getVideoQuality($videoquality);
         //本地文件路径
         $target = 'pichomethumb/' . date('Ym') . '/' . date('d') .'/'.md5($attachment['path']) . '.' . $cron['format'];
         //本地存储时路径
@@ -289,17 +284,14 @@ class fmpeg
         //更新转换执行次数
         C::t('video_record')->update($cron['id'], array('status' => 1,'path'=>$target, 'dateline' => TIMESTAMP, 'jobnum' => (($cron['jobnum']) ? intval($cron['jobnum']) + 1 : 1)));
         $video = $this->fm->open($file);
-        if (!in_array($ext, array('mp3', 'wav'))) {
-            //指定视频宽高
-            $video->filters()->resize(new FFMpeg\Coordinate\Dimension($width, $height))->synchronize();
-        }
+        
         //水印
 //       $video->filters() ->watermark($watermarkPath, array('position' => 'relative','bottom' => 50, 'right' => 50 ));
         $video->path = $cron['id'];
 
         switch ($ext) {
             case 'mp4':
-                $format = new FFMpeg\Format\Video\X264();
+                $format = new FFMpeg\Format\Video\X264('aac');
                 break;
             case 'webm':
                 $format = new FFMpeg\Format\Video\WebM();
@@ -317,18 +309,26 @@ class fmpeg
                 $format = new FFMpeg\Format\Audio\Mp3();
                 break;
             default:
-                $format = new FFMpeg\Format\Video\X264();
+                $format = new FFMpeg\Format\Video\X264('aac');
 
         }
         if (!in_array($ext, array('mp3', 'wav'))) {
             //获取视频信息
             try {
                 $info = $this->getInfo($attachment);
-                if ($info['bit_rate']) {
-                    if ($bitrate = intval($info['bit_rate'])) {
-                        $format->setKiloBitrate($bitrate);
-                    }
-                }
+				if(!in_array($ext,array('mp3','wav'))){
+					if($info['width']){
+						$width=$fwidth;
+						$height=$info['height']?($width*$info['height']/$info['width']):$fheight;
+						//指定视频宽高
+						$video->filters()->resize(new FFMpeg\Coordinate\Dimension($width, $height))->synchronize();
+					}else{
+						$video->filters()->resize(new FFMpeg\Coordinate\Dimension($fwidth, $fheight))->synchronize();
+					}
+				}
+				$bitrate=intval($fbitrate>$info['bit_rate']?$fbitrate:$info['bit_rate']);
+				$format->setKiloBitrate($bitrate);
+               
             } catch (\Exception $e) {
             };
         }

@@ -30,7 +30,7 @@ if($do=='getNavigation'){
 	    if($_G['adminid'] == 1){
             $number = DB::result_first("select count(DISTINCT appid) from %t  where  isdelete < %d",array('pichome_vapp',1));
         }else{
-            $number = DB::result_first("select count(DISTINCT appid) from %t vm left join %t v on vm.appid = v.appid where vm.uid = %d and v.isdelete < %d",
+            $number = DB::result_first("select count(DISTINCT v.appid) from %t vm left join %t v on vm.appid = v.appid where vm.uid = %d and v.isdelete < %d",
                 array('pichome_vappmember','pichome_vapp',$uid,1));
         }
 		$navlist[] = ['id'=>'library','name'=>'我的库','url'=>'index.php?mod=pichome&op=view','number'=>$number];

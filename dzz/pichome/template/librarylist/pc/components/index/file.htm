@@ -61,7 +61,7 @@
     const FileMixins = {
         data(){
             return {
-                hassub:0,
+                hassub:1,
                 fileparam:{
                     visible:true,
                     //是否显示文件夹目录
@@ -122,25 +122,29 @@
             },
             Filedblclick(item){//双击事件
                 var self = this;
-				var pathkey = item.pathkey.split(this.DocumentAppid);
+				var pathkey = item.pathkey.split(self.DocumentAppid);
 				var pathkeys = [];
 				for(var i in pathkey){
 					if(pathkey[i]){
-						pathkeys.push(pathkey[i]+this.DocumentAppid);
+						pathkeys.push(pathkey[i]+self.DocumentAppid);
 					}
 				}
 				if(pathkeys.length){
 					pathkeys.splice(pathkeys.length-1,1)
-					this.LeftTree.defaultOpenkeysInit = pathkeys;
-					this.LeftTree.defaultOpenkeys = pathkeys;
+					self.LeftTree.defaultOpenkeysInit = pathkeys;
+					self.LeftTree.defaultOpenkeys = pathkeys;
 				}
-				this.LeftTree.Currentkey = item.fid;
+				self.LeftTree.Currentkey = item.fid;
+				self.ScreenParam.fids = item.fid;
 				self.$refs.LeftTreeRef.setCurrentKey(item.fid);
-				this.LeftCurrenType = 'filelist'
+				self.LeftCurrenType = 'filelist'
 				self.$refs.ScreenBoxRef.DeleteAll();
 				self.$nextTick(function(){
-					// self.FileSetParam();
-					// self.$refs.RefImageLayout.restart();
+					self.RightParamClean();
+					self.RightType = 'folder';
+					self.RightActivefid = [item.fid];
+					self.CommonGetImageData();
+					self.RightGetData();
 				});
             },
             FileContextmenu(item){//右键事件

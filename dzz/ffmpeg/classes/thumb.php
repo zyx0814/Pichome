@@ -12,7 +12,7 @@ class thumb
 
     public function run(&$data)
     {
-
+        global $_G;
         $app = C::t('app_market')->fetch_by_identifier('ffmpeg', 'dzz');
         $extra = unserialize($app['extra']);
 
@@ -20,7 +20,7 @@ class thumb
         if (!$extra['status']) {
             return '';
         }
-        $exts = $extra['exts_thumb'] ? explode(',', $extra['exts_thumb']) : array();
+        $exts = explode(',',$_G['config']['pichomeffmpeggetthumbext']);//$extra['exts_thumb'] ? explode(',', $extra['exts_thumb']) : array();
 
         //如果类型不符合则停止执行
         if (!in_array($data['ext'], $exts)) return '';
@@ -34,18 +34,7 @@ class thumb
         }
         //执行获取缩略图
         if ($target = $fm->getThumb($data, $start)) {
-            $fileuri = IO::getStream($target);
-            if ($imginfo = getimagesize($fileuri)) {
-                //将缩略图宽高视为文件宽高
-                $resourcesarr = [
-                    'width' => $imginfo[0] ? $imginfo[0] : 0,
-                    'height' => $imginfo[1] ? $imginfo[1] : 0
-                ];
-                C::t('pichome_resources')->update($data['rid'], $resourcesarr);
                 return array($target);
-            } else {
-                return '';
-            }
         } else {
             return '';
         }

@@ -436,6 +436,7 @@
 				self.LeftTree.show = false;
 				self.LeftTree.defaultOpenkeys = [];
 				// self.LeftTree.defaultOpenkeysSearch = [];
+				self.LeftTree.arrangementLast = [];
 				if(val){
 					var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=searchfolderbyname', {keyword:val});
 					var data = res.data;

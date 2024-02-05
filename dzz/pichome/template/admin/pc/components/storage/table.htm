@@ -101,7 +101,8 @@
 					<el-popconfirm
 						@confirm="TableDelete(scope.row)"
 						title="此操作无法恢复，确定删除？">
-						<el-button type="danger" #reference size="small">删除</el-button>
+						<template #reference>
+						<el-button type="danger"  size="small">删除</el-button></template>
 					</el-popconfirm>
 				</template>
 				
@@ -166,14 +167,10 @@
 				}
 				var json = res.data;
 				if(json.success){
-					var index = 0;
-					self.getData.find(function(val,inx){
-						if(item.id == val.id){
-							index = inx;
-							return false;
-						}
+					let index=self.tableData.findIndex(function(val){
+						return  item.id == val.id;
 					});
-					self.getData.splice(index,1);
+					if(index>-1) self.tableData.splice(index,1);
 					self.$message({
 						message:'删除成功',
 						type:'success'

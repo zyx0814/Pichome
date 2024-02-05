@@ -134,7 +134,7 @@
   height: 100%;
   background-color: var(--el-overlay-color-lighter);
   z-index: 10;
-	padding-bottom:100px;
+  padding-bottom: 100px;
 }
 .wrap-content .piece .progress .find {
   background: #F4F4F4;
@@ -198,7 +198,7 @@
   transition: top 0.3s cubic-bezier(0.5, 1, 0.89, 1);
   padding: 0 24px;
   background: var(--el-bg-color);
-	z-index:11;
+  z-index: 11;
 }
 .wrap-content .piece .layer .name {
   display: -webkit-box;

@@ -12,15 +12,22 @@
 		    multiupload(item){
 				//分片数据
 				let self=this;
-				let bursts = this.UploadBurst(item.raw);//文件分片
-				if(bursts.length){
-					let argments = this.UploadExportLocation(self.UploaderData.folderData,item);
-					item['percentage']=0;
-					this.UploadRequest(bursts,item,argments);
-				}else{
+				if(item.size<=0){
 					item['fileStatus'] = 4;
 					item['error']='文件内容错误';
 					self.UploadAccomplish(item);
+					return ;
+				}else{
+					let bursts = this.UploadBurst(item.raw);//文件分片
+					if(bursts.length){
+						let argments = this.UploadExportLocation(self.UploaderData.folderData,item);
+						item['percentage']=0;
+						this.UploadRequest(bursts,item,argments);
+					}else{
+						item['fileStatus'] = 4;
+						item['error']='文件内容错误';
+						self.UploadAccomplish(item);
+					}
 				}
 			},
 			

@@ -188,7 +188,7 @@
 					this.HeaderRightBtnShow.order = getpagesetting && getpagesetting.sort || 'btime';
 				}
 				let hassub = sessionStorage.getItem('hassub');
-				this.hassub = hassub?parseInt(hassub):0;
+				this.hassub = hassub?parseInt(hassub):1;
 				if(res.folderdata){
 					let keys = Object.keys(res.folderdata);
 					if(keys.length){

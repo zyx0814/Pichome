@@ -34,24 +34,8 @@ class imageColor
         if (isset($_G['setting'])) $setting = $_G['setting'];
         else  $setting = C::t('setting')->fetch_all();
 
-        if ($setting['imagelib']) $setting['imagelib'] = extension_loaded($setting['imagelib']) ? $lib : 'gd';
-        else $setting['imagelib'] = '';
-        $lib = isset($setting['imagelib']) ? $setting['imagelib'] : (extension_loaded('imagick') ? 'imagick' : 'gd');
-		$lib = extension_loaded($lib) ? $lib : 'gd';
-        //if ($lib == 'gd') {
-           // $exts = getglobal('config/gdgetcolorextlimit');
-           // $extsarr = explode(',', $exts);
+        $lib = (isset($setting['imagelib']) && $setting['imagelib']) ? (extension_loaded('imagick') ? 'imagick' : 'gd') :'gd' ;
 
-       // } else {
-        //    $exts = getglobal('config/imageickallowextlimit') . ',' . getglobal('config/gdgetcolorextlimit');
-        //    $extsarr = explode(',', $exts);
-        //}
-
-        //if (!in_array($data['ext'], $extsarr)) {
-
-         //   runlog('imageColor', ' unablegetcolor img=' . $data['realpath']);
-         //   return '';
-       // }
         $cachepath = is_numeric($data['path']) ? intval($data['path']) : ($data['rid'] ? $data['rid']:md5($data['realpath']));
         if ($infodata = C::t('ffmpegimage_cache')->fetch_by_path($cachepath)) {
             $palettes = unserialize($infodata['info']);

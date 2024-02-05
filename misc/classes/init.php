@@ -27,6 +27,8 @@ class Init{
 				$dzz->init_session = false;
 				break;
 			default:
+				$dzz->init_cron = false;
+				$dzz->init_session = false;
 				break;
 		}
 		

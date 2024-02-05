@@ -60,7 +60,7 @@ class table_pichome_route extends dzz_table
         global $_G;
         //$surl = $this->path_transferred_meaning($url);
         if(!$path) $path = $this->create_shortpath($url);
-        elseif(!preg_match('/^\w+$/',$path)) return false;
+        elseif(!preg_match('/^\w{1,30}$/',$path)) return false;
        // $spath = $this->path_transferred_meaning($path);
         if(!DB::result_first("select id from %t where path = %s ",array($this->_table,$path))){
             if($id = DB::result_first("select id from %t where url = %s",array($this->_table,$url))){
@@ -79,30 +79,42 @@ class table_pichome_route extends dzz_table
 
     }
     //删除栏目单页的route规则
-    public function delete_by_abid($id,$isbanner = 1){
+    public function delete_by_abid($id,$isbanner = 1,$btype=2){
 
         $params = [$this->_table];
         if(!$isbanner){
             $wheresql = " url like %s ";
             $params[] = $this->path_transferred_meaning('%mod=alonepage&op=view#id='.$id.'%');
+            $sid = 'a_'.$id;
         }else{
             $wheresql = "  url like %s ";
             $params[] =  $this->path_transferred_meaning('%mod=banner&op=index#id='.$id.'%');
+            $sid = ($btype == 4) ? 'tb_'.$id:'b_'.$id;
         }
+		$i=0;
         foreach(DB::fetch_all("select id from %t where $wheresql ",$params) as $v){
-            parent::delete($v['id']);
+            if(parent::delete($v['id'])){
+                $this->delQRcodeBySid($sid);
+				$i++;
+			}
         }
         $this->update_route();
+		return $i;
     }
+
     ////删除库的route规则
     public function delete_by_appid($appid){
         $params = [$this->_table,'%'.$appid.'%'];
         $wheresql = " url like %s ";
         foreach(DB::fetch_all("select id from %t where $wheresql ",$params) as $v){
             parent::delete($v['id']);
+            $sid = 'vapp_'.$appid;
+            $this->delQRcodeBySid($sid);
+
         }
         $this->update_route();
     }
+
     public function update_route(){
         $pathinoStatus = isset($_G['setting']['pathinfo']) ? $_G['setting']['pathinfo']:0;
         if(!$pathinoStatus) $pathinoStatus = C::t('setting')->fetch('pathinfo');
@@ -115,19 +127,25 @@ class table_pichome_route extends dzz_table
         @file_put_contents($routefile,"<?php \t\n return ".var_export($data,true).";");
     }
     public function feth_path_by_url($url){
-        
-       // $url = $this->path_transferred_meaning($url);
+        //$url = $this->path_transferred_meaning($url);
         return  DB::result_first("select path from %t where url = %s",array($this->_table,$url));
+    }
+    public function delQRcodeBySid($sid){
+        $sidarr = explode('_',$sid);
+        $target='./qrcode/'.$sidarr[0].'/'.$sidarr[1].'.png';
+        @unlink(getglobal('setting/attachdir').$target);
     }
     public function getQRcodeBySid($url,$sid){
         $pathinoStatus = isset($_G['setting']['pathinfo']) ? $_G['setting']['pathinfo']:0;
         if(!$pathinoStatus) $pathinoStatus = C::t('setting')->fetch('pathinfo');
+
         if($pathinoStatus && $path = C::t('pichome_route')->feth_path_by_url($url)){
             $url = $path;
         }
-
+        $url = getglobal('siteurl').$url;
+        $sidarr = explode('_',$sid);
         //如果开启了短链接模式
-        $target='./qrcode/'.$sid[0].'/'.$sid.'.png';
+        $target='./qrcode/'.$sidarr[0].'/'.$sidarr[1].'.png';
         $targetpath = dirname(getglobal('setting/attachdir').$target);
         dmkdir($targetpath);
         if(@getimagesize(getglobal('setting/attachdir').$target)){

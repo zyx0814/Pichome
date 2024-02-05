@@ -41,10 +41,17 @@ class table_video_record extends dzz_table
         if ($returndata = DB::fetch_first("select * from %t  where rid = %s order by `status` desc", array($this->_table, $rid))) {
             return $returndata;
         } else {
-           /* $resourcesdata = C::t('pichome_resources')->fetch_data_by_rid($rid);
-             $hookdata = ['appid'=>$resourcesdata['appid'],'rid'=>$rid,'ext'=>$resourcesdata['ext'],'isforce'=>1,'realpath'=>$resourcesdata['realpath']];
+            return false;
 
-            $return = Hook::listen('pichomeconvert',$hookdata,null,false,true);*/
+        }
+
+    }
+    public function fetch_by_aid($aid)
+    {
+        $aid = intval($aid);
+        if ($returndata = DB::fetch_first("select * from %t  where aid = %d order by `status` desc", array($this->_table, $aid))) {
+            return $returndata;
+        } else {
             return false;
 
         }

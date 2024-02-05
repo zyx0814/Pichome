@@ -389,14 +389,14 @@ if ($operation == 'fetch') {
             if (($data['state'] == 2)) {
                 $processname = 'DZZ_PAGEEXPORTFILE_LOCK_' . $appid;
                 if (!dzz_process::islocked($processname, 60 * 5)) {
-                    dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
+                    dfsockopen(getglobal('localurl') . 'misc.php?mod=exportfile&appid=' . $appid, 0, '', '', false, '', 1);
                 }
 
 
             } elseif ($data['state'] == 3) {
                 $processname = 'DZZ_PAGEEXPORTCHECKFILE_LOCK_' . $appid;
                 if (!dzz_process::islocked($processname, 60 * 5)) {
-                    dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
+                    dfsockopen(getglobal('localurl') . 'misc.php?mod=exportfilecheck&appid=' . $appid, 0, '', '', false, '', 1);
                 }
 
             }
@@ -798,8 +798,8 @@ where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_reso
         'type' => $type,
         'path' => $path,
         'charset' => $charset,
-        'notallowext' => getglobal('setting/pichomeimportnotallowext'),
-        'allowext' => getglobal('setting/pichomeimportallowext'),
+        'notallowext' => ($type == 3) ? '*:*':getglobal('setting/pichomeimportnotallowext'),
+        'allowext' => ($type == 3) ? '':getglobal('setting/pichomeimportallowext'),
         'screen' => serialize($screen),
         'pagesetting' => 'a:7:{s:6:"layout";s:9:"waterFall";s:5:"other";s:5:"btime";s:4:"sort";s:5:"btime";s:4:"desc";s:4:"desc";s:8:"opentype";s:3:"new";s:5:"aside";s:1:"0";s:11:"filterstyle";s:1:"0";}',
         'fileds' => serialize($fileds)
@@ -996,7 +996,8 @@ where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_reso
 
 } elseif ($operation == 'geturlqrcode') {//获取链接二维码
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
-    $url = 'index.php?mod=pichome&op=fileview&appid=' . $appid;
+    $url = 'index.php?mod=pichome&op=fileview#appid=' . $appid;
+    $sid = 'vapp_'.$appid;
     $qrcode = C::t('pichome_route')->getQRcodeBySid($url, $appid);
     exit(json_encode(['success' => true, 'qrcode' => $qrcode]));
 } else {

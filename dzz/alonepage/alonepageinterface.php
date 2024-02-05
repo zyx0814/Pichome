@@ -80,7 +80,8 @@ if($do == 'addpage'){//新建单页
 }elseif($do == 'geturlqrcode'){//获取链接二维码
     $id = isset($_GET['id']) ? intval($_GET['id']) : '';
     $url = 'index.php?mod=alonepage&op=view#id='.$id;
-    $qrcode = C::t('pichome_route')->getQRcodeBySid($url,$id);
+    $sid = 'a_'.$id;
+    $qrcode = C::t('pichome_route')->getQRcodeBySid($url,$sid);
     exit(json_encode(['success'=>true,'qrcode'=>$qrcode]));
 }elseif($do == 'sortpage'){//单页排序
     $ids = isset($_GET['ids']) ? trim($_GET['ids']):'';
