@@ -320,7 +320,7 @@ class image {
 			case 1:
 				if($this->imginfo['width'] >= $this->param['thumbwidth'] || $this->imginfo['height'] >= $this->param['thumbheight']) {
 					$thumb = array();
-					list(,,$thumb['width'], $thumb['height']) = $this->sizevalue(0);
+					list($thumb['width'], $thumb['height']) = $this->scaleImage($this->param['thumbwidth'], $this->param['thumbheight'],$this->imginfo['width'],$this->imginfo['height']);
 					$cx = $this->imginfo['width'];
 					$cy = $this->imginfo['height'];
 					$thumb_photo = imagecreatetruecolor($thumb['width'], $thumb['height']);
