@@ -84,10 +84,21 @@ class fmpeg
                     'width' => intval($meta->get('width')),
                     'height' => intval($meta->get('height')),
                     'duration' => round($meta->get('duration'), 2),
+                    'tags' => $meta->get('tags'),
                 );
             }
         }
         if ($cachefile) @unlink($cachefile);
+        if(isset($info['tags']['rotate'])){
+            $rotate = intval($info['tags']['rotate'])%360;
+            if($rotate == 90){
+                $width = $info['width'];
+                $height = $info['height'];
+                $info['width'] = $height;
+                $info['height'] = $width;
+            }
+        }
+        unset($info['tags']);
         return $info;
 
     }
@@ -316,6 +327,7 @@ class fmpeg
             //获取视频信息
             try {
                 $info = $this->getInfo($attachment);
+
 				if(!in_array($ext,array('mp3','wav'))){
 					if($info['width']){
 						$width=$fwidth;
