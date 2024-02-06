@@ -40,14 +40,13 @@ if ($appdata['type'] == 0) {//eagle缩略图
         else{
 
             //否则尝试使用小图作为大图地址展示
-            $tmppath = str_replace(strrchr($patharr['path'], "."), "", $patharr['path']);
+            $tmppath = preg_replace('/\.'.$ext.'$/','',$patharr['path']);
             $thumbpath = $thumbdir . BS . $tmppath . '_thumbnail.png';
             //如果小图也不存在,使用图标代替大图
             if (!$patharr['hasthumb'])$thumbpath = 'static/dzzthumb/preview/b.gif';
         }
     }else{//小图时
-        $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
-        $tmppath = str_replace(strrchr($patharr['path'], "."), "", $patharr['path']);
+        $tmppath = preg_replace('/\.'.$ext.'$/','',$patharr['path']);
         $thumbpath = ($iscloud) ? IO::getFileUri($thumbdir . BS . $tmppath . '_thumbnail.png'):$thumbdir . BS . $tmppath . '_thumbnail.png';
         //如果小图不存在
         if (!$patharr['hasthumb']){
@@ -56,6 +55,7 @@ if ($appdata['type'] == 0) {//eagle缩略图
             else $thumbpath =  'static/dzzthumb/preview/b.gif';
         }
     }
+
 
 }
 elseif($appdata['type'] == 2) {//billfish缩略图
