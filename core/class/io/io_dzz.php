@@ -998,6 +998,8 @@ class io_dzz extends io_api
         $extraparams['istmp'] = 1;
         $extraparams['nomark'] = 1;
         $thumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, 0,  $extraparams);
+        $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
+        $thumbpath = $bz.$thumbpath;
         if($thumbpath){
             $img = IO::getFileuri($thumbpath);
             if ($returnurl) return $img;
