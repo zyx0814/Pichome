@@ -392,7 +392,9 @@ elseif($operation == 'mailcheck'){//邮件检测
        
         exit(json_encode(array('path'=>$_G['setting']['attachurl'] .$waterpath)));
     }
-        exit(json_encode(array('error'=>'upload error')));
+        exit(json_encode(array('path'=>$waterfilepath.'?'.VERHASH)));
+    }else{
+        exit(json_encode(array('error'=>'upload failer')));
     }
 }elseif($operation == 'watermark'){//水印设置
     if(!submitcheck('settingsubmit')) {

@@ -23,7 +23,11 @@ if($_GET['src']){
     }else{
         $resourcesdata = C::t('pichome_resources')->fetch_data_by_rid($rid);
     }
-    $fileurl = IO::getFileUri($resourcesdata['path']);
+    if(!$resourcesdata['iswebsitefile'] && $resourcesdata['bz'] == 'dzz::'){
+        $fileurl  = getglobal('siteurl') . 'index.php?mod=io&op=getStream&path=' . dzzencode($rid.'_3', '', 14400, 0);
+    }else{
+        $fileurl=IO::getFileuri($resourcesdata['path']);
+    }
     $str = file_get_contents($fileurl);
 }
 

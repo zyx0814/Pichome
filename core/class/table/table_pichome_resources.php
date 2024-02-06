@@ -248,6 +248,7 @@ class table_pichome_resources extends dzz_table
         if ($downshare[$resourcesdata['appid']]['isdelete']) return array();
         $attrdata = C::t('pichome_resources_attr')->fetch($rid);
         $resourcesdata = array_merge($resourcesdata, $attrdata);
+        $resourcesdata['remoteid'] = 0;
         if (is_numeric($resourcesdata['path'])) {
             $attachment = C::t('attachment')->fetch(intval($resourcesdata['path']));
             $bz = io_remote::getBzByRemoteid($attachment['remote']);
@@ -260,12 +261,19 @@ class table_pichome_resources extends dzz_table
                 $resourcesdata['bz'] = 'dzz::';
             } else {
                 $patharr = explode(':', $downshare[$resourcesdata['appid']]['path']);
-                $resourcesdata['bz'] = ($patharr[1]) ? $patharr[0] . ':' . $patharr[1] . ':' : 'dzz::';
-                $resourcesdata['remoteid'] = $patharr[1];
+                if(is_numeric($patharr[1])){
+                    $resourcesdata['bz'] = ($patharr[1]) ? $patharr[0] . ':' . $patharr[1] . ':' : 'dzz::';
+                    $resourcesdata['remoteid'] = $patharr[1];
+                }else{
+                    $resourcesdata['bz'] = 'dzz::';
+                }
+
             }
             $resourcesdata['path'] = $downshare[$resourcesdata['appid']]['path'] . BS . $resourcesdata['path'];
         }
         $resourcesdata['vapptype'] = $downshare[$resourcesdata['appid']]['type'];
+        if($resourcesdata['vapptype'] == 3)  $resourcesdata['iswebsitefile'] = 1;
+        else  $resourcesdata['iswebsitefile'] =0;
         return $resourcesdata;
     }
 

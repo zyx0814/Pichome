@@ -96,7 +96,7 @@
                 <!-- <el-radio :label="1" size="large">智能数据</el-radio> -->
                 <el-radio :label="2" size="large">单页</el-radio>
                 <el-radio :label="3" size="large">链接</el-radio>
-                <el-radio :label="4" size="large">专辑</el-radio>
+                <!--<el-radio :label="4" size="large">专辑</el-radio>-->
             </el-radio-group>
         </el-form-item>
         <el-form-item label="数据来源" prop="value" v-if="DialogData.type != 5">
@@ -126,13 +126,13 @@
                                 :label="item.name"
                                 :value="item.id"></el-option>
                         </template>
-                        <template v-else-if="DialogData.type == 4">
+                        <!--<template v-else-if="DialogData.type == 4">
                             <el-option
                                 v-for="item in DialogData.dataList.tab"
                                 :key="item.gid"
                                 :label="item.name"
                                 :value="item.gid"></el-option>
-                        </template>
+                        </template>-->
                   </el-select>
             </template>
             
