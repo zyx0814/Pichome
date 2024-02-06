@@ -321,9 +321,10 @@ elseif($operation == 'mailcheck'){//邮件检测
     //获取缩略图的md5
     $watermd5 = md5_file($files["tmp_name"]);
     $return = move_uploaded_file($files["tmp_name"],$waterfilepath);
+
     if($return){
         //rename($waterpath.$files['name'],$waterpath.'water.png');
-        @unlink($_G['setting']['waterimg']);
+        //@unlink($_G['setting']['waterimg']);
         //C::t('setting')->update('waterimg',$_G['setting']['attachurl'] .$waterpath);
         C::t('setting')->update('watermd5',$watermd5);
         updatecache('setting');
@@ -392,7 +393,7 @@ elseif($operation == 'mailcheck'){//邮件检测
        
         exit(json_encode(array('path'=>$_G['setting']['attachurl'] .$waterpath)));
     }
-        exit(json_encode(array('path'=>$waterfilepath.'?'.VERHASH)));
+        exit(json_encode(array('path'=>getglobal('setting/attachurl').$waterpath.'?'.VERHASH)));
     }else{
         exit(json_encode(array('error'=>'upload failer')));
     }
