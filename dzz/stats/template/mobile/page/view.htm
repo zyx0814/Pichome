@@ -285,6 +285,7 @@
                 div.className = 'Details-Iframe';
                 let iframe = document.createElement("iframe");
                 div.append(iframe);  
+                iframe.style.opacity = "0";
                 sessionStorage.setItem('selectindex',index);  
                 iframe.src =  'index.php?mod=details&opentype=current#path='+curr.dpath;
                 document.body.appendChild(div); 

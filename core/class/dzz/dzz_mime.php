@@ -810,4 +810,8 @@ class dzz_mime{
 	public static function get_type($ext) {
 		return isset(self::$mime_maps[$ext]) ? self::$mime_maps[$ext] : 'application/octet-stream';
 	}
+	public function get_ext($type){
+        $typearr = array_flip(self::$mime_maps);
+        return isset($typearr[$type]) ? $typearr[$type] : 'dzz';
+    }
 }

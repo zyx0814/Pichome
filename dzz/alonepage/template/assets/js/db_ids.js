@@ -72,6 +72,7 @@ const Tmpdb_text = {
                             <el-option label="库" value="1"></el-option>
                             <el-option label="单页" value="2"></el-option>
                             <el-option label="栏目" value="3"></el-option>
+                            <el-option label="专辑" value="4"></el-option>
                         </el-select>
                         <template v-if="parseInt(model[0].link) == 0">
                             <el-input v-model="model[0].linkval"></el-input>
@@ -84,6 +85,11 @@ const Tmpdb_text = {
                         <template v-else-if="parseInt(model[0].link) == 2">
                             <el-select v-model="model[0].linkval" style="width: 100%">
                                 <el-option v-for="item in typecollection.alonepage" :label="item.pagename" :value="item.id" :key="item.id"></el-option>
+                            </el-select>
+                        </template>
+                        <template v-else-if="parseInt(model[0].link) == 4">
+                            <el-select v-model="model[0].linkval" style="width: 100%">
+                                <el-option v-for="item in typecollection.tab" :label="item.name" :value="item.gid" :key="item.gid"></el-option>
                             </el-select>
                         </template>
                         <template v-else-if="parseInt(model[0].link) == 3">

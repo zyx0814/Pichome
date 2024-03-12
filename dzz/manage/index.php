@@ -44,18 +44,12 @@
 			'url'=>'index.php?mod=pichome&op=storagesetting',
 			'img'=>'data/attachment/appico/201712/21/171106u1dk40digrrr79ed.png'
 		);
-if(defined('PICHOME_LIENCE')){
-   /* $list[]=array(
-			'name'=>'专题管理',
-			'url'=>'index.php?mod=tab&op=admin',
-			'img'=>'data/attachment/appico/201712/21/131016is1wjww2uwvljllw.png'
+	$list[]=array(
+			'name'=>'搜索设置',
+			'url'=>'index.php?mod=search&op=setting',
+			'img'=>'data/attachment/appico/201712/21/113527zz2665xg7d3h2777.png'
 		);
-		$list[]=array(
-			'name'=>'收集管理',
-			'url'=>'index.php?mod=fileCollect&op=setting',
-			'img'=>'data/attachment/appico/201712/21/131016is1wjww2uwvljllw.png'
-		);*/
-}
+	
     $list_json=json_encode($list);
     include template('page/index');
     

@@ -1,0 +1,17 @@
+.m-header-munu {
+  background-color: transparent;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+.m-header-munu .el-drawer__header {
+  margin: 0;
+  height: 40px;
+  color: #FFFFFF;
+  font-weight: 700;
+  padding: 0 12px;
+}
+.m-header-munu .el-drawer__body {
+  background-color: var(--el-drawer-bg-color);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}

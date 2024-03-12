@@ -27,9 +27,8 @@ foreach(DB::fetch_all("select * from %t where isdelete = 0 and `type` != %d and 
         if (in_array($hour, $corntimes)) {
             $index = array_search($hour, $corntimes);
             array_splice($corntimes, 0, $index + 1);
-        } else {
-            $corntimes = array();
         }
+
         if(in_array($currentHour, $corntimes)){
             dfsockopen(getglobal('localurl') . 'misc.php?mod=initexport&appid=' . $appid, 0, '', '', false, '', 1);
         }

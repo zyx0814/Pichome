@@ -82,7 +82,18 @@ class dzz_admincp
 			if(!$this->isfounder) {
 				$session = C::t('user')->fetch($this->adminuser['uid']);
 				if($session && ($session['groupid']==1) ) {
-					$session = array_merge($session, (array)C::t('admincp_session')->fetch($this->adminuser['uid'], $session['groupid']));
+					if(!$s=C::t('admincp_session')->fetch($this->adminuser['uid'], $session['groupid'])){
+						$s=array(
+							'uid' => $this->adminuser['uid'],
+							'adminid' => $this->adminuser['adminid'],
+							'panel' => $this->adminuser['groupid'],
+							'ip' => $this->core->var['clientip'],
+							'dateline' => TIMESTAMP,
+							'errorcount' => 0,
+						);
+						C::t('admincp_session')->insert($s);
+					}
+					$session = array_merge($session, $s);
 				}else $session=array();
 			} else {
 				$session = C::t('admincp_session')->fetch($this->adminuser['uid'], $this->panel);

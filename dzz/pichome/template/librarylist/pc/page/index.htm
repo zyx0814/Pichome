@@ -38,7 +38,8 @@
 						:defaultparam="ScreenParam"
 						@submit="CommonGetImageData"
 						@visible="screenvisible"
-						:appid="DocumentAppid">
+						:appid="DocumentAppid"
+						:hassub="hassub">
 					</dzz-screen>
 				</el-header>
 				<el-main 
@@ -160,17 +161,21 @@
 				}
 				e.preventDefault();
 				const dataTransfer = e.dataTransfer;
+
 				if(dataTransfer.items && dataTransfer.items.length){
 					
 					for (let index = 0; index < dataTransfer.items.length; index++) {
 						const element = dataTransfer.items[index];
 						const folder = element.webkitGetAsEntry();
-						if (folder.isDirectory) {
+						if (folder && folder.isDirectory) {
 							readFolder(folder).then(files=>{
 								this.UploadFileChange(files,'drop');
 							});
 						}else{
-							this.UploadChange([element.getAsFile()],'drop');
+							if(element.getAsFile()){
+								this.UploadChange([element.getAsFile()],'drop');
+							}
+							
 						}
 					}
 				}

@@ -74,7 +74,9 @@
 							:headerkeyword="HeaderKeyword"
 							:defaultparam="ScreenParam"
 							@submit="CommonGetImageData"
-							@visible="screenvisible">
+							@visible="screenvisible"
+							:hassub="hassub"
+							@handlehassub="handlehassub">
 						</dzz-screen>
 					</el-header>
 				</el-affix>
@@ -144,12 +146,6 @@
 				},
 				deep:true,
 				immediate: true
-			},
-			'ScreenParam.hassub':{
-				handler(val){
-					this.ImageDataIsExpanded = val
-				},
-				deep:true,
 			},
 		},
 		created(){
@@ -234,6 +230,9 @@
 					break;
 				}
 			},
+			handlehassub(status){
+				this.hassub = parseInt(status);
+			}
 		},
 		
 		mounted(){

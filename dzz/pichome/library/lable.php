@@ -175,7 +175,7 @@ if($operation == 'save'){
                     case 'desc':
                         foreach(DB::fetch_all("select r.rid,r.name,attr.link from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
                             $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
-                            $attr['searchval'] = $value['name'].$value['link'].htmlspecialchars($val).implode('',$annotationdatas);
+                            $attr['searchval'] = $value['name'].$value['link'].getstr($val,255).implode('',$annotationdatas);
                             $attr = array_merge($attr,$attrs);
                             C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
                             $returndata[]=['rid'=>$value['rid'],'desc'=>$val];
@@ -184,7 +184,7 @@ if($operation == 'save'){
                     case 'link':
                         foreach(DB::fetch_all("select r.rid,r.name,attr.desc from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
                             $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
-                            $attr['searchval'] = $value['name'].$value['desc'].htmlspecialchars($val).implode('',$annotationdatas);
+                            $attr['searchval'] = $value['name'].getsrt($value['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
                             $attr = array_merge($attr,$attrs);
 
                             C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
@@ -194,7 +194,7 @@ if($operation == 'save'){
                     case 'name':
                         foreach(DB::fetch_all("select r.rid,attr.link,attr.desc from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
                             $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
-                            $attr['searchval'] = $value['link'].$value['desc'].htmlspecialchars($val).implode('',$annotationdatas);
+                            $attr['searchval'] = $value['link'].getstr($value['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
                             $attr = array_merge($attr,$attrs);
                             C::t('pichome_resources')->update_by_rids($appid,$value['rid'],$attrs);
                             C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
@@ -354,13 +354,13 @@ if($operation == 'save'){
                 $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($rid);
                 if($flag == 'name'){
                     C::t('pichome_resources')->update_by_rids($appid,$rids,$attrs);
-                    $attr['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['desc'].htmlspecialchars($val).implode('',$annotationdatas);
+                    $attr['searchval'] = $resourcesattrdata['link'].getsrt($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
                     C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attr);
                 }elseif($flag == 'desc'){
-                    $attrs['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['name'].htmlspecialchars($val).implode('',$annotationdatas);
+                    $attrs['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['name'].getstr($val,255).implode('',$annotationdatas);
                     C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);
                 }elseif($flag == 'link'){
-                    $attrs['searchval'] = $resourcesattrdata['name'].$resourcesattrdata['desc'].htmlspecialchars($val).implode('',$annotationdatas);
+                    $attrs['searchval'] = $resourcesattrdata['name'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
                     C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);
                 }
                 $returndata[] = ['rid'=>$rid,$flag=>$val];

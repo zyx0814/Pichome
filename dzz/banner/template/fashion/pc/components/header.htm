@@ -45,7 +45,7 @@
 	</div>
 	<el-autocomplete
 		ref="headerkeyword"
-		v-if="PageType == 'ku'"
+		v-if="PageType == 'ku' || PageType == 'tab'"
 		style="width: 300px;min-width: 300px;"
 		v-model="fheaderkeyword"
 		:fetch-suggestions="querySearch"
@@ -58,6 +58,18 @@
 	</el-autocomplete>
 </div>
 <div class="h-right"> 
+	<!--{if count($collectdata)}-->
+	<el-dropdown @command="handleCollectCommand">
+		<el-button type="primary" style="margin-right: 6px;" icon="Upload">归档文件</el-button>
+		<template #dropdown>
+			  <el-dropdown-menu>
+				<!--{loop $collectdata $key $val}-->
+				<el-dropdown-item command="$val[url]">$val[name]</el-dropdown-item>
+				<!--{/loop}-->
+			  </el-dropdown-menu>
+		</template>
+	</el-dropdown>
+	<!--{/if}-->
 	<el-tooltip content="切换页面配色" placement="bottom">
 		<el-button 
 			text 
@@ -68,7 +80,7 @@
 			@click="DocumentThemeChange">
 		</el-button>
 	</el-tooltip>
-	<template v-if="PageType != 'page'">
+	<template v-if="PageType != 'page' && PageType != 'tab'">
 		<el-tooltip :content="Screenshow?'隐藏筛选':'显示筛选'" placement="bottom">
 			<el-button 
 				text 
@@ -81,7 +93,7 @@
 			</el-button>
 		</el-tooltip>
 	</template>
-	<template v-if="PageType != 'page'">
+	<template v-if="PageType != 'page' && PageType != 'tab'">
 		<el-popover
 			placement="bottom"
 			trigger="click"
@@ -225,9 +237,12 @@
 				}
 				
 			},
+			handleCollectCommand(val){
+				window.open(val);
+			},
 			headerkeywordInput(){
 				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
-				if(this.PageType != 'ku'){
+				if(this.PageType != 'ku' && this.PageType != 'tab'){
 					this.bannerData.active = 0;
 					this.ContentData = [];
 					this.PageType = 'search';

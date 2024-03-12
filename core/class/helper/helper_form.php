@@ -13,14 +13,7 @@ class helper_form {
 			global $_G;
 			if($allowget || ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_GET['formhash']) && $_GET['formhash'] == formhash() && empty($_SERVER['HTTP_X_FLASH_VERSION']) && (empty($_SERVER['HTTP_REFERER']) ||
 			preg_replace("/https?:\/\/([^\:\/]+).*/i", "\\1", $_SERVER['HTTP_REFERER']) == preg_replace("/([^\:]+).*/", "\\1", $_SERVER['HTTP_HOST'])))) {
-				//if(checkperm('seccode')) {
-					if($secqaacheck && !check_secqaa($_GET['secanswer'], $_GET['sechash'])) {
-						showmessage('login_question_invalid');
-					}
-					if($seccodecheck && !check_seccode($_GET['seccodeverify'], $_GET['sechash'])) {
-						showmessage('submit_seccode_invalid');
-					}
-				//}
+				
 				return TRUE;
 			} else {
 				showmessage('submit_invalid');

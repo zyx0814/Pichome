@@ -358,7 +358,7 @@ class billfishxport
                     $attrdata['desc'] = $v['note'];
                     $attrdata['link'] = $v['origin'];
                     //将名字记入搜索字段
-                    $attrdata['searchval'] = $setarr['name'] . $attrdata['desc'] . $attrdata['link'];
+                    $attrdata['searchval'] = $setarr['name'] . getstr($attrdata['desc'],255) . $attrdata['link'];
                     //处理目录数据
                     if ($folderdata) {
                         $fid = $folderdata['fid'];
@@ -450,21 +450,31 @@ class billfishxport
                     $colorarr = explode('|',$colorstr);
                     foreach($colorarr as $colorval){
                         $tmpcolor = explode(',',$colorval);
-                        $intcolor = $tmpcolor[1];
-                        $intcolorsarr[] = $intcolor;
-                        $colorhex = dechex($intcolor);
-                        $rgbcolor = hex2rgb($colorhex);
-                        //$rgbarr = [$rgbcolor['r'],$rgbcolor['g'],$rgbcolor['b']];
-                       // $color = new Color($rgbarr);
-                        $palettesnum[] = $p = $this->getPaletteNumber($intcolor);
-                        $colorarr = ['rid' => $rid,
-                            'color' => $tmpcolor[1],
-                            'weight' => $tmpcolor[0],
-                            'r' => $rgbcolor['r'],
-                            'g' => $rgbcolor['g'],
-                            'b' => $rgbcolor['b'],
-                            'p' => $p
-                        ];
+                        if($tmpcolor[0] > 0){
+                            $intcolor = $tmpcolor[1];
+                            //获取颜色十六进制值
+                            $colorhex = $this->dec2hex($intcolor);
+                            $colorhexarr = str_split($colorhex,2);
+                            array_shift($colorhexarr);
+                            $colorhexarr = array_reverse($colorhexarr);
+                            $colorhex = implode('',$colorhexarr);
+                            //获取整型颜色值
+                            $intcolor = hexdec($colorhex);
+                            $intcolorsarr[] = $intcolor;
+                            $rgbcolor = hex2rgb($colorhex);
+                            //$rgbarr = [$rgbcolor['r'],$rgbcolor['g'],$rgbcolor['b']];
+                            // $color = new Color($rgbarr);
+                            $palettesnum[] = $p = $this->getPaletteNumber($intcolor);
+                            $colorarr = ['rid' => $rid,
+                                'color' => $tmpcolor[1],
+                                'weight' => $tmpcolor[0],
+                                'r' => $rgbcolor['r'],
+                                'g' => $rgbcolor['g'],
+                                'b' => $rgbcolor['b'],
+                                'p' => $p
+                            ];
+                        }
+
                         C::t('pichome_palette')->insert($colorarr);
                     }
                     $isgray = $this->isgray($intcolorsarr);
@@ -548,6 +558,30 @@ class billfishxport
         }
 
         return array('success' => true);
+    }
+    public function dec2hex($number)
+    {
+
+        $i = 0;
+        $hex = array();
+        while($i < 8) {
+            if($number == 0) {
+                array_push($hex, '0');
+            }
+            else {
+
+                array_push($hex, dechex(bcmod($number, '16')));
+
+                $number = bcdiv($number, '16', 0);
+
+            }
+            $i++;
+        }
+
+        krsort($hex);
+
+        return implode($hex);
+
     }
     public function export($force = false)
     {
@@ -657,7 +691,7 @@ class billfishxport
                     $attrdata['desc'] = $v['note'];
                     $attrdata['link'] = $v['origin'];
                     //将名字记入搜索字段
-                    $attrdata['searchval'] = $setarr['name'] . $attrdata['desc'] . $attrdata['link'];
+                    $attrdata['searchval'] = $setarr['name'] . getstr($attrdata['desc'],255) . $attrdata['link'];
                     //处理目录数据
                     if ($folderdata) {
                         $fid = $folderdata['fid'];
@@ -987,7 +1021,7 @@ class billfishxport
                     $attrdata['desc'] = $v['note'];
                     $attrdata['link'] = $v['origin'];
                     //将名字记入搜索字段
-                    $attrdata['searchval'] = $setarr['name'] . $attrdata['desc'] . $attrdata['link'];
+                    $attrdata['searchval'] = $setarr['name'] . getstr($attrdata['desc'],255) . $attrdata['link'];
                     //处理目录数据
                     if ($folderdata) {
                         //处理目录数据

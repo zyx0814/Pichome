@@ -11,6 +11,7 @@ if (!defined('IN_OAOOA')) {
 }
 session_start();
 global $_G;
+
 if($_G['uid']>0){
 	  $param = array(
             'username' => $_G['username'],
@@ -40,53 +41,23 @@ if(empty($setting)){
 
 	$setting= C::t('setting')->fetch_all(array(),true);
 }
-$_G['allow_loginmod'] = $setting['allow_loginmod'] = unserialize($setting['allow_loginmod']);
+
 //Hook::listen('login_check');//检查登录状态
-
-$from_connect = $setting['connect']['allow'] && !empty($_GET['from']) ? 1 : 0;
-
-$seccodecheck = $from_connect ? false : $setting['seccodestatus'] & 2;//是否开启验证码
-
-$seccodestatus = !empty($_GET['lssubmit']) ? false : $seccodecheck;
-
-if($_GET['operation']=='sms_send'){
-   $uid=intval($_GET['uid']);
-   $member=C::t('user')->fetch($_GET['uid']);
-   $phone=$member['phone'];
-   $re=sms('sms_login_code',$phone);
-   if($re['error']){
-	   exit(json_encode($re));
-   }else{
-	   $_SESSION['sms_code_'.$uid]=$re;
-	   exit(json_encode(array('msg'=>'success')));
-   }
-}
 
 if(!isset($_GET['loginsubmit'])) {//是否提交
 
     $username = !empty($_G['cookie']['loginuser']) ? dhtmlspecialchars($_G['cookie']['loginuser']) : '';
 
     $cookietimecheck = !empty($_G['cookie']['cookietime']) || !empty($_GET['cookietime']) ? 'checked="checked"' : '';
-
-    if($seccodecheck) $seccode = random(6, 1);
-
-    $referer = (isset($_GET['referer'])) ? htmlspecialchars($_GET['referer']):dreferer();
-	
-	
+    $referer = (isset($_GET['referer'])) ? ($_GET['referer']):dreferer();
     $navtitle = lang('title_login');
-	include template('login_single'.($_GET['template']?$_GET['template']:(isset($setting['loginset']['template']) ? $setting['loginset']['template'] : 1)));
+	
+	include template('pc/page/login_single'.($_GET['template']?$_GET['template']:(isset($setting['loginset']['template']) ? $setting['loginset']['template'] : 1)));
+	
 } else {
     $type = isset($_GET['returnType']) ?  $_GET['returnType']: 'json';//返回值方式
 
     Hook::listen('login_valchk',$_GET);//验证登录输入值及登录失败次数
-
-	
-	
-    //验证码开启，检测验证码
-    if($seccodecheck && !check_seccode( $_GET['seccodeverify'],$_GET['sechash'])){
-
-        showTips(array('error'=>lang('submit_seccode_invalid')), $type);
-    }
 
     //登录
     $result = userlogin($_GET['email'], $_GET['password'], $_GET['questionid'], $_GET['answer'],'auto', $_G['clientip']);
@@ -103,16 +74,7 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
 
     if($result['status'] > 0) {
 		$lastLoginTime=getCookie('logintime');
-		$smsauth=0;
-		$smssetting=$_G['setting']['sms_setting'];
-		if($result['member']['phone'] && $smssetting['enable']>0 && in_array('1',$smssetting['scope']) && ($smssetting['smsLoginExpire']<1 || $lastLoginTime+$smssetting['smsLoginExpire']*60<TIMESTAMP)){
-			$smsauth=1;
-		}
-		if($smsauth){
-			$member=$result['member'];
-			$referer = (isset($_GET['referer'])) ? htmlspecialchars($_GET['referer']):dreferer();
-			showTips(array('error'=>'redirect','url'=>'user.php?mod=login&op=logging&action=sms_auth&uid='.$member['uid'].'&referer='.urlencode($referer)),$type);
-		}
+		
 		if(!defined('PICHOME_LIENCE') && !C::t('user')->checkfounder($result['member'])){
             showTips(array('error'=>lang('personversion_no_create_unablelogin')),$type);
         }
@@ -127,9 +89,6 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
         //记录登录
         C::t('user_status')->update($_G['uid'], array('lastip' => $_G['clientip'], 'lastvisit' =>TIMESTAMP, 'lastactivity' => TIMESTAMP));
 
-        //邀请登录
-        //Hook::listen('inviate');
-
         //登录成功提示信息
         $param = array(
             'username' => $result['ucresult']['username'],
@@ -138,10 +97,8 @@ if(!isset($_GET['loginsubmit'])) {//是否提交
             'groupid' => $_G['groupid'],
             'syn' =>  0
         );
-        $loginmessage = /*$_G['groupid'] == 8 ? 'login_succeed_inactive_member' :*/ 'login_succeed';
-
-        $location = /*$_G['groupid'] == 8 ? 'user.php?mod=profile' :*/ dreferer();//待修改
-
+        $loginmessage = 'login_succeed';
+        $location = dreferer();//待修改
         $href = str_replace("'", "\'", $location);
         $href = preg_replace("/user\.php\?mod\=login.*?$/i", "", $location);
 

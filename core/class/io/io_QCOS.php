@@ -2403,21 +2403,7 @@
             $relativepath = $data['dirname'] ? getstr($data['dirname']):'';
             $pfid = $data['pfid'] ? trim($data['pfid']):'';
             $level = 0;
-            /*if($pfid){
-                $folderdata = DB::result_first("select pathkey,level from %t where fid = %s",array('pichome_folder',$pfid));
-                $tfids = explode($data['appid'],$folderdata['pathkey']);
-                $level = $folderdata['level'];
-                $pfids = [];
-                foreach($tfids as $v){
-                    $pfids[] = $v.$data['appid'];
-                }
-                //获取所有上级目录
-                $ppath = '';
-                foreach(DB::fetch_all("select fname from %t where fid in(%n)",array('pichome_folder',$pfids)) as $v){
-                    $ppath .= '/'.$v;
-                }
-                $relativepath = str_replace($relativepath,'',$ppath);
-            }*/
+
 
             //如果有不存在的目录则创建之
             $datas = array();
@@ -2540,15 +2526,6 @@
                 $setarr['fsize'] = formatsize($setarr['size']);
                 $setarr['ftype'] = getFileTypeName($setarr['type'], $setarr['ext']);
                 $setarr['fdateline'] = dgmdate($setarr['dateline']/1000);
-               /* $thumbparams = ['rid' => $setarr['rid'], 'hash' => VERHASH, 'download' => 1,
-                    'hasthumb' => 0, 'lastdate' => $setarr['lastdate']];
-                if(in_array($setarr['ext'],explode(',',getglobal('config/pichomecommimageext')))){
-                    //缩略图地址
-                    $setarr['icondata'] =  getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($thumbparams, 0, '');
-
-                }else{
-                    $setarr['icondata'] = geticonfromext($setarr['ext']);
-                }*/
                 $setarr['icondata'] = false;
                 $setarr['width'] = ($setarr['width']) ? intval($setarr['width']):900;
                 $setarr['height'] = ($setarr['height']) ? intval($setarr['height']):900;
@@ -2556,7 +2533,7 @@
                 $setarr['path'] = $path;
                 $setarr['path'] = dzzencode($setarr['rid'], '', 0, 0);
                 $setarr['aid'] = $attach['aid'];
-
+                $setarr['addnum'] = 1;
                 return $setarr;
             } else {
                 return array('error' => lang('data_error'));

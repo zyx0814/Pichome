@@ -1,0 +1,125 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/setting/pc/assets/css/library.css?{VERHASH}">
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<style>
+.notification{
+		position: relative;
+		background: var(--el-bg-color);
+		border: var(--el-border);
+		border-radius: 5px;
+
+	}
+	.hidden{
+		display: none;
+	}
+</style>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+		    <el-main>
+				<div class="container">
+					<div class="breadcrumb-wrapper" style="margin:15px 0">
+					 <el-breadcrumb separator-icon="ArrowRight">
+						<el-breadcrumb-item><el-link href="{$_G['siteurl']}index.php?mod=manage">管理工具</el-link></el-breadcrumb-item>
+						<el-breadcrumb-item>搜索模板列表</el-breadcrumb-item>
+
+					  </el-breadcrumb>
+					</div>
+					<div class="notification">
+						<!--{template setting/pc/components/main}-->
+					</div>
+				</div>
+			</el-main>
+		  </el-container>
+	</el-container>
+	<!-- 创建 -->
+	<!--{template setting/pc/components/created}-->
+	
+	<!-- 设置 -->
+	<!--{template setting/pc/components/right}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch,defineAsyncComponent, onBeforeUpdate } = Vue;
+	const dzzoffice = Vue.createApp({
+		data(){
+			return {
+				DocumentThemeColor:'',
+				tableData:eval('($data_json)'),
+				kus:eval('($kus_json)'),
+			}
+		},
+		
+		created(){
+			
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+		},
+		mixins:[CreatedMixin,MainMixin,RightMixin],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		
+		methods:{
+			TableAdd(type){
+				this.Catalogue.type = type;
+				this.Catalogue.dialogtype = 'add';
+				this.Catalogue.dialogVisible = true;
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			}
+		},
+		components: {
+			
+		},
+		mounted(){
+
+		}
+	});
+	dzzoffice.component('comavatar',comavatar);
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

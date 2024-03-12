@@ -78,54 +78,114 @@ if($operation == 'upload'){//上传文件图标类
         array_pop($patharr);
         $dirname = ($patharr) ? implode('/', $patharr) : '';
         $relativepath = $dirname;
+
         $folderdata = C::t('pichome_folder')->createfolerbypath($appid, $relativepath, $pfid);
         //如果当前库有该文件
         if ($rid = DB::result_first("select rid from %t where path = %d and appid = %s ", array('pichome_resources_attr', $aid, $appid))) {
-            $a =  C::t('pichome_resources')->fetch_by_rid($rid);
             $resourcesdata = C::t('pichome_resources')->fetch($rid);
-            $nfids = explode(',', $resourcesdata['fids']);
-            if (!in_array($folderdata['fid'], $nfids)) {
-                $nfids[] = $folderdata['fid'];
-            }
-            $rsetarr = [
-                'fids' => $nfids ? implode(',', $nfids) : ''
-            ];
-            $icoarr = [
-                'lastdate' => TIMESTAMP * 1000,
-                'appid' => $appid,
-                'uid'=>$_G['uid'],
-                'username'=>$_G['username'],
-                'apptype' => 3,
-                'size' => $resourcesdata['size'],
-                'type' => $resourcesdata['type'],
-                'ext' => $resourcesdata['ext'],
-                'mtime' => TIMESTAMP * 1000,
-                'dateline' => TIMESTAMP * 1000,
-                'btime' => TIMESTAMP * 1000,
-                'width' => $resourcesdata['width'],
-                'height' => $resourcesdata['height'],
-                'lastdate' => TIMESTAMP,
-                'level' => isset($folderdata['level']) ? $folderdata['level'] : 0,
-                'name' => $resourcesdata['name'],
-                'fids' => $nfids ? implode(',', $nfids) : '',
-                'rid' => $rid
-            ];
+            if($resourcesdata['isdelete']){
+                $rsetarr = [
+                    'lastdate' => TIMESTAMP * 1000,
+                    'appid' => $appid,
+                    'uid'=>$_G['uid'],
+                    'username'=>$_G['username'],
+                    'apptype' => 1,
+                    'size' => $resourcesdata['size'],
+                    'type' => $resourcesdata['type'],
+                    'ext' => $resourcesdata['ext'],
+                    'mtime' => TIMESTAMP * 1000,
+                    'dateline' => TIMESTAMP * 1000,
+                    'btime' => TIMESTAMP * 1000,
+                    'width' => $resourcesdata['width'],
+                    'height' => $resourcesdata['height'],
+                    'lastdate' => TIMESTAMP,
+                    'level' => isset($folderdata['level']) ? $folderdata['level'] : 0,
+                    'name' => $resourcesdata['name'],
+                    'fids' => $folderdata['fid'] ? $folderdata['fid']:''
+                ];
 
-            if (C::t('pichome_resources')->update($rid, $icoarr)) {//插入主表
-                //目录数据
-                if ($folderdata['fid']) {
-                    $frsetarr = ['appid' => $appid, 'rid' => $icoarr['rid'], 'fid' => $folderdata['fid']];
-                    C::t('pichome_folderresources')->insert($frsetarr);
-                    C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                if ($rsetarr['rid'] = C::t('pichome_resources')->insert_data($rsetarr)) {//插入主表
+                    //获取附属表数据
+                    $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+                    $attrdata['rid'] = $rsetarr['rid'];
+                    $attrdata['appid'] = $appid;
+                    $attrdata['searchval'] = $rsetarr['name'];
+                    C::t('attachment')->addcopy_by_aid($attrdata['path']);//增加图片使用数
+                    C::t('pichome_resources_attr')->insert($attrdata);
+                    //目录数据
+                    if ($folderdata['fid']) {
+                        $frsetarr = ['appid' => $appid, 'rid' => $rsetarr['rid'], 'fid' => $folderdata['fid']];
+                        C::t('pichome_folderresources')->insert($frsetarr);
+                        C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                    }
+                    //缩略图数据
+                    $thumbrecorddata = C::t('thumb_record')->fetch($rid);
+                    $thumbrecorddata['rid'] = $rsetarr['rid'];
+
+                    C::t('thumb_record')->insert_data($thumbrecorddata);
+
+                    //颜色数据
+                    foreach (DB::fetch_all("select * from %t where rid = %s", array('pichome_palette', $rid)) as $v) {
+                        $v['rid'] = $rsetarr['rid'];
+                        unset($v['id']);
+                        C::t('pichome_palette')->insert($v);
+                    }
+                    C::t('pichome_vapp')->addcopy_by_appid($appid);
+                    $data = C::t('pichome_resources')->fetch_by_rid($rsetarr['rid']);
+                    $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                    $data['addnum'] = 1;
+                } else {
+                    $data['error'] = 'uploadfailer';
                 }
-                //C::t('pichome_vapp')->addcopy_by_appid($appid);
-                $data = C::t('pichome_resources')->fetch_by_rid($rid);
+                exit(json_encode(array('success' => true, 'data' => $data)));
+            }else{
+                $nfids = explode(',', $resourcesdata['fids']);
+                $iscurrentfolder = 1;
+                if ($folderdata['fid'] && !in_array($folderdata['fid'], $nfids)) {
+                    $nfids[] = $folderdata['fid'];
+                    $iscurrentfolder = 0;
+                }
 
-                $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
-            } else {
-                $data['error'] = 'uploadfailer';
+                $icoarr = [
+                    'lastdate' => TIMESTAMP * 1000,
+                    'appid' => $appid,
+                    'uid'=>$_G['uid'],
+                    'username'=>$_G['username'],
+                    'apptype' => 3,
+                    'size' => $resourcesdata['size'],
+                    'type' => $resourcesdata['type'],
+                    'ext' => $resourcesdata['ext'],
+                    'mtime' => TIMESTAMP * 1000,
+                    'dateline' => TIMESTAMP * 1000,
+                    'btime' => TIMESTAMP * 1000,
+                    'width' => $resourcesdata['width'],
+                    'height' => $resourcesdata['height'],
+                    'lastdate' => TIMESTAMP,
+                    'level' => isset($folderdata['level']) ? $folderdata['level'] : 0,
+                    'name' => $resourcesdata['name'],
+                    //'fids' => $nfids ? implode(',', $nfids) : '',
+                    'rid' => $rid
+                ];
+
+                if (C::t('pichome_resources')->update($rid, $icoarr)) {//插入主表
+                    //目录数据
+                    if (!$iscurrentfolder && $folderdata['fid']) {
+                        $frsetarr = ['appid' => $appid, 'rid' => $rid, 'fid' => $folderdata['fid']];
+                        C::t('pichome_folderresources')->insert($frsetarr);
+                        //C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                    }
+                    //C::t('pichome_vapp')->addcopy_by_appid($appid);
+                    $data = C::t('pichome_resources')->fetch_by_rid($rid);
+
+                    $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                    $data['addnum'] = ($iscurrentfolder) ? 0:1;
+                    $data['onlyfolderadd'] = 1;
+                } else {
+                    $data['error'] = 'uploadfailer';
+                }
+                exit(json_encode(array('success' => true, 'data' => $data)));
             }
-            exit(json_encode(array('success' => true, 'data' => $data)));
+
         }
         elseif ($rid = DB::result_first("select rid from %t where path = %d ", array('pichome_resources_attr', $aid))) {//如果当前库没有该文件，但其它库有
             //获取原文件基本数据
@@ -162,7 +222,7 @@ if($operation == 'upload'){//上传文件图标类
                 if ($folderdata['fid']) {
                     $frsetarr = ['appid' => $appid, 'rid' => $rsetarr['rid'], 'fid' => $folderdata['fid']];
                     C::t('pichome_folderresources')->insert($frsetarr);
-                    C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                    //C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
                 }
                 //缩略图数据
                 $thumbrecorddata = C::t('thumb_record')->fetch($rid);
@@ -179,6 +239,7 @@ if($operation == 'upload'){//上传文件图标类
                 C::t('pichome_vapp')->addcopy_by_appid($appid);
                 $data = C::t('pichome_resources')->fetch_by_rid($rsetarr['rid']);
                 $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                $data['addnum'] = 1;
             } else {
                 $data['error'] = 'uploadfailer';
             }
@@ -188,82 +249,6 @@ if($operation == 'upload'){//上传文件图标类
     }else {
         exit(json_encode(array('success' => false)));
     }
-}
-elseif($operation == 'copyuploadfile'){//选择不使用已存在文件时处理
-    $rid = isset($_GET['rid']) ? trim($_GET['rid']):'';
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
-    $pfid = isset($_GET['pfid']) ? trim($_GET['pfid']):'';
-    $path = isset($_GET['relativePath']) ? trim($_GET['relativePath']):'';
-    if(!$appid){
-        $data['error'] = 'uploadfailer';
-        $data['msg'] = '缺少appid';
-        exit( json_encode( array( 'success' => true,'data'=>$data) ) );
-    }
-    $relativepath ='';
-    if($path){
-        //处理目录数据
-        $patharr = explode('/',$path);
-        array_pop($patharr);
-        $dirname = ($patharr) ? implode('/',$patharr):'';
-        $relativepath = $dirname;
-    }
-
-    $folderdata = C::t('pichome_folder')->createfolerbypath($appid,$relativepath,$pfid);
-
-    //获取原文件基本数据
-    $resourcesdata = C::t('pichome_resources')->fetch($rid);
-    $rsetarr=[
-        'lastdate' => TIMESTAMP * 1000,
-        'appid' => $appid,
-        'apptype' => 1,
-        'size' => $resourcesdata['filesize'],
-        'type' => $resourcesdata['type'],
-        'ext' => $resourcesdata['ext'],
-        'mtime' => TIMESTAMP * 1000,
-        'dateline' => TIMESTAMP * 1000,
-        'btime' => TIMESTAMP * 1000,
-        'width' => $resourcesdata['width'],
-        'height' => $resourcesdata['height'],
-        'lastdate' => TIMESTAMP,
-        'level' => isset($folderdata['level']) ? $folderdata['level']:0,
-        'name' => $resourcesdata['name'],
-        'fids'=>$folderdata['fid'],
-        'username'=>getglobal('username'),
-        'uid'=>getglobal('uid')
-    ];
-    if ($icoarr['rid'] = C::t('pichome_resources')->insert_data($rsetarr)) {//插入主表
-        //获取附属表数据
-        $attrdata = C::t('pichome_resources_attr')->fetch($rid);
-        $attrdata['rid'] = $icoarr['rid'];
-        $attrdata['searchval'] = $rsetarr['name'];
-        C::t('attachment')->update($attrdata['path'], array('copys' => $attach['copys'] + 1));//增加图片使用数
-        C::t('pichome_resources_attr')->insert($attrdata);
-        //目录数据
-        if($folderdata['fid']){
-            $frsetarr = ['appid' => $appid, 'rid' => $icoarr['rid'], 'fid' => $folderdata['fid']];
-            C::t('pichome_folderresources')->insert($frsetarr);
-        }
-        //颜色数据
-        foreach(DB::fetch_all("select * from %t where rid = %s",array('pichome_palette',$rid)) as $v){
-            $v['rid'] = $icoarr['rid'];
-            unset($v['id']);
-            C::t('pichome_palette')->insert($v);
-        }
-        //缩略图数据
-        foreach(DB::fetch_all("select * from %t where rid = %s",array('thumb_record',$rid)) as $v){
-            $v['rid'] = $icoarr['rid'];
-            C::t('thumb_record')->insert($v);
-        }
-        C::t('pichome_vapp')->addcopy_by_appid($appid);
-        $data = C::t('pichome_resources')->fetch_by_rid($icoarr['rid']);
-        $data['folder'] =C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
-
-    }else{
-        $data['error'] = 'uploadfailer';
-    }
-
-    exit(json_encode(array('success'=>true,'data'=>$data)));
-
 }
 elseif ( $operation == 'cloudupload' ) {
     global $_G;

@@ -30,9 +30,11 @@ if ($arr[1] && is_numeric($arr[1])) {
     $appdata['path'] = str_replace('dzz::', '', $appdata['path']);
 }
 $ext =$patharr['ext'];
+
 if ($appdata['type'] == 0) {//eagle缩略图
-    $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
+   // $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
     $thumbdir = $appdata['path'];
+
     //当地址为大图时
     if($patharr['thumbsign']){
         //如果有下载权限，并且当前图片支持预览返回原图地址

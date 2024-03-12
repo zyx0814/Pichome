@@ -910,7 +910,7 @@ $lang = array (
 	'profile_passwd_illegal'=>'Please fill in the password',
 	'register_email_verify' => '<p>Thank you for registering {sitename}</p><p>The system sent you an activation email. Go to the login email to activate your account.</p><p><a href="index.php?open=password">Re-receive verification email</a></p>',
 	'register_manual_verify' => '<p>Thank you for your registration, the site has manually verified registered users, please wait for review</p>',
-	'register_succeed' => '<p>Thank you for signing up for {sitename} and will now be logged in as {usergroup}</p><p><a href="index.php?open=profile">Improve the data now</a></p>',
+	'register_succeed' => '<p>Thank you for signing up for {sitename} and will now be logged in as {usergroup}</p>',
 	
 	'activate_illegal' => 'The ID you are using does not exist or you are not waiting for a verification member',
 	'activate_succeed' => 'Hello, {username}, your account has been successfully activated and will now be transferred to the site homepage',

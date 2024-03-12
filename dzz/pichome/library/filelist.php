@@ -17,14 +17,9 @@ if ($operation == 'filelist') {
     $params = ['pichome_resources'];
     $havingsql = '';
     $havingparams = [];
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
-    $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
-    if($ismusic){
-        $wheresql .= ' and r.ext in(%n) ';
-        $para[] = ['mp3','ogg','wav','wmv','flac','aac','asf','aiff','au','mid','ra','rma'];
-    }
+
     $start = ($page - 1) * $perpage;
     $limitsql = "limit $start," . $perpage;
 
@@ -48,49 +43,31 @@ if ($operation == 'filelist') {
     $orderarr = [];
     $orderparams = [];
 
-    $gappid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [];
-
-    //获取有权限访问的库
-    $vappids = [];
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0", array('pichome_vapp')) as $v) {
-
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
         if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
             continue;
         }
         if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
             $vappids[] = $v['appid'];
         }
-
-
     }
 
-    if(!is_array($appid)) $appid = (array)$appid;
-    $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
-    $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
-
-    if($gappid){
-        $appid = array_intersect($vappids,$gappid);
+    $whererangesql = [];
+    //库条件
+    if ($vappids) {
+        $whererangesql[]= '  r.appid in(%n)';
+        $para[] = $vappids;
     }else{
-        $appid = $vappids;
+        $whererangesql[]= '  0 ';
     }
 
-    if (empty($vappids)) {
-        $wheresql .= ' and 0';
-    } else {
-        if ($appid) {
-            $wheresql .= ' and r.appid in(%n)';
-            $para[] = $appid;
-            /*if (!$fids && !$hassub) {
-                $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-                $params[] = 'pichome_folderresources';
-                $wheresql .= ' and ISNULL(fr.fid)';
-            }*/
-
-        } else {
-            $wheresql .= '  and 0';
-           // $para[] = $vappids;
-        }
+    if($whererangesql){
+        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
     }
+    $fids = isset($_GET['fids']) ? trim($_GET['fids']):'';
+    $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']):0;
     if ($fids) {
         if ($fids == 'not' || $fids == 'notclassify') {
             $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
@@ -121,11 +98,11 @@ if ($operation == 'filelist') {
             } else {
                 if (in_array('not', $fidarr)) {
                     $nindex = array_search('not', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
 				}elseif(in_array('notclassify', $fidarr)) {
                     $nindex = array_search('notclassify', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 } else {
                     $wheresql .= ' and fr.fid  in(%n)';

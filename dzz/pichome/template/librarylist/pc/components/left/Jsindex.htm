@@ -155,7 +155,7 @@
 						pathkey:res.data.pathkey,
 						pfid:pfid
 					};
-					if(this.ImageDataIsExpanded){
+					if(this.hassub){
 						var str1 = {
 							fid:res.data.fid,
 							fname:'未命名文件夹',
@@ -507,13 +507,14 @@
 				};
 				return false;
 			},
-			LeftParentFilenum(id){//循环给父节点添加文件数量
+			LeftParentFilenum(node){//循环给父节点添加文件数量
 				let self = this;
-				let node = self.$refs.LeftTreeRef.getNode(id);
 				if(node && node.level > 0){
-					node.data.filenum = parseInt(node.data.filenum) + 1;
-					self.LeftParentFilenum(node.parent.data.fid);
+					let fnode = self.$refs.LeftTreeRef.getNode(node.data.fid);
+					fnode.data.filenum = parseInt(fnode.data.filenum) + 1;
+					self.LeftParentFilenum(fnode.parent);
 				}
+				
 			}
 		},
 		mounted(){

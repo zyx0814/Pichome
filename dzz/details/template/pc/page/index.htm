@@ -15,7 +15,9 @@
 		  type: 'success'
 		});
 		document.getElementById('copyInput').remove();
+
 	};
+	
 </script>
 <style>
 	body{
@@ -439,6 +441,7 @@
 				self.ImgParam.iswait = false;
 				self.HtmlLoading = false;
 			});
+			window.parent.document.querySelector('.Details-Iframe').lastChild.style.opacity  = "";
 			<!--{else}-->
 			window.onhashchange = function(){
 				if(self.DocumentBack){

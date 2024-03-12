@@ -102,6 +102,7 @@ if($do == 'addpage'){//新建单页
     $page = C::t('pichome_templatepage')->fetch($id);
     if(!$page) exit(json_encode(['success'=>false,'msg'=>'单页不存在']));
     $pagedata = $_GET['data'];
+
     $pagetag = [
         'tid'=>$pagedata['tid'] ? intval($pagedata['tid']):0,
         'tagtype'=>$pagedata['type'],
@@ -221,15 +222,16 @@ if($do == 'addpage'){//新建单页
     exit(json_encode(['success'=>true,'data'=>$returndata,'themeid'=>$themeid]));
 }elseif($do == 'typecollection'){//获取ku,单页，栏目,专辑
     $library = array();
-    if($_G['adminid'] == 1){
-        $library = DB::fetch_all("select * from %t  where isdelete = 0 order by `disp` asc,dateline desc", array('pichome_vapp'));
-    }else{
-        $library  = DB::fetch_all("select v.* from %t vm left join %t v on v.appid = vm.appid where vm.uid = %d and v.isdelete = 0 order by v.disp", array('pichome_vappmember','pichome_vapp',$uid));
-    }
-
+    $library = DB::fetch_all("select * from %t  where isdelete = 0 order by `disp` asc,dateline desc", array('pichome_vapp'));
     $alonepage = DB::fetch_all("select * from %t where 1 order by disp asc,dateline asc ",['pichome_templatepage']);
-    $banner = C::t('pichome_banner')->getbannerlist();
-
+    $banner = C::t('pichome_banner')->getbannerlist(0,1);
+    $search = array();
+    $search[] = array('id'=> '0','bannername'=> '全部');
+    foreach($banner['top'] as $v){
+        if($v['btype'] == 0 || $v['btype'] == 4){
+            $search[] = $v;
+        }
+    }
     $tabstatus = 0;
     $tabgroupdata = [];
     Hook::listen('checktab', $tabstatus);
@@ -241,7 +243,7 @@ if($do == 'addpage'){//新建单页
             unset($tabgroupdata[$k]);
         }
     }
-    exit(json_encode(array('tab' => $tabgroupdata,'library' => $library,'alonepage'=>$alonepage,'banner'=>$banner['top'])));
+    exit(json_encode(array('tab' => $tabgroupdata,'library' => $library,'alonepage'=>$alonepage,'banner'=>$banner['top'],'search'=>$search)));
 
 }elseif($do == 'getpagecontent'){//获取单页内容
     $id = isset($_GET['id']) ? intval($_GET['id']):0;

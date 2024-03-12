@@ -1035,7 +1035,6 @@ CREATE TABLE `dzz_pichome_bannertagcat` (
 ) ENGINE=MyISAM;
 
 
--- --------------------------------------------------------
 
 --
 -- 表的结构 `dzz_pichome_comments`
@@ -1264,7 +1263,7 @@ CREATE TABLE `dzz_pichome_resources_attr` (
   `gray` tinyint(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否黑白色',
   `colors` text COMMENT '颜色值',
   `duration` float(11,2) UNSIGNED NOT NULL DEFAULT '0.00' COMMENT '时长',
-  `desc` varchar(255) NOT NULL DEFAULT '' COMMENT '描述',
+  `desc` text COMMENT '描述',
   `link` varchar(255) NOT NULL DEFAULT '' COMMENT '链接',
   `tag` text NOT NULL COMMENT '标签id',
   `path` blob NOT NULL COMMENT '路径',
@@ -1506,7 +1505,7 @@ CREATE TABLE `dzz_pichome_vapp`  (
   `extra` text NULL COMMENT '拓展数据',
   `perm` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '权限值',
   `filenum` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '文件个数',
-  `lastid` char(13) NULL DEFAULT '' COMMENT '最后执行位置id',
+  `lastid` text NULL  COMMENT '最后执行位置id',
   `percent` tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT '导入百分比',
   `state` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0，未导入，1准备中，2导入中，3校验中，4已完成,-1导入失败',
   `filter` text NULL COMMENT '筛选项',
@@ -2201,6 +2200,21 @@ CREATE TABLE `dzz_views` (
   `idval` char(32) DEFAULT NULL COMMENT 'id值',
   `nums` int(11) UNSIGNED DEFAULT '0' COMMENT '次数',
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS `dzz_search_template`;
+CREATE TABLE dzz_search_template (
+ tid int(10) NOT NULL AUTO_INCREMENT COMMENT '模板TID自增',
+ title varchar(255) NOT NULL DEFAULT '' COMMENT '模板名称',
+ data text NOT NULL,
+ screen text NOT NULL COMMENT '筛选项',
+ pagesetting text NOT NULL COMMENT '偏好设置',
+ searchRange text NOT NULL COMMENT '搜索范围',
+ exts text NOT NULL COMMENT '限制的文件后缀',
+ dateline int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建时间',
+ disp smallint(6) NOT NULL DEFAULT '0' COMMENT '排序',
+ PRIMARY KEY (tid),
+ KEY disp (disp,dateline) USING BTREE
 ) ENGINE=MyISAM;
 
 COMMIT;

@@ -347,10 +347,10 @@ class table_pichome_resources extends dzz_table
         if ($did == 1 || $thumurlmod) {
             //小图参数
             $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
-                'thumbsign' => '0', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
+                'thumbsign' => '0', 'path'=>$resourcesdata['path'],'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
             //大图参数
             $largethumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
-                'thumbsign' => '1', 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
+                'thumbsign' => '1','path'=>$resourcesdata['path'], 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
             if ($apptype == 3 || $apptype == 1) {
                 $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
                 if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
@@ -493,7 +493,7 @@ class table_pichome_resources extends dzz_table
         if ($resourcesdata['height'] == 0) $resourcesdata['height'] = 900;
         $thumbwidth = getglobal('config/pichomethumlargwidth') ? getglobal('config/pichomethumlargwidth') : 1920;
         $thumbheight = getglobal('config/pichomethumlargheight') ? getglobal('config/pichomethumlargheight') : 1080;
-        $thumsizearr = $this->getImageThumbsize($resourcesdata['width'], $resourcesdata['height'], $thumbwidth, $thumbheight);
+        $thumsizearr = $this->scaleImage($resourcesdata['width'], $resourcesdata['height'], $thumbwidth, $thumbheight);
         $resourcesdata['iconwidth'] = $thumsizearr[0];
         $resourcesdata['iconheight'] = $thumsizearr[1];
 
@@ -547,15 +547,18 @@ class table_pichome_resources extends dzz_table
             } else {
                 $imgdata = $this->getfileimageurl($v, $downshare[$v['appid']]['path'], $downshare[$v['appid']]['type'], $v['download']);
             }
+            $v['hasthumb'] = $imagedatas[$v['rid']]['imgstatus'] ? intval($imagedatas[$v['rid']]['imgstatus']):0;
             $v = array_merge($v, $imgdata);
             $v['annonationnum'] = $annonationnumdata[$v['rid']]['num'];
             $thumbwidth = getglobal('config/pichomethumsmallwidth') ? getglobal('config/pichomethumsmallwidth') : 360;
             $thumbheight = getglobal('config/pichomethumsmallwidth') ? getglobal('config/pichomethumsmallwidth') : 360;
             if ($v['width'] == 0) $v['width'] = 900;
             if ($v['height'] == 0) $v['height'] = 900;
-            $thumsizearr = $this->getImageThumbsize($v['width'], $v['height'], $thumbwidth, $thumbheight);
-            $v['thumbwidth'] = $thumsizearr[0];
-            $v['thumbheight'] = $thumsizearr[1];
+            if($v['hasthumb']){
+                $thumsizearr = $this->scaleImage($v['width'], $v['height'], $thumbwidth, $thumbheight);
+                $v['thumbwidth'] = $thumsizearr[0];
+                $v['thumbheight'] = $thumsizearr[1];
+            }
             //获取文件所属目录数
             $v['foldernum'] = DB::result_first("select count(id) from %t where rid = %s", array('pichome_folderresources', $v['rid']));
             $intcolor = DB::result_first("select color from %t where rid = %s order by weight desc", array('pichome_palette', $v['rid']));
@@ -606,7 +609,34 @@ class table_pichome_resources extends dzz_table
         return array($width, $height);
 
     }
+    function scaleImage($owidth,$oheight,$width,$height) {
+        if($owidth>$width && $oheight>$height){
+            $or=$owidth/$oheight;
+            $r=$width/$height;
+            if($or>$r){
+                if($oheight<$height){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
+                    $width=ceil($height*$or);
+                }
 
+            }else{
+                if($owidth<$width){
+                    $height=$oheight;
+                    $width=$owidth;
+                }else{
+                    $height=ceil($width/$or);
+                }
+            }
+
+        }else{
+            $width=$owidth;
+            $height=$oheight;
+        }
+        //Return the results
+        return array($width,$height);
+    }
     public function geticondata_by_rid($rid, $onlyicon = 0)
     {
         $resourcesdata = DB::fetch_first("select r.rid,r.isdelete,r.appid,r.ext,r.type,ra.path as fpath,

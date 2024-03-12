@@ -881,7 +881,7 @@ $lang = array (
 	'profile_illegal' => '格式不正确或为空',
 	'profile_nickname_protect' => '用户名包含被系统屏蔽的字符',
 	'profile_username_protect' => '用户名包含被系统屏蔽的字符',
-	'register_check_found' => '该用户名已注册，请更换用户名&nbsp;<a href="user.php?mod=login&action=login" onclick="try{_login.logging();}catch(e){return true}">登录</a>',
+	'register_check_found' => '该用户名已注册，请更换用户名',
 	'register_activation' => '用户名已存在',
 	'no_invitation_code' => '抱歉，邀请码为空请填写，没有邀请码不允许注册',
 	'wrong_invitation_code' => '抱歉，邀请码错误，请重新填写，没有邀请码不允许注册',
@@ -911,7 +911,7 @@ $lang = array (
 	'profile_passwd_illegal'=>'请填写密码',
 	'register_email_verify' => '<p>感谢您注册 {sitename}</p><p>系统给您发送了一封激活邮件，快去登录邮箱激活账号吧</p><p><a href="index.php?open=password">重新接收验证邮件</a></p>',
 	'register_manual_verify' => '<p>感谢您的注册，站点开启了人工验证注册用户，请等待审核</p>',
-	'register_succeed' => '<p>感谢您注册 {sitename}，现在将以 {usergroup} 身份登录站点</p><p><a href="index.php?open=profile">现在去完善资料</a></p>',
+	'register_succeed' => '<p>感谢您注册 {sitename}，现在将以 {usergroup} 身份登录站点</p>',
 	
 	'activate_illegal' => '您所用的 ID 不存在或您不是等待验证成员',
 	'activate_succeed' => '您好，{username}，您的帐号已被成功激活，现在将转入站点首页',

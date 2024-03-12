@@ -3,7 +3,7 @@ if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
 
-class table_pichome_templatetagdata extends dzz_table
+class  table_pichome_templatetagdata extends dzz_table
 {
     public function __construct()
     {
@@ -37,20 +37,20 @@ class table_pichome_templatetagdata extends dzz_table
                 foreach($setarr['tdata'] as $v){
                     $naids[] = $v['aid'];
                 }
-            if($olddata){
-                $odata = unserialize($olddata['tdata']);
-                $oaids = [];
-                foreach($odata as $idata){
-                    $oaids[] = $idata['aid'];
-                }
+                if($olddata){
+                    $odata = unserialize($olddata['tdata']);
+                    $oaids = [];
+                    foreach($odata as $idata){
+                        $oaids[] = $idata['aid'];
+                    }
 
 
-                $delaids = array_diff($oaids,$naids);
-                foreach($delaids as $v){
-                    C::t('attachment')->delete_by_aid($v['aid']);
+                    $delaids = array_diff($oaids,$naids);
+                    foreach($delaids as $v){
+                        C::t('attachment')->delete_by_aid($v['aid']);
+                    }
+                    $naids = array_diff($naids,$oaids);
                 }
-                $naids = array_diff($naids,$oaids);
-            }
                 C::t('attachment')->addcopy_by_aid($naids);
                 $setarr['tdata'] = serialize($setarr['tdata']);
                 break;
@@ -59,6 +59,25 @@ class table_pichome_templatetagdata extends dzz_table
                 $setarr['tdata'] = $this->getcontentdata($setarr['tdata'],$olddata['tdata']);
                 break;
             default :
+                $naids =  [];
+                foreach($setarr['tdata'] as $v){
+                    $naids[] = $v['aid'];
+                }
+                if($olddata){
+                    $odata = unserialize($olddata['tdata']);
+                    $oaids = [];
+                    foreach($odata as $idata){
+                        $oaids[] = $idata['aid'];
+                    }
+
+
+                    $delaids = array_diff($oaids,$naids);
+                    foreach($delaids as $v){
+                        C::t('attachment')->delete_by_aid($v['aid']);
+                    }
+                    $naids = array_diff($naids,$oaids);
+                    if($naids)  C::t('attachment')->addcopy_by_aid($naids);
+                }
                 $setarr['tdata'] = serialize($setarr['tdata']);
                 break;
 
@@ -72,6 +91,12 @@ class table_pichome_templatetagdata extends dzz_table
         }
     }
     public function parserichtextdata($data){
+        $pattern = "/(https?:\/\/)?\w+\.\w+\.\w+\.\w+?(:[0-9]+)?\/index\.php\?mod=io&amp;op=getfileStream&amp;path=(.+)/";
+        $data= preg_replace_callback($pattern,function($matchs){
+
+            return 'index.php?mod=io&op=getfileStream&path='.$matchs[3];
+
+        },$data);
 
         $data= preg_replace_callback('/path=(\w+)&amp;aflag=(attach::\d+)/',function($matchs){
             if(isset($matchs[2])){
@@ -86,51 +111,51 @@ class table_pichome_templatetagdata extends dzz_table
         $tagdata = [];
         foreach(DB::fetch_all("select * from %t where tid = %d order by disp asc",[$this->_table,$tid]) as $v){
 
-           if($tagtype == 'rich_text'){
+            if($tagtype == 'rich_text'){
 
-               $v['tdata'] = $this->parserichtextdata($v['tdata']);
-           }else{
-               $v['tdata'] = unserialize($v['tdata']);
+                $v['tdata'] = $this->parserichtextdata($v['tdata']);
+            }else{
+                $v['tdata'] = unserialize($v['tdata']);
 
-               foreach($v['tdata'] as $k=>$val){
-                    //print_r($val);die;
-                   if($val['aid']){
-                       $v['tdata'][$k]['imgurl'] = getglobal('siteurl').IO::getFileUri('attach::'.$val['aid']);
-                   }
-                   if(!$val['link']) $val['tdata'][$k]['url'] =  $val['linkval'] ? $val['linkval']:'';
-                   else{
-                       switch ($val['link']){
-                           case 1:
-                               $url = 'index.php?mod=pichome&op=fileview#appid='.$val['linkval'];
-                               break;
-                           case 2:
-                               $url =  'index.php?mod=alonepage&op=view#id='.$val['linkval'];
-                               break;
-                           case 3:
-                               $bdata = C::t('pichome_banner')->fetch($val['linkval']);
-                               $url = ($bdata['btype'] == 3) ? $bdata['bdata']:'index.php?mod=banner&op=index#id='.$bdata['bdata'];
-                               break;
-                       }
-                       if(getglobal('setting/pathinfo')) $path = C::t('pichome_route')->feth_path_by_url($url);
-                       else $path = '';
-                       if($path){
-                           $v['tdata'][$k]['url'] = getglobal('siteurl').$path;
-                       }else{
-                           $v['tdata'][$k]['url'] = getglobal('siteurl').$url;
-                       }
-                   }
-               }
+                foreach($v['tdata'] as $k=>$val){
+                    if($val['aid']){
+                        $v['tdata'][$k]['imgurl'] = getglobal('siteurl').IO::getFileUri('attach::'.$val['aid']);
+                    }
+                    if(!$val['link']) $val['tdata'][$k]['url'] =  $val['linkval'] ? $val['linkval']:'';
+                    else{
+                        switch ($val['link']){
+                            case 1:
+                                $url = 'index.php?mod=pichome&op=fileview#appid='.$val['linkval'];
+                                break;
+                            case 2:
+                                $url =  'index.php?mod=alonepage&op=view#id='.$val['linkval'];
+                                break;
+                            case 3:
+                                $bdata = C::t('pichome_banner')->fetch($val['linkval']);
+                                $url = ($bdata['btype'] == 3) ? $bdata['bdata']:'index.php?mod=banner&op=index#id='.$bdata['bdata'];
+                                break;
+                        }
+                        if(getglobal('setting/pathinfo')) $path = C::t('pichome_route')->feth_path_by_url($url);
+                        else $path = '';
+                        if($path){
+                            $v['tdata'][$k]['url'] = getglobal('siteurl').$path;
+                        }else{
+                            $v['tdata'][$k]['url'] = getglobal('siteurl').$url;
+                        }
+                    }
+                }
 
-           }
+            }
 
-           $v['tdid'] = $v['id'];
-           unset($v['id']);
-           $tagdata[] = $v;
+            $v['tdid'] = $v['id'];
+            unset($v['id']);
+            $tagdata[] = $v;
         }
         return $tagdata;
     }
     public function getcontentdata($data,$odata){
         global $naids;
+        $data = str_replace(getglobal('siteurl'),'',$data);
         $naids= [];
         $data= preg_replace_callback('/path=(\w+)/',function($matchs){
             global $naids;
@@ -170,4 +195,5 @@ class table_pichome_templatetagdata extends dzz_table
         }
         return true;
     }
+
 }

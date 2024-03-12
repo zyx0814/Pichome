@@ -44,7 +44,7 @@ class io_dzz extends io_api
         $arr = self::getPartInfo($content_range);
         // echo $pfid;die;
         if ($arr['iscomplete']) {
-            if($relativePath){
+            if($relativePath && $relativePath != '.' && $relativePath != '..'){
                 $fdata = C::t('pichome_folder')->createfolerbypath($appid, $relativePath, $pfid);
                 if (isset($fdata['error'])) {
                     return array('error' => $data['error']);
@@ -52,21 +52,40 @@ class io_dzz extends io_api
             }elseif($pfid){
                 $folderdata = C::t('pichome_folder')->fetch($pfid);
                 $fdata = ['fid'=>$pfid,'level'=>$folderdata['level']];
+            }else{
+                $fdata = ['fid'=>'','level'=>0];
+
             }
 
+        }else{
+            if($relativePath && $relativePath != '.' && $relativePath != '..'){
+                $fdata = C::t('pichome_folder')->createfolerbypath($appid, $relativePath, $pfid);
+                if (isset($fdata['error'])) {
+                    return array('error' => $data['error']);
+                }
+            }elseif($pfid){
+                $folderdata = C::t('pichome_folder')->fetch($pfid);
+                $fdata = ['fid'=>$pfid,'level'=>$folderdata['level']];
+
+            }else{
+                $fdata = ['fid'=>'','level'=>0];
+
+            }
         }
-        if (substr($filename, -7) == '.folder') {
+       /* if (substr($filename, -7) == '.folder') {
             if(!$relativePath){
                 $patharr = explode('/',$filename);
                 array_pop($patharr);
                 $relativePath = ($patharr) ? implode('/',$patharr):'';
             }
             $fdata = C::t('pichome_folder')->createfolerbypath($appid, $relativePath, $pfid);
+            var_dump($fdata);
+            die;
             if (isset($fdata['error'])) {
                 return array('error' => $data['error']);
             }
             return $fdata;
-        }
+        }*/
         $arr['flag'] = $appid . '_' . $relativePath;
         //获取文件内容
         $fileContent = '';
@@ -326,38 +345,100 @@ class io_dzz extends io_api
         if ($rid = DB::result_first("select rid from %t where path = %d and appid = %s ", array('pichome_resources_attr', $attach['aid'], $appid))) {
 
             $resourcesdata = C::t('pichome_resources')->fetch($rid);
-            $nfids = explode(',', $resourcesdata['fids']);
-            if (!in_array($fid, $nfids)) {
-                $nfids[] = $fid;
-            }
-            $icoarr = [
-                'lastdate' => TIMESTAMP * 1000,
-                'appid' => $appid,
-                'uid'=>$_G['uid'],
-                'username'=>$_G['username'],
-                'apptype' => 3,
-                'mtime' => TIMESTAMP * 1000,
-                'dateline' => TIMESTAMP * 1000,
-                'btime' => TIMESTAMP * 1000,
-                'lastdate' => TIMESTAMP,
-                'name' => $resourcesdata['name'],
-                'fids' => $nfids ? implode(',', $nfids) : '',
-            ];
+            if($resourcesdata['isdelete']){
+                $rsetarr = [
+                    'lastdate' => TIMESTAMP * 1000,
+                    'appid' => $appid,
+                    'uid' => $_G['uid'],
+                    'username' => $_G['username'],
+                    'apptype' => 1,
+                    'size' => $resourcesdata['size'],
+                    'type' => $resourcesdata['type'],
+                    'ext' => $resourcesdata['ext'],
+                    'mtime' => TIMESTAMP * 1000,
+                    'dateline' => TIMESTAMP * 1000,
+                    'btime' => TIMESTAMP * 1000,
+                    'width' => $resourcesdata['width'],
+                    'height' => $resourcesdata['height'],
+                    'lastdate' => TIMESTAMP,
+                    'level' => isset($folderdata['level']) ? $folderdata['level'] : 0,
+                    'name' => $resourcesdata['name'],
+                    'fids' => $folderdata['fid'] ? $folderdata['fid'] : ''
+                ];
 
-            if (C::t('pichome_resources')->update($rid, $icoarr)) {//插入主表
-                //目录数据
-                if ($fid) {
-                    $frsetarr = ['appid' => $appid, 'rid' => $icoarr['rid'], 'fid' => $fid];
-                    C::t('pichome_folderresources')->insert($frsetarr);
-                    C::t('pichome_folder')->add_filenum_by_fid($fid, 1);
+                if ($rsetarr['rid'] = C::t('pichome_resources')->insert_data($rsetarr)) {//插入主表
+                    //获取附属表数据
+                    $attrdata = C::t('pichome_resources_attr')->fetch($rid);
+                    $attrdata['rid'] = $rsetarr['rid'];
+                    $attrdata['appid'] = $appid;
+                    $attrdata['searchval'] = $rsetarr['name'];
+                    C::t('attachment')->addcopy_by_aid($attrdata['path']);//增加图片使用数
+                    C::t('pichome_resources_attr')->insert($attrdata);
+                    //目录数据
+                    if ($folderdata['fid']) {
+                        $frsetarr = ['appid' => $appid, 'rid' => $rsetarr['rid'], 'fid' => $folderdata['fid']];
+                        C::t('pichome_folderresources')->insert($frsetarr);
+                        //C::t('pichome_folder')->add_filenum_by_fid($folderdata['fid'], 1);
+                    }
+                    //缩略图数据
+                    $thumbrecorddata = C::t('thumb_record')->fetch($rid);
+                    $thumbrecorddata['rid'] = $rsetarr['rid'];
+
+                    C::t('thumb_record')->insert_data($thumbrecorddata);
+
+                    //颜色数据
+                    foreach (DB::fetch_all("select * from %t where rid = %s", array('pichome_palette', $rid)) as $v) {
+                        $v['rid'] = $rsetarr['rid'];
+                        unset($v['id']);
+                        C::t('pichome_palette')->insert($v);
+                    }
+                    C::t('pichome_vapp')->addcopy_by_appid($appid);
+                    $data = C::t('pichome_resources')->fetch_by_rid($rsetarr['rid']);
+                    $data['addnum'] = 1;
+                    $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                    return $data;
+                }else{
+                    return array('error' => lang('data_error'));
                 }
-                $data = C::t('pichome_resources')->fetch_by_rid($rid);
-
-                $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($fid);
-                return $data;
             }else{
-             return array('error' => lang('data_error'));
-             }
+                $nfids = explode(',', $resourcesdata['fids']);
+                $iscurrentfolder = 1;
+                if (!in_array($fid, $nfids)) {
+                    $iscurrentfolder = 0;
+                    $nfids[] = $fid;
+                }
+                $icoarr = [
+                    'lastdate' => TIMESTAMP * 1000,
+                    'appid' => $appid,
+                    'uid'=>$_G['uid'],
+                    'username'=>$_G['username'],
+                    'apptype' => 3,
+                    'mtime' => TIMESTAMP * 1000,
+                    'dateline' => TIMESTAMP * 1000,
+                    'btime' => TIMESTAMP * 1000,
+                    'lastdate' => TIMESTAMP,
+                    'name' => $resourcesdata['name'],
+                    'fids' => $nfids ? implode(',', $nfids) : '',
+                ];
+
+                if (C::t('pichome_resources')->update($rid, $icoarr)) {//插入主表
+                    //目录数据
+                    if (!$iscurrentfolder && $fid) {
+                        $frsetarr = ['appid' => $appid, 'rid' => $rid, 'fid' => $fid];;
+                        C::t('pichome_folderresources')->insert($frsetarr);
+                       // C::t('pichome_folder')->add_filenum_by_fid($fid, 1);
+                    }
+                    $data = C::t('pichome_resources')->fetch_by_rid($rid);
+
+                    $data['addnum'] = ($iscurrentfolder) ? 0:1;
+                    $data['onlyfolderadd'] = 1;
+                    $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($fid);
+                    return $data;
+                }else{
+                    return array('error' => lang('data_error'));
+                }
+
+            }
 
         }
         elseif ($rid = DB::result_first("select rid from %t where path = %d ", array('pichome_resources_attr',$attach['aid']))) {//如果当前库没有该文件，但其它库有
@@ -412,6 +493,7 @@ class io_dzz extends io_api
                 C::t('pichome_vapp')->addcopy_by_appid($appid);
                 $data = C::t('pichome_resources')->fetch_by_rid($rsetarr['rid']);
                 $data['folder'] = C::t('pichome_folder')->fetch_allfolder_by_fid($folderdata['fid']);
+                $data['addnum'] = 1;
                 return $data;
             }else{
                 return array('error' => lang('data_error'));
@@ -473,6 +555,7 @@ class io_dzz extends io_api
                 $setarr['aid'] = $attach['aid'];
                 $setarr['dpath'] =  dzzencode($setarr['rid'], '', 0, 0);
                 $setarr['realpath'] = IO::getStream('attach::'.$attach['aid']);
+                $setarr['addnum'] = 1;
                 return $setarr;
             } else {
                 return array('error' => lang('data_error'));

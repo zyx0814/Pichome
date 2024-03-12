@@ -1,3 +1,7 @@
+:root {
+  --el-menu-base-level-padding:12px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -18,7 +22,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: #D8DADD;
   border-radius: 10px;
   -webkit-transition: all 0.2s ease-in-out;
   transition: all 0.2s ease-in-out;
@@ -26,7 +30,7 @@
 
 ::-webkit-scrollbar-thumb:hover {
   cursor: pointer;
-  background-color: rgba(0, 0, 0, 0.3019607843);
+  background: #C4C6CA;
 }
 
 :-webkit-any(article, aside, nav, section) :-webkit-any(article, aside, nav, section) h1 {
@@ -51,6 +55,22 @@
 
 .tipTxt:hover {
   color: var(--el-text-color-regular);
+}
+
+.el-backtop {
+  border-radius: 8px;
+}
+
+.dzz-menu > li {
+  margin-right: 8px !important;
+}
+
+.el-menu-item.is-active {
+  font-weight: 600;
+}
+
+.el-button.is-active {
+  font-weight: 600;
 }
 
 li {
@@ -130,6 +150,65 @@ html, body, #dzzoffice, .el-container {
   overflow: hidden;
 }
 
+.menu-hamburger {
+  width: 20px;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.menu-hamburger > span {
+  background-color: var(--el-text-color-primary);
+  border-radius: 10px;
+  height: 2px;
+  margin: 2px 0;
+  -webkit-transition: var(--el-transition-all);
+  transition: var(--el-transition-all);
+  width: 100%;
+}
+
+.menu-hamburger > span.hamburger-1 {
+  width: 50%;
+}
+
+.menu-hamburger > span.hamburger-3 {
+  width: 75%;
+}
+
+.menu-hamburger.active .hamburger-1 {
+  -webkit-transform-origin: bottom;
+          transform-origin: bottom;
+  -webkit-transform: rotate(45deg) translate(13px);
+          transform: rotate(45deg) translate(13px);
+}
+
+.menu-hamburger.active .hamburger-2 {
+  -webkit-transform-origin: top;
+          transform-origin: top;
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}
+
+.menu-hamburger.active .hamburger-3 {
+  -webkit-transform-origin: bottom;
+          transform-origin: bottom;
+  width: 50%;
+  -webkit-transform: translate(2px, -10px) rotate(45deg);
+          transform: translate(2px, -10px) rotate(45deg);
+}
+
 .hide {
   display: none !important;
 }
@@ -148,6 +227,14 @@ html, body, #dzzoffice, .el-container {
 }
 .el-backtop .el-backtop__icon {
   font-size: 22px;
+}
+
+.input-with-select .el-input-group__prepend {
+  background-color: var(--el-fill-color-blank);
+}
+
+.el-menu {
+  background: transparent;
 }
 
 .el-tree {
@@ -205,6 +292,42 @@ html, body, #dzzoffice, .el-container {
   margin: 11px 0;
   color: var(--header-text);
   vertical-align: middle;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 150px;
+  height: 150px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+.avatar-uploader .avatar-uploader-icon {
+  font-size: 16px;
+}
+.avatar-uploader .el-image {
+  height: 150px;
+  width: 100%;
+  line-height: 150px;
+}
+.avatar-uploader .el-progress {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 100;
 }
 
 .right-toolbar {
@@ -322,23 +445,6 @@ html, body, #dzzoffice, .el-container {
   overflow: hidden;
 }
 
-.page-left {
-  position: relative;
-  background: var(--el-bg-color);
-}
-.page-left .el-menu {
-  height: 100%;
-}
-.page-left .el-menu .el-menu-item:hover {
-  background-color: var(--el-fill-color-light);
-}
-.page-left .el-menu .el-menu-item.is-active {
-  background-color: var(--el-menu-hover-bg-color);
-}
-.page-left .el-menu .el-menu-item.is-active .el-text {
-  color: inherit;
-}
-
 .el-popper.isdropdown {
   --el-dropdown-menu-box-shadow: var(--el-box-shadow-light);
   --el-dropdown-menuItem-hover-fill: var(--el-color-primary-light-9);
@@ -433,8 +539,23 @@ html, body, #dzzoffice, .el-container {
   --el-cascader-tag-background: var(--el-color-info-light-9);
 }
 
+.page-left .el-menu {
+  height: 100%;
+}
+.page-left .el-menu .el-menu-item:hover {
+  background-color: var(--el-fill-color-light);
+}
+.page-left .el-menu .el-menu-item.is-active {
+  background-color: var(--el-menu-hover-bg-color);
+}
+.page-left .el-menu .el-menu-item.is-active .el-text {
+  color: inherit;
+}
+
 .page-left {
   border-right: var(--el-border);
+  position: relative;
+  background: var(--el-bg-color);
 }
 .page-left .left-main .el-menu {
   --el-menu-item-height: 34px;

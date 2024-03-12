@@ -20,14 +20,8 @@ if ($do == 'filelist') {
     $params = ['pichome_resources'];
     $havingsql = '';
     $havingparams = [];
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
-    $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
-    if($ismusic){
-        $wheresql .= ' and r.ext in(%n) ';
-        $para[] = ['mp3','ogg','wav','wmv','flac','aac','asf','aiff','au','mid','ra','rma'];
-    }
     $start = ($page - 1) * $perpage;
     $limitsql = "limit $start," . $perpage;
     if (!isset($_GET['order'])) {
@@ -49,65 +43,28 @@ if ($do == 'filelist') {
 
     $orderarr = [];
     $orderparams = [];
-    $bid = isset($_GET['bid']) ? intval($_GET['bid']):0;
-    $bannerdata = C::t('pichome_banner')->fetch($bid);
-    $gappid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [];
 
-    //获取有权限访问的库
-    $vappids = [];
-    //如果是搜索所有栏目
-   
-    if(isset($_GET['all']) && $_GET['all']){
-        foreach(DB::fetch_all("select bdata from %t where btype = 0 and isshow = 1",array('pichome_banner')) as $v){
-            $gappid[] = $v['bdata'];
-        }
-    }
-    //获取有权限访问的库
-    $vappids = [];
-    $gids = [];
-    if($bannerdata && $bannerdata['btype'] == 5){
-        //获取所有的专辑和库栏目
-        foreach(DB::fetch_all("select bdata,btype from %t where (btype = 0 or btype = 4) and isshow = 1",array('pichome_banner')) as $v){
-            if($v['btype'] == 0)$gappid[] = trim($v['bdata']);
-            elseif($v['btype'] == 4) $gids[] = intval($v['bdata']);
-        }
-    }
-    if(!is_array($appid)) $appid = $appid ? (array)$appid:[];
-    if($gappid){}
-//库权限判断部分
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0", array('pichome_vapp')) as $v) {
-
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
         if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
             continue;
         }
         if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
             $vappids[] = $v['appid'];
         }
+    }
 
-    }
-    if(!is_array($appid)) $appid = (array)$appid;
-    if($gappid){
-        $appid = array_intersect($vappids,$gappid);
-    }elseif($appid){
-        $appid = array_intersect($vappids,$appid);
-    }
     $whererangesql = [];
     //库栏目条件
-    if ($appid) {
+    if ($vappids) {
         $whererangesql[]= '  r.appid in(%n)';
-        $para[] = $appid;
+        $para[] = $vappids;
     }else{
         $whererangesql[]= '  0 ';
     }
 
-    if($gids){
-        if(!in_array('pichome_resourcestab',$params)){
-            $sql .= " left join %t rb on rb.rid = r.rid ";
-            $params[] = 'pichome_resourcestab';
-        }
-        $whererangesql[] = ' ( rb.gid in(%n) and !isnull(rb.tid) ) ';
-        $para[] = $gids;
-    }
+
     if($whererangesql){
         $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
     }
@@ -145,11 +102,11 @@ if ($do == 'filelist') {
             } else {
                 if (in_array('not', $fidarr)) {
                     $nindex = array_search('not', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 }elseif(in_array('notclassify', $fidarr)) {
                     $nindex = array_search('notclassify', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 } else {
                     $wheresql .= ' and fr.fid  in(%n)';
@@ -564,7 +521,7 @@ if ($do == 'filelist') {
     if (!empty($para)) $params = array_merge($params, $para);
 
     $counttotal = DB::result_first(" select  count(distinct r.rid) as filenum $sql  where $wheresql ", $params);
-    if($fids || isset($_GET['color']) || $gids || $order = 9){
+    if($fids || isset($_GET['color'])  || $order = 9){
         $groupby = ' group by r.rid';
     }else{
         $groupby='';
@@ -581,7 +538,7 @@ if ($do == 'filelist') {
     $data = array();
     if (!empty($rids)) $data = C::t('pichome_resources')->getdatasbyrids($rids);
 
-    // print_r($data);die;
+
     if (count($rids) >= $perpage) {
        $next = true;
     } else {

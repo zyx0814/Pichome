@@ -166,7 +166,7 @@ class fmpeg
                 $ffprobe = FFMpeg\FFProbe::create($option, null);
                 $meta = $ffprobe
                     ->streams($file) // extracts streams informations
-                    ->audios()                      // filters video streams
+                    ->videos()                      // filters video streams
                     ->first();
                 $duration = 0;
                 if ($meta) {

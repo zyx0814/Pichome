@@ -65,7 +65,7 @@ elseif ($operation == 'searchmenu_num') {
     $cid = isset($_GET['cid']) ? trim($_GET['cid']) : '';
     $tagkeyword = isset($_GET['tagkeyword']) ? htmlspecialchars($_GET['tagkeyword']) : '';
     $skey = isset($_GET['skey']) ? trim($_GET['skey']) : '';
-    // $wheresql = " 1 ";
+
     $para = [];
     if ($skey == 'tag') {
         $sql = "   %t rt   left join %t r on rt.rid=r.rid ";
@@ -86,43 +86,31 @@ elseif ($operation == 'searchmenu_num') {
     //用户权限等级
     $para[]= $_G['pichomelevel'];
 
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
-
-    if(!is_array($appid)) $appid = (array)$appid;
-    $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
-    //获取有权限访问的库
-    $vappids = [];
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0", array('pichome_vapp')) as $v) {
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
         if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
             continue;
         }
         if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
             $vappids[] = $v['appid'];
         }
+    }
 
-    }
-    if(!empty($appid)){
-        $appid = array_intersect($vappids,$appid);
+    $whererangesql = [];
+    //库条件
+    if ($vappids) {
+        $whererangesql[]= '  r.appid in(%n)';
+        $para[] = $vappids;
     }else{
-        $appid = $vappids;
+        $whererangesql[]= '  0 ';
     }
-    if(empty($vappids)){
-        $wheresql .= ' and 0 ';
-    }else{
-        if ($appid) {
-            $wheresql .= ' and r.appid in(%n)  ';
-            $para[] = $appid;
-            /*if(!$fids && !$hassub){
-                $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-                $params[] = 'pichome_folderresources';
-                $wheresql .= ' and ISNULL(fr.fid) ';
-            }*/
 
-        }else{
-            $wheresql .= '  and r.appid in(%n) ';
-            $para[] = $vappids;
-        }
+    if($whererangesql){
+        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
     }
+    $fids = isset($_GET['fids']) ? trim($_GET['fids']):'';
+    $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']):0;
     if ($fids) {
         if ($fids == 'not' || $fids == 'notclassify') {
             $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
@@ -153,11 +141,11 @@ elseif ($operation == 'searchmenu_num') {
             } else {
                 if (in_array('not', $fidarr)) {
                     $nindex = array_search('not', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 }elseif(in_array('notclassify', $fidarr)) {
                     $nindex = array_search('notclassify', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 } else {
                     $wheresql .= ' and fr.fid  in(%n)';
@@ -610,7 +598,7 @@ elseif ($operation == 'searchmenu_num') {
             $params[] = 'pichome_tag';
             if(!empty($preparams)) $params = array_merge($preparams,$params);
             if (!empty($para)) $params = array_merge($params, $para);
-            if(!empty($havingparams)) $params = array_merge($params,$havingparams);
+            if(!empty($havingpara)) $params = array_merge($params,$havingpara);
             if($presql) $presql = "distinct rt.tid,t1.tagname,$presql";
             else $presql = "distinct rt.tid,t1.tagname";
             foreach (DB::fetch_all("select $presql from $sql where $wheresql $havingsql $pagelimit", $params) as $v){
@@ -620,7 +608,7 @@ elseif ($operation == 'searchmenu_num') {
             $fparams = $params;
             if(!empty($preparams)) $params = array_merge($preparams,$params);
             if (!empty($para)) $params = array_merge($params, $para);
-            if(!empty($havingparams)) $params = array_merge($params,$havingparams);
+            if(!empty($havingpara)) $params = array_merge($params,$havingpara);
             if($presql) $presql = "distinct rt.tid,$presql";
             else $presql = 'distinct rt.tid';
             foreach (DB::fetch_all("select $presql from $sql where $wheresql $havingsql $pagelimit", $params) as $v){
@@ -924,8 +912,8 @@ elseif ($operation == 'searchmenu_num') {
 elseif ($operation == 'search_menu') {
 
     $skey = isset($_GET['skey']) ? trim($_GET['skey']) : '';
-    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):[];
     $para = [];
     if($skey == 'tag'){
         if($appid){
@@ -962,43 +950,31 @@ elseif ($operation == 'search_menu') {
     }
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
 
-    if(!is_array($appid)) $appid = (array)$appid;
-    //获取有权限访问的库
-    $vappids = [];
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0", array('pichome_vapp')) as $v) {
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
         if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
             continue;
         }
         if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
             $vappids[] = $v['appid'];
         }
-
-
     }
-    if(!empty($appid)){
-        $appid = array_intersect($vappids,$appid);
+
+    $whererangesql = [];
+    //库条件
+    if ($vappids) {
+        $whererangesql[]= '  r.appid in(%n)';
+        $para[] = $vappids;
     }else{
-        $appid = $vappids;
+        $whererangesql[]= '  0 ';
     }
 
-    if(empty($vappids)){
-        $wheresql .= ' and 0';
+    if($whererangesql){
+        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
     }
-    else{
-        if ($appid) {
-            $wheresql .= ' and r.appid in(%n) ';
-            $para[] = $appid;
-           /* if(!$fids && !$hassub){
-                $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-                $params[] = 'pichome_folderresources';
-                $wheresql .= ' and ISNULL(fr.fid)';
-            }*/
-
-        }else{
-            $wheresql .= '  and r.appid in(%n)';
-            $para[] = $vappids;
-        }
-    }
+    $fids = isset($_GET['fids']) ? trim($_GET['fids']):'';
+    $hasdub = isset($_GET['hassub']) ? intval($_GET['hassub']):0;
     if ($fids) {
         if ($fids == 'not' || $fids == 'notclassify') {
             $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
@@ -1029,11 +1005,11 @@ elseif ($operation == 'search_menu') {
             } else {
                 if (in_array('not', $fidarr)) {
                     $nindex = array_search('not', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 }elseif(in_array('notclassify', $fidarr)) {
                     $nindex = array_search('notclassify', $fidarr);
-                    unset($fids[$nindex]);
+                    unset($fidarr[$nindex]);
                     $wheresql .= ' and (fr.fid  in(%n) or ISNULL(fr.fid))';
                 } else {
                     $wheresql .= ' and fr.fid  in(%n)';

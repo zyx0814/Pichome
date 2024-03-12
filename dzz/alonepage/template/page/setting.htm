@@ -14,6 +14,7 @@
 <script type="text/javascript" src="{MOD_PATH}/template/assets/js/db_ids.js?{VERHASH}"></script>
 <script type="text/javascript" src="{MOD_PATH}/template/assets/js/banner.js?{VERHASH}"></script>
 <script type="text/javascript" src="{MOD_PATH}/template/assets/js/tab.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/assets/js/search_rec.js?{VERHASH}"></script>
 <script>
 	const BasicUrl = MOD_URL+'&op=alonepageinterface&do=';
 	function AxiosUrl(val,param,type){
@@ -50,7 +51,8 @@
 					library:[],
             		alonepage:[],
            		 	banner:[],
-					tab:[]
+					tab:[],
+					search:[]
 				},
 			}
 		},
@@ -97,6 +99,7 @@
             		alonepage:res.alonepage || [],
            		 	banner:res.banner || [],
 					tab:res.tab || [],
+					search:res.search || [],
 				}
             },
 			MainHandlerContentValue(item){
@@ -109,6 +112,34 @@
 					data:[]
 				};
 				switch(item.type){
+					case 'search_rec':
+						if(item.data && item.data.length){
+							let fstr = {
+								tdid:item.data[0].tdid,
+								data:[]
+							}
+							if(item.data[0].tdata && item.data[0].tdata.length){
+								for (let index = 0; index < item.data[0].tdata.length; index++) {
+									let fitem = item.data[0].tdata[index];
+									fstr.data.push(
+										{
+											key:0,
+											img:fitem.imgurl || '',
+											aid:fitem.aid || 0,
+											title:fitem.title || '',
+											desc:fitem.desc || '',
+											searchclassify:fitem.searchclassify || [],
+											defaultclassify:fitem.defaultclassify || '',
+											hots:parseInt(fitem.hots) || 0,
+											hotsValue:fitem.hotsValue || [],
+										},
+									)
+								}
+							}
+							str.data.push(fstr);
+						}
+						
+					break;
 					case 'slide':
 						if(item.data && item.data.length){
 							let fstr = {
@@ -122,7 +153,7 @@
 										{
 											key:0,
 											url:fitem.imgurl || '',
-											img:fitem.img || '',
+											img:fitem.imgurl || '',
 											aid:fitem.aid || 0,
 											link:fitem.link || '',
 											linkval:fitem.linkval || '',
@@ -147,7 +178,7 @@
 										{
 											key:0,
 											url:fitem.imgurl || '',
-											img:fitem.img || '',
+											img:fitem.imgurl || '',
 											aid:fitem.aid || 0,
 											link:fitem.link || '0',
 											linkval:fitem.linkval || '',
@@ -175,7 +206,7 @@
 											key:0,
 											title:ditem.title || '',
 											url:ditem.imgurl || '',
-											img:ditem.img || '',
+											img:ditem.imgurl || '',
 											aid:ditem.aid || 0,
 											link:ditem.link || '0',
 											linkval:ditem.linkval || '',
@@ -346,7 +377,7 @@
 										{
 											key:0,
 											aid:fitem.aid || 0,
-											img:fitem.img || '',
+											img:fitem.imgurl || '',
 											title:fitem.title || '',
 											message:fitem.message || '',
 											link:fitem.link || '',
@@ -374,7 +405,7 @@
 										{
 											key:0,
 											title:fitem.title || '',
-											img:fitem.img || '',
+											img:fitem.imgurl || '',
 											aid:fitem.aid || 0,
 										},
 									)
@@ -427,6 +458,7 @@
 			Tmpdb_ids,
 			Tmpbanner,
 			Tmptab_rec,
+			Tmpsearch_rec
 		}
 	});
 	dzzoffice.use(ElementPlus, {

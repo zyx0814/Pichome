@@ -1,0 +1,225 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="{MOD_PATH}/template/pc/assets/login_single3.css?{VERHASH}">
+<!--{if $_G['setting']['pwdsafety']}--> 
+<script type="text/javascript" src="user/scripts/md5.js?{VERHASH}" reload="1"></script> 
+<!--{/if}--> 
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<div id="wrapper_div" style="width: 100%;height:100%;  position: absolute; top: 0px; left: 0px; margin: 0px; padding: 0px; overflow: hidden;z-index:0;  font-size: 0px; background:{eval echo $_G['setting']['loginset']['bcolor']?$_G['setting']['loginset']['bcolor']:'#76838f';};"> 
+	
+		<img src="{eval echo $_G['setting']['loginset']['img']?$_G['setting']['loginset']['img']:MOD_PATH.'/images/login.jpg';}" name="imgbg" id="imgbg" style="right: 0px; bottom: 0px; top: 0px; left: 0px; z-index:1;margin:0;padding:0;overflow:hidden; position: absolute;" @load="handleImgLoad(this)">
+
+		
+		<iframe v-if="loginset.url"  id="wrapper_frame" name="wrapper_frame" src="$_G['setting']['loginset']['url']" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" allowtransparency="true" style="z-index:2;position:absolute;width:100%;height:100%;background:url(dzz/images/b.gif);"></iframe>
+		
+	</div>
+	<div class="mainContainer" id="main_message">
+	<div class="mask"></div>	
+	<div class="modal-content">
+		
+		<el-tooltip content="切换页面配色" placement="bottom">
+            <el-button 
+                text 
+				 class="themebtn"
+                :icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+                style="font-size: var(--el-font-size-extra-large);" 
+                circle  
+                size="large"
+                @click="DocumentThemeChange">
+            </el-button>
+        </el-tooltip>
+		 <div class="brand"> <img src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" /> </div>
+		<div v-if="loginset.title" class="main-title">$_G[setting][loginset][title]</div>
+		<div v-if="loginset.subtitle" class="sub-title">$_G[setting][loginset][subtitle]</div>
+		<el-text v-if="bbclosed" type="error" >{lang site_closed_please_admin}</el-text>
+      	
+		<el-form :model="ruleForm" class="loginForm" :rules="rules" ref="ruleForm" label-width="0" @keydown.enter.prevent="handleSubmit()">
+					
+			<input type="hidden" name="formhash" value="{FORMHASH}" />
+			<input type="hidden" v-model="ruleForm.referer" />
+			<el-form-item  prop="email">
+				<el-input class="maxWidth" size="large" v-model.trim="ruleForm.email" placeholder="{lang email_username}"></el-input>
+				
+			</el-form-item>
+			<el-form-item  prop="password">
+				<el-input class="maxWidth" size="large" show-password v-model.trim="ruleForm.password" placeholder="{lang user_login_password}"></el-input>
+				
+			</el-form-item>
+			<el-form-item>
+				<el-col :span="11" style="text-align:left">
+					<el-checkbox label="{lang automatic_login_within_thirtydays}" v-model="ruleForm.cookietime" value="1" />
+				</el-col>
+				<el-col :span="2"></el-col>
+				
+				<el-col v-if="regstatus" :span="11" style="text-align:right"><el-link type="text"  :underline="false" href="user.php?mod=register">{$_G['setting']['reglinkname']}</el-link></el-col>
+				
+			</el-form-item>
+			
+			<el-form-item style="margin-bottom:0;">
+				<el-button type="primary" size="large" @click="handleSubmit" style="width:100%">{lang login_empty}</el-button>
+			</el-form-item>
+		
+			<div class="third-wrapper">
+				<!--{hook third_login}-->
+			</div>
+		 
+		</el-form>
+		<div class="copyright-container">
+		<!--{template pc/page/login_copyright}-->
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			let self = this;
+			
+			return {
+				DocumentThemeColor:'',
+				pwdsafety:parseInt("{$_G[setting]['pwdsafety']}"),
+				regstatus:parseInt("{$_G[setting]['regstatus']}"),
+				bbclosed:parseInt("{$_G[setting]['bbclosed']}"),
+				loginset:{
+					title:"{$_G[setting]['loginset']['title']}",
+					subtitle:"{$_G[setting]['loginset']['subtitle']}",
+					url:"{$_G[setting]['loginset']['url']}",
+					bcolor:"{$_G[setting]['loginset']['bcolor']}",
+					img:"{$_G[setting]['loginset']['img']}",
+				},
+				bgimg: {
+					width:0,
+					height:0
+				},
+				ruleForm: {
+					email:'',
+					password:'',
+					cookietime:0,
+					referer:"{$referer}"
+				},
+				rules: {
+					email: [
+						{ required: true, message: '"{lang email_username}', trigger: 'blur' }
+					],
+					password: [
+						{ required: true, message: '{lang please_input_password}', trigger: 'blur' }
+					]
+				}
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			handleImgLoad(){
+				let img=document.getElementById('imgbg');
+			
+				this.bgimg.width=img.width;
+				this.bgimg.height=img.height;
+				this.setImageSize();
+			},
+				
+			setImageSize(){
+				let width=this.bgimg.width;
+				let height=this.bgimg.height;
+				var clientWidth=document.documentElement.clientWidth;
+				var clientHeight=document.documentElement.clientHeight;
+				var r0=clientWidth/clientHeight;
+				var r1=width/height;
+				if(r0>r1){//width充满
+					w=clientWidth;
+					h=w*(height/width);
+				}else{
+					h=clientHeight;
+					w=h*(width/height);
+				}
+				if(document.getElementById('imgbg')){
+				  document.getElementById('imgbg').style.width=w+'px';
+				  document.getElementById('imgbg').style.height=h+'px';
+				}
+			},
+						
+			
+			handleSubmit(){
+				var self = this;
+				self.$refs.ruleForm.validate(async function(valid){
+					if (valid) {
+						console.log(self.ruleForm);
+						var params = {
+							'loginsubmit':true,
+							'formhash':'{FORMHASH}',
+							'email':self.ruleForm.email,
+							'password':self.pwdsafety?hex_md5(self.ruleForm.password):self.ruleForm.password,
+							'cookietime':self.ruleForm.cookietime?30*60*60*24:0,
+							'referer':self.ruleForm.referer
+						};
+						
+						self.btnloading = true;
+						const {data: res} = await axios.post('user.php?mod=login&op=logging&action=login&loginsubmit=yes&returnType=json',params);
+						
+						if(res.success){
+							 self.$message({
+							 	message: res.success.message,
+								center: true,
+							 	duration:1000,
+								onClose:function(){
+									window.location.href=res.success.url_forward;
+							 	}
+							 });
+						}else{
+							self.btnloading = false;
+							self.$message.error(res.error || '登录失败');
+						}
+					} else {
+						self.$message.error('请先填写账号和密码');
+						self.btnloading = false;
+						return false;
+					}
+				});
+			}
+		},
+		mounted() {
+			window.onresize = () =>{
+				this.setImageSize();
+			}
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

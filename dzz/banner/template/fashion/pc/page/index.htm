@@ -48,15 +48,8 @@
 <!--{template common/container/pc/header_end}-->
 <div id="dzzoffice">
 	<el-container>
-		<el-header v-if="ispc" class="page-header"  height="60px">
-			<div class="p">
-				<div 
-					class="page-header" 
-					:class="{ku:PageType == 'ku' || PageType == 'search'}"
-					style="margin: 0px auto;height: 100%;border: 0;padding: 0;">
-					<!--{template fashion/pc/components/header}-->
-				</div>
-			</div>
+		<el-header v-if="ispc" class="page-header"  height="60px" :class="{ku:PageType == 'ku' || PageType == 'search'}">
+			<!--{template fashion/pc/components/header}-->
         </el-header>
 		<el-container class="page-main is-vertical">
 			<!-- <el-scrollbar 
@@ -78,11 +71,7 @@
 			<!-- </el-scrollbar> -->
 		</el-container>
 		<el-header v-if="!ispc" class="page-header"  height="50px" style="border:0;border-top: var(--el-border);">
-			<div class="m-page-header m">
-				<div class="page-header" style="height: 100%;width: 100%;border: 0;padding: 0;">
-					<!--{template fashion/pc/components/header_m}-->
-				</div>
-			</div>
+			<!--{template fashion/pc/components/header_m}-->
         </el-header>
 	</el-container>
 </div>
@@ -172,7 +161,7 @@
 					this.fheaderkeyword = keyword;
 				}
 				let btype = parseInt(this.bannerData.item.btype);
-				if(this.headerkeyword && btype != 0){
+				if(this.headerkeyword && btype != 0 && btype != 4){
 					this.bannerData.active = 0;
 					this.ContentData = [];
 					this.PageType = 'search';
@@ -184,6 +173,9 @@
 				}else if(btype == 1){//智能数据
 					this.ContentData = [];
 					this.PageType = 'sources';
+				}else if(btype == 4){//专辑
+					this.ContentData = [];
+					this.PageType = 'tab';
 				}else if(btype == 2){//单页
 					this.ContentData = [];
 					this.PageType = 'page';
@@ -240,7 +232,18 @@
 					<!--{/if}-->
 				}else{
 					if(this.bannerData.data && this.bannerData.data.top && this.bannerData.data.top.length){
-						this.banncomplete(this.bannerData.data.top[0]);
+						if(parseInt(this.bannerData.data.top[0].btype) == 3){
+							for (let index = 0; index < this.bannerData.data.top.length; index++) {
+								const element = this.bannerData.data.top[index];
+								if(parseInt(element.btype) != 3){
+									this.banncomplete(element);
+									break;
+								}
+							}
+						}else{
+							this.banncomplete(this.bannerData.data.top[0]);
+						}
+						
 					}
 				}
 			},
@@ -305,6 +308,7 @@
 			if(parseInt(showscreen) > -1){
 				this.Screenshow = parseInt(showscreen)?true:false;
 			}
+			window.addEventListener("resize", this.handleIsPc)
 			// this.scrollref = self.$refs.scrollref;
 		},
 		components:{

@@ -28,7 +28,7 @@ foreach(DB::fetch_all("select * from %t where rid in(%n) order by stimes",array(
 }
 $diff = array_diff($ridarr,$hasrecordrids);
 if($diff) $needcreate = array_merge($diff,$needcreate);
-if(count($needcreate)>=$limit) $needcreate=array_splice($needcreate,$limit);
+if(count($needcreate)>=$limit) $needcreate=array_splice($needcreate,0,$limit);
 foreach($needcreate as $v){
     $data[$v] = false;
 }

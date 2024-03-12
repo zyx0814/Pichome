@@ -3,7 +3,7 @@
 		<div></div>
         <div @click.stop class="cannot-select">
             <el-checkbox 
-                v-model="ImageDataIsExpanded" 
+                v-model="hassub" 
                 :true-label="1" 
                 :false-label="0" 
                 label="显示子文件夹内容"></el-checkbox>
@@ -22,7 +22,7 @@
 	:scrollref="scrollref"
 	:screenshow="Screenshow"
 	:ischecked="false"
-	:hassub="ImageDataIsExpanded">
+	:hassub="hassub">
 	<template v-slot:operation="{ data }">
 		<template v-if="data.share || data.down">
 			<template v-if="ImageProps.layout=='rowGrid' || ImageProps.layout=='imageList' || ImageProps.layout=='waterFall'">
@@ -52,7 +52,7 @@
 			</template>
 			<template v-else>
 				<el-dropdown @command="ImageOperation">
-					<el-button type="primary" style="margin-left: 12px;" icon="MoreFilled"></el-button>
+					<el-button style="margin-left: 12px;" icon="MoreFilled"></el-button>
 					<template #dropdown>
 						<el-dropdown-menu>
 							<el-dropdown-item 
@@ -80,7 +80,7 @@
 	var MixinImage = {
 		data(){
 			return {
-				ImageDataIsExpanded:1,
+				hassub:1,
 				ImageProps:{
 					layout:'rowGrid',//rowGrid,imageList,waterFall
 					ShowMessage:{
@@ -197,6 +197,7 @@
                     div.className = 'Details-Iframe';
                     let iframe = document.createElement("iframe");
                     div.append(iframe);  
+					iframe.style.opacity = "0";
 					sessionStorage.setItem('href','index.php?mod=pichome&op=fileview#appid='+this.DocumentAppid);
 					sessionStorage.setItem('selectindex',index);  
                     iframe.src =  'index.php?mod=details&opentype=current#path='+curr.dpath;

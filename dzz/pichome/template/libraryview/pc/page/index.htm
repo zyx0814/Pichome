@@ -7,7 +7,7 @@
 <script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
 <script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
 <link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
-<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/index.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/libraryview/pc/assets/index.css?{VERHASH}"/>
 <!--{template common/container/pc/header_end}-->
 <div id="dzzoffice">
 	<el-container>
@@ -30,7 +30,9 @@
 						:headerkeyword="HeaderKeyword"
 						:defaultparam="ScreenParam"
 						@submit="CommonGetImageData"
-						@visible="screenvisible">
+						@visible="screenvisible"
+						:hassub="hassub"
+						@handlehassub="handlehassub">
 					</dzz-screen>
 				</el-header>
 				<el-main class="dzz-container" style="padding: 0px;overflow: hidden;position: relative;">
@@ -39,19 +41,23 @@
 						ref="MainscrollbarRef" 
 						@scroll="HandleElScrollbar">
 						<div v-if="screenType.show && screenType.type && ispc" v-show="Screenshow" style="padding: 10px 0;">
-							<dzz-screendir
-								ref="ScreenBoxRef"
-								:resize="DocumentResize"
-								:props="ScreenProps"
-								:headerkeyword="HeaderKeyword"
-								:defaultparam="ScreenParam"
-								:appid="DocumentAppid"
-								@submit="CommonGetImageData">
-							</dzz-screendir>
+							<div style="border-radius: 8px;background: var(--el-bg-color);border: var(--el-border);">
+								<dzz-screendir
+									ref="ScreenBoxRef"
+									:resize="DocumentResize"
+									:props="ScreenProps"
+									:headerkeyword="HeaderKeyword"
+									:defaultparam="ScreenParam"
+									:appid="DocumentAppid"
+									@submit="CommonGetImageData"
+									:hassub="hassub">
+								</dzz-screendir>
+							</div>
+							
 						</div>
 						
 						<!--{template libraryview/pc/components/index/image}-->
-						<el-backtop target="#main_scrollbar>.el-scrollbar__wrap" :right="RightWidth + 20" :bottom="20"></el-backtop>
+						<el-backtop target="#main_scrollbar>.el-scrollbar__wrap" :bottom="20"></el-backtop>
 					</el-scrollbar>
 				</el-main>
 			</el-container>
@@ -100,12 +106,6 @@
 				},
 				deep:true,
 				immediate: true
-			},
-			'ScreenParam.hassub':{
-				handler(val){
-					this.ImageDataIsExpanded = val
-				},
-				deep:true,
 			},
 		},
 		created(){
@@ -157,6 +157,9 @@
                     this.ispc = false;
                 }
             },
+			handlehassub(status){
+				this.hassub = parseInt(status);
+			}
 		},
 		
 		mounted(){

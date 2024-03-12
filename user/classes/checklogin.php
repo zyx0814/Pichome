@@ -15,10 +15,9 @@ class Checklogin{
             }else{
                 include template('common/header_reload');
 
-                echo "<script type=\"text/javascript\">";
-
-                echo "location.href='user.php?mod=login';";
-
+                echo "<script type=\"text/javascript\" reload=\"1\">";
+				echo "var referer=encodeURIComponent(window.location.href);";
+                echo "window.location.href='user.php?mod=login&referer='+referer";
                 echo "</script>";
 
                 include template('common/footer_reload');

@@ -295,6 +295,7 @@ class table_pichome_folder extends dzz_table
     public function fetch_folder_by_appid_pfid($appid,$pfid=[]){
 
         $folderdata = [];
+
         if(!empty($pfid)){
             foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum,level as perm from %t where appid = %s and pfid in(%n) order by disp asc",array($this->_table,$appid,$pfid)) as $v){
                 $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 

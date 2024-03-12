@@ -27,7 +27,7 @@ if ($tagdata) {
     if ($tagtype == 'file_rec' || $tagtype == 'db_ids') {//如果是文件推荐
 
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-        $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 60;
+        $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 200;
         $tagval = unserialize($tagdata['tdata']);
         $cachename = 'templatetagdata_' . $tdid;
         $processname = 'templatetagdatalock_' . $tdid;

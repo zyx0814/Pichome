@@ -10,7 +10,9 @@
 		</div>
 	</el-space>
 	<div class="uedit" >
+		<!--{if $_GET['mod'] != 'my'}-->
 		<el-link href="user.php?mod=my&op=profile"><el-icon :size="20"><Edit /></el-icon></el-link>
+		<!--{/if}-->
 	</div>
 	<div class="unav" style="height:58px">
 		<el-menu

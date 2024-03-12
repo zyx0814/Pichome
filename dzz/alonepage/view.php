@@ -25,12 +25,12 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
             $cachename = 'templatetagdata_'.$tdid;
             $processname = 'templatetagdatalock_'.$tdid;
             $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-            $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 60;
+            $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 200;
             if($tagtype == 'db_ids' && $page == 1 && $limitnum && $perpage > $limitnum) $perpage = $limitnum;
             if($tagtype == 'db_ids' && $page > 1){
                 $count =($page - 1) * $perpage;
-                if($count > $limitnum) $perpage = 0;
-                elseif(($count+$perpage) > $limitnum){
+                if($limitnum && $count > $limitnum) $perpage = 0;
+                elseif( $limitnum && (($count+$perpage) > $limitnum)){
                     $perpage = (($limitnum - $count) < 0) ? 0:intval($limitnum - $count);
                 }
             }
@@ -118,6 +118,7 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
                 if ($para) $params = array_merge($params, $para);
                 $count = DB::result_first("select $countsql $sql where  $wheresql  ", $params);
                 $rids = [];
+
                 foreach (DB::fetch_all(" select  $selectsql $sql where  $wheresql  group by r.rid  order by $ordersql  $limitsql", $params) as $value) {
                     $rids[] = $value['rid'];
                 }
@@ -131,7 +132,7 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
                 }
             }
             if (!empty($rids)) {
-                $data = C::t('pichome_resources')->getdatasbyrids($rids);
+                $data = C::t('pichome_resources')->getdatasbyrids($rids,1);
             }
 
             $next = true;
@@ -167,7 +168,7 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
             $processname = 'templatetagdatalock_'.$tdid;
             $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
             $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 100;
-            if($limitnum && $perpage > $limit) $perpage = $limitnum;
+            if($limitnum && $perpage > $limitnum) $perpage = $limitnum;
             $start = ($page - 1) * $perpage;
             $limitsql = "limit $start," . $perpage;
             $tagval = $tagval[0];
@@ -252,69 +253,7 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
                 )
             );
         }
-       /* elseif ($tagtype == 'picture_rec') {//图组推荐，
-            $tagval = unserialize($tagdata['tdata']);
-            $tagval = $tagval[0];
-            $limitnum = intval($tagval['num']);
-            $sql = " from %t sd left join %t  f on sd.fid = f.fid ";
-            $selectsql = " f.* ";
-            $params = ['pichome_sourcesdata', 'pichome_folder'];
-            $wheresql = " sd.sid in(%n) and r.isdelete < 1 ";
-            $para[] = $sids;
 
-            if ($tagval['type'] == 1) {//最新推荐
-                $ordersql = '  f.dateline desc ';
-            } elseif ($tagval['type'] == 2) {//热门推荐
-                $sql .= ' left join %t v on r.rid=v.idval and v.idtype = 0 ';
-                $selectsql .= " ,v.nums num  ";
-                $params[] = 'views';
-                $ordersql = '  num desc ,f.dateline desc ';
-            } elseif ($tagval['type'] == 3) {//标签推荐
-                //获取标签id
-                $tagnames = explode(',', $tagval['value']);
-                $whereorsql = [];
-                foreach (DB::fetch_all("select tid from %t where tagname in(%n)", ['pichome_tag', $tagnames]) as $v) {
-                    $whereorsql[] = ' find_in_set(%d,f.tag) ';
-                    $para[] = $v;
-                }
-                $wheresql .= ' and (' . implode(' or ', $whereorsql) . ')';
-                $ordersql = ' f.dateline desc ';
-
-            }
-            $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-            $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
-            if($limitnum && $perpage > $limitnum) $perpage = $limitnum;
-            $start = ($page - 1) * $perpage;
-            $limitsql = "limit $start," . $perpage;
-            if($para) $params = array_merge($params,$para);
-
-            foreach (DB::fetch_all(" select  $selectsql $sql where  $wheresql  group by r.rid  order by $ordersql  $limitsql", $params) as $value) {
-                $data[] = $value;
-            }
-            $next = true;
-            //获取已查询总数
-            if(count($data) >= $perpage){
-                $total = $start + $perpage * 2 - 1;
-                if (!$limitnum || $total <= $limitnum) {
-                    $next = true;
-                }else{
-                    $next = false;
-                }
-            }else{
-                $total = $start + count($data);
-                $next = false;
-            }
-
-            $return = array(
-                'tdid' => $tdid,
-                'next' => $next,
-                'data' => $data ? $data : array(),
-                'param' => array(
-                    'page' => $page,
-                    'perpage' => $perpage,
-                )
-            );
-        }*/
     }
     exit(json_encode(['success' => true, 'data' => $return]));
 } elseif ($do == 'getdata') {

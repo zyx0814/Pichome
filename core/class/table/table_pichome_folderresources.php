@@ -23,8 +23,10 @@
            if(parent::insert($setarr)){
                $ofids = DB::result_first("select fids from %t where rid = %s",array('pichome_resources',$setarr['rid']));
                $ofidarr = explode(',',$ofids);
-               $fidarr[] = $setarr['fid'];
-               $fids = implode(',',$fidarr);
+               if(!in_array($setarr['fid'],$ofidarr)){
+                   $ofidarr[] = $setarr['fid'];
+               }
+               $fids = implode(',',$ofidarr);
                C::t('pichome_resources')->update_by_rids($setarr['appid'],$setarr['rid'],['fids'=>$fids,'lastdate'=>TIMESTMP]);
                C::t('pichome_folder')->add_filenum_by_fid($setarr,1);
            }
@@ -53,6 +55,7 @@
             if(!is_array($rids)) $rids = (array)$rids;
             if(!is_array($fids)) $fids = (array)$fids;
             $dids = [];
+            //print_r(DB::fetch_all("select * from %t where rid in(%n) and fid in(%n)",array($this->_table,$rids,$fids)));die;
             foreach(DB::fetch_all("select * from %t where rid in(%n) and fid in(%n)",array($this->_table,$rids,$fids)) as $v){
                 $dids[] = $v['id'];
                 $rdata = DB::fetch_first("select fids,isdelete from %t where rid = %s",array('pichome_resources',$v['rid']));

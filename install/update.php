@@ -7,14 +7,18 @@
  * @author      zyx(zyx@oaooa.com)
  */
 
+
 define('CURSCRIPT', 'misc');
 require __DIR__ . '/../core/coreBase.php';
+
 require_once  __DIR__ . '/../core/class/class_Color.php';
 @set_time_limit(0);
 error_reporting(0);
+
 $cachelist = array();
 $dzz = dzz_app::instance();
 
+global $_G;
 $dzz->cachelist = $cachelist;
 $dzz->init_cron = false;
 $dzz->init_setting = true;
@@ -315,584 +319,72 @@ if ($_GET['step'] == 'start') {
 } elseif ($_GET['step'] == 'data') {
     //如果没有识别码，增加识别码
     if (!$_GET['dp']) {
-        if (!C::t('setting')->fetch('machinecode')) {
-            //获取识别码
-            $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
-            $onlineip = $_SERVER['REMOTE_ADDR'];
-            $machinecode = 'PH' . $chars[date('y') % 60] . $chars[date('n')] .
-                $chars[date('j')] . $chars[date('G')] . $chars[date('i')] .
-                $chars[date('s')] . substr(md5($onlineip . TIMESTAMP), 0, 4) . random(4);
-            C::t('setting')->update('machinecode', $machinecode);
-        }
-        $baktab =DB::table('pichome_vapp_bak');
-        $vappparams = ['pichome_vapp_bak'];
-        //处理库访问权限以及偏好数据和栏目数据
-        $defaultscreen = [
-            [
-                'key' => 'classify',
-                'label' => '分类',
-            ],
-            [
-                'key' => 'tag',
-                'label' => '标签',
-                'group'=>'',
-                'sort'=>'hot',
-                'auto'=>'0',
-            ],
-            [
-                'key' => 'color',
-                'label' => '颜色',
-            ],
-            [
-                'key' => 'link',
-                'label' => '链接',
-            ],
-            [
-                'key' => 'desc',
-                'label' => '注释',
-            ],
-            [
-                'key' => 'duration',
-                'label' => '时长',
-            ],
-            [
-                'key' => 'size',
-                'label' => '尺寸',
-            ],
-            [
-                'key' => 'ext',
-                'label' => '类型',
-            ],
-            [
-                'key' => 'shape',
-                'label' => '形状',
-            ],
-            [
-                'key' => 'grade',
-                'label' => '评分',
-            ],
-            [
-                'key' => 'btime',
-                'label' => '添加时间',
-            ],
-            [
-                'key' => 'dateline',
-                'label' => '修改日期',
-            ],
-            [
-                'key' => 'mtime',
-                'label' => '创建日期',
-            ]
 
-        ];
-        $defaultfileds = [
-            [
-                'flag' => 'tag',
-                'type' => 'multiselect',
-                'name' => '标签',
-                'enable' => 1,
-                'checked' => 1
-            ],
-            [
-                'flag' => 'desc',
-                'type' => 'input',
-                'name' => '描述',
-                'enable' => 1,
-                'checked' => 1
-            ],
-            [
-                'flag' => 'link',
-                'type' => 'input',
-                'name' => '链接',
-                'enable' => 1,
-                'checked' => 1
-            ],
-
-            [
-                'flag' => 'grade',
-                'type' => 'grade',
-                'name' => '评分',
-                'enable' => 1,
-                'checked' => 1
-            ],
-            [
-                'flag' => 'fid',
-                'type' => 'multiselect',
-                'name' => '分类',
-                'enable' => 1,
-                'checked' => 1
-            ]
-        ];
-        foreach(DB::fetch_all("select * from %t where isdelete < 1",$vappparams) as $v){
-            $pagesetting = $_G['setting']['pichomepagesetting'];
-            $vappattr['pagesetting'] = [];
-            foreach($pagesetting as $key=>$val){
-                if($key == 'theme' || $key == 'template') {
-
-                }
-                elseif($key == 'show') $vappattr['pagesetting']['show'] = explode(',',$val);
-                else $vappattr['pagesetting'][$key] = $val;
-            }
-            $v['path'] = str_replace('dzz::','',$v['path']);
-            $v['screen'] = $v['filter'] ? $v['filter']:serialize($defaultscreen);
-            unset($v['filter']);
-            $v['pagesetting'] = (!empty($vappattr['pagesetting'])) ? serialize($vappattr['pagesetting']):'a:7:{s:6:"layout";s:9:"waterFall";s:5:"other";s:5:"btime";s:4:"sort";s:5:"btime";s:4:"desc";s:4:"desc";s:8:"opentype";s:3:"new";s:5:"aside";s:1:"0";s:11:"filterstyle";s:1:"0";}';
-            if($v['view']){
-                $v['view'] = (unserialize($v['view'])) ? $v['view']:serialize($v['view']);
-            }
-            $v['fileds'] =serialize($defaultfileds);
-            if(!DB::result_first("select count(*) from %t where appid = %s",array('pichome_vapp',$v['appid']))){
-                C::t('pichome_vapp')->insert($v);
-                $appid = $v['appid'];
-            }else{
-                $appid = $v['appid'];
-                unset($v['appid']);
-                C::t('pichome_vapp')->update($appid,$v);
-            }
-            if(!$v['isdelete']){
-                $setarr = [
-                    'bannername'=>$v['appname'],
-                    'bdata'=>$appid,
-                    'btype'=>0,
-                    'issystem'=>1,
-                    'icon'=>0,
-                    'isshow'=>1
-                ];
-                //print_r($setarr);
-                if($bid = DB::result_first("select id from %t where bdata = %s and issystem = 1",array('pichome_banner',$appid))){
-                    $setarr['id'] = $bid;
-                }
-                C::t('pichome_banner')->insert_data($setarr);
-            }
-
-        }
-        $cronarr = [
-            ['cronid'=>9,'available'=>1, 'type'=>'system', 'name'=>'定时获取需要更新的库', 'filename'=>'cron_pichome_vapp_update.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-            ['cronid'=>10,'available'=>1, 'type'=>'system', 'name'=>'定时检查库更新过程任务', 'filename'=>'cron_vapp_vappdoupdate.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-            ['cronid'=>11,'available'=>1, 'type'=>'system', 'name'=>'定时检查缩略图更新任务', 'filename'=>'cron_thumbcheckchange.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-            ['cronid'=>12,'available'=>1, 'type'=>'system', 'name'=>'定时更新缩略图变动任务', 'filename'=>'cron_thumbdochange.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-            ['cronid'=>13,'available'=>1, 'type'=>'system', 'name'=>'定时检查单页缓存数据更新', 'filename'=>'cron_update_alonepagedata.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-            ['cronid'=>14,'available'=>1, 'type'=>'system', 'name'=>'定时执行删除库已彻底删除文件任务', 'filename'=>'cron_pichome_deletefile.php', 'lastrun'=>0, 'nextrun'=>0, 'weekday'=>'-1', 'day'=>'-1', 'hour'=>'-1', 'minute'=>'0 5	10	15	20	25	30	35	40	45	50	55'],
-        ];
-        foreach($cronarr as $cron){
-            if(DB::result_first("select cronid from %t where cronid = %d",array('cron',$cron['cronid']))){
-                $cronid = $cron['cronid'];
-                unset($cron['cronid']);
-                C::t('cron')->update($cronid,$cron);
-            }else{
-                C::t('cron')->insert($cron);
-            }
-        }
-
-        //增加挂载点
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'core\dzz\ulimit'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'dzz_initafter',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'core\dzz\ulimit',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\ffmpeg\classes\info'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomegetfileinfo',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\ffmpeg\classes\info',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\imageColor\classes\imageColor'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomegetfileinfo',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\imageColor\classes\imageColor',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\qcos\classes\info'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomegetfileinfo',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\qcos\classes\info',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\ffmpeg\classes\thumb'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomethumb',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\ffmpeg\classes\thumb',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\imageColor\classes\getthumb'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomethumb',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\imageColor\classes\getthumb',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'ddzz\onlyoffice_view\classes\thumb'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomethumb',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\onlyoffice_view\classes\thumb',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\qcos\classes\thumb'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomethumb',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\qcos\classes\thumb',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\qcos\classes\convert'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomeconvert',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\qcos\classes\convert',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\ffmpeg\classes\convert'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomeconvert',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\ffmpeg\classes\convert',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\pichome\classes\addvappafter'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'addvappafter',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\pichome\classes\addvappafter',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\pichome\classes\pichomevappdelete'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'pichomevappdelete',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\pichome\classes\pichomevappdelete',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\pichome\classes\addfileafter'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'addfileafter',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\pichome\classes\addfileafter',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\stats\classes\addstatsdata'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'addstatsdata',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\stats\classes\addstatsdata',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\banner\classes\statsviewaddafter'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'statsviewaddafter',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\banner\classes\statsviewaddafter',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\banner\classes\statskeywordaddafter'))) {
-            DB::insert('hooks', array(
-                'app_market_id' => 0,
-                'name' => 'statskeywordaddafter',
-                'description' => ' ',
-                'type' => 1,
-                'update_time' => 0,
-                'addons' => 'dzz\stats\classes\addstatsdata',
-                'status' => 1,
-                'priority' => 0
-            ), false, true);
-        }
-
-
-        //更新onlyoffice设置位置
-        if($onlyofficesetting = C::t('setting')->fetch('onlyofficesetting',true)){
-            $app=C::t('app_market')->fetch_by_identifier('onlyoffice','dzz');
-            $extra =unserialize($app['extra']);
-            $extra["DocumentUrl"]=$onlyofficesetting['onlyofficeurl'];
-            $extra["FileUrl"]=$onlyofficesetting['onlyofficedocurl'] ? $onlyofficesetting['onlyofficedocurl']:getglobal('siteurl');
-            $extra["exts"]='pdf,doc,docx,rtf,odt,htm,html,mht,txt,ppt,pptx,pps,ppsx,odp,xls,xlsx,ods,csv';
-            $extra["secret"]='';
-            C::t("app_market")->update($app['appid'],array('identifier'=>'onlyoffice_view',"extra"=> serialize($extra)));
-        }
-        //更新ffmpeg设置
-        $ffmpegstatus = DB::result_first("select mediastatus from %t where id = 1",array('connect_storage'));
-        $app = C::t('app_market')->fetch_by_identifier('ffmpeg','dzz');
-        $extra =[];
-        $extra["ffmpeg.binaries"]=(getglobal('config/pichomeffmpegposition')) ? getglobal('config/pichomeffmpegposition'):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffmpeg.exe' : '/usr/bin/ffmpeg');
-        $extra["ffprobe.binaries"]=(getglobal('config/pichomeffprobeposition')) ? (getglobal('config/pichomeffprobeposition')):(strstr(PHP_OS, 'WIN') ? DZZ_ROOT . 'dzz\ffmpeg\ffmpeg\ffprobe.exe' : '/usr/bin/ffprobe');
-        $extra["timeout"]=3600;
-        $extra["ffmpeg.threads"]=1;
-        $extra["status"]= $ffmpegstatus ? intval($ffmpegstatus):0;
-        $extra["exts"]=$_G['config']['pichomeffmpegconvertext'];
-        $extra["exts_thumb"]=$_G['config']['pichomeffmpeggetthumbext'];
-        $extra["exts_info"]=$_G['config']['pichomeffmpeggetvieoinfoext'];
-        C::t("app_market")->update($app['appid'],array("extra"=> serialize($extra)));
-
-
-
-
-        //删除打开方式表数据
-        DB::delete("app_open",1);
-        //插入打开方式表数据
-        $appopensql = "INSERT INTO ".DB::table('app_open')." (`ext`, `appid`, `disp`, `extid`, `isdefault`) VALUES
-('pdf', 3, 0, 1, 0),
-('doc', 3, 0, 2, 0),
-('docx', 3, 0, 3, 0),
-('rtf', 3, 0, 4, 0),
-('odt', 3, 0, 5, 0),
-('htm', 3, 0, 6, 0),
-('html', 3, 0, 7, 0),
-('mht', 3, 0, 8, 0),
-('txt', 3, 0, 9, 0),
-('ppt', 3, 0, 10, 0),
-('pptx', 3, 0, 11, 0),
-('pps', 3, 0, 12, 0),
-('ppsx', 3, 0, 13, 0),
-('odp', 3, 0, 14, 0),
-('xls', 3, 0, 15, 0),
-('xlsx', 3, 0, 16, 0),
-('ods', 3, 0, 17, 0),
-('csv', 3, 0, 18, 0),
-('mp3', 7, 0, 19, 0),
-('mp4', 7, 0, 20, 0),
-('flv', 7, 0, 21, 0),
-('webm', 7, 0, 22, 0),
-('ogv', 7, 0, 23, 0),
-('ogg', 7, 0, 24, 0),
-('wav', 7, 0, 25, 0),
-('m3u8', 7, 0, 26, 0),
-('hls', 7, 0, 27, 0),
-('mpg', 7, 0, 28, 0),
-('avi', 7, 0, 29, 0),
-('rm', 7, 0, 30, 0),
-('rmvb', 7, 0, 31, 0),
-('mkv', 7, 0, 32, 0),
-('mov', 7, 0, 33, 0),
-('wmv', 7, 0, 34, 0),
-('asf', 7, 0, 35, 0),
-('mpg', 7, 0, 36, 0),
-('mpeg', 7, 0, 37, 0),
-('f4v', 7, 0, 38, 0),
-('vob', 7, 0, 39, 0),
-('ogv', 7, 0, 40, 0),
-('mts', 7, 0, 41, 0),
-('m2ts', 7, 0, 42, 0),
-('mpe', 7, 0, 43, 0),
-('ogg', 7, 0, 44, 0),
-('3gp', 7, 0, 45, 0),
-('flv', 7, 0, 46, 0),
-('midi', 7, 0, 47, 0),
-('wma', 7, 0, 48, 0),
-('vqf', 7, 0, 49, 0),
-('ra', 7, 0, 50, 0),
-('aac', 7, 0, 51, 0),
-('flac', 7, 0, 52, 0),
-('ape', 7, 0, 53, 0),
-('amr', 7, 0, 54, 0),
-('aiff', 7, 0, 55, 0),
-('au', 7, 0, 56, 0),
-('m4a', 7, 0, 57, 0),
-('m4v', 7, 0, 58, 0),
-('txt', 8, 0, 59, 1),
-('php', 8, 0, 60, 1),
-('js', 8, 0, 61, 1),
-('jsp', 8, 0, 62, 1),
-('htm', 8, 0, 63, 1),
-('html', 8, 0, 64, 1),
-('jsp', 8, 0, 65, 1),
-('asp', 8, 0, 66, 1),
-('aspx', 8, 0, 67, 1),
-('QCOS::pptx', 10, 0, 68, 1),
-('QCOS::ppt', 10, 0, 69, 1),
-('QCOS::pot', 10, 0, 70, 1),
-('QCOS::potx', 10, 0, 71, 1),
-('QCOS::pps', 10, 0, 72, 1),
-('QCOS::ppsx', 10, 0, 73, 1),
-('QCOS::dps', 10, 0, 74, 1),
-('QCOS::dpt', 10, 0, 75, 1),
-('QCOS::pptm', 10, 0, 76, 1),
-('QCOS::potm', 10, 0, 77, 1),
-('QCOS::ppsm', 10, 0, 78, 1),
-('QCOS::doc', 10, 0, 79, 1),
-('QCOS::dot', 10, 0, 80, 1),
-('QCOS::wps', 10, 0, 81, 1),
-('QCOS::wpt', 10, 0, 82, 1),
-('QCOS::docx', 10, 0, 83, 1),
-('QCOS::dotx', 10, 0, 84, 1),
-('QCOS::docm', 10, 0, 85, 1),
-('QCOS::dotm', 10, 0, 86, 1),
-('QCOS::xls', 10, 0, 87, 1),
-('QCOS::xlt', 10, 0, 88, 1),
-('QCOS::et', 10, 0, 89, 1),
-('QCOS::ett', 10, 0, 90, 1),
-('QCOS::xlsx', 10, 0, 91, 1),
-('QCOS::xltx', 10, 0, 92, 1),
-('QCOS::csv', 10, 0, 93, 1),
-('QCOS::xlsb', 10, 0, 94, 1),
-('QCOS::xlsm', 10, 0, 95, 1),
-('QCOS::xltm', 10, 0, 96, 1),
-('QCOS::ets', 10, 0, 97, 1),
-('QCOS::pdf', 10, 0, 98, 1),
-('QCOS::lrc', 10, 0, 99, 1),
-('QCOS::c', 10, 0, 100, 01),
-('QCOS::cpp', 10, 0, 101, 1),
-('QCOS::h', 10, 0, 102, 1),
-('QCOS::asm', 10, 0, 103, 1),
-('QCOS::s', 10, 0, 104, 1),
-('QCOS::java', 10, 0, 105, 1),
-('QCOS::asp', 10, 0, 106, 1),
-('QCOS::bat', 10, 0, 107, 1),
-('QCOS::bas', 10, 0, 108, 1),
-('QCOS::prg', 10, 0, 109, 1),
-('QCOS::cmd', 10, 0, 110, 1),
-('QCOS::rtf', 10, 0, 111, 1),
-('QCOS::txt', 10, 0, 112, 1),
-('QCOS::log', 10, 0, 113, 1),
-('QCOS::xml', 10, 0, 114, 1),
-('QCOS::htm', 10, 0, 115, 1),
-('QCOS::html', 10, 0, 116, 1),
-('pdf', 11, 0, 117, 1)";
-        DB::query($appopensql);
-        $alsetarr = array('name'=>'阿里云存储','type'=>'storage','bz'=>'ALIOSS','available'=>0, 'dname'=>'connect_storage');
-        if(!DB::result_first("select count(*) from %t where bz = %s",array('connect','ALIOSS'))){
-            C::t('connect')->insert($alsetarr);
-        }else{
-            C::t('connect')->update('ALIOSS',$alsetarr);
-        }
-        $qcossetarr = array('name'=>'Qcos','type'=>'storage','bz'=> 'QCOS', 'available'=> 2, 'dname'=>'connect_storage');
-        if(!DB::result_first("select count(*) from %t where bz = %s",array('connect','QCOS'))){
-            C::t('connect')->insert($qcossetarr);
-        }else{
-            C::t('connect')->update('QCOS',$qcossetarr);
-        }
-        $dzzsetarr = array('name'=>'本地', 'type'=>'local', 'bz'=>'dzz', 'available'=>2, 'disp'=> -2);
-        if(!DB::result_first("select count(*) from %t where bz = %s",array('connect','dzz'))){
-            C::t('connect')->insert($dzzsetarr);
-        }else{
-            C::t('connect')->update('dzz',$dzzsetarr);
-        }
-        if(!DB::result_first("select id from %t where bz = %s or id = %d ",array('connect_storage','dzz',1))){
-            $storagarr = array('id'=>1,'cloudname'=>'本地存储','perm'=>29751,'bz'=>'dzz','disp'=>-2);
-            C::t('connect_storage')->insert($storagarr);
-        }
-        //删除缩略图表数据
-        DB::delete('thumb_record','1');
+        //升级主题数据
         $themarr = array(
             'themename'=>'超酷时尚',
             'colors'=>'white,dark',
             'templates'=>'',
             'selcolor'=>'dark',
-            'themestyle'=>'a:7:{s:5:"slide";a:2:{s:10:"horizontal";a:4:{s:5:"title";s:6:"横幅";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}s:4:"full";a:4:{s:5:"title";s:6:"满屏";s:7:"default";s:5:"false";s:5:"value";s:4:"full";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}}s:9:"rich_text";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:4:"link";a:3:{s:10:"horizontal";a:3:{s:5:"title";s:6:"横排";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";}s:4:"card";a:3:{s:5:"title";s:6:"卡片";s:7:"default";s:5:"false";s:5:"value";s:4:"card";}s:4:"icon";a:3:{s:5:"title";s:6:"图标";s:7:"default";s:5:"false";s:5:"value";s:4:"icon";}}s:8:"question";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:8:"file_rec";a:5:{s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:4:"true";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:6:"db_ids";a:6:{s:9:"waterFall";a:3:{s:5:"title";s:9:"瀑布流";s:7:"default";s:4:"true";s:5:"value";s:9:"waterFall";}s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:5:"false";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:10:"manual_rec";a:7:{s:3:"one";a:4:{s:5:"title";s:18:"单排文字居中";s:7:"default";s:4:"true";s:5:"value";s:3:"one";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"two";a:4:{s:5:"title";s:18:"单排文字居下";s:7:"default";s:5:"false";s:5:"value";s:3:"two";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"three";a:4:{s:5:"title";s:18:"单排图外文字";s:7:"default";s:5:"false";s:5:"value";s:5:"three";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"four";a:4:{s:5:"title";s:18:"双排文字居中";s:7:"default";s:5:"false";s:5:"value";s:4:"four";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"five";a:4:{s:5:"title";s:18:"双排文字居下";s:7:"default";s:5:"false";s:5:"value";s:4:"five";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"six";a:4:{s:5:"title";s:18:"双排图外文字";s:7:"default";s:5:"false";s:5:"value";s:3:"six";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"seven";a:3:{s:5:"title";s:18:"大图小图混排";s:7:"default";s:5:"false";s:5:"value";s:5:"seven";}}}',
+            'themestyle'=>'a:8:{s:5:"slide";a:2:{s:10:"horizontal";a:4:{s:5:"title";s:6:"横幅";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}s:4:"full";a:4:{s:5:"title";s:6:"满屏";s:7:"default";s:5:"false";s:5:"value";s:4:"full";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}}s:10:"search_rec";a:4:{s:6:"style1";a:3:{s:5:"title";s:21:"简洁边框中对齐";s:7:"default";s:4:"true";s:5:"value";s:6:"style1";}s:6:"style2";a:3:{s:5:"title";s:21:"简洁边框左对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style2";}s:6:"style3";a:3:{s:5:"title";s:18:"无边框中对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style3";}s:6:"style4";a:3:{s:5:"title";s:18:"无边框左对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style4";}}s:9:"rich_text";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:4:"link";a:3:{s:10:"horizontal";a:3:{s:5:"title";s:6:"横排";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";}s:4:"card";a:3:{s:5:"title";s:6:"卡片";s:7:"default";s:5:"false";s:5:"value";s:4:"card";}s:4:"icon";a:3:{s:5:"title";s:6:"图标";s:7:"default";s:5:"false";s:5:"value";s:4:"icon";}}s:8:"question";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:8:"file_rec";a:5:{s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:4:"true";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:6:"db_ids";a:6:{s:9:"waterFall";a:3:{s:5:"title";s:9:"瀑布流";s:7:"default";s:4:"true";s:5:"value";s:9:"waterFall";}s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:5:"false";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:10:"manual_rec";a:7:{s:3:"one";a:4:{s:5:"title";s:18:"单排文字居中";s:7:"default";s:4:"true";s:5:"value";s:3:"one";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"two";a:4:{s:5:"title";s:18:"单排文字居下";s:7:"default";s:5:"false";s:5:"value";s:3:"two";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"three";a:4:{s:5:"title";s:18:"单排图外文字";s:7:"default";s:5:"false";s:5:"value";s:5:"three";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"four";a:4:{s:5:"title";s:18:"双排文字居中";s:7:"default";s:5:"false";s:5:"value";s:4:"four";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"five";a:4:{s:5:"title";s:18:"双排文字居下";s:7:"default";s:5:"false";s:5:"value";s:4:"five";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"six";a:4:{s:5:"title";s:18:"双排图外文字";s:7:"default";s:5:"false";s:5:"value";s:3:"six";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"seven";a:3:{s:5:"title";s:18:"大图小图混排";s:7:"default";s:5:"false";s:5:"value";s:5:"seven";}}}',
             'themefolder'=>'fashion',
             'dateline'=>TIMESTAMP);
         C::t('pichome_theme')->insert_data($themarr);
+
+            //插入搜索模板数据
+        $searchtemplatesql = "INSERT INTO ".DB::table('search_template')."(`tid`, `title`, `data`, `screen`, `pagesetting`, `searchRange`, `exts`, `dateline`, `disp`) VALUES
+(3, '音频', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"},{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"}]', '{\"layout\":\"imageList\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'wav,ogg,mp3,m4a,flac,aac,ape,aiff,amr', 1709696619, 3),
+(1, '综合', '', '[{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"details\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', '', 1709696484, 0),
+(2, '图片', '', '[{\"key\":\"color\",\"label\":\"\\u989c\\u8272\"},{\"key\":\"link\",\"label\":\"\\u94fe\\u63a5\"},{\"key\":\"desc\",\"label\":\"\\u6ce8\\u91ca\"},{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"},{\"key\":\"size\",\"label\":\"\\u5c3a\\u5bf8\"},{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"shape\",\"label\":\"\\u5f62\\u72b6\"},{\"key\":\"grade\",\"label\":\"\\u8bc4\\u5206\"},{\"key\":\"btime\",\"label\":\"\\u6dfb\\u52a0\\u65f6\\u95f4\"},{\"key\":\"dateline\",\"label\":\"\\u4fee\\u6539\\u65e5\\u671f\"},{\"key\":\"mtime\",\"label\":\"\\u521b\\u5efa\\u65e5\\u671f\"},{\"key\":\"level\",\"label\":\"\\u5bc6\\u7ea7\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"waterFall\",\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"0\"}', '', 'svg,png,jpg,jpeg,jpe,webp,jfif,ico,heic,gif,eps,bmp,tga,hdr,exr,dds,ppm,pnm,pgm,pdd,pcx,pbm,pam,mpo,mng,miff,jpx,jps,jpf,jpc,jp2,j2k,j2c,dib,cur,cin,tif,wmf,emf,tiff,psd,ai,3fr,arw,cr2,cr3,crw,dng,erf,mrw,nef,nrw,orf,otf,pef,raf,raw,rw2,sr2,srw,x3f', 1709696566, 2),
+(4, '视频', '', '[{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"},{\"key\":\"shape\",\"label\":\"\\u5f62\\u72b6\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"rowGrid\",\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'wmv,webm,mp4,mov,m4v,avi,ts,swf,rmvb,rm,mkv,flv,vob,trp,sct,ogv,mxf,mpg,m2ts,f4v,dv,dcr,asf,3g2p', 1709696675, 4),
+(5, '文档', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"tabodd\",\"display\":[\"name\",\"extension\",\"other\"],\"other\":\"filesize\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'xlsx,xls,pptx,ppt,pdf,docx,doc,pdf,txt,rtf,odt,htm,html,mht,pps,ppsx,odp,ods,csv', 1709696731, 5),
+(6, '其它', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"tabodd\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'zip,rar,7z', 1709696795, 6);";
+        DB::query($searchtemplatesql);
+
         show_msg("基础数据升级完成", "$theurl?step=data&dp=1");
 
-    }
-    elseif ($_GET['dp'] == 1) {//目录数据升级
+    } elseif ($_GET['dp'] == 1) {//billfish数据升级
         $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
         //获取普通目录库id
         $appids = [];
-        foreach (DB::fetch_all("select appid from %t where isdelete < 1", array('pichome_vapp')) as $v) {
-            $appids[] = $v['appid'];
-        }
         if (empty($appids)) {
             show_msg("数据升级结束", "$theurl?step=delete");
         } else {
             if(!$_GET['count']){
-                $count = DB::result_first("select COUNT(DISTINCT r.rid) from %t r
-left join %t fr on fr.rid = r.rid where  r.appid in(%n) and !isnull(fr.fid) ",
-                    array('pichome_resources','pichome_folderresources',$appids));
+                $count = DB::result_first("select count(p.color) from %t p 
+    left join %t r on r.rid=p.rid 
+    left join %t v on r.appid=v.appid where v.isdelete < %d and v.type = %d",
+                    array('pichome_palette','pichome_resources','pichome_vapp',1,2));
             }else{
                 $count = $_GET['count'];
             }
             $perpage = 1000;
             $start = ($i - 1) * $perpage;
             $j = 0;
-            $data = DB::fetch_all("select r.rid,GROUP_CONCAT(DISTINCT fr.fid SEPARATOR ',') as fids from %t r 
-left join %t fr on fr.rid = r.rid where   r.appid in(%n) group by r.rid limit $start,$perpage ",
-                array('pichome_resources','pichome_folderresources','pichome_vapp',$appids));
+            $data = DB::fetch_all("select p.color,p.id from %t p 
+    left join %t r on r.rid=p.rid 
+    left join %t v on r.appid=v.appid where v.isdelete < %d and v.type = %d limit $start,$perpage",
+                array('pichome_palette','pichome_resources','pichome_vapp',1,2));
 
             foreach($data as $v){
-                C::t('pichome_resources')->upddate($v['rid'],['fids'=>$v['fids']]);
+                $colorhex = updatedec2hex($v['color']);
+                $colorhexarr = str_split($colorhex,2);
+                array_shift($colorhexarr);
+                $colorhexarr = array_reverse($colorhexarr);
+                $colorhex = implode('',$colorhexarr);
+                //获取整型颜色值
+                $intcolor = hexdec($colorhex);
+                $intcolorsarr[] = $intcolor;
+                $rgbcolor = hex2rgb($colorhex);
+
+                $p = updategetPaletteNumber($intcolor);
+                $colorarr = [
+                    'r' => $rgbcolor['r'],
+                    'g' => $rgbcolor['g'],
+                    'b' => $rgbcolor['b'],
+                    'p' => $p
+                ];
+                C::t('pichome_palette')->update($v['id'],$colorarr);
                 $j++;
             }
 
@@ -907,160 +399,10 @@ left join %t fr on fr.rid = r.rid where   r.appid in(%n) group by r.rid limit $s
                 show_msg("目录数据升级结束,即将开始标签数据升级", "$theurl?step=data&dp=2");
             }
         }
-    }elseif($_GET['dp'] == 2){//标签数据升级
-        $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
-        if(!$_GET['count']){
-            $count = DB::result_first("select count(id) from %t where 1",array('pichome_vapp_tag'));
-        }else{
-            $count = $_GET['count'];
-        }
-        $perpage = 1000;
-        $start = ($i - 1) * $perpage;
-        $j = 0;
-        foreach(DB::fetch_all("select * from %t where 1 limit $start,$perpage",array('pichome_vapp_tag')) as $v){
-            if(!DB::result_first("select count(id) from %t where id = %d",array('pichome_vapp_tag',$v['id']))){
-                C::t('pichome_resources_tag')->insert($v);
-            }
-            $j++;
-        }
-        if ($j >= $perpage) {
-            $complatei = ($i - 1) * $perpage + $j;
-            $i++;
-            $msg='标签数据升级完成';
-            $next = $theurl . '?step=data&dp=2&i=' . $i.'&count='.$count;
-            show_msg($msg."[ $complatei/$count] ", $next);
-        } else {
-            show_msg("标签数据升级结束,即将开始音视频转换数据升级", "$theurl?step=data&dp=3");
-        }
-
-    }elseif($_GET['dp'] == 3){//音视频转码数据升级
-        $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
-        if(!$_GET['count']){
-            $videoparams = ['video_record_bak'];
-            $count = DB::result_first("select count(id) from %t where 1 ",$videoparams);
-        }else{
-            $count = $_GET['count'];
-        }
-        $perpage = 100;
-        $start = ($i - 1) * $perpage;
-        $j = 0;
-        foreach(DB::fetch_all("select * from %t where 1 limit $start,$perpage",$videoparams) as $v){
-            $path = str_replace(getglobal('setting/attachdir'),'',$v['path']);
-            if(DB::result_first("select id from %t where id = %s",array('video_record',$v['id']))){
-                if($path) C::t('video_record')->update($v['id'],['path'=>$path]);
-            }else{
-                if($path) $v['path'] = $path;
-                C::t('video_record')->insert($v);
-            }
-
-            $j++;
-        }
-
-        if ($j >= $perpage) {
-            $complatei = ($i - 1) * $perpage + $j;
-            $i++;
-            $msg='音视频转码数据升级完成';
-            $next = $theurl . '?step=data&dp=1&i=' . $i.'&count='.$count;
-            show_msg($msg."[ $complatei/$count] ", $next);
-        } else {
-            //show_msg("标签数据升级结束", "$theurl?step=data&dp=2");
-
-            show_msg("音视频转码数据升级结束，开始升级颜色数据",  "$theurl?step=data&dp=4");
-        }
-    }elseif($_GET['dp'] == 4){//颜色数据升级
-        $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
-        if(!$_GET['count']){
-            $count = DB::result_first("select count(DISTINCT rid) from %t where 1",array('pichome_palette'));
-        }else{
-            $count = $_GET['count'];
-        }
-        $perpage = 1000;
-        $start = ($i - 1) * $perpage;
-        $j = 0;
-        foreach(DB::fetch_all("select rid,GROUP_CONCAT(color,'_',id) as colors from %t where 1 group by rid limit $start,$perpage",array('pichome_palette')) as $v){
-            $pnums = [];
-            $colors = explode(',',$v['colors']);
-            foreach($colors as $color){
-                $colorarr = explode('_',$color);
-                $pnum = getintPaletteNumber($colorarr[0]);
-                C::t('pichome_palette')->update($colorarr[1],['p'=>$pnum]);
-                $pnums[] = $pnum;
-            }
-            $pnumstr = implode(',',$pnums);
-            C::t('pichome_resources_attr')->update($v['rid'],['colors'=>$pnumstr]);
-            $j++;
-        }
-
-        if ($j >= $perpage) {
-            $complatei = ($i - 1) * $perpage + $j;
-            $i++;
-            $msg='颜色数据升级完成';
-            $next = $theurl . '?step=data&dp=4&i=' . $i.'&count='.$count;
-            show_msg($msg."[ $complatei/$count] ", $next);
-        } else {
-            show_msg("颜色数据升级完成，即将开始缩略图数据升级", "$theurl?step=data&dp=5");
-        }
-    }elseif($_GET['dp'] == 5){//缩略图数据升级
-        $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
-        //获取普通目录库id
-        $appids = [];
-        foreach (DB::fetch_all("select appid from %t where isdelete < %d and `type` = %d", array('pichome_vapp',1,1)) as $v) {
-            $appids[] = $v['appid'];
-        }
-        if (empty($appids)) {
-            show_msg("数据升级结束", "$theurl?step=delete");
-        } else {
-            if(!$_GET['count']){
-                $count = DB::result_first("select COUNT(DISTINCT rid) from %t where  appid in(%n) ",
-                    array('pichome_resources',$appids));
-            }else{
-                $count = $_GET['count'];
-            }
-            $perpage = 1000;
-            $start = ($i - 1) * $perpage;
-            $j = 0;
-            $data = DB::fetch_all("select * from %t  where  appid in(%n)  limit $start,$perpage ",
-                array('pichome_resources',$appids));
-            $wp = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarkstatus']:'';
-            $wt = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarktype']:'';
-            $wcontent = $_G['setting']['IsWatermarkstatus'] ? ($_G['setting']['watermarktype'] == 'png' ? $_G['setting']['waterimg']:''):'';
-            foreach($data as $v){
-                //缩略图数据
-                $thumbrecorddata = [
-                    'rid' => $v['rid'],
-                    'ext' => $v['ext'],
-                    'filesize'=>$v['size'],
-                    'width'=>$v['width'],
-                    'height'=>$v['height'],
-                    'swidth'=>$_G['setting']['thumbsize']['small']['width'],
-                    'sheight'=>$_G['setting']['thumbsize']['small']['height'],
-                    'lwidth' => $_G['setting']['thumbsize']['large']['width'],
-                    'lheight' => $_G['setting']['thumbsize']['large']['height'],
-                    'lwaterposition'=>$wp,
-                    'lwatertype'=>$wt,
-                    'lwatercontent'=>$wcontent,
-                    'swaterposition'=>$wp,
-                    'swatertype'=>$wt,
-                    'swatercontent'=>$wcontent,
-                ];
-                C::t('thumb_record')->insert($thumbrecorddata);
-                $j++;
-            }
-
-            if ($j >= $perpage) {
-                $complatei = ($i - 1) * $perpage + $j;
-                $i++;
-                $msg='缩略图数据升级完成';
-                $next = $theurl . '?step=data&dp=5&i=' . $i.'&count='.$count;
-                show_msg($msg."[ $complatei/$count] ", $next);
-            } else {
-                show_msg("数据升级结束", "$theurl?step=delete");
-            }
-        }
     }
 
-
-} elseif ($_GET['step'] == 'delete') {
+}
+elseif ($_GET['step'] == 'delete') {
     $oldtables = array();
     $query = DB::query("SHOW TABLES LIKE '$config[tablepre]%'");
     while ($value = DB::fetch($query)) {
@@ -1627,5 +969,72 @@ function fetchtablelist($tablepre = '') {
         $tables[] = $table['Name'];
     }
     return $tables;
+}
+function updatedec2hex($number)
+{
+
+    $i = 0;
+    $hex = array();
+    while($i < 8) {
+        if($number == 0) {
+            array_push($hex, '0');
+        }
+        else {
+
+            array_push($hex, dechex(bcmod($number, '16')));
+
+            $number = bcdiv($number, '16', 0);
+
+        }
+        $i++;
+    }
+
+    krsort($hex);
+
+    return implode($hex);
+
+}
+function updategetPaletteNumber($colors, $palette = array())
+{
+
+    if (empty($palette))  $palette = [
+        0xfff8e1, 0xf57c00, 0xffd740, 0xb3e5fc, 0x607d8b, 0xd7ccc8,
+        0xff80ab, 0x4e342e, 0x9e9e9e, 0x66bb6a, 0xaed581, 0x18ffff,
+        0xffe0b2, 0xc2185b, 0x00bfa5, 0x00e676, 0x0277bd, 0x26c6da,
+        0x7c4dff, 0xea80fc, 0x512da8, 0x7986cb, 0x00e5ff, 0x0288d1,
+        0x69f0ae, 0x3949ab, 0x8e24aa, 0x40c4ff, 0xdd2c00, 0x283593,
+        0xaeea00, 0xffa726, 0xd84315, 0x82b1ff, 0xab47bc, 0xd4e157,
+        0xb71c1c, 0x880e4f, 0x00897b, 0x689f38, 0x212121, 0xffff00,
+        0x827717, 0x8bc34a, 0xe0f7fa, 0x304ffe, 0xd500f9, 0xec407a,
+        0x6200ea, 0xffab00, 0xafb42b, 0x6a1b9a, 0x616161, 0x8d6e63,
+        0x80cbc4, 0x8c9eff, 0xffeb3b, 0xffe57f, 0xfff59d, 0xff7043,
+        0x1976d2, 0x5c6bc0, 0x64dd17, 0xffd600
+    ];;
+    $arr = array();
+
+    if (is_array($colors)) {
+        $isarray = 1;
+    } else {
+        $colors = (array)$colors;
+        $isarray = 0;
+    }
+
+    foreach ($colors as $color) {
+        $bestColor = 0x000000;
+        $bestDiff = PHP_INT_MAX;
+        $color = new Color($color);
+        foreach ($palette as $key => $wlColor) {
+            // calculate difference (don't sqrt)
+            $diff = $color->getDiff($wlColor);
+            // see if we got a new best
+            if ($diff < $bestDiff) {
+                $bestDiff = $diff;
+                $bestColor = $wlColor;
+            }
+        }
+        unset($color);
+        $arr[] = array_search($bestColor, $palette);
+    }
+    return $isarray ? $arr : $arr[0];
 }
 ?>

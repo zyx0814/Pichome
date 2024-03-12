@@ -11,13 +11,13 @@
 	:scrollref="scrollref"
 	:screenshow="Screenshow"
 	:ischecked="false"
-	:hassub="ImageDataIsExpanded">
+	:hassub="hassub">
 </Image-Layout>
 <script type="text/javascript">
 	var MixinImage = {
 		data(){
 			return {
-				ImageDataIsExpanded:0,
+				hassub:1,
 				ImageProps:{
 					layout:'imageList',//rowGrid,imageList,waterFall
 					ShowMessage:{
@@ -118,6 +118,7 @@
 				div.className = 'Details-Iframe';
 				let iframe = document.createElement("iframe");
 				div.append(iframe);  
+				iframe.style.opacity = "0";
 				sessionStorage.setItem('href',window.location.href);
 				sessionStorage.setItem('href','index.php?mod=pichome&op=fileview#appid='+this.DocumentAppid);
 				sessionStorage.setItem('selectindex',index);  

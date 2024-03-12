@@ -57,6 +57,34 @@
                 </item>
   
             </item>
+            <!-- 搜索 -->
+            <item id="search_rec">
+                <!-- 样式1 -->
+                <item id="style1">
+                    <item id="title"><![CDATA[简洁边框中对齐]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[style1]]></item>
+                </item>
+                <!-- 样式2 -->
+                <item id="style2">
+                    <item id="title"><![CDATA[简洁边框左对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style2]]></item>
+                </item>
+                <!-- 样式3 -->
+                <item id="style3">
+                    <item id="title"><![CDATA[无边框中对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style3]]></item>
+                </item>
+                <!-- 样式4 -->
+                <item id="style4">
+                    <item id="title"><![CDATA[无边框左对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style4]]></item>
+                </item>
+                
+            </item>
             <!-- 富文本 -->
             <item id="rich_text">
                 <!-- 样式1 -->

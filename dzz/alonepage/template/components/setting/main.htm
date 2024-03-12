@@ -277,6 +277,32 @@
                             }
                         ]
                     },
+                    search_rec:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'search_rec',//块类型
+                        title:'搜索',//块名称
+                        style:{style:'',size:''},//样式
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {
+                                        key:0,
+                                        img:'',
+                                        aid:0,
+                                        title:'',
+                                        desc:'',
+                                        searchclassify:[],
+                                        defaultclassify: '',
+                                        hots: 0,
+                                        hotsValue:[]
+                                    },
+                                ]
+                            }
+                        ]
+                    },
                 }
             }
         },
@@ -354,6 +380,7 @@
                 switch(NewData.type){
                     case 'slide':
                     case 'link':
+                    case 'search_rec':
                     case 'contact':
                     case 'banner':
                         if(NewData.data[0].data && NewData.data[0].data.length){
@@ -399,6 +426,7 @@
                         case 'slide':
                         case 'link':
                         case 'contact':
+                        case 'search_rec':
                         case 'banner':
                             if(data.data[0]){
                                 data.data[0].tdid = res.data.data[0].tdid;

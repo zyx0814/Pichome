@@ -152,7 +152,6 @@ left join %t th on t.tid = th.tid and th.themeid = %d where t.pageid = %d order 
             $v['data'] = C::t('pichome_templatetagdata')->fetch_data_by_tidandtagtype($v['tid'], $v['tagtype']);
             $tagdata[] = $v;
         }
-
         return $tagdata;
     }
 

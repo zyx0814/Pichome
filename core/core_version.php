@@ -11,8 +11,8 @@ if(!defined('IN_OAOOA')) {
 }
 
 if(!defined('CORE_VERSION')) {
-	define('CORE_VERSION', '10.2.0.1');
+	define('CORE_VERSION', '10.2.0.2');
 	define('CORE_VERSION_LEVEL', 'Home');
-	define('CORE_RELEASE', '20240205');
-	define('CORE_FIXBUG' , '10020010');
+	define('CORE_RELEASE', '20240308');
+	define('CORE_FIXBUG' , '10020200');
 }

@@ -9,11 +9,6 @@
 <script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
 <link rel="stylesheet" href="{MOD_PATH}/template/fashion/pc/assets/css/index.css?{VERHASH}">
 <script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
-<style>
-    body{
-        background: transparent;
-    }
-</style>
 <script>
     function debounce(fun, delay) {
 		var time;
@@ -63,7 +58,22 @@
             <!--{template components/information/header}-->
         </el-header>
         <el-container class="page-main is-vertical dzz-container">
-            <el-scrollbar  id="main_scrollbar" ref="scrollref">
+            <el-scrollbar  id="main_scrollbar" ref="scrollref" @scroll="handleScroll">
+                <div class="container" style="display: flex;align-items: center;padding-top: 20px;">
+					<el-icon><Location /></el-icon>
+					<el-text tag="b" style="margin-left: 6px;">您得位置：</el-text>
+					<el-breadcrumb separator-icon="Arrow-Right">
+						<el-breadcrumb-item v-for="(item,key) in breadcrumb">
+							<template v-if="breadcrumb.length - 1 == key">
+								{{ item.bannername }}
+							</template>
+							<template v-else>
+								<a :href="item.url?item.url:item.realurl">{{ item.bannername }}</a>
+							</template>
+						</el-breadcrumb-item>
+					</el-breadcrumb>
+				</div>
+
                 <!--{template components/information/message}-->
                 <div style="background: #EBEBEB;border-top: 2px solid var(--el-color-primary);">
                     <div class="page-footer">
@@ -71,7 +81,7 @@
                             class="dzz-menu dzz-footer-menu"
                             :default-active="active"
                             mode="horizontal"
-                            style="border:0;height: 100%;justify-content: center;"
+                            style="border: 0px;height: 100%;justify-content: center;margin-bottom: 10px;"
                             @select="handleSelect">
                             <template v-for="item in headeralldata.data">
                                 <template v-if="item.children && item.children.length">
@@ -102,7 +112,8 @@
                         <el-text 
                             v-if="headeralldata.message.sitebeiantxt || headeralldata.message.sitebeian" 
                             tag="p" 
-                            style="display: flex;align-items: center;justify-content: center;margin-top: 20px;color: var(--el-text-color-primary);">{{headeralldata.message.sitebeiantxt}} <el-link href="https://beian.miit.gov.cn/" target="_blank" style="color: var(--el-text-color-primary);">{{headeralldata.message.sitebeian}}</el-link>
+                            style="display: flex;align-items: center;justify-content: center;margin-top: 20px;">{{headeralldata.message.sitebeiantxt}} 
+                            <el-link href="https://beian.miit.gov.cn/" target="_blank" style="margin-left: 8px;">{{headeralldata.message.sitebeian}}</el-link>
                         </el-text>
                     </div>
                 </div>
@@ -168,7 +179,7 @@
                 breadcrumb:[],
                 tabkeyword:'',
                 ImageDataIframe:'',
-                template:3,
+                template:2,
                 tyttvalue:[],
                 tyttvalue1:'',
                 DocumentThemeColor:'',
@@ -383,11 +394,11 @@
                     hash.push('tid='+this.tagactive)
                 }
                 this.bannerData.ImageLayout.url = 'index.php?mod=banner&op=information&do=getfilelist';
-                this.bannerData.ImageLayout.parentbox = self.$refs.parentbox;
+
+                
                 
                 hash = hash.join('&');
                 location.hash = hash;
-                
                 self.$nextTick(function(){
                     switch(type){
                         case 'image':
@@ -413,6 +424,30 @@
             },
             ImageDetails(){
 
+            },
+            handleScroll(){
+                let self = this;
+                let type = this.bannerData.banneractive;
+                switch(type){
+                    case 'image':
+                        self.$refs.RefImageLayoutimage.HandleElScrollbar();
+                    break;
+                    case 'video':
+                        self.$refs.RefImageLayoutvideo.HandleElScrollbar();
+                    break;
+                    case 'audio':
+                        self.$refs.RefImageLayoutaudio.HandleElScrollbar();
+                    break;
+                    case 'document':
+                        self.$refs.RefImageLayoutdocument.HandleElScrollbar();
+                    break;
+                    case 'other':
+                        self.$refs.RefImageLayoutother.HandleElScrollbar();
+                    break;
+                    case 'search':
+                        self.$refs.RefImageLayoutsearch.HandleElScrollbar();
+                    break;
+                }
             },
             handleLayoutType(type){
                 this.bannerData.banner[this.bannerData.banneractive].layout = type;
@@ -484,7 +519,8 @@
 		},
 		mounted(){
             const self = this;
-            this.scrollref = self.$refs.scrollref
+            self.scrollref = self.$refs.scrollref;
+            self.bannerData.ImageLayout.parentbox = self.$refs.parentbox;
 		}
 	});
 	

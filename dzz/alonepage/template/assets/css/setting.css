@@ -246,3 +246,18 @@
 .right-type-box .right-type-li .el-icon {
   margin-right: 6px;
 }
+
+.search_rec-uploader .el-upload {
+  overflow: unset;
+}
+.search_rec-uploader .el-upload .delete {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  font-size: 25px;
+  color: var(--el-text-color-regular);
+  display: none;
+}
+.search_rec-uploader .el-upload:hover .delete {
+  display: block;
+}

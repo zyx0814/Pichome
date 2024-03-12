@@ -426,10 +426,15 @@ class localexport
                                         //dfsockopen(getglobal('localurl') . 'misc.php?mod=thumbconvertrecord&rid='.$data['rid'], 0, '', '', false, '',0.01);
                                         $dirstr = dirname($filepath);
                                         if ($dirstr != '.' && $dirstr != '..' && $dirstr) {
+                                            //获取原目录数据
+                                            $ofids = DB::result_first("select fids from %t where rid = %s",array('pichome_resources',$rid));
+                                            $ofidsarr = explode(',',$ofids);
+                                            //移除旧目录数据
+                                            C::t('pichome_folderresources')->delete_by_ridfid([$rid],$ofidsarr);
                                             // $fdata = $this->createfolerbypath($dirstr);
                                             $dirstr = str_replace(BS,'/',$dirstr);
                                             $fdata = C::t('pichome_folder')->createfolerbypath($this->appid,$dirstr,'');
-                                            runlog('aaaexportafter',print_r($fdata,true));
+
                                             if ($fdata['fid']) {
                                                 $frsetarr = ['appid' => $this->appid, 'rid' => $rid, 'fid' => $fdata['fid']];
                                                 C::t('pichome_folderresources')->insert($frsetarr);

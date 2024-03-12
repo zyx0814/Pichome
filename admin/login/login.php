@@ -86,7 +86,7 @@ function html_login_header($form = true) {
 EOT;
 
     if ($form) {
-        $loginset_img=$_G['setting']['loginset']['img']?$_G['setting']['loginset']['img']:'user/login/images/login.jpg';
+        $loginset_img=$_G['setting']['loginset']['img']?$_G['setting']['loginset']['img']:'admin/login/images/bg.jpg';
         $loginset_bcolor=$_G['setting']['loginset']['bcolor']?$_G['setting']['loginset']['bcolor']:'#76838f';
         echo <<<EOT
 <div id="wrapper_div" style="width: 100%;height:100%;  position: absolute; top: 0px; left: 0px; margin: 0px; padding: 0px; overflow: hidden;z-index:0;  font-size: 0px; background:$loginset_bcolor;"> 
