@@ -349,16 +349,19 @@
 									data:[],
 									name:fitem.tdataname,
 								}
-								for (let findex = 0; findex < fitem.tdata.length; findex++) {
-									const ditem = fitem.tdata[findex];
-									fstr.data.push(
-										{
-											key:0,
-											title:ditem.title || '',
-											answer:ditem.answer || '',
-										},
-									)
+								if(fitem.tdata && fitem.tdata.length){
+									for (let findex = 0; findex < fitem.tdata.length; findex++) {
+										const ditem = fitem.tdata[findex];
+										fstr.data.push(
+											{
+												key:0,
+												title:ditem.title || '',
+												answer:ditem.answer || '',
+											},
+										)
+									}
 								}
+								
 								str.data.push(fstr);
 							}
 							

@@ -172,7 +172,7 @@ const Tmpquestion_txt = {
             return id;
         };
         function handledelete(index){//删除
-            props.model.data[0].data.splice(index,1);
+            props.model.data.splice(index,1);
         };
         onMounted(function(){//排序
             Sortable.create(DomDiv.value, {
