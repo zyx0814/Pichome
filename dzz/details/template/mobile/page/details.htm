@@ -444,6 +444,10 @@
 					}
 				}, false);
 			}
+			<!--{if $opentype=='current'}-->
+			
+				window.parent.document.querySelector('.Details-Iframe').lastChild.style.opacity  = "";
+			<!--{/if}-->
 			window.addEventListener('message',function(event){
 				var data = event.data.data;
 				var paths = [];
