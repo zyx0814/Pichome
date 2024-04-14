@@ -13,19 +13,44 @@ ini_set('memory_limit', -1);
 $ridarr = isset($_GET['rids']) ? $_GET['rids']:[];
 if(!$ridarr) exit(json_encode(['success'=>true,'data'=>false]));
 
+$cachename = 'PICHOMETHUMBSTATUS';
+$thumbstatus = C::t('cache')->fetch_cachedata_by_cachename($cachename);
+if (!$thumbstatus) {
+    $thunbdata = [];
+    foreach(DB::fetch_all("select id,bz,imagestatus from %t where 1",array('connect_storage')) as $v){
+        if($v['bz'] == 'dzz'){
+            $key  = $v['bz'].'::';
+        }else{
+            $key = $v['bz'].':'.$v['id'].':';
+        }
+        $thunbdata[$key] = intval($v['imagestatus']);
+    }
+    $setarr = ['cachekey' => $cachename, 'cachevalue' => serialize($thunbdata), 'dateline' => time()];
+    C::t('cache')->insert_cachedata_by_cachename($setarr);
+} else {
+    $thunbdata = $thumbstatus;
+}
+
+$thumbstate = 0;
+foreach($thunbdata as $v){
+    if($v) $thumbstate = 1;
+}
+if(!$thumbstate) exit(json_encode(['success'=>true,'data'=>false]));
 $data = [];
 $needcreate = [];
 $hasrecordrids = [];
 $thumbrecorddata = [];
 foreach(DB::fetch_all("select * from %t where rid in(%n) order by stimes",array('thumb_record',$ridarr)) as $v){
     if($v['sstatus']){
-        $data[$v['rid']][] = getglobal('siteurl').IO::getFileUri($v['spath']);
+        $uri = IO::getFileUri($v['spath']);
+        $data[$v['rid']][] = preg_match( '/^http(s)?:\\/\\/.+/',$uri) ?  $uri:getglobal('siteurl').$uri;
     }else{
         $needcreate[] = $v['rid'];
     }
     $hasrecordrids[] = $v['rid'];
     $thumbrecorddata[$v['rid']] = $v;
 }
+
 $diff = array_diff($ridarr,$hasrecordrids);
 if($diff) $needcreate = array_merge($diff,$needcreate);
 if(count($needcreate)>=$limit) $needcreate=array_splice($needcreate,0,$limit);

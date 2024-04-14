@@ -42,7 +42,8 @@ if($do == 'addspace'){
         'did'=>$space['id'],
         'host'=>$space['host'],
     ];
-    if(DB::update('connect_storage',['isdefault'=>0],'id !='.$id) && DB::update('connect_storage',['isdefault'=>1],'id ='.$id)){
+    if(DB::update('connect_storage',['isdefault'=>1],'id ='.$id)){
+        DB::update('connect_storage',['isdefault'=>0],'id !='.$id);
         C::t('setting')->update('defaultspacesetting',$defaultspacesettingdata);
         updatecache('setting');
     }

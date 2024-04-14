@@ -93,11 +93,10 @@ class table_pichome_resources extends dzz_table
 
     public function update_by_rids($appid, $rids, $attr)
     {
-        if (!is_array($rids)) $rids = (array)$rids;
-        if (parent::update($rids, $attr)) {
-            $hookindex = ['rids' => $rids, 'appid' => $appid];
-            Hook::listen('updatedataafter', $hookindex);
-        }
+        if(!is_array($rids)) $rids = array($rids);
+        Hook::listen('resourcesupdateBefore',$attr,$rids);
+        if($attr) parent::update($rids,$attr);
+        return true;
     }
 
     //清空删除文件
@@ -322,10 +321,14 @@ class table_pichome_resources extends dzz_table
         $return = [];
         foreach (DB::fetch_all("select * from %t where rid in(%n)", array('thumb_record', $rids)) as $v) {
             if ($v['rid']) $return[$v['rid']]['imgstatus'] = 1;
-            if ($v['sstatus']) $return[$v['rid']]['icondata'] = getglobal('siteurl') . IO::getFileuri($v['spath']);
-            else $return[$v['rid']]['icondata'] = false;
-            if ($v['lstatus']) $return[$v['rid']]['originalimg'] = getglobal('siteurl') . IO::getFileuri($v['lpath']);
-            else $return[$v['rid']]['originalimg'] = false;
+            if ($v['sstatus']) {
+                $uri =  IO::getFileuri($v['spath']);
+                $return[$v['rid']]['icondata'] =preg_match( '/^http(s)?:\\/\\/.+/',$uri) ? $uri:getglobal('siteurl') .$uri;
+            } else $return[$v['rid']]['icondata'] = false;
+            if ($v['lstatus']) {
+                $uri =  IO::getFileuri($v['lpath']);
+                $return[$v['rid']]['originalimg'] = preg_match( '/^http(s)?:\\/\\/.+/',$uri) ? $uri:getglobal('siteurl') . $uri;
+            } else $return[$v['rid']]['originalimg'] = false;
         }
         return $return;
     }
@@ -339,7 +342,7 @@ class table_pichome_resources extends dzz_table
         $did = is_numeric($patharr[1]) ? $patharr[1] : 1;
         //库路径
         $thumbdir = $apppath;
-        if(strpos($resourcesdata['path'],$thumbdir)!==false)$resourcesdata['path'] = str_replace($thumbdir.BS,'',$resourcesdata['path']);
+        if(strpos($resourcesdata['path'],$thumbdir)!==false)$resourcesdata['path'] = str_replace([$thumbdir.BS,$thumbdir.'/'],'',$resourcesdata['path']);
         $ext = $resourcesdata['ext'];
         //获取缩略图地址模式，默认0由服务器自动根据文件位置生成地址
         $thumurlmod = getglobal('config/thumburlmod') ?  getglobal('config/thumburlmod'):0;
@@ -351,13 +354,27 @@ class table_pichome_resources extends dzz_table
             //大图参数
             $largethumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
                 'thumbsign' => '1','path'=>$resourcesdata['path'], 'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
-            if ($apptype == 3 || $apptype == 1) {
+            if ($apptype == 3) {
                 $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
                 if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
                 else $imgdata['icondata'] =  false;
                 if ($thumbdata['lstatus']) $imgdata['originalimg'] = getglobal('siteurl') . IO::getFileuri($thumbdata['lpath']);
                 else {
                     $imgdata['originalimg'] =  (!$return) ? false: getglobal('siteurl') . 'index.php?mod=io&op=createThumb&path='.$resourcesdata['dpath'].'&size=large';
+                }
+            }elseif($apptype == 1){
+                if(isset($resourcesdata['isFilelistThumb']) && $resourcesdata['isFilelistThumb']){
+                    $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
+                        'thumbsign' => '0', 'path'=>$resourcesdata['path'],'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
+                    $imgdata['iconimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($smallthumbparams, 0, '') . '&' . VERHASH;
+                }else{
+                    $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
+                    if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
+                    else $imgdata['icondata'] =  false;
+                    if ($thumbdata['lstatus']) $imgdata['originalimg'] = getglobal('siteurl') . IO::getFileuri($thumbdata['lpath']);
+                    else {
+                        $imgdata['originalimg'] =  (!$return) ? false: getglobal('siteurl') . 'index.php?mod=io&op=createThumb&path='.$resourcesdata['dpath'].'&size=large';
+                    }
                 }
             } else {
 
@@ -366,9 +383,9 @@ class table_pichome_resources extends dzz_table
             }
         }
         else {
+
             switch ($apptype) {
                 case 0:
-
                     //小图地址
                     if ($resourcesdata['hasthumb']) {
                         $tmppath = str_replace(strrchr($resourcesdata['path'], "."), "", $resourcesdata['path']);
@@ -424,6 +441,20 @@ class table_pichome_resources extends dzz_table
                     }
                     break;
                 case 1:
+
+                    if(isset($resourcesdata['isFilelistThumb']) && $resourcesdata['isFilelistThumb']){
+                        $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
+                            'thumbsign' => '0', 'path'=>$resourcesdata['path'],'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
+                        $imgdata['iconimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($smallthumbparams, 0, '') . '&' . VERHASH;
+
+                    }else{
+                        $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
+                        if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
+                        else $imgdata['icondata'] = false;
+                        if ($thumbdata['lstatus']) $imgdata['originalimg'] = getglobal('siteurl') . IO::getFileuri($thumbdata['lpath']);
+                        else  $imgdata['originalimg'] =  (!$return) ? false: getglobal('siteurl') . 'index.php?mod=io&op=createThumb&path='.$resourcesdata['dpath'].'&size=large';
+                    }
+                    break;
                 case 3:
                     $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
                     if ($thumbdata['sstatus']) $imgdata['icondata'] = getglobal('siteurl') . IO::getFileuri($thumbdata['spath']);
@@ -486,7 +517,9 @@ class table_pichome_resources extends dzz_table
 
         $resourcesdata['isdetail'] = 1;
         $resourcesdata['dpath'] =dzzencode($rid, '', 0, 0);
+        $resourcesdata['isFilelistThumb'] = 1;
         $imgdata = $this->getfileimageurl($resourcesdata, $appdata['path'], $appdata['type'], $resourcesdata['download'],1);
+        if(!$imgdata['icondata'] && $imgdata['iconimg']) $imgdata['icondata'] = $imgdata['iconimg'];
         $resourcesdata = array_merge($resourcesdata, $imgdata);
 
         if ($resourcesdata['width'] == 0) $resourcesdata['width'] = 900;
@@ -511,6 +544,8 @@ class table_pichome_resources extends dzz_table
         unset($resourcesdata['path']);
         $random = rand();
         $resourcesdata['iniframe'] = ($src) ? $src . '&random=' . $random . '&hash=' . VERHASH . '&path=' . $resourcesdata['dpath'] : '';
+
+        Hook::listen('resourcesdataFilter',$resourcesdata,false);
         return $resourcesdata;
     }
 
@@ -532,7 +567,7 @@ class table_pichome_resources extends dzz_table
         //获取所有的缩略图表数据
         $imagedatas = $this->getThumbsByrids($rids);
         foreach ($resourcesdata as $v) {
-            if ($nodel && $v['isdelete'] > 0) continue;
+            if (($nodel && $v['isdelete'] > 0)  ) continue;
             if($v['isdelete']){
                 $v['share'] = $v['download'] = $v['collection'] = 0;
             }else{
@@ -544,6 +579,11 @@ class table_pichome_resources extends dzz_table
 
             if ($imagedatas[$v['rid']]['imgstatus']) {
                 $imgdata = ['icondata' => $imagedatas[$v['rid']]['icondata'], 'originalimg' => $imagedatas[$v['rid']]['originalimg']];
+                if($downshare[$v['appid']]['type'] == 1 && !$imgdata['icondata']){
+                    $v['isFilelistThumb'] = 1;
+                    $tmpimagedata =  $this->getfileimageurl($v, $downshare[$v['appid']]['path'], $downshare[$v['appid']]['type'], $v['download']);
+                   $imgdata = array_merge($imgdata,$tmpimagedata);
+                }
             } else {
                 $imgdata = $this->getfileimageurl($v, $downshare[$v['appid']]['path'], $downshare[$v['appid']]['type'], $v['download']);
             }
@@ -566,6 +606,7 @@ class table_pichome_resources extends dzz_table
             unset($v['path']);
             $returndata[] = $v;
         }
+        Hook::listen('resourcesdataFilter',$returndata,true);
         return $returndata;
     }
 
@@ -637,7 +678,7 @@ class table_pichome_resources extends dzz_table
         //Return the results
         return array($width,$height);
     }
-    public function geticondata_by_rid($rid, $onlyicon = 0)
+    public function geticondata_by_rid($rid, $onlyicon = 0,$force = 1)
     {
         $resourcesdata = DB::fetch_first("select r.rid,r.isdelete,r.appid,r.ext,r.type,ra.path as fpath,
             v.path,v.type as apptype,v.download from %t r 
@@ -647,11 +688,23 @@ class table_pichome_resources extends dzz_table
             if ($onlyicon) return false;
             else return $resourcesdata;
         } else {
+            $vapppath = $resourcesdata['path'];
+            if($resourcesdata['apptype'] != 3){
+                $resourcesdata['path'] = $vapppath.BS.$resourcesdata['fpath'];
+            }
+           if($force && $resourcesdata['apptype'] = 1){
+               $resourcesdata['isFilelistThumb'] = 1;
+           }
             $download = C::t('pichome_vapp')->getpermbypermdata($resourcesdata['download'], $resourcesdata['appid'], 'download');
-            $imgdata = $this->getfileimageurl($resourcesdata, $resourcesdata['path'], $resourcesdata['apptype'], $download);
+            $imgdata = $this->getfileimageurl($resourcesdata, $vapppath, $resourcesdata['apptype'], $download);
 
             if ($onlyicon) {
-                return $imgdata['icondata'];
+                if($resourcesdata['apptype'] = 1 && !$imgdata['icondata'] && $imgdata['iconimg']){
+                    $iconimgdata =$imgdata['iconimg'];
+                }else{
+                    $iconimgdata = $imgdata['icondata'];
+                }
+                return $iconimgdata;
             } else {
                 return array_merge($resourcesdata, $imgdata);
             }
