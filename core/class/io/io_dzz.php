@@ -342,7 +342,7 @@ class io_dzz extends io_api
 
         global $_G;
         //如果当前库有该文件
-        if ($rid = DB::result_first("select rid from %t where path = %d and appid = %s ", array('pichome_resources_attr', $attach['aid'], $appid))) {
+        if ($rid = DB::result_first("select rid from %t where path = %s and appid = %s ", array('pichome_resources_attr', $attach['aid'], $appid))) {
 
             $resourcesdata = C::t('pichome_resources')->fetch($rid);
             if($resourcesdata['isdelete']){
@@ -441,7 +441,7 @@ class io_dzz extends io_api
             }
 
         }
-        elseif ($rid = DB::result_first("select rid from %t where path = %d ", array('pichome_resources_attr',$attach['aid']))) {//如果当前库没有该文件，但其它库有
+        elseif ($rid = DB::result_first("select rid from %t where path = %s ", array('pichome_resources_attr',$attach['aid']))) {//如果当前库没有该文件，但其它库有
             //获取原文件基本数据
             $resourcesdata = C::t('pichome_resources')->fetch($rid);
             $rsetarr = [
