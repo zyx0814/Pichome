@@ -90,38 +90,47 @@ AI对各文件类型支持陆续增加中，目前已经支持的文件类型：
 - [x] 图片
 - [ ] 视频
 - [ ] 文档
-PicHome还将陆续提供更多能够对接的在线大模型，以及对接私有化大模型的方案，以满足不同用户的需求。
+
+ PicHome还将陆续提供更多能够对接的在线大模型，以及对接私有化大模型的方案，以满足不同用户的需求。
 
 ---
 
 **支持格式**
-任意格式的文件都可以上传导入，支持大多数常见格式的预览，支持图片水印保护源文件。
+
+ 任意格式的文件都可以上传导入，支持大多数常见格式的预览，支持图片水印保护源文件。
 
 **图像**
-svg  png jpg jpeg jpe webp  jfif ico heic gif eps bmp tga hdr exr dds ppm pnm pgm pdd pcx pbm pam mpo mng miff jpx jps jpf jpc jp2 j2k j2c dib cur cin  tif  wmf  emf tiff
+
+ svg  png jpg jpeg jpe webp  jfif ico heic gif eps bmp tga hdr exr dds ppm pnm pgm pdd pcx pbm pam mpo mng miff jpx jps jpf jpc jp2 j2k j2c dib cur cin  tif  wmf  emf tiff
 
 **源文件**
-psd ai
+ psd ai
 
 **音频**
-wav ogg mp3 m4a flac aac ape aiff amr
+
+ wav ogg mp3 m4a flac aac ape aiff amr
 
 **视频**
-wmv webm mp4 mov m4v avi ts swf rmvb rm mkv flv vob trp sct ogv mxf mpg m2ts f4v dv dcr asf 3g2p
+
+ wmv webm mp4 mov m4v avi ts swf rmvb rm mkv flv vob trp sct ogv mxf mpg m2ts f4v dv dcr asf 3g2p
 
 **RAW**
-3fr arw cr2 cr3 crw dng erf mrw nef nrw orf otf pef raf raw rw2 sr2 srw x3f
+
+ 3fr arw cr2 cr3 crw dng erf mrw nef nrw orf otf pef raf raw rw2 sr2 srw x3f
 
 **办公**
-xlsx xls pptx ppt pdf docx  doc pdf txt rtf odt htm html mht pps ppsx odp ods csv
+
+ xlsx xls pptx ppt pdf docx  doc pdf txt rtf odt htm html mht pps ppsx odp ods csv
 
 **压缩包**
-zip rar
+
+ zip rar
 
 ---
 
 **丰富使用场景**
-可以应用于电商，游戏，设计，开发，企事业，学校，实验室，媒体，演艺机构等类型的个人，团队，企业业务中
+
+ 可以应用于电商，游戏，设计，开发，企事业，学校，实验室，媒体，演艺机构等类型的个人，团队，企业业务中
 
 1. 作为普通网盘使用
 2. 创建素材共享库
