@@ -83,7 +83,7 @@ PicHome的文件共享功能强大且灵活，它不仅支持整个库的共享�
 
 5. **AI文件问答**：回答用户关于文件的问题，提供更智能的文件管理服务。
 
-在PicHome中，各项文件标注功能通过自定义Prompt来实现。不同的Prompt描述可以引导AI生成不同方向的结果，从而实现针对不同行业、不同类型文件的精准标注。管理员可以在后台自定义设置多条Prompt，并在管理界面中方便地选择采用哪个Prompt来进行文件标注。
+ 在PicHome中，各项文件标注功能通过自定义Prompt来实现。不同的Prompt描述可以引导AI生成不同方向的结果，从而实现针对不同行业、不同类型文件的精准标注。管理员可以在后台自定义设置多条Prompt，并在管理界面中方便地选择采用哪个Prompt来进行文件标注。
 ![11.jpg](https://imgc.cc/2024/04/29/662f11162e2dd.jpg)
 
 AI对各文件类型支持陆续增加中，目前已经支持的文件类型：
@@ -101,26 +101,27 @@ AI对各文件类型支持陆续增加中，目前已经支持的文件类型：
 
 **图像**
 
- svg  png jpg jpeg jpe webp  jfif ico heic gif eps bmp tga hdr exr dds ppm pnm pgm pdd pcx pbm pam mpo mng miff jpx jps jpf jpc jp2 j2k j2c dib cur cin  tif  wmf  emf tiff
+   svg  png jpg jpeg jpe webp  jfif ico heic gif eps bmp tga hdr exr dds ppm pnm pgm pdd pcx pbm pam mpo mng miff jpx jps jpf jpc jp2 j2k j2c dib cur cin  tif  wmf  emf tiff
 
 **源文件**
- psd ai
+
+   psd ai
 
 **音频**
 
- wav ogg mp3 m4a flac aac ape aiff amr
+   wav ogg mp3 m4a flac aac ape aiff amr
 
 **视频**
 
- wmv webm mp4 mov m4v avi ts swf rmvb rm mkv flv vob trp sct ogv mxf mpg m2ts f4v dv dcr asf 3g2p
+   wmv webm mp4 mov m4v avi ts swf rmvb rm mkv flv vob trp sct ogv mxf mpg m2ts f4v dv dcr asf 3g2p
 
 **RAW**
 
- 3fr arw cr2 cr3 crw dng erf mrw nef nrw orf otf pef raf raw rw2 sr2 srw x3f
+   3fr arw cr2 cr3 crw dng erf mrw nef nrw orf otf pef raf raw rw2 sr2 srw x3f
 
 **办公**
 
- xlsx xls pptx ppt pdf docx  doc pdf txt rtf odt htm html mht pps ppsx odp ods csv
+   xlsx xls pptx ppt pdf docx  doc pdf txt rtf odt htm html mht pps ppsx odp ods csv
 
 **压缩包**
 
