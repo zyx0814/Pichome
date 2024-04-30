@@ -14,37 +14,16 @@ if ($do == 'filelist') {
     $sql = " from %t  r ";
     $selectsql = " r.rid ";
     $preparams = [];
-    $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle)$wheresql = " r.isdelete < 1 ";
-    else $wheresql = " r.isdelete = 1 ";
     $para = [];
     $params = ['pichome_resources'];
     $havingsql = '';
     $havingparams = [];
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
-
     $start = ($page - 1) * $perpage;
     $limitsql = "limit $start," . $perpage;
-    if (!isset($_GET['order'])) {
-        //获取用户默认排序方式
-        $sortdata = C::t('user_setting')->fetch_by_skey('pichomesortfileds');
-        $sortfilearr = ['btime' => 1, 'mtime' => 2, 'dateline' => 3, 'name' => 4, 'size' => 5, 'grade' => 6, 'duration' => 7, 'whsize' => 8];
-        if ($sortdata) {
-            $sortdatarr = unserialize($sortdata);
-            $order = $sortdatarr['filed'] ? $sortfilearr[$sortdatarr['filed']] : 1;
-            $asc = ($sortdatarr['scolorort']) ? $sortdatarr['sort'] : 'desc';
-        } else {
-            $order = 1;
-            $asc = 'desc';
-        }
-    } else {
-        $order = isset($_GET['order']) ? intval($_GET['order']) : 1;
-        $asc = (isset($_GET['asc']) && trim($_GET['asc'])) ? trim($_GET['asc']) : 'desc';
-    }
-
-    $orderarr = [];
-    $orderparams = [];
+    $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
+    $wheresql = ' 1 ';
     //获取搜索模板数据
     $sid = isset($_GET['sid']) ? intval($_GET['sid']):0;
     $stdata = C::t('search_template')->fetch($sid);
@@ -81,18 +60,32 @@ if ($do == 'filelist') {
         $para[] = explode(',',$stdata['exts']);
     }
 
+    if(!$isrecycle)$wheresql .= " and r.isdelete = 0 ";
+    else $wheresql .= " and r.isdelete = 1 ";
 
-  /*  if($gids){
-        if(!in_array('pichome_resourcestab',$params)){
-            $sql .= " left join %t rb on rb.rid = r.rid ";
-            $params[] = 'pichome_resourcestab';
+    $start = ($page - 1) * $perpage;
+    $limitsql = "limit $start," . $perpage;
+    if (!isset($_GET['order'])) {
+        //获取用户默认排序方式
+        $sortdata = C::t('user_setting')->fetch_by_skey('pichomesortfileds');
+        $sortfilearr = ['btime' => 1, 'mtime' => 2, 'dateline' => 3, 'name' => 4, 'size' => 5, 'grade' => 6, 'duration' => 7, 'whsize' => 8];
+        if ($sortdata) {
+            $sortdatarr = unserialize($sortdata);
+            $order = $sortdatarr['filed'] ? $sortfilearr[$sortdatarr['filed']] : 1;
+            $asc = ($sortdatarr['scolorort']) ? $sortdatarr['sort'] : 'desc';
+        } else {
+            $order = 1;
+            $asc = 'desc';
         }
-        $whererangesql[] = ' ( rb.gid in(%n) and !isnull(rb.tid) ) ';
-        $para[] = $gids;
+    } else {
+        $order = isset($_GET['order']) ? intval($_GET['order']) : 1;
+        $asc = (isset($_GET['asc']) && trim($_GET['asc'])) ? trim($_GET['asc']) : 'desc';
     }
-    if($whererangesql){
-        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
-    }*/
+
+    $orderarr = [];
+    $orderparams = [];
+
+
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
 

@@ -1,0 +1,28 @@
+[
+    {
+        "function": "stream_socket_server",
+        "params": [
+            "tcp://0.0.0.0:9999",
+            null,
+            null
+        ],
+        "error": {
+            "msg": "A PHP error",
+            "type": 512
+        },
+        "return": false
+    },
+    {
+        "function": "stream_socket_server",
+        "params": [
+            "tcp://0.0.0.0:10000",
+            null,
+            null
+        ],
+        "error": {
+            "msg": "A PHP error",
+            "type": 512
+        },
+        "return": false
+    }
+]

@@ -190,7 +190,6 @@ const Tmpfile_rec = {
                                         <el-option label="库" value="1"></el-option>
                                         <el-option label="单页" value="2"></el-option>
                                         <el-option label="栏目" value="3"></el-option>
-                                        <el-option label="专辑" value="4"></el-option>
                                     </el-select>
                                     <template v-if="parseInt(item.data[0].link) == 0">
                                         <el-input v-model="item.data[0].linkval"></el-input>

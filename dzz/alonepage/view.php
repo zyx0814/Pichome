@@ -49,7 +49,7 @@ if ($do == 'gettagdata') {//获取标签位文件列表数据
                 $sql = " from %t r  ";
                 //$selectsql = "  distinct r.rid,r.name ";
                 $selectsql = "   r.rid,r.name ";
-                $wheresql = " r.appid = %s and r.isdelete < 1 ";
+                $wheresql = " r.appid = %s and r.isdelete = 0 ";
                 $params = ['pichome_resources'];
                 $para[] = trim($tagval['id']);
                 //}

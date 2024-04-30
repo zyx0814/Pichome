@@ -202,7 +202,9 @@
 			}else{
 				this.DocumentThemeColor = 'light'
 			}
+			// console.log(11111);
 			var arr = (location.hash || "").replace(/^\?/,'').split("&");
+			// console.log(arr);
 			if(arr.length){
 				var path=arr[0].replace("#","").split('=')[1];
 				this.path = path;

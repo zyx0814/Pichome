@@ -68,7 +68,7 @@ if ($operation == 'fetch') {
             'pagesetting' => isset($_GET['pagesetting']) ? serialize($_GET['pagesetting']) : '',
             'cron' => isset($_GET['cron']) ? intval($_GET['cron']) : '',
             'crontype' => isset($_GET['crontype']) ? intval($_GET['crontype']) : 0,
-            'crontime' => trim($_GET['crontime']),
+            'crontime' => $_GET['crontime'] ? trim( $_GET['crontime']):'',
             'fileds' => serialize($fileds),
         ];
 
@@ -79,12 +79,12 @@ if ($operation == 'fetch') {
             C::t('pichome_route')->update_path_by_url($url, $address);
         }
 
-        C::t('pichome_vapp')->update($appid, $setarr);
+        C::t('pichome_vapp')->updateByAppid($appid, $setarr);
 
         exit(json_encode(array('success' => true)));
     } else {
         require_once(DZZ_ROOT . './dzz/class/class_encode.php');
-        if ($data = DB::fetch_first("select * from %t where appid=%s and isdelete = 0 ", array('pichome_vapp', $appid))) {
+        if ($data = C::t('pichome_vapp')->fetchByAppid($appid)) {
 
             //用户权限部分开始
             $data['view'] = unserialize($data['view']);
@@ -412,9 +412,8 @@ if ($operation == 'fetch') {
                 $data['url'] = $url;
             }
             //短链接部分结束
-
-            //标注设置开始
-            $data['fileds'] = $data['fileds'] ? unserialize($data['fileds']) : [
+            //默认标注设置
+            $defaultfileds =  [
                 [
                     'flag' => 'tag',
                     'type' => 'multiselect',
@@ -452,6 +451,17 @@ if ($operation == 'fetch') {
                     'checked' => 1
                 ]
             ];
+            if($data['type'] != 1 && $data['type'] != 3){
+                $defaultfileds['fileds'][] = [
+                    'flag' => 'preview',
+                    'type' => 'multiupload',
+                    'name' => '多预览图',
+                    'checked' => 0,
+                    'enable' => 1
+                ];
+            }
+            //标注设置开始
+            $data['fileds'] = $data['fileds'] ? unserialize($data['fileds']) :$defaultfileds;
 
             //获取tab部分
             $tabstatus = 0;
@@ -482,10 +492,24 @@ if ($operation == 'fetch') {
                     $data['fileds'][] = ['flag' => $v['flag'], 'type' => 'tabgroup', 'name' => $v['name'], 'checked' => 0, 'enable' => $v['enable']];
                 }
             }
+
+            if($data['type'] == 1 || $data['type'] == 3){
+                $filedFlag = array_column($data['fileds'],'flag');
+                if(!in_array('preview',$filedFlag)){
+                    $data['fileds'][] = [
+                        'flag' => 'preview',
+                        'type' => 'multiupload',
+                        'name' => '多预览图',
+                        'checked' => 0,
+                        'enable' => 1
+                    ];
+                }
+            }
             $data['fileds'] = array_values($data['fileds']);
             //标注设置结束
             $data['screen'] = unserialize($data['screen']);
             $data['pagesetting'] = unserialize($data['pagesetting']);
+            $data['appid'] = $appid;
             exit(json_encode(array('success' => true, 'data' => $data)));
         } else {
             exit(json_encode(array('error' => true)));
@@ -494,15 +518,14 @@ if ($operation == 'fetch') {
 } elseif ($operation == 'setfolderperm') {//设置目录默认权限
     if ($_G['adminid'] != 1) return array('success' => false, 'msg' => lang('no_perm'));
     if (submitcheck('settingsubmit')) {
-
         $fid = isset($_GET['fid']) ? trim($_GET['fid']) : '';
         $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
         $perm = isset($_GET['perm']) ? intval($_GET['perm']) : 0;
         $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
         $forceset = isset($_GET['forceset']) ? intval($_GET['forceset']) : 0;
-        $appdata = C::t('pichome_vapp')->fetch($appid);
+        $appdata = C::t('pichome_vapp')->fetchByAppid($appid);
         if (!$appdata || $appdata['isdelete']) exit(json_encode(array('error' => '未找到目标所在库或库已被删除')));
-        if ($data['state'] > 0 && $data['state'] < 4) exit(json_encode(array('error' => '库正在导入，当前状态下不可操作')));
+        if ($appdata['state'] > 0 && $appdata['state'] < 4) exit(json_encode(array('error' => '库正在导入，当前状态下不可操作')));
         if (!$fid) {
             C::t('pichome_vapp')->update($appid, ['perm' => $perm]);
             if ($hassub) {
@@ -562,6 +585,7 @@ if ($operation == 'fetch') {
 
         $data[] = $val;
     }
+    Hook::listen("vappdataFilter",$data,true);
     exit(json_encode(array('data' => $data)));
 
 } elseif ($operation == 'getvappico') {//获取库图片
@@ -576,10 +600,10 @@ if ($operation == 'fetch') {
     foreach ($vappdatas as $val) {
         //获取最新图片
         $resourcesdata = DB::fetch_first("select r.*,ra.path from %t r left join %t ra on r.rid = ra.rid 
-where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_resources', 'pichome_resources_attr', $val['appid']]);
-
+where r.isdelete = 0 and r.appid = %s order by r.dateline desc ", ['pichome_resources', 'pichome_resources_attr', $val['appid']]);
+        $resourcesdata['isFilelistThumb'] = 1;
         $icondata = C::t('pichome_resources')->getfileimageurl($resourcesdata, $val['path'], $val['type'], 1);
-        $arr[] = array('icon' => $icondata['icondata'], 'appid' => $val['appid']);
+        $arr[] = array('icon' => (!$icondata['icondata'] && $icondata['iconimg']) ? $icondata['iconimg'] :$icondata['icondata'], 'appid' => $val['appid']);
     }
     exit(json_encode(array('data' => $arr)));
 } elseif ($operation == 'getinfonum') {//已获取文件信息个数
@@ -715,6 +739,15 @@ where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_reso
             'checked' => 1
         ]
     ];
+    if($type == 1 || $type == 3){
+        $fileds[] = [
+            'flag'=>'preview',
+            'type' => 'multiupload',
+            'name' => '多预览图',
+            'enable' => 1,
+            'checked' => 1
+        ];
+    }
     if (defined('PICHOME_LIENCE')) {
         $fileds[] = [
             'flag' => 'level',
@@ -895,7 +928,7 @@ where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_reso
         $path = DZZ_ROOT . 'library';
     }
     if (!empty($Defaultnotallowdir)) {
-        $notallowdir = getglobal('setting/pichomeimportnotdir') ? getglobal('setting/pichomeimportnotdir') : implode(',', $Defaultallowext);
+        $notallowdir = getglobal('setting/pichomeimportnotdir') ? getglobal('setting/pichomeimportnotdir') : implode(',', $Defaultnotallowdir);
         $notallowdir = str_replace(array('.', ',', '+', '$', "'", '^', '(', ')', '[', ']', '{', '}'), array('\.', '|', '\+', '\$', "'", '\^', '\(', ')', '\[', '\]', '\{', '\}'), $notallowdir);
         $notallowdir = str_replace('*', '.*', $notallowdir);
     }

@@ -100,7 +100,7 @@
 				},
 				rules: {
 					email: [
-						{ required: true, message: '"{lang email_username}', trigger: 'blur' }
+						{ required: true, message: '{lang email_username}', trigger: 'blur' }
 					],
 					password: [
 						{ required: true, message: '{lang please_input_password}', trigger: 'blur' }
@@ -170,7 +170,6 @@
 				var self = this;
 				self.$refs.ruleForm.validate(async function(valid){
 					if (valid) {
-						console.log(self.ruleForm);
 						var params = {
 							'loginsubmit':true,
 							'formhash':'{FORMHASH}',

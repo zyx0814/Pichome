@@ -1430,6 +1430,11 @@ $lang = array
 	'imgwater_image_watermark_preview'=>'预览水印效果',
 	'imgwater_image_watermark_preview_tips'=>'请提交后再预览',
 	
+	
+	//管理员登录页
+	'title_admincp'=>'管理员登录入口',
+	'login_cplock' => '您的管理面板已经锁定! <br>请在<b> {ltime} </b>秒以后重新访问',
+	
 );
 
 

@@ -1,0 +1,128 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style>
+    .el-link__inner{
+        width: 100%;
+    }
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+    <el-container class="page-main">
+        <!--{template common/container/pc/header_default}-->
+        <el-container>
+            <el-main style="padding: 0;">
+                <el-scrollbar style="padding: 40px 20px;">
+                    <div>
+                        <el-link :underline="false" style="margin-bottom: 20px;" href="{MOD_URL}&op=admin&do=add">
+                            <el-button style="width: 100%;" size="large" type="primary">添加</el-button>
+                        </el-link>
+                    </div>
+                    <el-table :data="tableData" border style="width: 100%;">
+                        <el-table-column prop="name" label="名称"></el-table-column>
+                        <el-table-column prop="desc" label="描述"></el-table-column>
+                        <el-table-column prop="content" label="内容"></el-table-column>
+                        <el-table-column label="操作" width="250" align="center">
+                            <template #default="scope">
+                                <el-tooltip content="查看" placement="top">
+                                    <el-button type="success" @click="handleOperation('view',scope.row.id)" icon="View"></el-button>
+                                </el-tooltip>
+                                <el-tooltip content="编辑" placement="top">
+                                    <el-button type="primary" @click="handleOperation('edit',scope.row.id)" icon="EditPen"></el-button>
+                                </el-tooltip>
+                                <el-tooltip content="复制" placement="top">
+                                    <el-button type="info" @click="handleOperation('copy',scope.row.id)" icon="CopyDocument"></el-button>
+                                </el-tooltip>
+                                <el-tooltip content="删除" placement="top">
+                                    <el-button type="danger" @click="handleOperation('delete',scope.row.id)" icon="Delete"></el-button>
+                                </el-tooltip>
+
+
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    
+                </el-scrollbar>
+            </el-main>
+        </el-container>
+
+    </el-container>
+</div>
+
+<script type="text/javascript">
+    const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+    const dzzoffice = createApp({
+        setup(){
+            let DocumentThemeColor = ref('');
+            let tableData = reactive($datas);
+            watch(()=>DocumentThemeColor.value, (newval)=>{
+                document.querySelector('html').className = newval
+            },{
+                deep: true,
+            })
+            function DocumentThemeChange(){//主题色切换
+                if(DocumentThemeColor.value=='light'){
+                    DocumentThemeColor.value='dark';
+                    localStorage.setItem('theme','dark');
+                }else{
+                    DocumentThemeColor.value='light';
+                    localStorage.setItem('theme','light');
+                }
+            };
+            function handleOperation(type,id){
+                switch (type) {
+                    case 'delete':
+                        window.location.href = '{MOD_URL}&op=admin&do=delete&id='+id;
+                        break;
+                    case 'view':
+                        window.location.href = '{MOD_URL}&do=work&id='+id;
+                        break;
+                    case 'edit':
+                        window.location.href = '{MOD_URL}&op=admin&do=add&id='+id;
+                    break;
+                    case 'copy':
+                        if(!id)return false;
+                        var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+                        input.setAttribute('value', SITEURL+'{MOD_URL}&do=work&id='+id);
+                        document.getElementsByTagName('body')[0].appendChild(input);
+                        document.getElementById('copyInput').select();
+                        document.execCommand('copy')
+                        ElementPlus.ElMessage({
+                            message: '成功复制到剪切板',
+                            type: 'success'
+                        });
+                        
+                        document.getElementById('copyInput').remove();
+                    break;
+                }
+            }
+            onMounted(function(){
+                //主题颜色
+                let theme = localStorage.getItem('theme');
+                if(theme){
+                    DocumentThemeColor.value = theme;
+                }else{
+                    DocumentThemeColor.value = 'light'
+                }
+            });
+            return {
+                DocumentThemeColor,
+                tableData,
+
+                DocumentThemeChange,
+                handleOperation
+            }
+        }
+    });
+    dzzoffice.use(ElementPlus, {
+        locale: ElementPlusLocaleZhCn,
+    });
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        dzzoffice.component(key, component)
+    }
+    dzzoffice.component('comavatar', comavatar)
+    // 屏蔽警告信息
+    dzzoffice.config.warnHandler = function(){return null};
+    dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template pc/frame/footer_simple}-->

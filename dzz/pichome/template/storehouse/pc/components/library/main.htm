@@ -9,14 +9,14 @@
 			<template v-if="item.type == 'add'">
 				<div class="new">
 					<el-icon><Circle-Plus /></el-icon>
-					<el-text tag="p" style="width: 100%;">新建</el-text>
+					<el-text tag="p" style="width: 100%;">{lang create}</el-text>
 				</div>
 				<div class="entrys">
 					<div style="width: 260px;height: auto;">
-						<el-button @click="TableAdd('3')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/pichome.png" /> PicHome库</el-button>
-						<el-button @click="TableAdd('1')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/file.png" /> 普通目录</el-button>
-						<el-button @click="TableAdd('0')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/eagle.png" /> Eagle&nbsp;库</el-button>
-						<el-button @click="TableAdd('2')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/billfish.png" />Billfish&nbsp;库</el-button>
+						<el-button @click="TableAdd('3')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/pichome.png" /> PicHome {lang library}</el-button>
+						<el-button @click="TableAdd('1')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/file.png" /> {lang normal_directory}</el-button>
+						<el-button @click="TableAdd('0')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/eagle.png" /> Eagle&nbsp;{lang library}</el-button>
+						<el-button @click="TableAdd('2')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/billfish.png" />Billfish&nbsp;{lang library}</el-button>
 						
 					</div>
 				</div>
@@ -85,7 +85,7 @@
 				</div>
 				<div class="operation">
 					<a class="el-button el-button--success edit" :href="'{MOD_URL}&op=library&do=filelist#appid='+item.appid" target="_blank">
-						<span>编辑</span>
+						<span>{lang edit}</span>
 					</a>
 					<el-popover
 						placement="top"
@@ -226,8 +226,10 @@
 					draggable: ".piece",
 					preventOnFilter: true,
                     animation: 150,
+					filter:'.piece-add',
 					onMove: function (evt,originalEvent) {
 						if(evt.related.classList.contains('piece-add')) {
+							console.log(1111);
 							return false;
 						}
 					},

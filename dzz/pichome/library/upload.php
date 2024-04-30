@@ -12,7 +12,7 @@ $operation = isset($_GET['operation']) ? trim($_GET['operation']) : '';
 if($operation == 'upload'){//上传文件图标类
     include libfile( 'class/uploadhandler' );
 
-    $options = array( 'accept_file_types' => '/\.(gif|jpe?g|png|svg)$/i',
+    $options = array( 'accept_file_types' => '/\.(gif|jpe?g|png|svg|webp)$/i',
 
         'upload_dir' => $_G[ 'setting' ][ 'attachdir' ] . 'cache/',
 

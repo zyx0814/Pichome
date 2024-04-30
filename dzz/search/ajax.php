@@ -101,8 +101,8 @@ elseif ($operation == 'searchmenu_num') {
         $params = ['pichome_resources'];
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-   if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
-   else $wheresql = " r.isdelete =0  and r.level <= %d ";
+   if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
+   else $wheresql = " r.isdelete =1  and r.level <= %d ";
 
     //用户权限等级
     $para[]= $_G['pichomelevel'];
@@ -961,8 +961,8 @@ elseif ($operation == 'search_menu') {
         exit(json_encode(array()));
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
-    else $wheresql = " r.isdelete =0  and r.level <= %d ";
+    if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
+    else $wheresql = " r.isdelete =1  and r.level <= %d ";
 
     //用户权限等级
     $para[] = $_G['pichomelevel'];
@@ -1420,8 +1420,8 @@ elseif ($operation == 'search_menu') {
         }
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql .= " and r.isdelete < 1 ";
-    else $wheresql .= " and r.isdelete =0 ";
+    if(!$isrecycle) $wheresql .= " and r.isdelete = 0 ";
+    else $wheresql .= " and r.isdelete =1 ";
     $data = array();
     if ($skey == 'tag') {
 

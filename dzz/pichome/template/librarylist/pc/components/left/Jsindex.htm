@@ -2,10 +2,10 @@
 	const leftMixins = {
 		data(){
 			return {
-				DocumentOverlay:false,
 				LeftCurrenType:'',
 				LeftWidth:260,
 				leftsearch:'',
+				LeftTreePathKeys:[],
 				LeftTree:{
 					Visible:true,
 					loading:false,
@@ -31,6 +31,13 @@
 					Visible:false,
 					title:'',
 					checked:1,
+					loading:false
+				},
+				LeftTreeDialogAdd:{
+					type:'',
+					title:'',
+					name:'',
+					Visible:false,
 					loading:false
 				},
 				LeftTreeSidebar:{
@@ -77,7 +84,6 @@
 			LeftTreeContextmenu(event,data,node){
 				const self = this;
 				if(this.DocumentVapp.type != 3)return false;
-				self.DocumentOverlay = true;
 				this.DocumentHideAllPop();
 				self.LeftTreePopover.node = node;
 				let menu = self.$refs.treeMenu.popperRef.contentRef;
@@ -113,10 +119,11 @@
 				var self = this;
 				this.LeftTreePopover.show = false;
 				if(type == 'rename'){
-					this.LeftTreePopover.node.data.isRename = true;
-					self.$nextTick(function(){
-						self.$refs['treeinput'+this.LeftTreePopover.node.data.fid].select();
-					});
+					this.LeftTreeDialogAdd.langkey = this.LeftTreePopover.node.data.langkey&&this.LeftTreePopover.node.data.langkey.fname?this.LeftTreePopover.node.data.langkey.fname:'';
+					this.LeftTreeDialogAdd.type = type;
+					this.LeftTreeDialogAdd.title = '重命名';
+					this.LeftTreeDialogAdd.name = this.LeftTreePopover.node.data.fname;
+					this.LeftTreeDialogAdd.Visible = true;
 				}else if(type == 'delete'){
 					this.LeftTreeDialog.fid = this.LeftTreePopover.node.data.fid;
 					if(parseInt(this.LeftTreePopover.node.data.filenum)){
@@ -126,81 +133,19 @@
 						this.LeftTreeDelete();
 					}
 				}else if(type == 'addparent'){
+
 					this.LeftTreePopover.node = this.LeftTree.TopLevelNode;
-					this.LeftTreeOperation('add')
-				}else if(type == 'add' || type == 'addchild'){
-					if(this.LeftTreePopover.node.level>=1){
-						var pfid = this.LeftTreePopover.node.data.pfid;
-						if(type == 'addchild'){
-							pfid = this.LeftTreePopover.node.data.fid;
-						}
-					}else{
-						var pfid = '';
-					}
-					
-					var {data: res} = await axios.post('{MOD_URL}&op=library&do=folder&operation=newfolder',{
-						appid:this.DocumentAppid,
-						pfid:pfid,
-						foldername:'未命名文件夹'
-					});
-					var str = {
-						fid:res.data.fid,
-						fname:'未命名文件夹',
-						pfname:'未命名文件夹',
-						filenum:0,
-						nosubfilenum:0,
-						children:[],
-						leaf:true,
-						isRename:true,
-						pathkey:res.data.pathkey,
-						pfid:pfid
-					};
-					if(this.hassub){
-						var str1 = {
-							fid:res.data.fid,
-							fname:'未命名文件夹',
-							pfname:'未命名文件夹',
-							filenum:0,
-							nosubfilenum:0,
-							children:[],
-							leaf:true,
-							isRename:true,
-							pathkey:res.data.pathkey,
-							pfid:pfid,
-							icon: "dzz/images/extimg/unknow.png"
-						};
-						this.filedata.data.push(str1);
-					}
-					if(type == 'addchild'){
-						if(this.LeftTreePopover.node.loaded){
-							this.LeftTreePopover.node.expanded = true;
-							self.$refs.LeftTreeRef.append(str,pfid);
-							self.$nextTick(function(){
-								var node = self.$refs.LeftTreeRef.getNode(res.data.fid);
-								self.LeftTreePopover.node = node;
-								setTimeout(function() {
-									self.$refs['treeinput'+res.data.fid].select();
-								}, 300);
-							});
-						}else{
-							this.LeftTreePopover.renameFid = res.data.fid;
-							this.LeftTreePopover.node.expand();
-						}
-					}else{
-						if(this.LeftTreePopover.node.level>0){
-							self.$refs.LeftTreeRef.insertAfter(str,this.LeftTreePopover.node.data.fid);
-						}else{
-							self.$refs.LeftTreeRef.append(str,this.LeftTreePopover.node);
-						}
-						self.$nextTick(function(){
-							var node = self.$refs.LeftTreeRef.getNode(res.data.fid);
-							self.LeftTreePopover.node = node;
-							setTimeout(function() {
-								self.$refs['treeinput'+res.data.fid].select();
-							}, 300);
-						});
-					}
-					
+					this.LeftTreeDialogAdd.langkey = '';
+					this.LeftTreeDialogAdd.type = type;
+					this.LeftTreeDialogAdd.title = '添加同级文件夹';
+					this.LeftTreeDialogAdd.name = '';
+					this.LeftTreeDialogAdd.Visible = true;
+				}else if(type == 'addchild'){
+					this.LeftTreeDialogAdd.langkey = '';
+					this.LeftTreeDialogAdd.type = type;
+					this.LeftTreeDialogAdd.title = '添加子级文件夹';
+					this.LeftTreeDialogAdd.name = '';
+					this.LeftTreeDialogAdd.Visible = true;
 				}
 			},
 			async LeftGetAllNum(){
@@ -245,39 +190,113 @@
 				this.LeftTreeDialog.Visible = false;
 				this.LeftTreeDialog.loading = false;
 			},
+			LeftTreeAdd(){
+				let type = this.LeftTreeDialogAdd.type;
+				switch (type) {
+					case 'rename':
+						this.LefttreeinputRename();
+					break;
+					case 'addparent':
+					case 'addchild':
+						this.LeftTreeAddNode(type);
+					break;
+				}
+			},
+			async LeftTreeAddNode(type){
+				let self = this;
+				if(this.LeftTreeDialogAdd.name == '')return false;
+				if(this.LeftTreePopover.node.level>=1){
+					var pfid = this.LeftTreePopover.node.data.pfid;
+					if(type == 'addchild'){
+						pfid = this.LeftTreePopover.node.data.fid;
+					}
+				}else{
+					var pfid = '';
+				}
+				this.LeftTreeDialogAdd.loading = true;
+				var {data: res} = await axios.post('{MOD_URL}&op=library&do=folder&operation=newfolder',{
+					appid:this.DocumentAppid,
+					pfid:pfid,
+					foldername:this.LeftTreeDialogAdd.name
+				});
+				this.LeftTreeDialogAdd.loading = false;
+				
+				var str = {
+					fid:res.data.fid,
+					fname:this.LeftTreeDialogAdd.name,
+					pfname:this.LeftTreeDialogAdd.name,
+					filenum:0,
+					nosubfilenum:0,
+					children:[],
+					leaf:true,
+					// isRename:true,
+					pathkey:res.data.pathkey,
+					pfid:pfid
+				};
+				if(this.LeftCurrenType == 'filelist' && this.hassub){
+					var str1 = {
+						fid:res.data.fid,
+						fname:this.LeftTreeDialogAdd.name,
+						pfname:this.LeftTreeDialogAdd.name,
+						filenum:0,
+						nosubfilenum:0,
+						children:[],
+						leaf:true,
+						isRename:true,
+						pathkey:res.data.pathkey,
+						pfid:pfid,
+						icon: ""
+					};
+					self.$refs.ImageFileRef.appendData(str1);
+				}
+				if(type == 'addchild'){
+					if(this.LeftTreePopover.node.loaded){
+						this.LeftTreePopover.node.expanded = true;
+						self.$refs.LeftTreeRef.append(str,pfid);
+					}else{
+						this.LeftTreePopover.node.expand();
+					}
+				}else{
+					if(this.LeftTreePopover.node.level>0){
+						self.$refs.LeftTreeRef.insertAfter(str,this.LeftTreePopover.node.data.fid);
+					}else{
+						self.$refs.LeftTreeRef.append(str,this.LeftTreePopover.node);
+					}
+				}
+				this.LeftTreeDialogAdd.Visible = false;
+			},
 			async LefttreeinputRename(){
 				var self = this;
-				if(this.LeftTreePopover.node.data.fname == ''){
-					this.LeftTreePopover.node.data.fname = this.LeftTreePopover.node.data.pfname;
-					this.LeftTreePopover.node.data.isRename = false;
+				if(this.LeftTreeDialogAdd.name == ''){
+					this.LeftTreeDialogAdd.name = this.LeftTreePopover.node.data.fname;
 					return false;
 				}
-				if(this.LeftTreePopover.node.data.fname != this.LeftTreePopover.node.data.pfname){
+				
+				if(this.LeftTreePopover.node.data.fname != this.LeftTreeDialogAdd.name){
+					this.LeftTreeDialogAdd.loading = true;
 					var res = await axios.post('{MOD_URL}&op=library&do=folder&operation=rename',{
 						fid:this.LeftTreePopover.node.data.fid,
-						name:this.LeftTreePopover.node.data.fname
+						name:this.LeftTreeDialogAdd.name
 					});
+					this.LeftTreeDialogAdd.loading = false;
 					if(res.data.success){
-						this.LeftTreePopover.node.data.pfname = this.LeftTreePopover.node.data.fname;
-						if(this.filedata.data.length){
-							var curr = this.filedata.data.find(function(current){
-								return current.fid == self.LeftTreePopover.node.data.fid
+						this.LeftTreePopover.node.data.fname = this.LeftTreeDialogAdd.name;
+						if(self.$refs.ImageFileRef){
+							self.$refs.ImageFileRef.EditData({
+								fid:self.LeftTreePopover.node.data.fid,
+								type:'fname',
+								value:this.LeftTreeDialogAdd.name
 							});
-							if(curr){
-								curr.fname = this.LeftTreePopover.node.data.fname;
-							}
 						}
-						this.LeftTreePopover.node.data.isRename = false;
+						this.LeftTreeDialogAdd.Visible = false;
 					}else{
 						self.$message({
 							type:'error',
 							message:'修改失败'
 						});
-						this.LeftTreePopover.node.data.fname = this.LeftTreePopover.node.data.pfname;
-						this.LeftTreePopover.node.data.isRename = false;
 					}
 				}else{
-					this.LeftTreePopover.node.data.isRename = false;
+					this.LeftTreeDialogAdd.Visible = false;
 				}
 				
 			},
@@ -390,9 +409,20 @@
 						item['pfname'] = item['fname'];
 						arr.push(item);
 					}
+					let folderVal = self.LeftTreePathKeys.findIndex(function(current){
+						return current.fid == item.fid;
+					});
+					if(folderVal < 0){
+						self.LeftTreePathKeys.push({
+							pathkey:item.pathkey,
+							fid:item.fid
+						})
+					}
 				}
 				resolve(arr);
+				
 				self.$nextTick(function(){
+					self.LeftTreeGetFolderNum();
 					for(var v in arr){
 						if(self.LeftTreePopover.renameFid && arr[v].fid == self.LeftTreePopover.renameFid){
 							var node = self.$refs.LeftTreeRef.getNode(arr[v].fid);
@@ -410,6 +440,37 @@
 					}
 					// self.LeftGetTreeDataSubstringFinish();
 				});
+			},
+			async LeftTreeGetFolderNum(){
+				let self = this;
+				if(!self.LeftTreePathKeys.length)return false;
+				let pathkeys = [];
+				self.LeftTreePathKeys.forEach(element => {
+					pathkeys.push(element.pathkey)
+				});		
+				let {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfoldernum',{
+					appid:this.DocumentAppid,
+					pathkeys:pathkeys.join(',')
+				});
+				if(res.data && res.data.length){
+					for (let index = 0; index < res.data.length; index++) {
+						const element = res.data[index];
+						let curr = self.LeftTreePathKeys.find(function(current){
+							return current.pathkey == element.pathkey;
+						});
+						let findex = self.LeftTreePathKeys.findIndex(function(current){
+							return current.pathkey == element.pathkey;
+						});
+						if(findex>-1){
+							self.LeftTreePathKeys.splice(findex,1);
+						}
+						if(!curr)continue;
+						let node = self.$refs.LeftTreeRef.getNode(curr.fid);
+						if(node){
+							node.data.filenum = element.filenum;
+						}
+					}
+				}
 			},
 			LeftGetTreeDataSubstringFinish(){
 				var self = this;

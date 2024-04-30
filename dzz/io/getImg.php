@@ -22,6 +22,7 @@ $appid = $patharr['appid'];
 $appdata = C::t('pichome_vapp')->fetch($appid);
 $iscloud = false;
 
+
 $arr = explode(':', $appdata['apppath']);
 if ($arr[1] && is_numeric($arr[1])) {
     $iscloud = true;
@@ -32,9 +33,8 @@ if ($arr[1] && is_numeric($arr[1])) {
 $ext =$patharr['ext'];
 
 if ($appdata['type'] == 0) {//eagle缩略图
-   // $patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
+    //$patharr['path'] = DB::result_first("select path from %t where rid = %s",array('pichome_resources_attr',$patharr['rid']));
     $thumbdir = $appdata['path'];
-
     //当地址为大图时
     if($patharr['thumbsign']){
         //如果有下载权限，并且当前图片支持预览返回原图地址
@@ -57,8 +57,6 @@ if ($appdata['type'] == 0) {//eagle缩略图
             else $thumbpath =  'static/dzzthumb/preview/b.gif';
         }
     }
-
-
 }
 elseif($appdata['type'] == 2) {//billfish缩略图
     //获取记录表缩略图对应信息

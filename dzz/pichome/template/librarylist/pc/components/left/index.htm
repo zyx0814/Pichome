@@ -94,7 +94,7 @@
 								<Folder />
 							</template>
 						</el-icon>
-						<template v-if="node.data.isRename">
+						<!-- <template v-if="node.data.isRename">
 							<el-input 
 								v-model.trim="data.fname" 
 								size="small"
@@ -104,11 +104,11 @@
 								@keyup.enter.native="LefttreeinputRename" 
 								@blur="LefttreeinputRename" />
 						</template>
-						<template v-else>
+						<template v-else> -->
 							<div class="name" :ref="'treename'+data.fid" v-cloak v-html="node.label"></div>
 							<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
 							<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
-						</template>
+						<!-- </template> -->
 				    	
 				    </div>
 			  </template>
@@ -135,8 +135,8 @@
 	trigger="contextmenu"
 	width="auto"
 	:show-arrow="false"
-	@after-enter="screenvisible(true)"
-	@before-leave="screenvisible(false)">
+	@after-enter="handleDocumentOverlay(true)"
+	@before-leave="handleDocumentOverlay(false)">
     <ul class="el-dropdown-menu">
 		<li 
 			class="el-dropdown-menu__item" 
@@ -147,7 +147,7 @@
 		<el-divider style="margin: 4px 0;"></el-divider>
 		<li
 			class="el-dropdown-menu__item" 
-			@click="LeftTreeOperation('add')">
+			@click="LeftTreeOperation('addparent')">
 			<el-icon><Folder-Add /></el-icon>
 			新增同级文件夹
 		</li>
@@ -183,9 +183,31 @@
       </span>
     </template>
 </el-dialog>
+<el-dialog
+    v-model="LeftTreeDialogAdd.Visible"
+    :title="LeftTreeDialogAdd.title"
+	:close-on-click-modal="false"
+	:close-on-press-escape="false"
+	:show-close="!LeftTreeDialogAdd.loading">
+	<el-form>
+		<el-form-item label="名称：">
+			<div class="language-box">
+				<el-input v-model="LeftTreeDialogAdd.name" clearable></el-input>
+				<language v-if="LeftTreeDialogAdd.langkey" :langkey="LeftTreeDialogAdd.langkey" formhash="{FORMHASH}"></language>
+			</div>
+		  	
+		</el-form-item>
+	  	</el-form>
+    <template #footer>
+      <span class="dialog-footer">
+			<el-button @click="LeftTreeDialogAdd.Visible = false" :disabled="LeftTreeDialogAdd.loading">取消</el-button>
+			<el-button type="primary" @click="LeftTreeAdd" :loading="LeftTreeDialogAdd.loading">确定</el-button>
+      </span>
+    </template>
+</el-dialog>
 <div 
 	@mousedown.prevent="LeftdragControllerDiv"
-	:style="{position: 'fixed',height: '100%',width: '4px',top: '0',left: LeftWidth-2+'px',cursor: 'col-resize','z-index': 100}" 
+	:style="{position: 'absolute',height: '100%',width: '4px',top: '0',left: LeftWidth-2+'px',cursor: 'col-resize','z-index': 100}" 
 	ref="leftResize" 
 	id="leftResize"></div>
-	<div v-if="DocumentOverlay" class="el-overlay" style="z-index: 1001;background: transparent;"></div>
+<div v-if="DocumentOverlay.left" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>

@@ -15,6 +15,23 @@ class table_pichome_vapp extends dzz_table
         parent::__construct();
     }
 
+    public function fetchByAppid($appid,$hasdel=1){
+        $appdata = [];
+        //不包含删除状态库
+        if(!$hasdel){
+            $data =  DB::fetch_first('SELECT * FROM %t WHERE appid=%s and isdelete < %d', array($this->_table, $appid,1));
+        }else{
+            $data = parent::fetch($appid);
+        }
+        Hook::listen("vappdataFilter",$data,false);
+        return $data;
+    }
+    public function updateByAppid($appid,$setarr){
+        $setarr['appid'] = $appid;
+        Hook::listen('vappupdateBefore',$setarr);
+        parent::update($appid,$setarr);
+        return $appid;
+    }
     private function code62($x)
     {
         $show = '';

@@ -1,0 +1,99 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "unknown"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "unknown"
+    },
+    {
+        "function": "stream_context_create",
+        "params": [],
+        "return": "@mock-stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            4,
+            "@mock-stream-context"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            5
+        ],
+        "return": true
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return-op": "key-save",
+        "return": 199
+    },
+    {
+        "function": "fgets",
+        "params": [
+            "@mock-stream",
+            1024
+        ],
+        "return-op": "key-respond",
+        "return": "HTTP\/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {key}\r\n\r\n"
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [129, 147]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            4
+        ],
+        "return-op": "chr-array",
+        "return": [33, 111, 149, 174]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            19
+        ],
+        "return-op": "chr-array",
+        "return": [115, 10, 246, 203, 72, 25, 252, 192, 70, 79, 244, 142, 76, 10, 230, 221, 64, 8, 240]
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    }
+]

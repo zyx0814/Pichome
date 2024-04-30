@@ -472,14 +472,13 @@ function dzzdecode($string, $key = '', $ckey_length = 0)
 	);
 返回加密字符串
 */
-function Pencode($params = array(), $expiry = 0, $key = '')
-{
-    $arr = array();
-    foreach ($params as $k => $v) {
-        $arr[] = $k . ':' . $v;
+function Pencode($params=array(),$expiry=0,$key=''){
+    $arr=array();
+    foreach($params as $k => $v){
+        $arr[]=$k.':'.base64_encode($v);
     }
-    if ($arr) {
-        return dzzencode(implode('|', $arr), $key, $expiry);
+    if($arr){
+        return dzzencode(implode('|',$arr),$key,$expiry);
     }
     return '';
 }
@@ -493,18 +492,18 @@ function Pencode($params = array(), $expiry = 0, $key = '')
 	);
 
 */
-function Pdecode($string, $key = '')
-{
-    if (!$str = dzzdecode($string, $key)) return array();
-    $ret = array();
-    if (strpos($str, '|') !== false) {
-        $arr = explode('|', $str);
-        foreach ($arr as $key => $value) {
-            $arr1 = explode(':', $value);
-            $ret[$arr1[0]] = $arr1[1];
+
+function Pdecode($string, $key = ''){
+    if(!$str=dzzdecode($string,$key)) return array();
+    $ret=array();
+    if(strpos($str,'|')!==false){
+        $arr=explode('|',$str);
+        foreach($arr as $key => $value){
+            $arr1=explode(':',$value);
+            $ret[$arr1[0]]=base64_decode($arr1[1]);
         }
-    } else {
-        $ret['path'] = $str;
+    }else{
+        $ret['path']=$str;
     }
     return $ret;
 }
@@ -771,7 +770,7 @@ function random($length, $numeric = 0)
     }
     $max = strlen($seed) - 1;
     for ($i = 0; $i < $length; $i++) {
-        $hash .= $seed{random_int(0, $max)};
+        $hash .= $seed[random_int(0, $max)];
     }
     return $hash;
 }

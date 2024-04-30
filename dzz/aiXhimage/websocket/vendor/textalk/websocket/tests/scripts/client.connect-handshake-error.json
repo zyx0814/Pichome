@@ -1,0 +1,86 @@
+[
+    {
+        "function": "stream_context_create",
+        "params": [],
+        "return": "@mock-stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            4,
+            "@mock-stream-context"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            5
+        ],
+        "return": true
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return-op": "key-save",
+        "return": 199
+    },
+    {
+        "function": "fgets",
+        "params": [
+            "@mock-stream",
+            1024
+        ],
+        "return": false
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": true,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 0,
+            "seekable": false
+        }
+    },
+    {
+        "function": "fclose",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": true
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": ""
+    }
+]

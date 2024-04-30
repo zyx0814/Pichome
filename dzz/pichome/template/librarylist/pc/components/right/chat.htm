@@ -1,0 +1,22 @@
+<div class="questions-answers" ref="questions">
+    <template v-for="item in answerData">
+        <div class="single" :class="{'questions':item.type=='user','answers':item.type=='assistant'}">
+            <div class="time">
+                <el-text size="small" :type="item.type=='user'?'primary':'success'">{{item.name}}</el-text>
+                <el-text size="small" :type="item.type=='user'?'primary':'success'">{{item.time}}</el-text>
+            </div>
+            <div class="message">
+                <template v-if="item.loading">
+                    <el-text tag="p">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </el-text>
+                </template>
+                <template v-else>
+                    <div v-html="item.content"></div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>

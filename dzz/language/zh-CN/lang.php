@@ -335,7 +335,7 @@ $lang = array(
     'position_righttop' => '右上角',
     'position_rightbottom' => '右下角',
     'position_center' => '居 中',
-    'create' => '新建',
+    
     'newdoc' => 'Word 文档',
     'newexcel' => 'Excel 工作表',
     'newpowerpoint' => 'PPT 演示文稿',
@@ -481,6 +481,15 @@ $lang = array(
 	'event_archive' => '{username}归档了 <a href=\'javascript:;\'  onclick="location.hash=\'{hash}\';">{position}</a>',
     'event_unarchive' => '{username}取消了归档 <a href=\'javascript:;\' onclick="location.hash=\'{hash}\';">{position}</a>',
 
-    'default_groupname'=>'默认分类'
+    'default_groupname'=>'默认分类',
+
+
+
+
+    //新增
+    'create' => '新建',
+    'library' => '库',
+    
+    
 );
 ?>

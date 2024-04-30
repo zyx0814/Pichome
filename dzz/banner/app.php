@@ -13,9 +13,6 @@ if ($do == 'filelist') {
     $sql = " from %t  r ";
     $selectsql = " r.rid ";
     $preparams = [];
-    $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle)$wheresql = " r.isdelete < 1 ";
-    else $wheresql = " r.isdelete = 1 ";
     $para = [];
     $params = ['pichome_resources'];
     $havingsql = '';
@@ -24,6 +21,35 @@ if ($do == 'filelist') {
     $perpage = isset($_GET['perpage']) ? intval($_GET['perpage']) : 30;
     $start = ($page - 1) * $perpage;
     $limitsql = "limit $start," . $perpage;
+    $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
+    $wheresql = ' 1 ';
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
+        if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
+            continue;
+        }
+        if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
+            $vappids[] = $v['appid'];
+        }
+    }
+
+
+    $whererangesql = [];
+    //库条件
+    if ($vappids) {
+        $whererangesql[]= '  r.appid in(%n)';
+        $para[] = $vappids;
+    }else{
+        $whererangesql[]= '  0 ';
+    }
+
+    if($whererangesql){
+        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
+    }
+    if(!$isrecycle)$wheresql .= " and r.isdelete = 0 ";
+    else $wheresql .= " and r.isdelete = 1 ";
+
     if (!isset($_GET['order'])) {
         //获取用户默认排序方式
         $sortdata = C::t('user_setting')->fetch_by_skey('pichomesortfileds');
@@ -44,30 +70,7 @@ if ($do == 'filelist') {
     $orderarr = [];
     $orderparams = [];
 
-    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
-    //库权限判断部分
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
-        if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
-            continue;
-        }
-        if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
-            $vappids[] = $v['appid'];
-        }
-    }
 
-    $whererangesql = [];
-    //库栏目条件
-    if ($vappids) {
-        $whererangesql[]= '  r.appid in(%n)';
-        $para[] = $vappids;
-    }else{
-        $whererangesql[]= '  0 ';
-    }
-
-
-    if($whererangesql){
-        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
-    }
     $fids = isset($_GET['fids']) ? trim($_GET['fids']) : '';
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']) : 0;
 

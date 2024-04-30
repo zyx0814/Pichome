@@ -1,0 +1,32 @@
+[
+    {
+        "function": "stream_socket_accept",
+        "params": [
+            "@mock-socket"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "stream_socket_get_name",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "127.0.0.1:12345"
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": false
+    },
+        {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": ""
+    }
+]

@@ -335,7 +335,7 @@ $lang = array(
     'position_righttop' => 'Upper right corner',
     'position_rightbottom' => 'Upper right corner',
     'position_center' => 'centered',
-    'create' => 'new',
+    
     'newdoc' => 'Word document',
     'newexcel' => 'Excel worksheet',
     'newpowerpoint' => 'PPT presentation',
@@ -479,5 +479,12 @@ $lang = array(
 	'savetosuccess'=>' Saved successfully, file path: ',
 	'event_archive' => '{username}archived <a href=\'javascript:;\'  onclick="location.hash=\'{hash}\';">{position}</a>',
     'event_unarchive' => '{username}cancel archive <a href=\'javascript:;\' onclick="location.hash=\'{hash}\';">{position}</a>',
+
+
+  
+
+    //新增
+    'create' => 'new',
+    'library' => 'library',
 );
 ?>

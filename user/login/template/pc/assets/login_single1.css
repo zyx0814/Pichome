@@ -13,6 +13,7 @@ input:-internal-autofill-selected {
 	-webkit-appearance: menulist-button;
     background-color:  transparent !important;
     background-image: none !important;
+	box-shadow: inset 0 0 0 1000px var(--el-input-bg-color, var(--el-fill-color-blank)) !important; 
 }
  .mainContainer{
 	animation-duration: 800ms;
@@ -38,6 +39,7 @@ input:-internal-autofill-selected {
     max-width: 100%; 
     background: var(--el-bg-color); 
 	min-width:320px;
+	max-width:500px;
 }
 .themebtn{
 	position: absolute;

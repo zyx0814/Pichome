@@ -1,0 +1,29 @@
+<div class="marginTop Preview-image-box">
+    <div class="el-space el-space--horizontal" ref="PreviewRef" style="flex-wrap: wrap;margin-bottom: -8px;align-items: center;">
+        <div class="el-space__item add" style="padding-bottom: 8px;margin-right: 8px;">
+            <el-upload
+                class="upload"
+                action=""
+                multiple
+                :auto-upload="false"
+                name="files[]"
+                accept=".gif,.jpeg,.jpg,.png,.svg,.webp"
+                :show-file-list="false"
+                :disabled="item.num?true:false"
+                :on-change="RightPreviewUploadChange">
+                <template #trigger>
+                    <el-button style="width: 50px;height: 50px;overflow: hidden;" plain icon="Plus" v-loading="item.num?true:false"></el-button>
+                </template>
+            </el-upload>
+        </div>
+        <div class="el-space__item" style="padding-bottom: 8px;margin-right: 8px;" v-for="fitem in item.value" :key="fitem.id">
+            <div class="image">
+                <el-image style="width: 50px; height: 50px;border-radius: var(--el-border-radius-base);" :src="fitem.spath" fit="cover" >
+                    <template #error><div class="el-image__placeholder"></div></template>
+                </el-image>
+                <el-icon class="delete" @click="RightPreviewDelete(fitem.id)"><Circle-Close-Filled /></el-icon>
+            </div>
+        </div>
+        
+    </div>
+</div>

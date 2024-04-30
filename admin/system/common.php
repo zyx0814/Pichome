@@ -104,6 +104,8 @@ if($operation == 'getApp'){//获取当前用户应用
 }else{
 	// 地址栏名称
 	$navtitle = $_G['setting']['sitename'];
+	// 地址栏
+	$siteurl = $_G['siteurl'];
 	// 获取hash
 	$hash = FORMHASH;
 	
@@ -179,6 +181,6 @@ if($operation == 'getApp'){//获取当前用户应用
 	// 获取通知
 	$notice_num=DB::result_first("select COUNT(*) from %t where new>0 and uid=%d",array('notification',$_G['uid']));
 
-	exit(json_encode(array('hash'=>$hash,'navMenu'=>$navMenu,'userData'=>$userData,'notice_num'=>$notice_num,'navtitle'=>$navtitle)));
+	exit(json_encode(array('hash'=>$hash,'navMenu'=>$navMenu,'userData'=>$userData,'notice_num'=>$notice_num,'navtitle'=>$navtitle,'siteurl'=>$siteurl)));
 }
 ?>

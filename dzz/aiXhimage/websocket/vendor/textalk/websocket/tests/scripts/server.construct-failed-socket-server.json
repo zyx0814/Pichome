@@ -1,0 +1,20 @@
+[
+    {
+        "function": "stream_socket_server",
+        "params": [
+            "tcp://0.0.0.0:9999",
+            null,
+            null
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_socket_server",
+        "params": [
+            "tcp://0.0.0.0:10000",
+            null,
+            null
+        ],
+        "return": false
+    }
+]

@@ -498,6 +498,12 @@
 							}
 							
 							if(addnum){
+								let index = self.ImageIcon.data.findIndex(function(current){
+									return current == fdata.rid;
+								});
+								if(!fdata.icondata && index < 0){
+									self.ImageIcon.data.push(fdata.rid)
+								}
 								if(!self.LeftCurrenType){
 									self.$refs.RefImageLayout.AppendData(fdata,'unshift');
 									
@@ -525,6 +531,13 @@
 							}
 						}else{
 							if(addnum){
+								let index = self.ImageIcon.data.findIndex(function(current){
+									return current == fdata.rid;
+								});
+								if(!fdata.icondata && index < 0){
+									self.ImageIcon.data.push(fdata.rid)
+								}
+
 								self.$refs.RefImageLayout.AppendData(fdata,'unshift');
 								if(self.LeftCurrenType == 'filelist'){
 									let node = self.$refs.LeftTreeRef.getNode(self.LeftTree.Currentkey);

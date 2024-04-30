@@ -24,10 +24,10 @@ if($operation == 'deletefolder'){//删除目录
     $fid = isset($_GET['fid']) ? trim($_GET['fid']):'';
     $fname = isset($_GET['name']) ? getstr($_GET['name']):'';
     $folderdata = C::t('pichome_folder')->fetch($fid);
-    if(!$fname){
-        exit(json_encode(array('success'=>false,'msg'=>'文件名不能为空!')));
+    if(!$folderdata || !$fname){
+        exit(json_encode(array('success'=>false,'msg'=>'参数不合法!')));
     }
-    C::t('pichome_folder')->update_name_by_fid($fid,$fname);
+    C::t('pichome_folder')->updateByFids($fid,['fname'=>$fname]);
     exit(json_encode(array('success'=>true)));
 }elseif($operation == 'copy'){//粘贴文件
   $iscopy = isset($_GET['iscopy']) ? intval($_GET['iscopy']):1;//是否是复制

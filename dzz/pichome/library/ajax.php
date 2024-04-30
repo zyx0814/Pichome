@@ -1,4 +1,5 @@
 <?php
+global $shapedataarr;
 if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
@@ -44,7 +45,14 @@ if ($operation == 'addsearch') {//增加关键词搜索次数
     }else{
         $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
     }
+    //Hook::listen('getLangKey',$folderdatanum,['fname',1]);
     exit(json_encode(array( 'folderdatanum' => $folderdatanum)));
+}elseif($operation == 'getsearchfoldernum'){
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $pathkeys = isset($_GET['pathkeys']) ? trim($_GET['pathkeys']):'';
+    $pathkeyarr = explode(',',$pathkeys);
+    $data = C::t('pichome_folder')->getFolderNumByPathkey($appid,$pathkeyarr);
+    exit(json_encode(array( 'data' => $data)));
 }elseif($operation == 'searchfolderbyname'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']):'';
@@ -76,8 +84,8 @@ elseif ($operation == 'searchmenu_num') {
         $params = ['pichome_resources'];
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-   if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
-   else $wheresql = " r.isdelete =0  and r.level <= %d ";
+   if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
+   else $wheresql = " r.isdelete =1  and r.level <= %d ";
     $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
     if($ismusic){
         $wheresql .= ' and r.ext in(%n) ';
@@ -928,8 +936,8 @@ elseif ($operation == 'search_menu') {
         exit(json_encode(array()));
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
-    else $wheresql = " r.isdelete =0  and r.level <= %d ";
+    if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
+    else $wheresql = " r.isdelete =1  and r.level <= %d ";
     $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
     if($ismusic){
         $wheresql .= ' and r.ext in(%n) ';
@@ -1382,8 +1390,8 @@ elseif ($operation == 'search_menu') {
         }
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql .= " and r.isdelete < 1 ";
-    else $wheresql .= " and r.isdelete =0 ";
+    if(!$isrecycle) $wheresql .= " and r.isdelete = 0 ";
+    else $wheresql .= " and r.isdelete =1 ";
     $data = array();
     if ($skey == 'tag') {
 
@@ -1942,7 +1950,7 @@ elseif($operation == 'realfianllypath'){
     if(!$imagestatus){
        exit(json_encode(array('success'=>false,'msg'=>'当前存储位置未开启缩略图处理，请开启后再试')));
     }
-    $processname1 = 'PICHOMEGETTHUMB_'.$rid;
+    $processname = 'PICHOMEGETTHUMB_'.$rid;
     if (dzz_process::islocked($processname, 60*5)) {
         exit(json_encode(array('success'=>true,'msg'=>'任务正在执行,请稍后...')));
     }
@@ -2024,14 +2032,110 @@ elseif($operation == 'realfianllypath'){
 }elseif($operation == 'getleftnum'){//获取左侧文件数
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
     $data = ['all'=>0,'nocat'=>0,'notag'=>0,'isrecycle'=>0];
-    $data['notag'] = DB::result_first("select count(distinct(r.rid)) as num from %t r left join %t ra on r.rid=ra.rid 
-        where r.isdelete < 1 and r.appid = %s and (isnull(ra.tag) or ra.tag='')",array('pichome_resources','pichome_resources_attr',$appid));
+
+    $data['notag'] = DB::result_first("select count(distinct(r.rid)) as num from %t r 
+        where r.isdelete = 0 and r.appid = %s and not exists (select 1 from %t ra where ra.rid = r.rid)",array('pichome_resources',$appid,'pichome_resourcestag'));
+
     $data['nocat'] = DB::result_first("select count(rid) as num from %t 
-        where  appid = % and isdelete < 1 and (isnull(fids) or fids='')",array('pichome_resources',$appid));
+        where  appid = %s and isdelete = 0 and (isnull(fids) or fids='')",array('pichome_resources',$appid));
+
     $data['all'] = DB::result_first("select count(rid) as num  from %t 
-        where  appid = % and isdelete < 1",array('pichome_resources',$appid));
+        where  appid = %s and isdelete = 0",array('pichome_resources',$appid));
+
+
     $data['isrecycle'] = DB::result_first("select count(rid) as num  from %t 
-        where  appid = % and isdelete = 1",array('pichome_resources',$appid));
+        where  appid = %s and isdelete = 1",array('pichome_resources',$appid));
+
     $data['tagname'] = DB::result_first("select count(id) from %t where appid = %s",array('pichome_vapp_tag',$appid));
+
     exit(json_encode(['success'=>true,'data'=>$data]));
+}elseif($operation == 'imageAiData'){
+    $rid = isset($_GET['rid']) ? trim($_GET['rid']):'';
+    $tplid = isset($_GET['tplid']) ? intval($_GET['tplid']):0;
+    $aiKey = isset($_GET['aiKey']) ? trim($_GET['aiKey']):'';
+    if(!$tplid){
+        exit(json_encode(['success'=>false,'msg'=>'lowser prompt template id']));
+    }
+    if(!$aiKey){
+        exit(json_encode(['success'=>false,'msg'=>'lowser AI object']));
+    }
+    $force = isset($_GET['isforce']) ? intval($_GET['isforce']):0;
+    $data = Hook::listen('imageAiData',$rid,['isforce'=>$force,'tplid'=>$tplid,'aiKey'=>$aiKey]);
+    if($data[0]['error']){
+        exit(json_encode(['success'=>false,'msg'=>$data[0]['error']]));
+    }else{
+        exit(json_encode(['success'=>true,'data'=>$data[0]]));
+    }
+}elseif($operation == 'getImageAiData'){
+    $rid = isset($_GET['rid']) ? trim($_GET['rid']):'';
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $fid = isset($_GET['fid']) ? trim($_GET['fid']):'';
+    $getConetent = isset($_GET['getContent']) ? $_GET['getContent']:[];
+    $getContentdata = [];
+    foreach($getConetent as $k=>$v){
+        if(!$v['flag'] || !$v['key'] || !$v['tplid']){
+            continue;
+        }else{
+            $getContentdata[] = $v;
+        }
+    }
+    if(!$rid && !$appid && !$fid){
+        exit(json_encode(['success'=>false,'msg'=>'lowser get object']));
+    }
+    if(empty($getContentdata)){
+        exit(json_encode(['success'=>false,'msg'=>'lowser prompt data']));
+    }
+    if($rid) {
+        $idval = $rid;
+        $idtype = 0;
+    }elseif($fid){
+        $idval = $fid;
+        $idtype = 1;
+    }elseif($appid){
+        $idval = $appid;
+        $idtype = 2;
+    }
+    $setarr = [
+        'idval'=>$idval,
+        'idtype'=>$idtype,
+        'getContent'=>serialize($getContentdata),
+        'uid'=>getglobal('uid'),
+        'dateline'=>TIMESTAMP
+    ];
+    $id = C::t('ai_cron')->insertData($setarr);
+    if($id){
+        dfsockopen(getglobal('localurl') . 'misc.php?mod=aicrontotask&id='.$id, 0, '', '', false, '', 0.5);
+        exit(json_encode(['success'=>true]));
+    }else{
+        exit(json_encode(['success'=>false,'error'=>'do failed']));
+    }
+
+}elseif($operation == 'getTaskByAppid'){
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $taskarr = [
+        '改名',
+        '打标签',
+        '写描述',
+    ];
+    $datanums = [];
+    $aitaskdata = C::t('ai_task')->fetchNumByAppid($appid);
+    foreach($taskarr as $k=>$v){
+        $datanums[] = ['lablename'=>$taskarr[$k],'data'=>$aitaskdata[$k] ? intval($aitaskdata[$k]):0];
+    }
+    $queryInterval = 0;
+    //计算待生成缩略图总文件数
+    $filenum = DB::result_first("select count(rid) as num from %t where appid = %s and isdelete = 0",array('pichome_resources',$appid));
+    $getthumbnum = DB::result_first("select count(t.rid) from %t t left join %t r on r.rid=t.rid where
+      r.appid = %s and t.sstatus = %d and r.isdelete = 0",['thumb_record','pichome_resources',$appid,1]);
+    if($getthumbnum < $filenum) $queryInterval = 3;
+    if(!$queryInterval){
+        foreach($datanums as $v){
+            if($v['data']){
+                $queryInterval = 3;
+                break;
+            }
+        }
+    }
+    $datanums[] = ['lablename'=>'生成缩略图','data'=>$getthumbnum.'/'.$filenum];
+    exit(json_encode(['success'=>true,'data'=>$datanums,'queryInterval'=>$queryInterval]));
 }

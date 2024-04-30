@@ -45,6 +45,7 @@ class table_pichome_folder extends dzz_table
                     $return = ['fid'=>$fid,'level'=>$level,'pathkey'=>$setarr['pathkey']];
                 }
            // }
+             Hook::listen('folderdataFilter',$return,true);
             return $return;
     }
 
@@ -140,6 +141,12 @@ class table_pichome_folder extends dzz_table
             $hookdatad = ['appid'=>$folder['appid']];
             Hook::listen("delpichomefolderafter",$hookdatad);
         }
+    }
+    public function updateByFids($fids,$setarr){
+        if(!is_array($fids)) $fids = array($fids);
+        Hook::listen('folderupdateBefore',$setarr,$fids);
+        if($setarr) parent::update($fids,$setarr);
+        return true;
     }
     public function update_name_by_fid($fid,$name){
         if(!$folder = parent::fetch($fid)) return false;
@@ -249,48 +256,16 @@ class table_pichome_folder extends dzz_table
 
     public function fetch_all_folder_by_appid($appid,$pfid='',$i=1){
         if($i>5) return [];
-        foreach(DB::fetch_all("select fid,fname,pathkey,pfid,`level` as perm from %t where appid = %s and password = '' and pfid = %s",array($this->_table,$appid,$pfid)) as $v){
+        foreach(DB::fetch_all("select fid,fname,pathkey,pfid,`level` as perm from %t where appid = %s and password = '' and pfid = %s order by disp asc",array($this->_table,$appid,$pfid)) as $v){
             $v['level'] = $i;
             $j = $i+1;
             $v['children'] = $this->fetch_all_folder_by_appid($appid,$v['fid'],$j);
             $returndata[] = $v;
         }
+        Hook::listen('folderdataFilter',$returndata);
         return $returndata;
     }
-  /*  public function fetch_folder_by_appid_pfid($appid,$pfid=[]){
-        global $_G;
-        $ulevel = ($_G['uid']) ? $_G['pichomelevel']:0 ;
-        $folderdata = [];
-        if(!empty($pfid)){
-            foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,`level` as perm from %t where appid = %s and pfid in(%n) order by disp asc",array($this->_table,$appid,$pfid)) as $v){
-               $v['nosubfilenum'] =  DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t r on fr.rid = r.rid
-                    where fr.appid = %s  and fr.fid  = %s and r.level <= %d",array('pichome_folderresources','pichome_resources',$appid,$v['fid'],$ulevel));
-                $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t f on fr.fid = f.fid
-                    left join %t r on fr.rid = r.rid
-                    where fr.appid = %s and f.pathkey  like %s and r.level <= %d ",array('pichome_folderresources','pichome_folder','pichome_resources',$appid,$v['pathkey'].'%',$ulevel));
-                $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
-                $folderdata[] = $v;
 
-            }
-        }else{
-            foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,`level` as perm from %t where appid = %s and pfid = '' order by disp asc",array($this->_table,$appid)) as $v){
-                $v['nosubfilenum'] =  DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t r on fr.rid = r.rid
-                    where fr.appid = %s and fr.fid  = %s and r.level <= %d ",array('pichome_folderresources','pichome_resources',$appid,$v['fid'],$ulevel));
-                $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t f on fr.fid = f.fid
-                    left join %t r on fr.rid = r.rid
-                    where fr.appid = %s  and f.pathkey  like %s and r.level <= %d",array('pichome_folderresources','pichome_folder','pichome_resources',$appid,$v['pathkey'].'%',$ulevel));
-                $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
-
-                $folderdata[] = $v;
-
-            }
-        }
-        return $folderdata;
-    }*/
 
     public function fetch_folder_by_appid_pfid($appid,$pfid=[]){
 
@@ -298,24 +273,34 @@ class table_pichome_folder extends dzz_table
 
         if(!empty($pfid)){
             foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum,level as perm from %t where appid = %s and pfid in(%n) order by disp asc",array($this->_table,$appid,$pfid)) as $v){
-                $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t f on fr.fid = f.fid left join %t r on r.rid=fr.rid
-                    where fr.appid = %s and f.pathkey  like %s and r.isdelete < 1",array('pichome_folderresources','pichome_folder','pichome_resources',$appid,$v['pathkey'].'%'));
+                $v['filenum'] = 0;
                 $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
                 $folderdata[] = $v;
 
             }
         }else{
             foreach(DB::fetch_all("select fid,fname,pathkey,appid,pfid,filenum as nosubfilenum,level as perm from %t where appid = %s and pfid = '' order by disp asc",array($this->_table,$appid)) as $v){
-                $v['filenum'] = DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr 
-                    left join %t f on fr.fid = f.fid left join %t r on r.rid=fr.rid
-                    where fr.appid = %s and f.pathkey  like %s and r.isdelete < 1",array('pichome_folderresources','pichome_folder','pichome_resources',$appid,$v['pathkey'].'%'));
+                $v['filenum'] = 0;
                 $v['leaf'] = DB::result_first("select count(*) from %t where pfid = %s",array($this->_table,$v['fid'])) ? false:true;
                 $folderdata[] = $v;
-
             }
+
         }
         return $folderdata;
+    }
+
+    public function getFolderNumByPathkey($appid,$pathkey){
+        if(!is_array($pathkey))$pathkey = (array)$pathkey;
+        $returndata = [];
+        foreach($pathkey as $v){
+            $filenum =  DB::result_first("SELECT count(DISTINCT fr.rid) FROM %t fr
+                     left join %t r on r.rid=fr.rid
+                    where fr.appid = %s and fr.pathkey  like %s and r.isdelete = 0 ",array('pichome_folderresources','pichome_resources',$appid,$v.'%'));
+            $returndata[] = ['pathkey'=>$v,'filenum'=>$filenum];
+        }
+
+        return $returndata;
+
     }
 
     public function search_by_fname($keyword,$appid=''){
@@ -458,7 +443,7 @@ class table_pichome_folder extends dzz_table
     }
     public function update_data_by_fids($appid,$fids,$data){
         if(!is_array($fids)) $fids = (array)$fids;
-        if(parent::update($fids,$data)){
+        if($this->updateByFids($fids,$data)){
             $hookindex = ['fids'=>$fids,'appid'=>$appid];
             Hook::listen('updatedataafter',$hookindex);
         }
@@ -483,5 +468,17 @@ class table_pichome_folder extends dzz_table
         } else {
             DB::query("update %t set filenum=filenum-%d where fid IN(%n)", array($this->_table, abs($ceof), $fids));
         }
+    }
+    public function getDataByFids($fids){
+        if(!is_array($fids)) $fids = (array)$fids;
+        $fids = array_unique($fids);
+        $fids = array_filter($fids);
+        $folders = [];
+        foreach(DB::fetch_all("select fid,fname,pathkey,level,cover,filenum from %t where fid in(%n)",array($this->_table,$fids)) as $v){
+            $folders[$v['fid']] = $v;
+        }
+        Hook::listen('folderdataFilter',$folders,true);
+        return $folders;
+
     }
 }

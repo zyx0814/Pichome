@@ -84,10 +84,14 @@
             return true;
         }
         public function update_by_rids($appid,$rids,$setarr){
-            if(!is_array($rids)) $rids = (array)$rids;
-            foreach($rids as $v){
-                $this->update_by_rid($appid,$v,$setarr);
+            if(!is_array($rids)) $rids = array($rids);
+            Hook::listen('resourcesupdateBefore',$setarr,$rids);
+            if($setarr){
+                foreach($rids as $v){
+                    $this->update_by_rid($appid,$v,$setarr);
+                }
             }
+
         }
         public function update_searchval_by_rid($rid){
             $searchval = '';

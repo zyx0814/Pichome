@@ -13,18 +13,19 @@ if($operation == 'getfolderdata'){//获取右侧信息
     $data = ['num'=>0,'size'=>0];
     if($nofolder){
         $data = DB::fetch_first("select count(r.rid) as num,sum(r.size) as size from %t r left join %t rf on r.rid=rf.rid 
-        where isnull(rf.id) and r.appid = %s and r.isdelete < 1",array('pichome_resources','pichome_folderresources',$appid));
+        where isnull(rf.id) and r.appid = %s and r.isdelete = 0",array('pichome_resources','pichome_folderresources',$appid));
 
     }elseif($notag){
         $data = DB::fetch_first("select count(distinct(r.rid)) as num ,sum(r.size) as size from %t r left join %t rt on r.rid=rt.rid 
-        where isnull(rt.id) and r.appid = %s and r.isdelete < 1",array('pichome_resources','pichome_resourcestag',$appid));
+        where isnull(rt.id) and r.appid = %s and r.isdelete = 0",array('pichome_resources','pichome_resourcestag',$appid));
     }elseif($fid){
             $fids = explode(',',$fid);
             $folderdata = [];
             $i = 0;
             $o = [];
-            foreach(DB::fetch_all("select fname,tag,`desc`,dateline from %t where fid in(%n)",array('pichome_folder',$fids)) as $v){
+            foreach(DB::fetch_all("select fname,tag,`desc`,dateline,appid from %t where fid in(%n)",array('pichome_folder',$fids)) as $v){
                 $ids= $v['tag'] ? explode(",", $v['tag']):array();
+                if(!$appid) $appid = $v['appid'];
                 if($i==0){
                     $o['tag']=$ids;
                     $o['desc']=$v['desc'];
@@ -48,18 +49,22 @@ if($operation == 'getfolderdata'){//获取右侧信息
                 }
             }
             unset($o['tag']);
-        if($hassub){
+       // if($hassub){
             $nfids = [];
             foreach(DB::fetch_all("select pathkey from %t where fid in(%n)",array('pichome_folder',$fids)) as $value){
                 foreach(DB::fetch_all("select fid from %t where pathkey like %s",array('pichome_folder',$value['pathkey'].'%')) as $v){
                     $nfids[] = $v['fid'];
                 }
             }
-            $fids = $nfids;
-        }
+            //$fids = $nfids;
+       // }
         $data = DB::fetch_first("select count(distinct(r.rid)) as num,sum(r.size) as size from %t r left join %t rf on r.rid=rf.rid 
-        where r.appid = %s and rf.fid in(%n) and r.isdelete < 1", array('pichome_resources', 'pichome_folderresources', $appid, $fid));
+        where r.appid = %s and rf.fid in(%n) and r.isdelete = 0", array('pichome_resources', 'pichome_folderresources', $appid, $nfids));
+        $data['foldernum'] = (count($fids) > 1) ? count($nfids):count(array_diff($nfids,$fids));
         $data = array_merge($o,$data);
+        //如果有文件才提供ai获取
+        if(count($fids) == 1 && $data['num']) $data['fid'] = $nfids;
+        Hook::listen('editfilefilter',$data,['type'=>'folder','appid'=>$appid]);
 
     }elseif($isrecycle){
         $data = DB::fetch_first("select count(rid) as num,sum(size) as size from %t 
@@ -67,9 +72,15 @@ if($operation == 'getfolderdata'){//获取右侧信息
     }else{
         $data = DB::fetch_first("select count(rid) as num,sum(size) as size from %t 
         where  appid = % and isdelete < 1",array('pichome_resources',$appid));
+        if($data['num']) $data['appid'] = $appid;
+        Hook::listen('editfilefilter',$data,['type'=>'vapp','appid'=>$appid]);
     }
     $data['size'] = formatsize($data['size']);
 	$data['dateline'] = dgmdate(round($data['dateline'] / 1000), 'Y/m/d H:i');
+
+    if(!$data['fid']) $data['fid'] =($nfids) ? array_intersect($fids,$nfids):$fids;
+    Hook::listen('folderdataFilter',$data,false);
+
    exit(json_encode($data));
 }elseif($operation == 'getfiledata'){//获取文件右侧信息
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
@@ -79,12 +90,19 @@ if($operation == 'getfolderdata'){//获取右侧信息
         if(count($rids) > 1){
             //获取文件标签和描述链接信息
             $o['fileds'] = unserialize($appdata['fileds']);
-           $d = $oc = [];
+            $filedFlags = array_column($o['fileds'],'flag');
+            $filedsKey = array_search('preview',$filedFlags);
+            unset($o['fileds'][$filedsKey]);
+            $o['fileds'] = array_values($o['fileds']);
+          $aiFilterdata =  $d = $oc = [];
             $link = $desc = '';
             $grade = $size = 0;
-            foreach(DB::fetch_all("select r.rid,r.fids,r.size,r.grade,r.appid,attr.tag,attr.desc,attr.link from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
+            foreach(DB::fetch_all("select r.rid,r.ext,r.fids,r.size,r.grade,r.appid,attr.tag,attr.desc,attr.link from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
                 $ids= $value['tag'] ? explode(",", $value['tag']):array();
                 $fids= $value['fids'] ? explode(",", $value['fids']):array();
+                $aiFilterdata['rid'][] = $value['rid'];
+                $aiFilterdata['exts'][] = $value['ext'];
+                if(!$appid) $appid = $value['appid'];
                 $o['icondata'][] = C::t('pichome_resources')->geticondata_by_rid($value['rid'],1);
                 if($i==0){
                     $o['tags']=$ids;
@@ -112,15 +130,8 @@ if($operation == 'getfolderdata'){//获取右侧信息
                     $o['tagdata'][$v['tid']] = $v['tagname'];
                 }
             }
-            //print_r($o['fids']);die;
             if($o['fids']){
-
-                $o['folderdata'] = [];
-                foreach(DB::fetch_all("select fname,fid,pathkey from %t where fid in(%n)",array('pichome_folder',$o['fids'])) as $v){
-                    $o['folderdata'][$v['fid']]['fname'] = $v['fname'];
-                    $o['folderdata'][$v['fid']]['pathkey'] = $v['pathkey'];
-
-                }
+                $o['folderdata'] = C::t('pichome_folder')->getDataByFids($o['fids']);
             }
             unset($o['tags']);
             unset($o['fids']);
@@ -151,10 +162,26 @@ if($operation == 'getfolderdata'){//获取右侧信息
                     }
                 }
             }
+            if(!$o['rid']) $o['rid'] = $rids;
+
+            Hook::listen('editfilefilter',$aiFilterdata,['type'=>'files','appid'=>$appid]);
+
+            $o = array_merge($o,$aiFilterdata);
+            Hook::listen('resourcesdataFilter',$o,false);
 			exit(json_encode($o));
         }else{
             $data = C::t('pichome_resources')->fetch_by_rid($rids[0],1,1);
             $data['fileds'] = unserialize($appdata['fileds']);
+            global  $Types;
+            $notallowPreviewexts = array_merge($Types['document'],$Types['video'],$Types['audio']);
+            if(in_array($data['ext'],$notallowPreviewexts)){
+                $filedFlags = array_column($data['fileds'],'flag');
+                $filedsKey = array_search('preview',$filedFlags);
+                unset($data['fileds'][$filedsKey]);
+            }
+            $data['fileds'] = array_values($data['fileds']);
+            $data['preview'] =  C::t('thumb_preview')->fetchPreviewByRid($rids[0],1);
+            $data['allowcover'] = ($data['apptype'] == 1 || $data['apptype'] == 3) ? 1 : 0;
             //获取tab数据
             $tabstatus = 0;
             Hook::listen('checktab', $tabstatus);
@@ -171,6 +198,9 @@ if($operation == 'getfolderdata'){//获取右侧信息
                     }
                 }
             }
+            $aiFilterdata = ['rid'=>[$data['rid']],'exts'=>[$data['ext']]];
+            Hook::listen('editfilefilter',$aiFilterdata,['type'=>'file','appid'=>$data['appid']]);
+            $data = array_merge($data,$aiFilterdata);
 			exit(json_encode($data));
         }
         

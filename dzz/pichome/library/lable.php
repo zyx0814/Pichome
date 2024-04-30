@@ -81,7 +81,7 @@ if($operation == 'save'){
                 }
                 $returndata = ['fid'=>[$fid],'tag'=>$tagdatas];
             }
-        }elseif($flag == 'desc'){
+        }elseif($flag == 'desc' || $flag == 'name'){
             $attrs = [
                 $flag => getstr($val)
             ];
@@ -174,30 +174,30 @@ if($operation == 'save'){
                         break;
                     case 'desc':
                         foreach(DB::fetch_all("select r.rid,r.name,attr.link from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
-                            $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
+                          /*  $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
                             $attr['searchval'] = $value['name'].$value['link'].getstr($val,255).implode('',$annotationdatas);
-                            $attr = array_merge($attr,$attrs);
-                            C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
+                            $attr = array_merge($attr,$attrs);*/
+                            C::t('pichome_resources_attr')->update_by_rids($appid,$value['rid'],$attrs);
                             $returndata[]=['rid'=>$value['rid'],'desc'=>$val];
                         }
                         break;
                     case 'link':
                         foreach(DB::fetch_all("select r.rid,r.name,attr.desc from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
-                            $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
+                           /* $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
                             $attr['searchval'] = $value['name'].getsrt($value['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
-                            $attr = array_merge($attr,$attrs);
+                            $attr = array_merge($attr,$attrs);*/
 
-                            C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
+                            C::t('pichome_resources_attr')->update_by_rids($appid,$value['rid'],$attrs);
                             $returndata[]=['rid'=>$value['rid'],'link'=>$val];
                         }
                         break;
                     case 'name':
                         foreach(DB::fetch_all("select r.rid,attr.link,attr.desc from %t r LEFT JOIN %t attr ON r.rid=attr.rid   where r.rid IN(%n)",array('pichome_resources','pichome_resources_attr',$rids)) as $value){
-                            $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
-                            $attr['searchval'] = $value['link'].getstr($value['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
-                            $attr = array_merge($attr,$attrs);
+                            //$annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($value['rid']);
+                           /* $attr['searchval'] = $value['link'].getstr($value['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
+                            $attr = array_merge($attr,$attrs);*/
                             C::t('pichome_resources')->update_by_rids($appid,$value['rid'],$attrs);
-                            C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
+                           // C::t('pichome_resources_attr')->update_by_rid($appid,$value['rid'],$attr);
                             $returndata[]=['rid'=>$value['rid'],'name'=>$val];
                         }
 
@@ -284,7 +284,8 @@ if($operation == 'save'){
                     $rtag = ['appid' => $appid, 'rid' => $rid, 'tid' => $v,'gid'=>$gid];
                     C::t('pichome_resourcestab')->insert($rtag);
                 }
-            }elseif($flag == 'tag'){
+            }
+            elseif($flag == 'tag'){
                 $attrdata = C::t('pichome_resources_attr')->fetch($rid);
                 $datatags = explode(',',$attrdata['tag']);
                 $ntags = explode(',',$attrs['tag']);
@@ -309,7 +310,8 @@ if($operation == 'save'){
                 }
                 $returndata = ['rid'=>$rid,'tag'=>$tagdatas];
 
-            }elseif($flag == 'fid'){
+            }
+            elseif($flag == 'fid'){
                 $resourcesdata = C::t('pichome_resources')->fetch($rid);
                 $datafolders = explode(',',$resourcesdata['fids']);
                 $nfolders = explode(',',$val);
@@ -354,14 +356,14 @@ if($operation == 'save'){
                 $annotationdatas = C::t('pichome_comments')->fetch_annotation_by_rid($rid);
                 if($flag == 'name'){
                     C::t('pichome_resources')->update_by_rids($appid,$rids,$attrs);
-                    $attr['searchval'] = $resourcesattrdata['link'].getsrt($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
-                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attr);
+                   /* $attr['searchval'] = $resourcesattrdata['link'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
+                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attr);*/
                 }elseif($flag == 'desc'){
-                    $attrs['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['name'].getstr($val,255).implode('',$annotationdatas);
-                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);
+                    //$attrs['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['name'].getstr($val,255).implode('',$annotationdatas);
+                    C::t('pichome_resources_attr')->update_by_rids($appid,$rid,$attrs);
                 }elseif($flag == 'link'){
-                    $attrs['searchval'] = $resourcesattrdata['name'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
-                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);
+                   /* $attrs['searchval'] = $resourcesattrdata['name'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
+                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);*/
                 }
                 $returndata[] = ['rid'=>$rid,$flag=>$val];
             }
@@ -482,6 +484,7 @@ if($operation == 'save'){
                 $result['hots'] = intval($hots);
                 
             }
+            $result['langkey'] = ['tagname'=>'tag_'.$result['tid']];
             $data[] =  $result;
         }else{
             $setarr = array(
@@ -507,6 +510,7 @@ if($operation == 'save'){
             C::t('pichome_vapp_tag')->insert($tagvapp);
             $setarr['tid'] = $id;
             $setarr['hots'] = 0;
+            $setarr['langkey'] = ['tagname'=>'tag_'.$setarr['tid']];
             $data[] =  $setarr;
         }
     }

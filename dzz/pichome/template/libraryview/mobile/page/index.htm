@@ -35,7 +35,6 @@
 				id="main_scrollbar" 
 				ref="MainscrollbarRef" 
 				@scroll="HandleElScrollbar">
-				
 				<el-affix 
 					class="dzz-affix" 
 					target="#main_scrollbar>.el-scrollbar__wrap" 
@@ -52,8 +51,8 @@
 							placement="bottom"
 							trigger="click"
 							popper-class="isdropdown header-dropdown-menu"
-							@show="screenvisible(true)"
-							@hide="screenvisible(false)">
+							@show="handleDocumentOverlay(true)"
+							@hide="handleDocumentOverlay(false)">
 							<comsort
 								:iscolumn="false"
 								:defaultval="HeaderRightBtnShow"
@@ -74,17 +73,19 @@
 							:headerkeyword="HeaderKeyword"
 							:defaultparam="ScreenParam"
 							@submit="CommonGetImageData"
-							@visible="screenvisible"
+							@visible="handleDocumentOverlay"
 							:hassub="hassub"
 							@handlehassub="handlehassub">
 						</dzz-screen>
 					</el-header>
 				</el-affix>
-				<el-main style="--el-main-padding: 0;">
+				<el-main style="--el-main-padding: 0;position: relative;overflow: hidden;">
 					<!--{template libraryview/mobile/components/index/image}-->
+					
 				</el-main>
 				<el-backtop v-show="!backtop" target="#main_scrollbar>.el-scrollbar__wrap" :right="20" :bottom="80"></el-backtop>
 			</el-scrollbar>
+			<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 		</el-container>
 		<el-header class="page-header"  height="50px" style="border:0;border-top: var(--el-border);">
 			<div class="page-header" style="height: 100%;width: 100%;border: 0;padding: 0;">
@@ -95,7 +96,7 @@
 	
     <!--{template libraryview/mobile/components/index/screen/Jsindex}-->
 	<!--{template libraryview/mobile/components/index/common}-->
-	<div v-if="DocumentOverlay" class="el-overlay" style="z-index: 1001;background: transparent;"></div>
+	
 </div>
 <script>
 	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
@@ -125,7 +126,10 @@
 				},
 				rollingdire:'up',
 				HeaderKeyword:'',
-				DocumentOverlay:false,
+				DocumentOverlay:{
+					screen:false,
+					main:false,
+				},
 
 				beforeScrollTop:0,
 				topValue:0,
@@ -232,7 +236,15 @@
 			},
 			handlehassub(status){
 				this.hassub = parseInt(status);
-			}
+			},
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			},
 		},
 		
 		mounted(){

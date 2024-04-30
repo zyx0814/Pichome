@@ -1417,6 +1417,10 @@ $lang = array
 	'imgwater_image_watermark_preview'=>'Preview watermark effect',
 	'imgwater_image_watermark_preview_tips'=>'Please submit and preview',
 	
+	//管理员登录页
+	'title_admincp'=>'Administrator login entry',
+	'login_cplock' => 'Your admin panel is locked! <br>Please revisit after <b> {ltime} </b> seconds',
+	
 );
 
 

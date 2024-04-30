@@ -83,6 +83,11 @@ const Tmpslide = {
                                 <el-option v-for="item in typecollection.alonepage" :label="item.pagename" :value="item.id" :key="item.id"></el-option>
                             </el-select>
                         </template>
+                        <template v-else-if="parseInt(scope.row.link) == 4">
+                            <el-select v-model="scope.row.linkval" style="width: 100%">
+                                <el-option v-for="item in typecollection.tab" :label="item.name" :value="item.gid" :key="item.gid"></el-option>
+                            </el-select>
+                        </template>
                         <template v-else-if="parseInt(scope.row.link) == 3">
                             <el-cascader 
                                 style="width: 100%"

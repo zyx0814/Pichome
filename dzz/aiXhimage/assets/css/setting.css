@@ -1,0 +1,62 @@
+.maxWidth {
+  width: 500px;
+}
+
+.tipTxt {
+  display: block;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.avatarstatus {
+  width: 100%;
+  height: 100%;
+}
+
+.avatarstatus .img-circle {
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.page-content .Topcarousel {
+  line-height: 148px;
+}
+
+.el-form-item__content {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.prompt-ul .prompt-li {
+  max-width: 800px;
+  border: 1px solid var(--el-border-color);
+  background-color: var(--el-bg-color);
+  padding: 10px;
+  border-radius: var(--el-border-radius-base);
+  margin-bottom: 10px;
+}
+.prompt-ul .prompt-li .move {
+  height: 32px;
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.prompt-ul .prompt-li .input-box {
+  flex: 1;
+}
+.prompt-ul .prompt-li .operation {
+  text-align: right;
+}
+
+.Prompt-add {
+  width: 100%;
+  max-width: 800px;
+}
+.Prompt-add .el-button {
+  width: 100%;
+  margin: 15px 0;
+}
+
+/*# sourceMappingURL=setting.css.map */

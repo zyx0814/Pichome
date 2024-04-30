@@ -24,12 +24,19 @@ class table_form_setting_filedcat extends dzz_table
         $data=parent::fetch($id);
         return $data;
     }
+    public function updateById($ids,$setarr){
+        if(!is_array($ids)) $ids = (array)$ids;
+        Hook::listen('filedcatupdateBefore',$setarr,$ids);
+        if($setarr) parent::update($ids,$setarr);
+        return true;
 
+    }
     public function fetch_all_by_tabgroupid($tabgroupid){
         $data=array();
         foreach(DB::fetch_all("select * from %t where tabgroupid = %d order by disp",array($this->_table,$tabgroupid)) as $value){
             $data[$value['id']]=$value;
         }
+        Hook::listen("filedcatFilter",$data);
         return $data;
     }
     public function delete_by_id($id,$field){

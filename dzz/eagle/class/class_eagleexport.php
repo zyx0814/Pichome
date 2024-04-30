@@ -355,6 +355,7 @@ class eagleexport
 
                         //如果是删除状态，并且已有数据则执行删除
                         if ($filemetadata['isDeleted']) {
+
                             if ($rid) C::t('pichome_resources')->delete_by_rid($rid);
                         } else {
                             //如果不是新生成rid

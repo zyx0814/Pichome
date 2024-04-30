@@ -248,7 +248,7 @@ class io_dzz extends io_api
 				}
 			}
         }
-        
+
         private static function saveCache($path, $str)
         {
             global $_G;
@@ -263,10 +263,10 @@ class io_dzz extends io_api
 				), false, true);
 			}
 		}
-        
+
         private static function deleteCache($path)
         {
-	
+
             $cachekey = 'dzz_upload_' . md5($path);
 			if(memory('check')){
 				memory('rm',$cachekey);
@@ -594,6 +594,7 @@ class io_dzz extends io_api
     public function getMeta($path, $getimagedata = 0)
     {
         if(strpos($path, 'attach::') === 0){
+            global $Types;
             $attachment = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
             $bz = io_remote::getBzByRemoteid($attachment['remoteid']);
             $data = array(
@@ -606,7 +607,15 @@ class io_dzz extends io_api
                 'path'=>$bz.$attachment['attachment'],
                 'aid'=>$attachment['aid']
             );
-            return $data;
+            $imginfo = array();
+            if ($getimagedata && (in_array($attachment['filetype'], $Types['commonimage']) || in_array($attachment['filetype'], $Types['image']))) {
+                //获取图片信息，以取得宽高
+                $imgpath  =IO::getStream($path);
+                $imgdata = @getimagesize($imgpath);
+                $imginfo['width'] = isset($imgdata[0]) ? $imgdata[0] : 0;
+                $imginfo['height'] = isset($imgdata[1]) ? $imgdata[1] : 0;
+            }
+            return array_merge($data, $imginfo);
         }elseif(preg_match('/^\w{32}$/i',$path)){
             $data = C::t('pichome_resources')->fetch_data_by_rid($path);
             return $data;
@@ -738,21 +747,21 @@ class io_dzz extends io_api
             $attach = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
             if($attach['remote'] > 0){
                 $bz = io_remote::getBzByRemoteid($attach['remote']);
-                return IO::getFileUri($bz.$attach['attachment']);
+                $uri =  IO::getFileUri($bz.$attach['attachment']);
             }else{
-                return getglobal('setting/attachurl') . $attach['attachment'];
+                $uri =  getglobal('setting/attachurl') . $attach['attachment'];
             }
 
         }elseif(preg_match('/^\w{32}$/',$path)){
             $resources = C::t('resources')->fetch_data_by_rid($path);
-            return IO::getFileUri($resources['path']);
+            $uri =  IO::getFileUri($resources['path']);
         }elseif(strpos($path, 'dzz::') === 0){
             $path = str_replace('dzz::','',$path);
-            return getglobal('setting/attachurl') . $path;
+            $uri =  getglobal('setting/attachurl') . $path;
         }else{
-            return $path;
+            $uri =  $path;
         }
-
+        return preg_match( '/^http(s)?:\\/\\/.+/',$uri) ? $uri:getglobal('siteurl') .$uri;
     }
 
     //获取文件的真实地址
@@ -772,7 +781,7 @@ class io_dzz extends io_api
             $path = str_replace('dzz::','',$path);
             return getglobal('setting/attachdir') . $path;
         }elseif(preg_match('/^\w{32}$/',$path)){
-            $resources = C::t('resources')->fetch_data_by_rid($path);
+            $resources = C::t('pichome_resources')->fetch_data_by_rid($path);
             return IO::getStream($resources['path']);
         }else{
             return $path;
@@ -1084,7 +1093,7 @@ class io_dzz extends io_api
         $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
         $thumbpath = $bz.$thumbpath;
         if($thumbpath){
-            $img = IO::getFileuri($thumbpath);
+            $img = IO::getFileUri($thumbpath);
             if ($returnurl) return $img;
             else IO::output_thumb($img);
         }else{
@@ -1345,6 +1354,142 @@ class io_dzz extends io_api
         if ($returnurl) return $img;
         else IO::output_thumb($img);
     }
+    public function getPreviewThumb($rdata, $thumbsign='', $original = false, $returnurl = false, $create = 0,  $thumbtype = 1, $extraparams = array(), $filesize = 0)
+    {
+        global $_G;
+        if (!$data = IO::getMeta('attach::'.$rdata['aid'])) return false;
+        $filesize = $data['size'];
+        $filepath = $data['path'];
+        $wp = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarkstatus']:'';
+        $wt = $_G['setting']['IsWatermarkstatus'] ? $_G['setting']['watermarktype']:'';
+        $wcontent = $_G['setting']['IsWatermarkstatus'] ? ($_G['setting']['watermarktype'] == 'png' ? $_G['setting']['waterimg']:$extraparams['position_text']):'';
+        //水印图md5或者水印文字
+        $watermd5 = '';
+        if($extraparams['watermarkstatus']){
+            $watermd5 = !$extraparams['watermarktext'] ? $_G['setting']['watermd5']:($extraparams['watermarktext'] ? $extraparams['watermarktext']:$_G['setting']['watermarktext']);
+        }
+        //水印参数处理
+        $extraparams['position_text'] = $extraparams['position_text'] ? $extraparams['position_text']:$wcontent;
+        $extraparams['position'] = $extraparams['position'] ? $extraparams['position']:$wp;
+        $extraparams['watermarkstatus'] = $extraparams['watermarkstatus'] ?$extraparams['watermarkstatus']:$_G['setting']['IsWatermarkstatus'];
+        $extraparams['watermarktype'] = $extraparams['watermarktype'] ?$extraparams['watermarktype']:$wt;
+        $extraparams['watermarktext'] = $extraparams['watermarktext'] ? $extraparams['watermarktext']:'';
+        //宽高值获取，原图默认为0
+        $data['thumbsign'] = $thumbsign;
+        $defaultspace = $_G['setting']['defaultspacesetting'];
+        if($thumbsign){
+            $width =   $_G['setting']['thumbsize'][$thumbsign]['width'];
+            $height =   $_G['setting']['thumbsize'][$thumbsign]['height'];
+        }else{
+            $width = $height = 0;
+        }
+        $thumbpath = '';
+        if($thumbsign == 'small' && $rdata['sstatus']){//小图
+            $thumbpath = $rdata['spath'];
+        }elseif($thumbsign == 'large' && $rdata['lstatus']){//大图
+            $thumbpath = $rdata['lpath'];
+        }
+
+        // //尝试从缓存表获取数据
+        if(!$thumbpath){
+            $thumbarr = [
+                'width'=>$width,
+                'height'=>$height,
+                'aid'=>$data['aid'],
+                'thumbtype'=>$thumbtype,
+                'watermd5'=>$watermd5,
+            ];
+            $cachedata = C::t('thumb_cache')->fetch_data_by_thumbparam($thumbarr);
+            if($cachedata){
+                $bz = io_remote::getBzByRemoteid($cachedata['remoteid']);
+                $thumbpath = $bz.$cachedata['path'];
+                if($thumbsign == 'small'){
+                    $thumbarr = [
+                        'spath'=>$thumbpath,
+                        'sstatus'=>1,
+                        'scacheid'=>$cachedata['id'],
+                        'sremoteid'=>$cachedata['remoteid'],
+                        'sdateline'=>TIMESTAMP,
+                        'schk'=>0,
+                        'schktimes'=>0
+                    ];
+                }elseif($thumbsign == 'large'){
+                    $thumbarr = [
+                        'lpath'=>$thumbpath,
+                        'lstatus'=>1,
+                        'lcacheid'=>$cachedata['id'],
+                        'lremoteid'=>$cachedata['remoteid'],
+                        'ldateline'=>TIMESTAMP,
+                        'lchk'=>0,
+                        'lchktimes'=>0
+                    ];
+                }
+                //插入缩略图记录表
+                C::t('thumb_preview')->update($rdata['id'], $thumbarr);
+            }  else{
+                //如果没有强制生成根据查询结果返回
+                if (!$create) {
+                    $thumbpath = IO::getFileUri($rdata['opath']);
+                } else {
+                    //创建缩略图
+                    $cthumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, $original, $extraparams, $filesize);
+                    $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
+                    $thumbpath = $bz.$cthumbpath;
+                    if($cthumbpath){
+                        $cacheid = '';
+                        if($rdata['aid']){
+                            $thumbarr = [
+                                'width'=>$width,
+                                'height'=>$height,
+                                'aid'=>$rdata['aid'],
+                                'thumbtype'=>$thumbtype,
+                                'watermd5'=>$watermd5,
+                                'path'=>$cthumbpath,
+                                'remoteid'=>$defaultspace['did']
+                            ];
+                            $cacheid = C::t('thumb_cache')->insertdata($thumbarr);
+                        }
+
+                        if($data['rid']){
+                            $thumbdataarr = [];
+                            if($thumbsign == 'small'){
+                                $thumbdataarr = [
+                                    'spath'=>$thumbpath,
+                                    'sstatus'=>1,
+                                    'schk'=>0,
+                                    'sremoteid'=>$defaultspace['did'],
+                                    'scacheid'=>$cacheid
+                                ];
+                            }elseif($thumbsign == 'large'){
+                                $thumbdataarr = [
+                                    'lpath'=>$thumbpath,
+                                    'lstatus'=>1,
+                                    'lchk'=>0,
+                                    'lremoteid'=>$defaultspace['did'],
+                                    'lcacheid'=>$cacheid
+                                ];
+                            }
+                            C::t('thumb_preview')->update($rdata['id'],$thumbdataarr);
+                        }
+                    }
+
+                }
+
+            }
+
+        }
+
+
+
+        if ($thumbpath) {
+            $img = IO::getFileUri($thumbpath);
+        } else{
+            $img = geticonfromext($data['ext'], $data['type']);
+        }
+        if ($returnurl) return $img;
+        else IO::output_thumb($img);
+    }
+
 
     //过滤文件名称
     public function name_filter($name)

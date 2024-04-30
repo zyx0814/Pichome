@@ -1,0 +1,58 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [],
+        "return": "stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            4,
+            "@mock-stream-context"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            5
+        ],
+        "return": true
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return-op": "key-save",
+        "return": 199
+    },
+    {
+        "function": "fgets",
+        "params": [
+            "@mock-stream",
+            1024
+        ],
+        "return-op": "key-respond",
+        "return": "HTTP\/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {key}\r\n\r\n"
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 13
+    }
+]

@@ -7,17 +7,14 @@
  * @author      zyx(zyx@oaooa.com)
  */
 
-
 define('CURSCRIPT', 'misc');
 require __DIR__ . '/../core/coreBase.php';
+require_once __DIR__ . '/../core/class/class_Color.php';
 
-require_once  __DIR__ . '/../core/class/class_Color.php';
 @set_time_limit(0);
 error_reporting(0);
-
 $cachelist = array();
 $dzz = dzz_app::instance();
-
 global $_G;
 $dzz->cachelist = $cachelist;
 $dzz->init_cron = false;
@@ -26,11 +23,17 @@ $dzz->init_user = false;
 $dzz->init_session = false;
 $dzz->init_misc = false;
 $dzz->init();
+
+
+
 $config = array(
     'dbcharset' => $_G['config']['db']['1']['dbcharset'],
     'charset' => $_G['config']['output']['charset'],
     'tablepre' => $_G['config']['db']['1']['tablepre']
 );
+
+
+
 $theurl = 'update.php';
 
 $_G['siteurl'] = preg_replace('/\/install\/$/i', '/', $_G['siteurl']);
@@ -181,6 +184,8 @@ if ($_GET['step'] == 'start') {
     show_msg($msg, $theurl . $url, $time * 1000, 0, $notice);
 } elseif ($_GET['step'] == 'prepare') {
     $repeat = array();
+    unset($_G['config']['security']['querysafe']['daction']['4']);
+    save_config_file(DZZ_ROOT. './config/config.php',$_G['config'],[],[]);
     /*//检查数据库表 app_market 中有无appurl重复的情况；
     foreach(DB::fetch_all("select appid,appurl from ".DB::table('app_market')." where 1") as $value){
         if(in_array($value['appurl'],$repeat)){
@@ -241,8 +246,8 @@ if ($_GET['step'] == 'start') {
             if ($key == 'PRIMARY') {
                 if ($value != $oldcols[$key]) {
                     if (!empty($oldcols[$key])) {
-                        $baktab =DB::table($newtable . '_bak');
-                        if(!in_array($baktab,$tablist)){
+                        $baktab = DB::table($newtable . '_bak');
+                        if (!in_array($baktab, $tablist)) {
                             $usql = "RENAME TABLE " . DB::table($newtable) . " TO " . DB::table($newtable . '_bak');
                             if (!DB::query($usql, 'SILENT')) {
                                 show_msg('升级表 ' . DB::table($newtable) . ' 出错,请手工执行以下升级语句后,再重新运行本升级程序:<br><br><b>升级SQL语句</b>:<div style=\"position:absolute;font-size:11px;font-family:verdana,arial;background:#EBEBEB;padding:0.5em;\">' . dhtmlspecialchars($usql) . "</div><br><b>Error</b>: " . DB::error() . "<br><b>Errno.</b>: " . DB::errno());
@@ -319,90 +324,257 @@ if ($_GET['step'] == 'start') {
 } elseif ($_GET['step'] == 'data') {
     //如果没有识别码，增加识别码
     if (!$_GET['dp']) {
+        //appmarket表增加数据
+        if (!DB::result_first("select appid from %t where identifier = %s", array('app_market', 'aiXhimage'))) {
+            DB::insert('app_market', array(
+                'mid' => 0,
+                'appname' => '星火图片理解',
+                'appico' => 'appico/202404/29/095905euqa4ujagqqttlu1.png',
+                'appdesc' => '',
+                'appurl' => '{dzzscript}?mod=aiXhimage',
+                'appadminurl' => '{dzzscript}?mod=aiXhimage&op=setting',
+                'noticeurl' => '',
+                'dateline' => 0,
+                'disp' => 0,
+                'vendor' => '',
+                'haveflash' => 0,
+                'isshow' => 1,
+                'havetask' => 0,
+                'hideInMarket' => 1,
+                'feature' => '',
+                'fileext' => '',
+                'group' => 3,
+                'orgid' => 0,
+                'position' => 0,
+                'system' => 0,
+                'identifier' => 'aiXhimage', 'app_path' => 'dzz', 'available' => 1, 'version' => '1.0',
+                'upgrade_version' => '', 'check_upgrade_time' => 0, 'extra' => 'a:1:{s:11:\"installfile\";s:11:\"install.php\";}', 'uids' => '', 'showadmin' => 1));
+        }
+        //更新计划任务
+        $cornarr = [
+            [
+                'available' => 1,
+                'type' => 'system',
+                'name' => '定时执行ai批量处理到任务表',
+                'filename' => 'cron_ai_checkaicrontotask.php',
+                'lastrun' => 1714468447,
+                'nextrun' => 1714468500,
+                'weekday' => -1,
+                'day' => -1,
+                'hour' => -1,
+                'minute' => '0	5	10	15	20	25	30	35	40	45	50	55',
+            ],
+            [
+                'available' => 1,
+                'type' => 'system',
+                'name' => '定时执行ai批量处理',
+                'filename' => 'cron_ai_doaitask.php',
+                'lastrun' => 1714469057,
+                'nextrun' => 1714469100,
+                'weekday' => -1,
+                'day' => -1,
+                'hour' => -1,
+                'minute' => '0	5	10	15	20	25	30	35	40	45	50	55',
+            ],
+            [
+                'available' => 1,
+                'type' => 'system',
+                'name' => '定时获取预览图缩略图任务',
+                'filename' => 'cron_pichome_getpreviewthumb.php',
+                'lastrun' => 1714469179,
+                'nextrun' => 1714469400,
+                'weekday' => -1,
+                'day' => -1,
+                'hour' => -1,
+                'minute' => '0	5	10	15	20	25	30	35	40	45	50	55',
+            ],
+            [
+                'available' => 1,
+                'type' => 'system',
+                'name' => '定时检查预览图缩略图任务',
+                'filename' => 'cron_thumbcheckpreviewchange.php',
+                'lastrun' => 1714469240,
+                'nextrun' => 171446940,
+                'weekday' => -1,
+                'day' => -1,
+                'hour' => -1,
+                'minute' => '0	5	10	15	20	25	30	35	40	45	50	55',
+            ],
+            [
+                'available' => 1,
+                'type' => 'system',
+                'name' => '定时改变预览图缩略图任务',
+                'filename' => 'cron_thumbdopreviewchange.php',
+                'lastrun' => 1714469301,
+                'nextrun' => 1714469400,
+                'weekday' => -1,
+                'day' => -1,
+                'hour' => -1,
+                'minute' => '0	5	10	15	20	25	30	35	40	45	50	55',
+            ]
 
-        //升级主题数据
-        $themarr = array(
-            'themename'=>'超酷时尚',
-            'colors'=>'white,dark',
-            'templates'=>'',
-            'selcolor'=>'dark',
-            'themestyle'=>'a:8:{s:5:"slide";a:2:{s:10:"horizontal";a:4:{s:5:"title";s:6:"横幅";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}s:4:"full";a:4:{s:5:"title";s:6:"满屏";s:7:"default";s:5:"false";s:5:"value";s:4:"full";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:9:"1800×450";s:7:"default";s:4:"true";s:5:"value";s:3:"25%";}i:1;a:3:{s:5:"title";s:9:"1800×500";s:7:"default";s:5:"false";s:5:"value";s:3:"28%";}i:2;a:3:{s:5:"title";s:9:"1800×800";s:7:"default";s:5:"false";s:5:"value";s:3:"44%";}}}}s:10:"search_rec";a:4:{s:6:"style1";a:3:{s:5:"title";s:21:"简洁边框中对齐";s:7:"default";s:4:"true";s:5:"value";s:6:"style1";}s:6:"style2";a:3:{s:5:"title";s:21:"简洁边框左对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style2";}s:6:"style3";a:3:{s:5:"title";s:18:"无边框中对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style3";}s:6:"style4";a:3:{s:5:"title";s:18:"无边框左对齐";s:7:"default";s:5:"false";s:5:"value";s:6:"style4";}}s:9:"rich_text";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:4:"link";a:3:{s:10:"horizontal";a:3:{s:5:"title";s:6:"横排";s:7:"default";s:4:"true";s:5:"value";s:10:"horizontal";}s:4:"card";a:3:{s:5:"title";s:6:"卡片";s:7:"default";s:5:"false";s:5:"value";s:4:"card";}s:4:"icon";a:3:{s:5:"title";s:6:"图标";s:7:"default";s:5:"false";s:5:"value";s:4:"icon";}}s:8:"question";a:2:{s:3:"top";a:4:{s:5:"title";s:12:"顶部分类";s:7:"default";s:4:"true";s:5:"value";s:3:"top";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}s:4:"left";a:4:{s:5:"title";s:12:"左侧分类";s:7:"default";s:5:"false";s:5:"value";s:4:"left";s:4:"size";a:2:{i:0;a:3:{s:5:"title";s:3:"宽";s:7:"default";s:4:"true";s:5:"value";s:4:"full";}i:1;a:3:{s:5:"title";s:3:"窄";s:7:"default";s:5:"false";s:5:"value";s:5:"limit";}}}}s:8:"file_rec";a:5:{s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:4:"true";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:6:"db_ids";a:6:{s:9:"waterFall";a:3:{s:5:"title";s:9:"瀑布流";s:7:"default";s:4:"true";s:5:"value";s:9:"waterFall";}s:9:"imageList";a:3:{s:5:"title";s:6:"网格";s:7:"default";s:5:"false";s:5:"value";s:9:"imageList";}s:7:"rowGrid";a:3:{s:5:"title";s:9:"自适应";s:7:"default";s:5:"false";s:5:"value";s:7:"rowGrid";}s:6:"tabodd";a:3:{s:5:"title";s:12:"列表单列";s:7:"default";s:5:"false";s:5:"value";s:6:"tabodd";}s:7:"tabeven";a:3:{s:5:"title";s:12:"列表双列";s:7:"default";s:5:"false";s:5:"value";s:7:"tabeven";}s:7:"details";a:3:{s:5:"title";s:6:"详情";s:7:"default";s:5:"false";s:5:"value";s:7:"details";}}s:10:"manual_rec";a:7:{s:3:"one";a:4:{s:5:"title";s:18:"单排文字居中";s:7:"default";s:4:"true";s:5:"value";s:3:"one";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"two";a:4:{s:5:"title";s:18:"单排文字居下";s:7:"default";s:5:"false";s:5:"value";s:3:"two";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"three";a:4:{s:5:"title";s:18:"单排图外文字";s:7:"default";s:5:"false";s:5:"value";s:5:"three";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"four";a:4:{s:5:"title";s:18:"双排文字居中";s:7:"default";s:5:"false";s:5:"value";s:4:"four";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:4:"five";a:4:{s:5:"title";s:18:"双排文字居下";s:7:"default";s:5:"false";s:5:"value";s:4:"five";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:3:"six";a:4:{s:5:"title";s:18:"双排图外文字";s:7:"default";s:5:"false";s:5:"value";s:3:"six";s:4:"size";a:3:{i:0;a:3:{s:5:"title";s:8:"266×182";s:7:"default";s:4:"true";s:5:"value";s:9:"rectangle";}i:1;a:3:{s:5:"title";s:8:"266×400";s:7:"default";s:4:"true";s:5:"value";s:8:"vertical";}i:2;a:3:{s:5:"title";s:8:"266×266";s:7:"default";s:4:"true";s:5:"value";s:6:"square";}}}s:5:"seven";a:3:{s:5:"title";s:18:"大图小图混排";s:7:"default";s:5:"false";s:5:"value";s:5:"seven";}}}',
-            'themefolder'=>'fashion',
-            'dateline'=>TIMESTAMP);
-        C::t('pichome_theme')->insert_data($themarr);
+        ];
+        foreach ($cornarr as $v) {
+            if (DB::result_first("select cronid from %t where filename = %s", array('cron', $v['filename']))) {
+                DB::insert('cron', $v);
+            }
+        }
+        //更新onlyoffice设置位置
+        $docstatus = DB::result_first("select docstatus from %t where bz = %s", array('connect_storage', 'dzz'));
+        //管理界面不显示onlyoffice_view
+        $app = C::t('app_market')->fetch_by_identifier('onlyoffice_view', 'dzz');
+        if($app['showadmin']) C::t('app_market')->update($app['appid'], ['showadmin' => 0]);
+        if ($docstatus == 1) {
+            if (!$app['available']) C::t('app_market')->update($app['appid'], ['available' => 1]);
+        } else {
+            if ($app['available']) C::t('app_market')->update($app['appid'], ['available' => 1]);
+        }
+        $app = C::t('app_market')->fetch_by_identifier('ffmpeg');
+        if($app['showadmin']) C::t('app_market')->update($app['appid'], ['showadmin' => 0]);
+        //增加星火模型图片理解默认模板
+        $xhimageparsetpl = [
+            [
+                'id' => 1,
+                'name' => '通用标签',
+                'prompt' => '请根据图片内容给出5到20个关键词作为图片标签，每个标签词的长度不能超过5个字，且标签词之间不能重复。标签尽量简洁，能用一个字用一个字，能用2个字的用2个字。',
+                'cate' => 1,
+                'isdefault' => 0,
+                'status' => 1,
+                'disp' => 1,
+                'dateline' => 0
+            ],
+            [
+                'id' => 2,
+                'name' => '通用描述',
+                'prompt' => '请你根据所给出的图片，详细描述其内容，并给出一个不超过120个字符的简短介绍。请确保你的描述中包含主要元素、色彩和可能的主题或情感表达，同时注意保持描述的连贯性和准确性。',
+                'cate' => 2,
+                'isdefault' => 0,
+                'status' => 1,
+                'disp' => 1,
+                'dateline' => 0
+            ],
+            [
+                'id' => 3,
+                'name' => '通用改文件名',
+                'prompt' => '根据图片内容给出图片文件名，不超过30个字符',
+                'cate' => 0,
+                'isdefault' => 0,
+                'status'=>1,
+                'disp' => 1,
+                'dateline' => 0
+                ]
+        ];
+        foreach($xhimageparsetpl as $value){
+            if(!DB::result_first("select id from %t where id = %d",array('ai_xhimageprompt',$value['id']))){
+                DB::insert('ai_xhimageprompt',$value);
+            }
+        }
 
-            //插入搜索模板数据
-        $searchtemplatesql = "INSERT INTO ".DB::table('search_template')."(`tid`, `title`, `data`, `screen`, `pagesetting`, `searchRange`, `exts`, `dateline`, `disp`) VALUES
-(3, '音频', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"},{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"}]', '{\"layout\":\"imageList\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'wav,ogg,mp3,m4a,flac,aac,ape,aiff,amr', 1709696619, 3),
-(1, '综合', '', '[{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"details\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', '', 1709696484, 0),
-(2, '图片', '', '[{\"key\":\"color\",\"label\":\"\\u989c\\u8272\"},{\"key\":\"link\",\"label\":\"\\u94fe\\u63a5\"},{\"key\":\"desc\",\"label\":\"\\u6ce8\\u91ca\"},{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"},{\"key\":\"size\",\"label\":\"\\u5c3a\\u5bf8\"},{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"shape\",\"label\":\"\\u5f62\\u72b6\"},{\"key\":\"grade\",\"label\":\"\\u8bc4\\u5206\"},{\"key\":\"btime\",\"label\":\"\\u6dfb\\u52a0\\u65f6\\u95f4\"},{\"key\":\"dateline\",\"label\":\"\\u4fee\\u6539\\u65e5\\u671f\"},{\"key\":\"mtime\",\"label\":\"\\u521b\\u5efa\\u65e5\\u671f\"},{\"key\":\"level\",\"label\":\"\\u5bc6\\u7ea7\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"waterFall\",\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"0\"}', '', 'svg,png,jpg,jpeg,jpe,webp,jfif,ico,heic,gif,eps,bmp,tga,hdr,exr,dds,ppm,pnm,pgm,pdd,pcx,pbm,pam,mpo,mng,miff,jpx,jps,jpf,jpc,jp2,j2k,j2c,dib,cur,cin,tif,wmf,emf,tiff,psd,ai,3fr,arw,cr2,cr3,crw,dng,erf,mrw,nef,nrw,orf,otf,pef,raf,raw,rw2,sr2,srw,x3f', 1709696566, 2),
-(4, '视频', '', '[{\"key\":\"duration\",\"label\":\"\\u65f6\\u957f\"},{\"key\":\"shape\",\"label\":\"\\u5f62\\u72b6\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"rowGrid\",\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'wmv,webm,mp4,mov,m4v,avi,ts,swf,rmvb,rm,mkv,flv,vob,trp,sct,ogv,mxf,mpg,m2ts,f4v,dv,dcr,asf,3g2p', 1709696675, 4),
-(5, '文档', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"tabodd\",\"display\":[\"name\",\"extension\",\"other\"],\"other\":\"filesize\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'xlsx,xls,pptx,ppt,pdf,docx,doc,pdf,txt,rtf,odt,htm,html,mht,pps,ppsx,odp,ods,csv', 1709696731, 5),
-(6, '其它', '', '[{\"key\":\"ext\",\"label\":\"\\u7c7b\\u578b\"},{\"key\":\"tag\",\"label\":\"\\u6807\\u7b7e\",\"group\":\"\",\"auto\":\"0\",\"sort\":\"hot\"}]', '{\"layout\":\"tabodd\",\"display\":[\"name\",\"extension\"],\"other\":\"btime\",\"sort\":\"btime\",\"desc\":\"desc\",\"opentype\":\"current\",\"filterstyle\":\"1\"}', '', 'zip,rar,7z', 1709696795, 6);";
-        DB::query($searchtemplatesql);
-
+        //去掉个人版的收藏夹挂载点
+        if ($delhooksid = DB::result_first("select id from %t where addons = %s", array('hooks', 'dzz\collection\classes\deleteafter'))) {
+            DB::delete('hooks', ['id' => $delhooksid]);
+        }
+        //获取aiKey挂载点
+        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\aiXhimage\classes\ImageAIkey'))) {
+            DB::insert('hooks', array(
+                'app_market_id' => 12,
+                'name' => 'editfilefilter',
+                'description' => 'ImageAIkey',
+                'type' => 1,
+                'update_time' => 0,
+                'addons' => 'dzz\aiXhimage\classes\ImageAIkey',
+                'status' => 1,
+                'priority' => 0
+            ), false, true);
+        }
+        //获取描述名词标签挂载点
+        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\aiXhimage\classes\ImagetagAnddesc'))) {
+            DB::insert('hooks', array(
+                'app_market_id' => 12,
+                'name' => 'imageAiData',
+                'description' => 'ImagetagAnddesc',
+                'type' => 1,
+                'update_time' => 0,
+                'addons' => 'dzz\aiXhimage\classes\ImagetagAnddes',
+                'status' => 1,
+                'priority' => 0
+            ), false, true);
+        }
+        //彻底删除附件处理挂载点
+        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\aiXhimage\classes\attachmentDelAfter'))) {
+            DB::insert('hooks', array(
+                'app_market_id' => 12,
+                'name' => 'finalydelete',
+                'description' => 'finalydelete',
+                'type' => 1,
+                'update_time' => 0,
+                'addons' => 'dzz\aiXhimage\classes\attachmentDelAfter',
+                'status' => 1,
+                'priority' => 0
+            ), false, true);
+        }
+        //彻底删除文件处理挂载点
+        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\aiXhimage\classes\pichomedatadeleteafter'))) {
+            DB::insert('hooks', array(
+                'app_market_id' => 12,
+                'name' => 'pichomedatadeleteafter',
+                'description' => 'pichomedatadeleteafter',
+                'type' => 1,
+                'update_time' => 0,
+                'addons' => 'dzz\aiXhimage\classes\pichomedatadeleteafter',
+                'status' => 1,
+                'priority' => 0
+            ), false, true);
+        }
+        //统计token使用数
+        if (!DB::result_first("select count(id) from %t where addons = %s", array('hooks', 'dzz\stats\classes\addTokenuse'))) {
+            DB::insert('hooks', array(
+                'app_market_id' => 12,
+                'name' => 'statsTokenuse',
+                'description' => 'statsTokenuse',
+                'type' => 1,
+                'update_time' => 0,
+                'addons' => 'dzz\stats\classes\addTokenuse',
+                'status' => 1,
+                'priority' => 0
+            ), false, true);
+        }
         show_msg("基础数据升级完成", "$theurl?step=data&dp=1");
 
-    } elseif ($_GET['dp'] == 1) {//billfish数据升级
+    } elseif ($_GET['dp'] == 1) {//pathkey数据升级
         $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
         //获取普通目录库id
-        $appids = [];
-        if (empty($appids)) {
-            show_msg("数据升级结束", "$theurl?step=delete");
-        } else {
-            if(!$_GET['count']){
-                $count = DB::result_first("select count(p.color) from %t p 
-    left join %t r on r.rid=p.rid 
-    left join %t v on r.appid=v.appid where v.isdelete < %d and v.type = %d",
-                    array('pichome_palette','pichome_resources','pichome_vapp',1,2));
-            }else{
-                $count = $_GET['count'];
+
+            if (!isset($_GET['count'])) {
+                $count = DB::result_first("select count(DISTINCT fid) from %t where 1  ", ['pichome_folderresources']);
+                if(!$count) show_msg("数据升级结束", "$theurl?step=delete");
+            } else {
+                $count = intval($_GET['count']);
             }
+            $i = isset($_GET['i']) ? intval($_GET['i']) : 1;
             $perpage = 1000;
             $start = ($i - 1) * $perpage;
             $j = 0;
-            $data = DB::fetch_all("select p.color,p.id from %t p 
-    left join %t r on r.rid=p.rid 
-    left join %t v on r.appid=v.appid where v.isdelete < %d and v.type = %d limit $start,$perpage",
-                array('pichome_palette','pichome_resources','pichome_vapp',1,2));
-
-            foreach($data as $v){
-                $colorhex = updatedec2hex($v['color']);
-                $colorhexarr = str_split($colorhex,2);
-                array_shift($colorhexarr);
-                $colorhexarr = array_reverse($colorhexarr);
-                $colorhex = implode('',$colorhexarr);
-                //获取整型颜色值
-                $intcolor = hexdec($colorhex);
-                $intcolorsarr[] = $intcolor;
-                $rgbcolor = hex2rgb($colorhex);
-
-                $p = updategetPaletteNumber($intcolor);
-                $colorarr = [
-                    'r' => $rgbcolor['r'],
-                    'g' => $rgbcolor['g'],
-                    'b' => $rgbcolor['b'],
-                    'p' => $p
-                ];
-                C::t('pichome_palette')->update($v['id'],$colorarr);
-                $j++;
+            foreach (DB::fetch_all("select DISTINCT fid from %t where 1  limit $start,$perpage", ['pichome_folderresources']) as $value) {
+                $pathkey = DB::result_first("select pathkey from %t where fid = %s", ['pichome_folder', $value['fid']]);
+                if ($pathkey) {
+                    DB::update('pichome_folderresources', ['pathkey' => $pathkey], ['fid' => $value['fid']]);
+                    $j++;
+                }
             }
-
             if ($j >= $perpage) {
                 $complatei = ($i - 1) * $perpage + $j;
                 $i++;
-                $msg='目录数据升级完成';
-                $next = $theurl . '?step=data&dp=1&i=' . $i.'&count='.$count;
-                show_msg($msg."[ $complatei/$count] ", $next);
+                $msg = '目录关系数据升级完成';
+                $next = $theurl . '?step=data&dp=1&i=' . $i . '&count=' . $count;
+                show_msg($msg . "[ $complatei/$count] ", $next);
             } else {
-                //show_msg("标签数据升级结束", "$theurl?step=data&dp=2");
-                show_msg("目录数据升级结束,即将开始标签数据升级", "$theurl?step=data&dp=2");
+                show_msg("数据升级结束,即将开始标签数据升级", "$theurl?step=delete");
             }
-        }
+
     }
 
-}
-elseif ($_GET['step'] == 'delete') {
+} elseif ($_GET['step'] == 'delete') {
     $oldtables = array();
     $query = DB::query("SHOW TABLES LIKE '$config[tablepre]%'");
     while ($value = DB::fetch($query)) {
@@ -516,15 +688,16 @@ elseif ($_GET['step'] == 'delete') {
     dir_clear(DZZ_ROOT . './data/template');
     //dir_clear(DZZ_ROOT.'./data/cache');
     savecache('setting', '');
-    $routefile = DZZ_ROOT.'./data/cache/'. 'route.php';
-    if(!is_file($routefile)){
-        @file_put_contents($routefile,"<?php \t\n return array();");
+    $routefile = DZZ_ROOT . './data/cache/' . 'route.php';
+    if (!is_file($routefile)) {
+        @file_put_contents($routefile, "<?php \t\n return array();");
     }
-    $configfile = DZZ_ROOT.'data/cache/default_mod.php';
+    $configfile = DZZ_ROOT . 'data/cache/default_mod.php';
     $configarr = array();
-    $configarr['default_mod' ]='banner';
-    @file_put_contents($configfile,"<?php \t\n return ".var_export($configarr,true).";");
-    C::t('setting')->update('default_mod','banner');
+    $configarr['default_mod'] = 'banner';
+    @file_put_contents($configfile, "<?php \t\n return " . var_export($configarr, true) . ";");
+    C::t('setting')->update('default_mod', 'banner');
+    C::t('setting')->update('bbclosed', 0);
     if ($_GET['from']) {
         show_msg('<span id="finalmsg">缓存更新中，请稍候 ...</span><iframe src="../misc.php?mod=syscache" style="display:none;" onload="parent.window.location.href=\'' . $_GET['from'] . '&t=1\'"></iframe>');
     } else {
@@ -745,7 +918,7 @@ function save_config_file($filename, $config, $default, $deletevar)
 
 EOT;
     $content .= getvars(array('_config' => $config));
-    $content .= "\r\n// ".str_pad('  THE END  ', 50, '-', STR_PAD_BOTH)."\r\n return \$_config;";
+    $content .= "\r\n// " . str_pad('  THE END  ', 50, '-', STR_PAD_BOTH) . "\r\n return \$_config;";
     if (!is_writable($filename) || !($len = file_put_contents($filename, $content))) {
         file_put_contents(DZZ_ROOT . './data/config.php', $content);
         return 0;
@@ -883,28 +1056,29 @@ function initFoldertag($data)
     return true;
 
 }
+
 function formatpath($path)
 {
-    if(strpos($path,':') === false){
+    if (strpos($path, ':') === false) {
         $bz = 'dzz';
-    }else{
+    } else {
         $patharr = explode(':', $path);
         $bz = $patharr[0];
         $did = $patharr[1];
 
     }
-    if(!is_numeric($did) || $did < 2){
+    if (!is_numeric($did) || $did < 2) {
         $bz = 'dzz';
     }
 
-    $rootpath = str_replace(BS,'/',DZZ_ROOT);
+    $rootpath = str_replace(BS, '/', DZZ_ROOT);
     $path = str_replace(DZZ_ROOT, '', $path);
     $path = str_replace($rootpath, '', $path);
     $path = str_replace(BS, '/', $path);
     $path = str_replace('//', '/', $path);
     $path = str_replace('./', '', $path);
-    if($bz == 'dzz')$path = 'dzz::'.ltrim($path,'/');
-    else $path = ltrim($path,'/');
+    if ($bz == 'dzz') $path = 'dzz::' . ltrim($path, '/');
+    else $path = ltrim($path, '/');
     return $path;
 }
 
@@ -916,18 +1090,18 @@ function getbasename($filename)
 function getintPaletteNumber($colors, $palette = array())
 {
 
-    if (empty($palette))  $palette = [
-        0xfff8e1,0xf57c00,0xffd740,0xb3e5fc,0x607d8b,0xd7ccc8,
-        0xff80ab,0x4e342e,0x9e9e9e,0x66bb6a,0xaed581,0x18ffff,
-        0xffe0b2,0xc2185b,0x00bfa5,0x00e676,0x0277bd,0x26c6da,
-        0x7c4dff,0xea80fc,0x512da8,0x7986cb,0x00e5ff,0x0288d1,
-        0x69f0ae,0x3949ab,0x8e24aa,0x40c4ff,0xdd2c00,0x283593,
-        0xaeea00,0xffa726,0xd84315,0x82b1ff,0xab47bc,0xd4e157,
-        0xb71c1c,0x880e4f,0x00897b,0x689f38,0x212121,0xffff00,
-        0x827717,0x8bc34a,0xe0f7fa,0x304ffe,0xd500f9,0xec407a,
-        0x6200ea,0xffab00,0xafb42b,0x6a1b9a,0x616161,0x8d6e63,
-        0x80cbc4,0x8c9eff,0xffeb3b,0xffe57f,0xfff59d,0xff7043,
-        0x1976d2,0x5c6bc0,0x64dd17,0xffd600
+    if (empty($palette)) $palette = [
+        0xfff8e1, 0xf57c00, 0xffd740, 0xb3e5fc, 0x607d8b, 0xd7ccc8,
+        0xff80ab, 0x4e342e, 0x9e9e9e, 0x66bb6a, 0xaed581, 0x18ffff,
+        0xffe0b2, 0xc2185b, 0x00bfa5, 0x00e676, 0x0277bd, 0x26c6da,
+        0x7c4dff, 0xea80fc, 0x512da8, 0x7986cb, 0x00e5ff, 0x0288d1,
+        0x69f0ae, 0x3949ab, 0x8e24aa, 0x40c4ff, 0xdd2c00, 0x283593,
+        0xaeea00, 0xffa726, 0xd84315, 0x82b1ff, 0xab47bc, 0xd4e157,
+        0xb71c1c, 0x880e4f, 0x00897b, 0x689f38, 0x212121, 0xffff00,
+        0x827717, 0x8bc34a, 0xe0f7fa, 0x304ffe, 0xd500f9, 0xec407a,
+        0x6200ea, 0xffab00, 0xafb42b, 0x6a1b9a, 0x616161, 0x8d6e63,
+        0x80cbc4, 0x8c9eff, 0xffeb3b, 0xffe57f, 0xfff59d, 0xff7043,
+        0x1976d2, 0x5c6bc0, 0x64dd17, 0xffd600
     ];
     $arr = array();
 
@@ -956,7 +1130,9 @@ function getintPaletteNumber($colors, $palette = array())
     }
     return $isarray ? $arr : $arr[0];
 }
-function fetchtablelist($tablepre = '') {
+
+function fetchtablelist($tablepre = '')
+{
     global $db;
     $arr = explode('.', $tablepre);
     $dbname = $arr[1] ? $arr[0] : '';
@@ -970,71 +1146,6 @@ function fetchtablelist($tablepre = '') {
     }
     return $tables;
 }
-function updatedec2hex($number)
-{
 
-    $i = 0;
-    $hex = array();
-    while($i < 8) {
-        if($number == 0) {
-            array_push($hex, '0');
-        }
-        else {
 
-            array_push($hex, dechex(bcmod($number, '16')));
-
-            $number = bcdiv($number, '16', 0);
-
-        }
-        $i++;
-    }
-
-    krsort($hex);
-
-    return implode($hex);
-
-}
-function updategetPaletteNumber($colors, $palette = array())
-{
-
-    if (empty($palette))  $palette = [
-        0xfff8e1, 0xf57c00, 0xffd740, 0xb3e5fc, 0x607d8b, 0xd7ccc8,
-        0xff80ab, 0x4e342e, 0x9e9e9e, 0x66bb6a, 0xaed581, 0x18ffff,
-        0xffe0b2, 0xc2185b, 0x00bfa5, 0x00e676, 0x0277bd, 0x26c6da,
-        0x7c4dff, 0xea80fc, 0x512da8, 0x7986cb, 0x00e5ff, 0x0288d1,
-        0x69f0ae, 0x3949ab, 0x8e24aa, 0x40c4ff, 0xdd2c00, 0x283593,
-        0xaeea00, 0xffa726, 0xd84315, 0x82b1ff, 0xab47bc, 0xd4e157,
-        0xb71c1c, 0x880e4f, 0x00897b, 0x689f38, 0x212121, 0xffff00,
-        0x827717, 0x8bc34a, 0xe0f7fa, 0x304ffe, 0xd500f9, 0xec407a,
-        0x6200ea, 0xffab00, 0xafb42b, 0x6a1b9a, 0x616161, 0x8d6e63,
-        0x80cbc4, 0x8c9eff, 0xffeb3b, 0xffe57f, 0xfff59d, 0xff7043,
-        0x1976d2, 0x5c6bc0, 0x64dd17, 0xffd600
-    ];;
-    $arr = array();
-
-    if (is_array($colors)) {
-        $isarray = 1;
-    } else {
-        $colors = (array)$colors;
-        $isarray = 0;
-    }
-
-    foreach ($colors as $color) {
-        $bestColor = 0x000000;
-        $bestDiff = PHP_INT_MAX;
-        $color = new Color($color);
-        foreach ($palette as $key => $wlColor) {
-            // calculate difference (don't sqrt)
-            $diff = $color->getDiff($wlColor);
-            // see if we got a new best
-            if ($diff < $bestDiff) {
-                $bestDiff = $diff;
-                $bestColor = $wlColor;
-            }
-        }
-        unset($color);
-        $arr[] = array_search($bestColor, $palette);
-    }
-    return $isarray ? $arr : $arr[0];
-}
 ?>

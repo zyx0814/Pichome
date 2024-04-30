@@ -11,10 +11,36 @@ if ($operation == 'filelist') {
     $selectsql = " DISTINCT r.rid ";
     $preparams = [];
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle)$wheresql = " r.isdelete < 1 ";
-    else $wheresql = " r.isdelete = 1 ";
-    $para = [];
     $params = ['pichome_resources'];
+    $preparams = [];
+    $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
+    $wheresql = ' 1 ';
+    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
+    //库权限判断部分
+    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
+        if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
+            continue;
+        }
+        if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
+            $vappids[] = $v['appid'];
+        }
+    }
+
+
+    $whererangesql = [];
+    //库条件
+    if ($vappids) {
+        $whererangesql[]= '  r.appid in(%n)';
+        $para[] = $vappids;
+    }else{
+        $whererangesql[]= '  0 ';
+    }
+
+    if($whererangesql){
+        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
+    }
+    if(!$isrecycle)$wheresql .= " and r.isdelete = 0 ";
+    else $wheresql .= " and r.isdelete = 1 ";
     $havingsql = '';
     $havingparams = [];
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
@@ -41,38 +67,14 @@ if ($operation == 'filelist') {
     }
 
     $orderarr = [];
-    $orderparams = [];
 
-    $appid = isset($_GET['appid']) ? [trim($_GET['appid'])] : [-1];
-    //库权限判断部分
-    foreach (DB::fetch_all("select appid,path,view,type from %t where isdelete = 0 and appid in(%n)", array('pichome_vapp',$appid)) as $v) {
-        if ($v['type'] != 3 && !IO::checkfileexists($v['path'],1)) {
-            continue;
-        }
-        if (C::t('pichome_vapp')->getpermbypermdata($v['view'],$v['appid'])) {
-            $vappids[] = $v['appid'];
-        }
-    }
-
-    $whererangesql = [];
-    //库条件
-    if ($vappids) {
-        $whererangesql[]= '  r.appid in(%n)';
-        $para[] = $vappids;
-    }else{
-        $whererangesql[]= '  0 ';
-    }
-
-    if($whererangesql){
-        $wheresql .= ' and ('.implode(' OR ',$whererangesql).') ';
-    }
     $fids = isset($_GET['fids']) ? trim($_GET['fids']):'';
     $hassub = isset($_GET['hassub']) ? intval($_GET['hassub']):0;
     if ($fids) {
         if ($fids == 'not' || $fids == 'notclassify') {
-            $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
-            $params[] = 'pichome_folderresources';
-            $wheresql .= ' and ISNULL(fr.fid)';
+            // $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
+            //$params[] = 'pichome_folderresources';
+            $wheresql .= " and (ISNULL(r.fids) or r.fids = '') ";
         } else {
 
             $sql .= " LEFT JOIN %t fr on fr.rid = r.rid ";
@@ -395,37 +397,6 @@ if ($operation == 'filelist') {
     }
     //关键词条件
     $keyword = isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : '';
-  /* if ($keyword) {
-        if (!in_array('pichome_resources_attr', $params)) {
-            $sql .= "left join %t ra on r.rid = ra.rid ";
-            $params[] = 'pichome_resources_attr';
-        }
-        if (!in_array('pichome_resourcestag', $params)) {
-            $sql .= "left join %t rt on r.rid = rt.rid ";
-            $params[] = 'pichome_resourcestag';
-        }
-        $sql .= "left join %t t on t.tid = rt.tid";
-        $params[] = 'pichome_tag';
-        $keywords = array();
-        $arr1 = explode('+', $keyword);
-        foreach ($arr1 as $value1) {
-            $value1 = trim($value1);
-            $arr2 = explode(' ', $value1);
-            $arr3 = array();
-            foreach ($arr2 as $value2) {
-
-                $arr3[] = "ra.desc LIKE %s or ra.link LIKE %s or t.tagname LIKE %s or r.name LIKE %s";
-                $para[] = '%' . $value2 . '%';
-                $para[] = '%' . $value2 . '%';
-                $para[] = '%' . $value2 . '%';
-                $para[] = '%' . $value2 . '%';
-            }
-            $keywords[] = "(" . implode(" OR ", $arr3) . ")";
-        }
-        if ($keywords) {
-            $wheresql .= " and (" . implode(" AND ", $keywords) . ") ";
-        }
-    }*/
 
     if ($keyword) {
         if (!in_array('pichome_resources_attr', $params)) {
@@ -457,12 +428,9 @@ if ($operation == 'filelist') {
         $tagrelative = isset($_GET['tagrelative']) ? intval($_GET['tagrelative']) : 0;
         $tag = trim($_GET['tag']);
         if ($tag == -1 || $tag=='nottag') {
-            if (!in_array('pichome_resourcestag', $params)) {
-                $sql .= "left join %t rt on r.rid = rt.rid ";
-                $params[] = 'pichome_resourcestag';
-            }
-            $wheresql .= " and isnull(rt.tid) ";
-        } else {
+            $wheresql .= " AND NOT EXISTS (SELECT 1 FROM %t wrt  WHERE wrt.rid = r.rid) ";
+            $para[] = 'pichome_resourcestag';
+        } else{
             if(!$tagrelative){
                 $tagval = explode(',', trim($_GET['tag']));
                 $tagwheresql = [];
@@ -571,7 +539,7 @@ if ($operation == 'filelist') {
 
     $data = array();
     if (!empty($rids)) $data = C::t('pichome_resources')->getdatasbyrids($rids);
-    // print_r($data);die;
+
     $next = false;
     if (count($rids) >= $perpage) {
         $total = $start + $perpage * 2 - 1;
@@ -642,6 +610,7 @@ elseif($operation == 'folderlist'){
 		$v['dateline'] = dgmdate(round($v['dateline'] / 1000), 'Y/m/d H:i');
         $folderdata[] = $v;
     }
+    Hook::listen('folderdataFilter',$folderdata,1);
     $return = array(
         'appid' => $appid,
         'total' => $total,
@@ -660,7 +629,7 @@ else{
     $themeid = isset($_G['setting']['pichometheme']) ? intval($_G['setting']['pichometheme']):1;
     $themedata = $_G['setting']['pichomethemedata'][$themeid];
     */
-    
+    $maxChunkSize = intval($_G['setting']['maxChunkSize']);
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
     if($appid){
         $appdata  = C::t('pichome_vapp')->fetch($appid);

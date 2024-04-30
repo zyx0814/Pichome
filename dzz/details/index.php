@@ -35,7 +35,16 @@ if($operation == 'fetch'){
 	}
 
 	$resourcesdata = C::t('pichome_resources')->fetch_by_rid($rid,$isshare,1);
+    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
+   if(!$isshare && !C::t('pichome_vapp')->getpermbypermdata($appdata['view'],$resourcesdata['appid'])){
+       exit(json_encode(array('status'=>2,'error'=>lang('no_perm'))));
+   }
+    if(!$resourcesdata['iniframe']){
+        $resourcesdata['preview'] = C::t('thumb_preview')->fetchPreviewByRid($rid);
+        $resourcesCover = ['spath'=>$resourcesdata['icondata'],'lpath'=>$resourcesdata['originalimg']];
+        if($resourcesdata['preview']) array_unshift($resourcesdata['preview'],$resourcesCover);
 
+    }
     $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
     $data['fileds'] = unserialize($appdata['fileds']);
     //获取tab数据
@@ -64,6 +73,7 @@ if($operation == 'fetch'){
 	if($isshare || $ulevel >= $resourcesdata['level']){
         exit(json_encode(array('status'=>1,'resourcesdata' => $resourcesdata,'sitename'=>$_G['setting']['sitename'])));
     }else{
+
         exit(json_encode(array('status'=>2,'error'=>lang('no_perm'))));
     }
 

@@ -14,7 +14,7 @@ if (!defined('IN_OAOOA')) {
 
 class table_form_setting extends dzz_table
 {
-    private $type = array('input','time', 'textarea','date', 'timerange', 'select', 'multiselect', 'user', 'label', 'tagcat', 'grade', 'color', 'link');
+    private $type = array('input','time','fulltext', 'textarea','date', 'timerange', 'select', 'multiselect', 'user', 'label', 'tagcat', 'grade', 'color', 'link');
 
     public function __construct()
     {
@@ -46,7 +46,8 @@ class table_form_setting extends dzz_table
             $data['extra']['maxdate'] = dgmdate($data['extra']['maxdate'], $data['extra']['dateformat']);
         }
 
-        $data['labelname'] = lang('fs_' . $data['flag']) != 'fs_' . $data['flag'] ? lang('fs_' . $data['flag']) : $data['labelname'];
+       // $data['labelname'] = lang('fs_' . $data['flag']) != 'fs_' . $data['flag'] ? lang('fs_' . $data['flag']) : $data['labelname'];
+        Hook::listen('fileddataFilter',$data);
         return $data;
     }
 

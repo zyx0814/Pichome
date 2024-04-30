@@ -22,7 +22,7 @@
 			</template>
 			
 			<el-container>
-				<el-header v-if="(screenType.show && !screenType.type) || !ispc" v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;">
+				<el-header v-if="(screenType.show && !screenType.type) || !ispc" v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;position: relative;">
 					<dzz-screen
 						ref="ScreenBoxRef"
 						:resize="DocumentResize"
@@ -30,10 +30,11 @@
 						:headerkeyword="HeaderKeyword"
 						:defaultparam="ScreenParam"
 						@submit="CommonGetImageData"
-						@visible="screenvisible"
+						@visible="handleDocumentOverlay"
 						:hassub="hassub"
 						@handlehassub="handlehassub">
 					</dzz-screen>
+					<div v-if="DocumentOverlay.screen" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 				</el-header>
 				<el-main class="dzz-container" style="padding: 0px;overflow: hidden;position: relative;">
 					<el-scrollbar 
@@ -59,6 +60,7 @@
 						<!--{template libraryview/pc/components/index/image}-->
 						<el-backtop target="#main_scrollbar>.el-scrollbar__wrap" :bottom="20"></el-backtop>
 					</el-scrollbar>
+					<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 				</el-main>
 			</el-container>
             
@@ -67,7 +69,6 @@
 	<!--{template libraryview/pc/components/left/Jsindex}-->
     <!--{template libraryview/pc/components/index/screen/Jsindex}-->
 	<!--{template libraryview/pc/components/index/common}-->
-	<div v-if="DocumentOverlay" class="el-overlay" style="z-index: 1001;background: transparent;"></div>
 </div>
 <script>
 	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
@@ -89,7 +90,11 @@
 					type:0,
 					show:false
 				},
-				DocumentOverlay:false
+				DocumentOverlay:{
+					left:false,
+					screen:false,
+					main:false,
+				},
 			}
 		},
 		watch:{
@@ -159,7 +164,15 @@
             },
 			handlehassub(status){
 				this.hassub = parseInt(status);
-			}
+			},
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			},
 		},
 		
 		mounted(){

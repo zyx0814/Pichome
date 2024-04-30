@@ -91,7 +91,13 @@
 				GetParam:null,
 				DocumentThemeColor:'',//dark,
 				PostParam:null,
-				isadmin:'$isadmin'
+				isadmin:'$isadmin',
+				previews:{
+					data:[],
+					transform:0,
+					active:0,
+					size:false
+				}
 			}
 		},
 		watch: {
@@ -221,12 +227,6 @@
 		
 		
 		methods: {
-			
-
-
-	
-
-
 			DocumentThemeChange(){
 				if(this.DocumentThemeColor=='light'){
 					this.DocumentThemeColor='dark';
@@ -268,10 +268,8 @@
 					if(json.error){
 						self.$confirm(json.error, '提示', {
 							closeOnPressEscape:false,
-							showClose:false,
 							confirmButtonText: '确定',
 							showCancelButton:false,
-							closeOnClickModal:false,
 							showConfirmButton:parseInt(json.status)==2?false:true,
 							type: 'warning'
 						}).then(function(){
@@ -293,6 +291,7 @@
 					// }
 					document.title = item.name+'-'+json.sitename;
 					self.ImageCollect.rid = [item.rid];
+					self.previews.data = item.preview || [];
 					var colors = [];
 					if(item.colors){
 						for(var c in item.colors){
@@ -354,6 +353,9 @@
 					}
 					<!--{/if}-->
 					self.PostParam = null;	
+					self.$nextTick(function () {
+						self.previewSize()
+					});
 				}).catch(function (error) {
 				    console.log(error);
 				});
@@ -409,6 +411,7 @@
 			window.onresize = function(){
 				var h = document.getElementById('ImgScroll').clientHeight;
 				document.querySelector('#ImgScroll .el-scrollbar__view').style.lineHeight = h+'px';
+				self.previewSize();
 			}
 
 		

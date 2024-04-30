@@ -119,8 +119,7 @@ class  table_pichome_templatetagdata extends dzz_table
 
                 foreach($v['tdata'] as $k=>$val){
                     if($val['aid']){
-                        $uri = IO::getFileUri('attach::'.$val['aid']);
-                        $v['tdata'][$k]['imgurl'] =preg_match( '/^http(s)?:\\/\\/.+/',$uri) ?  $uri:getglobal('siteurl').$uri;
+                        $v['tdata'][$k]['imgurl'] =IO::getFileUri('attach::'.$val['aid']);
                     }
                     if(!$val['link']) $val['tdata'][$k]['url'] =  $val['linkval'] ? $val['linkval']:'';
                     else{

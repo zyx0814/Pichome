@@ -58,11 +58,7 @@ $lang=array (
   'desktop_sum_video' => '视频数',
   'desktop_sum_attach' => '附件数',
   'head_save_mistakes' => '头像保存错误，请稍候重试',
-  'use_Email_user_not_exist' => '抱歉，使用此 Email 的用户不存在，不能使用取回密码功能',
-  'apology_account_data_mismatching' => '抱歉，您填写的账户资料不匹配，不能使用取回密码功能，如有疑问请与管理员联系',
-  'password_has_been_sent_email' => '取回密码的方法已通过 Email 发送到您的信箱：<br /><b>{email}</b><br />',
-  'please_tree_edit_password' => '请在 3 天之内修改您的密码',
-  'administrator_account_not_allowed_find' => '管理员帐号不允许找回',
+  
   'original_password' => '原密码',
   'original_password_mistake' => '原密码错误',
   'WeChat_id_illegal' => '微信号不合法',
@@ -82,8 +78,7 @@ $lang=array (
   'login_success' => '登录成功！',
   'password_error' => '密码不正确！',
   'username_or_password_error' => '用户名或密码不正确！',
-  'password_not_match' => '两次密码不匹配！',
-  'please_input_password' => '请输入密码！',
+  
   'qq_shortcut_login_binding_success' => 'QQ快捷登录绑定成功！',
   'user_password_not_correct' => '用户密码不正确，请重试',
   'space_usage' => '空间使用',
@@ -101,7 +96,7 @@ $lang=array (
   'other_login' => '其他登录',
   'qq_login' => 'QQ登录',
   'automatic_login_within_thirtydays' => '30天内自动登录',
-  'email_username' => '邮箱或用户名',
+  
   'binding_for_account' => '绑定已有账号',
   'register_new_account_bound' => '注册新账号并绑定',
   'register_new_account' => '注册新账号',
@@ -138,7 +133,7 @@ $lang=array (
   'verification_code' => '验证码',
   'save_changes' => '保存更改',
 
-  'password_short' => '密码太短，不得少于',
+  
   'cryptographic_strength' => '密码强度',
   'submit_audit' => '提交审核',
   'Information_complete' => '资料完成',
@@ -224,6 +219,43 @@ $lang=array (
 	'sms_auth_login'=>'登录短信验证',
 	'sms_phone_empty'=>'手机号码不能为空',
 	'sms_code_empty'=>'短信验证码不能为空',
-    'personversion_no_create_unablelogin'=>'个人版只允许创始人登录'
+    'personversion_no_create_unablelogin'=>'个人版只允许创始人登录',
+	
+	
+	
+	//新
+	'title_login'=>'登录',
+	'email_username' => '邮箱或用户名',
+	'please_input_email_username' => '请输入邮箱或用户名',
+	'register_rules_agree' => '您必须同意服务条款后才能注册',
+	'Email_sensitivity' => 'Email 包含敏感字符',
+	'email_illegal'=>'请输入有效的邮箱地址',
+	
+	'please_input_email'=>'请输入邮箱地址！',
+    'please_input_password' => '请输入密码！',
+    'please_input_repassword' => '请再次输入密码！',
+	'please_input_nickname'=>'请输入用户名！',
+	'please_input_username'=>'请输入姓名！',
+	'please_input_username'=>'请输入姓名！',
+	'password_not_match' => '两次密码不匹配！',
+	'password_short' => '密码太短，不得少于',
+	'pwd_strong'=>'密码强度',
+	'pwd_strong_1'=>'密码必须包含数字',
+	'pwd_strong_2'=>'密码必须包含小写字母',
+	'pwd_strong_3'=>'密码必须包含大写字母',
+	'pwd_strong_4'=>'密码必须包含特殊字符',
+	
+	//找回密码
+	'lostpassword'=>'忘记密码',
+	'fill_your_login_email'=>'填写您注册登录邮箱',
+	'lostpassword_tips'=>'请填写您注册登录邮箱，系统会验证此邮箱是否注册，并发送找回邮件到此邮箱',
+	'password_has_been_sent_email' => '取回密码的方法已通过 Email 发送到您的信箱：{email}，',
+	'use_Email_user_not_exist' => '抱歉，使用此 Email 的用户不存在，不能使用取回密码功能',
+    'apology_account_data_mismatching' => '抱歉，您填写的账户资料不匹配，不能使用取回密码功能，如有疑问请与管理员联系',
+  
+   'please_tree_edit_password' => '请在 3 天之内修改您的密码',
+    'administrator_account_not_allowed_find' => '管理员帐号不允许找回',
+	
+	'submit_invalid_msg'=>'请先解决错误，再提交'
 
 );

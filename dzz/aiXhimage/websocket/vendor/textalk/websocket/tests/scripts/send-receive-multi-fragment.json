@@ -1,0 +1,112 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fwrite",
+        "params": [],
+        "return": 14
+    },
+    {
+        "function": "fwrite",
+        "params": [],
+        "return": 14
+    },
+    {
+        "function": "fwrite",
+        "params": [],
+        "return": 9
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [1, 136]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            4
+        ],
+        "return-op": "chr-array",
+        "return": [105, 29, 187, 18]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            8
+        ],
+        "return-op": "chr-array",
+        "return": [36, 104, 215, 102, 0, 61, 221, 96]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [0, 136]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            4
+        ],
+        "return-op": "chr-array",
+        "return": [221, 240, 46, 69]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            8
+        ],
+        "return-op": "chr-array",
+        "return": [188, 151, 67, 32, 179, 132, 14, 49]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [128, 131]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            4
+        ],
+        "return-op": "chr-array",
+        "return": [9, 60, 117, 193]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            3
+        ],
+        "return-op": "chr-array",
+        "return": [108, 79, 1]
+    }
+]

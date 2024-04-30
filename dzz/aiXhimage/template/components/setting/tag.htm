@@ -1,0 +1,221 @@
+<el-text type="info" tag="p" class="tipTxt" size="small">注：排序第一个的Prompt为默认Prompt，如果开启自动获取，会自动使用第一个Prompt</el-text>
+
+<ul class="prompt-ul">
+    <li class="prompt-li" v-for="(item,key) in PromptData" v-loading="item.loading" :key="item.id">
+        <div class="dzz-move">
+            <el-icon><Rank /></el-icon>
+        </div>
+        <div class="input-box">
+            <el-form :model="secretkeyruleForm" :rules="secretkeyrules" ref="secretkeyruleForm" label-width="120px" label-suffix="：">
+                <el-form-item label="名称">
+                    <el-input style="width: 100%;" v-model.trim="item.name"></el-input>
+                </el-form-item>
+                <el-form-item label="Prompt">
+                    <el-input 
+                        style="width: 100%;"
+                        type="textarea" 
+                        :autosize="{ minRows: 3}"
+                        v-model.trim="item.prompt"></el-input>
+                </el-form-item>
+            </el-form>
+        </div>
+        <div class="operation">
+            <el-switch
+                v-model="item.status"
+                :active-value="1"
+                :inactive-value="0"
+                @change="PromptDefault(key)"
+            ></el-switch>
+            <el-button type="primary" size="small" style="margin-left: 12px;" @click="PromptSave(key)">保存</el-button>
+            <template v-if="item.type == 'new'">
+                <el-button type="danger" size="small" @click="PromptDelete(key)">删除</el-button>
+            </template>
+            <template v-else>
+                <el-popconfirm title="此操作无法恢复，确定删除？" width="300" @confirm="PromptDelete(key)">
+                    <template #reference>
+                        <el-button size="small" type="danger">删除</el-button>
+                    </template>
+                  </el-popconfirm>
+            </template>
+            
+        </div>
+    </li>
+
+</ul>
+<div class="Prompt-add">
+    <el-button type="primary" size="large"  @click="PromptAdd()">
+        <el-icon><Plus /></el-icon>
+        添加
+    </el-button>
+</div>
+<script>
+    const PromptOtherMixin = {
+        data(){
+            return {
+                PromptData:[] 
+            }
+        },
+        methods: {
+            async PromptAdd(data){
+                if(!data){
+                    let cate = 0;
+                    switch (this.leftactive) {
+                        case 'tag':
+                            cate = 1;
+                        break;
+                        case 'desc':
+                            cate = 2;
+                        break;
+                        case 'filename':
+                            cate = 0;
+                        break;
+                    }
+                    this.PromptData.push({
+                        id:new Date().getTime(),
+                        cate:cate,
+                        name:'',
+                        prompt:'',
+                        isdefault:0,
+                        status:1,
+                        type:'new',
+                        loading:false
+                    })
+                    return false;
+                }
+                let params = {
+                    name:data.name,
+                    prompt:data.prompt,
+                    cate:data.cate,
+                    status:1
+                };
+                data.loading = true;
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=addPrompt',params); 
+                data.loading = false;
+                if(res.success){
+                    data.id = res.id;
+                    data.type = '';
+                }else{
+                    slef.$message({
+                        type:'error',
+                        message:res.error || '修改失败'
+                    })
+                }
+            },
+            async PromptSave(index){
+                let self = this;
+                let curr = this.PromptData[index];
+                if(curr.type == 'new'){
+                    this.PromptAdd(curr);
+                    return false;
+                }
+                let params = {
+                    id:curr.id,
+                    name:curr.name,
+                    prompt:curr.prompt,
+                };
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=editPrompt',params); 
+                if(res.success){
+                    self.$message({
+                        type:'success',
+                        message:'修改成功'
+                    })
+                }else{
+                    slef.$message({
+                        type:'error',
+                        message:res.error || '修改失败'
+                    })
+                }
+            },
+            PromptSortable(){//排序
+				var _this = this;
+				var tbody = document.querySelector('.prompt-ul');
+				Sortable.create(tbody, {
+					draggable: ".prompt-li",
+                    handle: ".dzz-move",
+                    filter: ".Prompt-add",
+                    animation: 150,
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var currRow = _this.PromptData.splice(oldIndex, 1)[0];
+						_this.PromptData.splice(newIndex, 0, currRow);
+                        _this.PromptSortableSave();
+					}
+				});
+			},
+            async PromptSortableSave(){
+                let ids = [];
+                this.PromptData.forEach(function(item,index){
+                    ids.push(item.id);
+                })
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=sortPrompt',{
+                    ids:ids.join(',')
+                }); 
+            },
+            async PromptDelete(index){
+                let self = this;
+                let curr = this.PromptData[index];
+                if(curr.type == 'new'){
+                    this.PromptData.splice(index,1);
+                    return false;
+                }
+                let params = {
+                    id:curr.id,
+                }
+                curr.loading = true;
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=delPrompt',params); 
+                if(res.success){
+                    this.PromptData.splice(index,1);
+                }else{
+                    slef.$message({
+                        type:'error',
+                        message:res.error || '删除失败'
+                    })
+                }
+            },
+            async PromptGet(){
+                let self = this;
+                let cate = 0;
+                switch (this.leftactive) {
+                    case 'tag':
+                        cate = 1;
+                    break;
+                    case 'desc':
+                        cate = 2;
+                    break;
+                    case 'filename':
+                        cate = 0;
+                    break;
+                }
+                this.PromptData = [];
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=getPromptByCate',{
+                    cate:cate
+                }); 
+                if(res.success){
+                    if(res.data && res.data.length){
+                        for (let index = 0; index < res.data.length; index++) {
+                            const element = res.data[index];
+                            this.PromptData.push({
+                                id:element.id,
+                                cate:element.cate,
+                                name:element.name,
+                                prompt:element.prompt,
+                                isdefault:parseInt(element.isdefault),
+                                status:parseInt(element.status),
+                                type:'',
+                                loading:false
+                            })
+                        }
+                    }
+                }
+                
+            },
+            async PromptDefault(index){
+                let curr = this.PromptData[index];
+                const {data: res} = await axios.post('{MOD_URL}&op=setting&do=setStatus',{
+                    id:curr.id,
+                    status:curr.status
+                }); 
+                
+            }
+        }
+    }
+</script>

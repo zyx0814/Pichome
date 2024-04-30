@@ -22,7 +22,7 @@
             
             parent::__construct();
         }
-        
+
         public function insert_data($setarr,$isreturn = false)
         {
 
@@ -75,7 +75,7 @@
             return $rdata;
         }
         
-        public function delete_by_rid($rids)
+        public function delete_by_rid($rids,$vapptype)
         {
             if(!is_array($rids)) $rids = (array)$rids;
             foreach (DB::fetch_all("select * from %t where rid in(%n)", array($this->_table, $rids)) as $v) {
@@ -83,6 +83,10 @@
                //if($v['lstatus'] == 1) IO::Delete($v['lpath']);
               // if($v['opath']) IO::Delete($v['opath']);
                self::delete($v['rid']);
+               if($vapptype == 1){
+                   if($v['sstatus'] == 1) IO::Delete($v['spath']);
+                   if($v['lstatus'] == 1) IO::Delete($v['lpath']);
+               }
 
             }
         }

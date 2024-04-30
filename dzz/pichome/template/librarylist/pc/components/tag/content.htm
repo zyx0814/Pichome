@@ -26,13 +26,13 @@
 							</p>
 							
 						</el-affix>
-						<div style="padding-top: 1px;"></div>
+						<div style="padding-top: 1px;display: flex;flex-wrap: wrap;gap: 8px;">
 							<template v-for="fitem in item.data">
 								<el-button 
 									:class="['tagcontent'+fitem.tid]"
 									@contextmenu.prevent="TagContentContextmenu(fitem)"
 									@dblclick="TagContentSearch(fitem.tid)"
-									style="margin-right: 8px;"
+									style="margin: 0;"
 									:key="fitem.tid"
 									>
 									<span class="text">{{ fitem.tagname }}</span>
@@ -91,6 +91,7 @@
 			</template>
 		</el-skeleton>
 	</template>
+	<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 </div>
 <el-popover
 	popper-class="isdropdown header-dropdown-menu"
@@ -99,8 +100,8 @@
 	:popper-style="{top: tagContextMenu.top, left: tagContextMenu.left}"
     v-model:visible="tagContextMenu.show"
 	width="auto"
-	@after-enter="screenvisible(true)"
-	@before-leave="screenvisible(false)"
+	@after-enter="handleDocumentOverlay(true)"
+	@before-leave="handleDocumentOverlay(false)"
 	:show-arrow="false">
     <ul class="el-dropdown-menu">
 		<li
@@ -206,6 +207,7 @@
 						return !!value.trim();
 					} 
 				}).then(async ({ value }) => {
+					value = value.replace(/，/g, ',');
 					let {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_add',{
 						appid:self.DocumentAppid,
 						tags:value,

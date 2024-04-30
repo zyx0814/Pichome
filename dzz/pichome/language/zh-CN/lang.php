@@ -33,7 +33,6 @@ $lang = array (
     'is'=>'是',
     'no'=>'不是',
     'banner_type_is_notallow_edit'=>'栏目类型不允许修改',
-
-
+    'normal_directory'=>'普通目录',
 );
 ?>

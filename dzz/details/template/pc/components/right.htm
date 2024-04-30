@@ -89,8 +89,8 @@
 					</div>
 				</div>
 				<div class="thesis-wrap" v-if="imagesData.desc" v-cloak>
-					<el-text v-cloak truncated tag="b" class="tip-title" size="large" style="color: var(--el-text-color-primary);">注释</el-text>
-					<div v-if="imagesData.desc" class="notes">{{imagesData.desc}}</div>
+					<el-text v-cloak truncated tag="b" class="tip-title" size="large" style="color: var(--el-text-color-primary);">描述</el-text>
+					<div v-if="imagesData.desc" class="notes" style="white-space: pre-wrap;">{{imagesData.desc}}</div>
 				</div>
 			
 				<div class="thesis-wrap" v-if="imagesData.link" v-cloak>

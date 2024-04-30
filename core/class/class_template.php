@@ -153,7 +153,7 @@ class template {
 		$template = preg_replace("/\<\!\-\-\{(.+?)\}\-\-\>/s", "{\\1}", $template);
 //	    js的lang替换
 		$template = preg_replace_callback("/<script[^>]+?src=\"(.+?)\".*?>[\s\S]*?/is", array($this, 'parse_template_callback_javascript'), $template);
-//	       模版lang替换
+//       模版lang替换
 		$template = preg_replace_callback("/\{lang\s+(.+?)\}/is", array($this, 'parse_template_callback_languagevar_1'), $template);
 //	       模版__lang替换
 		$template = preg_replace_callback("/__lang\.(\w+)/i", array($this, 'parse_template_callback_languagevar_2'), $template);		
@@ -204,7 +204,7 @@ class template {
 	}
 
 	function parse_template_callback_javascript($matches) {
-		return $this -> loadjstemplate($matches);
+        return $this -> loadjstemplate($matches);
 	}
 
     function parse_template_callback_hook($matches){
@@ -337,10 +337,11 @@ class template {
         },$paramet);
 
 		$src =DZZ_ROOT.'/' . $parameter;
-
 		$src = preg_replace('/\?.*/i', '', $src);
-		$jsname = str_replace('.','_',basename($src,'.js'));	
+		//$jsname = str_replace('.','_',basename($src,'.js'));
+        $jsname = md5($src);
 		$content = @file_get_contents($src);
+
         $_G['template_paramet_replace_value'] = $paramet;
 		if(!$content){
 		    $return = preg_replace_callback("/<script([^>]+?)src=\"(.+?)\"(.*?)>[\s\S]*?/is",function($m){
@@ -371,7 +372,8 @@ class template {
 		        fwrite($fp, $jscontent);
 		        fclose($fp);
 			}
-		   	$return = '<script type="text/javascript" src="'.$jscachefile.'"></script>';
+
+		  	$return = '<script type="text/javascript" src="'.$jscachefile.'"></script>';
             $return .= preg_replace_callback("/<script([^>]+?)src=\"(.+?)\"(.*?)>[\s\S]*?/is",function($m){
                 return '<script'.$m[1].'src="'.getglobal('template_paramet_replace_value').'"'.$m[3].'>';
             },$matches[0]);
@@ -382,6 +384,7 @@ class template {
             return '<script'.$m[1].'src="'.getglobal('template_paramet_replace_value').'"'.$m[3].'>';
         },$matches[0]);
         unset($_G['template_paramet_replace_value']);
+
 		return $return;
 	}
 //	模版lang替换

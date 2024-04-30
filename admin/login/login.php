@@ -11,45 +11,13 @@ if (!defined('IN_OAOOA') ) {
     exit('Access Denied');
 }
 
-if (!function_exists('ajaxshowheader')) {
-    function ajaxshowheader() {
-        global $_G;
-        ob_end_clean();
-        @header("Expires: -1");
-        @header("Cache-Control: no-store, private, post-check=0, pre-check=0, max-age=0", FALSE);
-        @header("Pragma: no-cache");
-        header("Content-type: application/xml");
-        echo "<?xml version=\"1.0\" encoding=\"" . CHARSET . "\"?>\n<root><![CDATA[";
-    }
-
-}
-
-if (!function_exists('ajaxshowfooter')) {
-    function ajaxshowfooter() {
-        echo ']]></root>';
-        exit();
-    }
-
-}
-if ($dzz ->var['inajax']) {
-    ajaxshowheader();
-    ajaxshowfooter();
-}
   html_login_header();
 
-if ($admincp -> cpaccess == -1) {
+if ($admincp -> cpaccess == -1 || $admincp -> cpaccess == -4) {
     $ltime = $this -> sessionlife - (TIMESTAMP - $this -> adminsession['dateline']);
     echo '<p class="logintips">' . lang('login_cplock', array('ltime' => $ltime)) . '</p>';
 
-} elseif ($admincp -> cpaccess == -4) {
-    $ltime = $this -> sessionlife - (TIMESTAMP - $this -> adminsession['dateline']);
-    echo '<p class="logintips">' . lang('login_user_lock') . '</p>';
-
-//} elseif($admincp->cpaccess = 3) {
-	//header("Location:".dreferer());
-	//exit();
 } else {
-
     html_login_form();
 }
 
@@ -59,9 +27,7 @@ function html_login_header($form = true) {
     global $_G;
     $uid = getglobal('uid');
     $charset = CHARSET;
-    $lang = &lang();
-    $title = $lang['login_title'];
-    $tips = $lang['login_tips'];
+    $title = lang('title_admincp');
 
     echo <<<EOT
 <!DOCTYPE>
@@ -71,16 +37,8 @@ function html_login_header($form = true) {
 <base href="{$_G['siteurl']}">
 <meta http-equiv="Content-Type" content="text/html;charset=$charset" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css" type="text/css" media="all" />
 <link rel="stylesheet" href="admin/login/images/adminlogin.css" type="text/css" media="all" />
-<link rel="stylesheet" href="static/css/common.css" type="text/css" media="all" />
 <script type="text/javascript" src="static/js/md5.js"></script> 
-<script type="text/javascript" src="static/jquery/jquery.min.js?{VERHASH}"></script>
-<script type="text/javascript" src="static/js/common.js?{VERHASH}"></script>
-<!--[if lt IE 9]>
-  <script src="static/js/jquery.placeholder.js" type="text/javascript"></script>
-<![endif]-->
-<meta content="oaooa.com" name="Copyright" />
 </head>
 <body>
 EOT;
@@ -94,7 +52,7 @@ EOT;
 	<img src="$loginset_img" name="imgbg" id="imgbg" style="right: 0px; bottom: 0px; top: 0px; left: 0px; z-index:1;margin:0;padding:0;overflow:hidden; position: absolute;width:100%;height:100%" height="100%" width="100%">
 </div>
 <div class="mainContainer">
-<table class="loginContainer" wide="100%" height="100%">
+<table class="loginContainer" width="100%" height="100%" style="layout:f">
 <tr><td align="center" valign="middle">
 EOT;
     }
@@ -118,51 +76,41 @@ EOT;
 function html_login_form() {
     global $_G;
     $uid = getglobal('uid');
-    $isguest = !getglobal('uid');
-    $lang1 = lang();
     $year=dgmdate(TIMESTAMP,'Y');
     $maintitle=lang('title_admincp');
-    $loginuser = $isguest ? '<input class="form-control" name="admin_email"  type="text" title="" onfocus="if(this.value==\'' . lang('login_email_username') . '\'){this.value=\'\'}"   onblur="if(this.value==\'\'){this.value=\'' . lang('login_email_username') . '\'}"  autocomplete="off" />' : '<div class="username">' . $_G['member']['username'] . '</div><div class="email">' . $_G['member']['email'] . '</div>';
+	$placeholder_email=lang('login_email_username');
+    $loginuser = empty($uid) ? '<input class="form-control" name="admin_email"  type="text" placeholder="'.$placeholder_email.'"  autocomplete="off" />' : '<div class="username">' . $_G['member']['username'] . '</div><div class="email">' . $_G['member']['email'] . '</div>';
     $sid = getglobal('sid');
-    $avatarstatus=getglobal('avatarstatus','member');
     if(!$uid ){
-        $avastar ='<img src="'.($_G['setting']['sitelogo']?\IO::getFileUri('attach::'.$_G['setting']['sitelogo']):'static/image/common/logo.png').'" />';
+        $avastar ='<img src="data/attachment/sitelogo/sitelogo.png?'.VERHASH.'" />';
     }else{
         $avastar = avatar_block($uid);
     }
 	$_GET['referer'] = dhtmlspecialchars($_GET['referer'], ENT_QUOTES);
-    $_GET['referer'] = str_replace('&amp;', '&', $_GET['referer']);
+    $referer = str_replace('&amp;', '&', $_GET['referer']);
     $avastar.='<div class="maintitle">'.$maintitle.'</div>';
     $extra = BASESCRIPT . '?' . $_SERVER['QUERY_STRING'];
-    $forcesecques = '<option value="0">' . ($_G['config']['admincp']['forcesecques'] ? $lang1['forcesecques'] : $lang1['security_question_0']) . '</option>';
+	$placeholder_password=lang('password');
+	$placeholder_login=lang('login');
     echo <<<EOT
     	
 		<form method="post" name="login" id="loginform" action="$extra" onsubmit="pwmd5('admin_password')">
             <input type="hidden" name="sid" value="$sid">
-            <input type="hidden" name="referer" value="$_GET[referer]">
+            <input type="hidden" name="referer" value="$referer">
             <div class="loginformContainer">       
                 <div class="avatarContainer">$avastar</div>
 				
                 $loginuser
                 <div id="admin_password_Container">
-						<input  name="admin_password"  id="admin_password"  type="password" class="form-control"  value="" autocomplete="off" placeholder="$lang1[password]" />
+						<input  name="admin_password"  id="admin_password"  type="password" class="form-control"  value="" autocomplete="off" placeholder="$placeholder_password" />
 
                 </div>
-                <input name="submit" value="$lang1[login]" type="submit" class="btn btn-primary"  />
-                <div class="copyright">Powered by <a href="https://www.oaooa.com/" target="_blank">Pichome</a> &copy; 2012-$year</div>
+                <button name="submit"  type="submit" class="btn btn-primary btn-block btn-lg" >$placeholder_login</button>
+                
              </div>
              
 		 </form>
-		<script type="text/JavaScript">
-            jQuery(document).ready(function(e) {
-				jQuery('#loginform .form-control:first').focus();
-                if(jQuery('.ie8,.ie9').length){ //ie8模拟placeholder;
-                    jQuery(':input[placeholder]').each(function(){
-                        jQuery(this).placeholder();
-                    });
-                }
-            });
-		</script>
+		<div class="copyright">Powered by <a href="https://www.oaooa.com/" target="_blank">Pichome</a> &copy; 2012-$year</div>
 EOT;
 }
 ?>

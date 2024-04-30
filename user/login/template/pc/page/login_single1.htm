@@ -46,7 +46,8 @@
 			<!--{/if}-->
 			<el-form-item>
 				<el-col :span="11" style="text-align:left">
-					<el-checkbox label="{lang automatic_login_within_thirtydays}" v-model="ruleForm.cookietime" value="1" />
+					<!--<el-checkbox label="{lang automatic_login_within_thirtydays}" v-model="ruleForm.cookietime" value="1" />-->
+					<el-link type="text"  :underline="false" href="user.php?mod=login&op=lostpasswd">{lang lostpasswd}</el-link>
 				</el-col>
 				<el-col :span="2"></el-col>
 				
@@ -99,7 +100,7 @@
 				},
 				rules: {
 					email: [
-						{ required: true, message: '"{lang email_username}', trigger: 'blur' }
+						{ required: true, message: '{lang email_username}', trigger: 'blur' }
 					],
 					password: [
 						{ required: true, message: '{lang please_input_password}', trigger: 'blur' }
@@ -169,13 +170,12 @@
 				var self = this;
 				self.$refs.ruleForm.validate(async function(valid){
 					if (valid) {
-						console.log(self.ruleForm);
 						var params = {
 							'loginsubmit':true,
 							'formhash':'{FORMHASH}',
 							'email':self.ruleForm.email,
 							'password':self.pwdsafety?hex_md5(self.ruleForm.password):self.ruleForm.password,
-							'cookietime':self.ruleForm.cookietime?30*60*60*24:0,
+							'cookietime':30*60*60*24,
 							'referer':self.ruleForm.referer
 						};
 						

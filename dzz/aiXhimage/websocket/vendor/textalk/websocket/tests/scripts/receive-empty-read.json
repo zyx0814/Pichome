@@ -1,0 +1,58 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fread",
+        "params": [],
+        "return": ""
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 0,
+            "seekable": false
+        }
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": true,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 2,
+            "seekable": false
+        }
+    },
+    {
+        "function": "fclose",
+        "params": [
+            "@mock-stream"
+        ],
+        "return":true
+    }
+]

@@ -16,7 +16,7 @@
 	<div class="mainContainer" id="main_message">
 	<div class="modal-content">
 		<div class="mask"></div>
-		<el-tooltip content="切换页面配色" placement="bottom">
+		<el-tooltip content="{lang themeColor_tip}" placement="bottom">
             <el-button 
                 text 
 				 class="themebtn"
@@ -46,7 +46,8 @@
 			</el-form-item>
 			<el-form-item>
 				<el-col :span="11" style="text-align:left">
-					<el-checkbox label="{lang automatic_login_within_thirtydays}" v-model="ruleForm.cookietime" value="1" />
+					<!--<el-checkbox label="{lang automatic_login_within_thirtydays}" v-model="ruleForm.cookietime" value="1" />-->
+					<el-link type="text"  :underline="false" href="user.php?mod=login&action=lostpasswd{eval echo $referer?'&referer='.urlencode($referer):''}">{lang lostpassword}</el-link>
 				</el-col>
 				<el-col :span="2"></el-col>
 				
@@ -99,7 +100,7 @@
 				},
 				rules: {
 					email: [
-						{ required: true, message: '"{lang email_username}', trigger: 'blur' }
+						{ required: true, message: '{lang please_input_email_username}', trigger: 'blur' }
 					],
 					password: [
 						{ required: true, message: '{lang please_input_password}', trigger: 'blur' }
@@ -169,7 +170,6 @@
 				var self = this;
 				self.$refs.ruleForm.validate(async function(valid){
 					if (valid) {
-						console.log(self.ruleForm);
 						var params = {
 							'loginsubmit':true,
 							'formhash':'{FORMHASH}',
@@ -193,10 +193,10 @@
 							 });
 						}else{
 							self.btnloading = false;
-							self.$message.error(res.error || '登录失败');
+							self.$message.error(res.error );
 						}
 					} else {
-						self.$message.error('请先填写账号和密码');
+						self.$message.error('{lang submit_invalid_msg}');
 						self.btnloading = false;
 						return false;
 					}

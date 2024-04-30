@@ -2,6 +2,7 @@
 <link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
 <script src="static/js/sortable.min.js?{VERHASH}"></script>
 <link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/tag.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
 <script>
 	function debounce(fun, delay) {
 		var time;
@@ -28,7 +29,7 @@
 			<el-aside class="page-left" width="200px">
 				<!--{template librarylist/pc/components/tag/left}-->
 			</el-aside>
-			<el-main style="overflow: hidden;padding: 0;">
+			<el-main style="overflow: hidden;padding: 0;position: relative;">
 				<el-scrollbar id="container_scroll" ref="scrollbar" @scroll="DocumentHideAllPop">
 					<div class="page-content">
 						<!--{template librarylist/pc/components/tag/content}-->
@@ -37,6 +38,7 @@
 				<div class="right-toolbar">
 					<el-button type="primary" style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;" circle icon="Plus" size="large" @click="TagContextAddTag"></el-button>
 				</div>
+				<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 			</el-main>
 		</el-container>
 	   
@@ -51,7 +53,12 @@
 				DocumentResize:0,
 				DocumentAppid:'$_GET[appid]',
 				DocumentThemeColor:'',//dark
-				DocumentVapp:{appname:'',type:0}
+				DocumentVapp:{appname:'',type:0},
+				DocumentOverlay:{
+					left:false,
+					group:false,
+					main:false,
+				},
 			}
 		},
 		mixins:[leftMixins,HeaderMixins,TagLeftMixin,TagContentMixin],
@@ -95,8 +102,13 @@
 				//标签群组隐藏
 				this.tagLeftMenu.show = false;
 			},
-			screenvisible(status,text){
-				this.DocumentOverlay = status;
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
 			},
 			async CommonInit(){
 				const {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getpagesetting',{
@@ -121,6 +133,7 @@
 		dzzoffice.component(key, component)
 	}
 	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('language',language);
 	// 屏蔽警告信息
 	dzzoffice.config.warnHandler = function(){return null};
 	dzzoffice.mount('#dzzoffice');

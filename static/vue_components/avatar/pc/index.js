@@ -37,7 +37,7 @@ const comavatar = {
                     <slot></slot>
                     <template v-if="level">
                         <template v-for="item in LevelData">
-                            <el-tooltip v-if="item.val == level" class="level" effect="dark" content="密级" placement="bottom-end">
+                            <el-tooltip v-if="item.val == level" class="level" effect="dark" :content="Lang.text1" placement="bottom-end">
                                 <el-image v-cloak class="level-image" :src="item.img" fit="contain"></el-image>
                             </el-tooltip>
                         </template>
@@ -45,21 +45,29 @@ const comavatar = {
                 </div>
                 <template #dropdown>
                     <el-dropdown-menu slot="dropdown" style="width: 165px;">
-                        <el-dropdown-item command="personal">个人中心</el-dropdown-item>
-                        <el-dropdown-item command="systeminfo" v-if="adminid==1">系统管理</el-dropdown-item>
+                        <el-dropdown-item command="personal">{{Lang.text2}}</el-dropdown-item>
+                        <el-dropdown-item command="systeminfo" v-if="adminid==1">{{Lang.text3}}</el-dropdown-item>
                         <el-divider class="adjust-divider"></el-divider>
-						<el-dropdown-item command="about">关于Pichome</el-dropdown-item>
-                        <el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+						<el-dropdown-item command="about">{{Lang.text4}}Pichome</el-dropdown-item>
+                        <el-dropdown-item command="OutLogin">{{Lang.text5}}</el-dropdown-item>
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
         </template>
         <template v-else>
-            <el-button type="primary" size="mini" @click="GoLogin">登录</el-button>
+            <el-button type="primary" size="mini" @click="GoLogin">{{Lang.text6}}</el-button>
         </template>
     `,
     setup(props, context){
         let isuid = ref(props.uid);
+        let Lang = {
+            text1:__lang.level,
+            text2:__lang.userCenter,
+            text3:__lang.system_management,
+            text4:__lang.about,
+            text5:__lang.logout,
+            text6:__lang.login,
+        };
         const LevelData = [
             {val:1,img:'static/vue_components/avatar/image/1.png'},
             {val:2,img:'static/vue_components/avatar/image/2.png'},
@@ -104,21 +112,21 @@ const comavatar = {
                         </div>
                         <div class="el-form el-form--default el-form--label-left">
                             <div class="el-form-item" style="margin-bottom: 0;">
-                                <label class="el-form-item__label" style="width:90px;">软件名称：</label>
+                                <label class="el-form-item__label" style="width:90px;">${__lang.software_name}：</label>
                                 <div class="el-form-item__content">欧奥PicHome</div>
                             </div>
                             <div class="el-form-item" style="margin-bottom: 0;">
-                                <label class="el-form-item__label" style="width:90px;">版本信息：</label>
+                                <label class="el-form-item__label" style="width:90px;">${__lang.version_information}：</label>
                                 <div class="el-form-item__content">${props.version}</div>
                             </div>
                             <div class="el-form-item" style="margin-bottom: 0;">
-                                <label class="el-form-item__label" style="width:90px;">版权信息：</label>
+                                <label class="el-form-item__label" style="width:90px;">${__lang.copyright_information}：</label>
                                 <div class="el-form-item__content">
                                     <span class="el-text">Powered By PicHome </span>
                                 </div>
                             </div>
                             <div class="el-form-item" style="margin-bottom: 0;">
-                                <label class="el-form-item__label" style="width:90px;">网站地址：</label>
+                                <label class="el-form-item__label" style="width:90px;">${__lang.Website_address}：</label>
                                 <div class="el-form-item__content">
                                     <a class="el-link el-link--primary" href="https://oaooa.com/" target="_blank">
                                         <span class="el-link__inner">oaooa.com</span>
@@ -137,9 +145,9 @@ const comavatar = {
                     });
                 break;
                 case 'OutLogin':
-                    ElementPlus.ElMessageBox.confirm('您确定要注销登录?', '提示', {
-                          confirmButtonText: '确定',
-                          cancelButtonText: '取消',
+                    ElementPlus.ElMessageBox.confirm(__lang.js_exit, __lang.board_message, {
+                          confirmButtonText: __lang.confirms,
+                          cancelButtonText: __lang.cancel,
                           type: 'warning'
                         }).then(async function() {
                             let {data: res} = await axios.post('user.php?mod=login&op=logging&inajax=1&action=logout&formhash='+props.formhash+'&t='+new Date().getTime());
@@ -153,7 +161,7 @@ const comavatar = {
                                 // }
                                 
                             }else{
-                                ElementPlus.ElMessage.error(res.msg || '退出登录失败')
+                                ElementPlus.ElMessage.error(res.msg || __lang.logout_error)
                             }
                         }).catch(function() {
                                    
@@ -172,11 +180,13 @@ const comavatar = {
             var referer = encodeURIComponent(window.location.href);
             window.location.href = 'user.php?mod=login&referer='+referer;
         }
+        
         return {
             LevelData,
             handlecommand,
             isuid,
-            GoLogin
+            GoLogin,
+            Lang
         }
     }
 };

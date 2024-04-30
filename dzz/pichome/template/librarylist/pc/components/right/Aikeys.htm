@@ -1,0 +1,45 @@
+<template v-if="RightData.Aikey.type == 'files'">
+	<div style="padding: 8px 18px;">
+		<el-button plain style="width: 100%;" @click="Aikeys.visible=true">AI批量标注</el-button>
+	</div>
+</template>
+<template v-if="RightData.Aikey.type == 'folder' || RightData.Aikey.type == 'vapp'">
+	<div style="padding: 8px 18px;">
+		<el-button  plain style="width: 100%;" @click="Aikeys.visible=true">AI批量标注整个文件夹图片</el-button>
+	</div>
+</template>
+
+<el-dialog
+    v-model="Aikeys.visible"
+    title="AI批量标注"
+    width="500"
+    @open="AikeysOpen">
+    <p class="tipTxt" v-if="RightData.Aikey.type == 'files'" style="margin: 0;margin-bottom: 12px;">
+        已选中
+        <el-text type="warning" size="large" tag="b">{{RightActiveRid.length}}</el-text>
+        个图片，选择要进行以下哪些批量操作</p>
+    <el-form 
+        :model="AikeysForm" 
+        style="max-width: 600px" 
+        label-position="top">
+        <template v-for="item in this.AikeysForm">
+            <el-form-item :label="item.title">
+                <el-select v-model="item.value" placeholder="留空则不会修改" style="width: 100%">
+                    <el-option
+                        v-for="fitem in item.data"
+                        :key="fitem.tplid"
+                        :label="fitem.name"
+                        :value="fitem.tplid"
+                    />
+                </el-select>
+            </el-form-item>
+        </template>
+        
+    </el-form>
+    <template #footer>
+        <div class="dialog-footer">
+            <el-button @click="Aikeys.visible = false">取消</el-button>
+            <el-button type="primary" @click="AikeysSubmit">提交</el-button>
+        </div>
+    </template>
+</el-dialog>

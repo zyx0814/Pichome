@@ -61,7 +61,10 @@ if ($operation == 'deltag') {//删除标签
             'dateline' => TIMESTAMP
         );
         $cid = C::t('pichome_taggroup')->insert($setarr);
-        exit(json_encode(array('success' => true, 'cid' => $cid)));
+        $data = $setarr;
+        $data['cid'] = $cid;
+        Hook::listen('taggroupdataFilter',$data,0);
+        exit(json_encode(array('success' => true, 'cid' => $cid,'data'=>$data)));
     }
 
 } elseif ($operation == 'sorttaggroup') {//分类排序
@@ -74,7 +77,8 @@ if ($operation == 'deltag') {//删除标签
     $cid = isset($_GET['cid']) ? trim($_GET['cid']):'';
     $catname = isset($_GET['catname']) ? getstr($_GET['catname']):'';
     C::t('pichome_taggroup')->update($cid, ['catname' => $catname]);
-    exit(json_encode(array('success' => true)));
+    $data['langkey']=['catname'=>'tag_catname_'.$cid];
+    exit(json_encode(array('success' => true,'data'=>$data)));
 }
 elseif ($operation == 'gettaggroup') {
 
@@ -143,6 +147,7 @@ elseif ($operation == 'gettaggroup') {
         }
 
     }
+
     exit(json_encode(array('data' => $tagdata)));
 
 }else{
@@ -163,7 +168,9 @@ function gettagcount($appid){
     $groupdata = C::t('pichome_taggroup')->fetch_tagcatandnum_by_pcid($appid);
     $arr = [];
     foreach ($groupdata as $key => $val) {
-        $arr[] = array('cid' => $key, 'text' => $val['tagname'],'num'=>$val['num']);
+        $arr[$key] = array('cid' => $key, 'text' => $val['tagname'],'num'=>$val['num']);
+
     }
+    Hook::listen('taggroupdataFilter',$arr,1);
     return array('all'=>$allnum,'nocat'=>$nocatnum,'data'=>$arr);
 }

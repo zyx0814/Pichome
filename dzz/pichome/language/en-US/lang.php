@@ -7,5 +7,6 @@ $lang = array (
 	'weixin_illegal'=>'Micro signal is illegal',
 	'weixin_registered'=>'The micro signal has been registered',
 	'email_registered_retry'=>'The mailbox has been registered, please change your email and try again.',
+	'normal_directory'=>'Normal directory',
 );
 ?>

@@ -23,24 +23,6 @@ if($do=='getNavigation'){
     if(defined('PICHOME_LIENCE')){
         $number = DB::result_first("select count(clid) from %t where uid = %d and perm > %d",array('pichome_collectuser',$uid,0));
         $navlist[] = ['id'=>'collection','name'=>'我的收藏','url'=>'index.php?mod=collection&op=view','number'=>$number];
-       /* $collectlis = Hook::listen('collectlist');
-        if(isset($collectlis[0])){
-            if(isset($collectlis[0]['x']) && $collectlis[0]['x']){
-                $navlist[] = ['id'=>'fileCollect1','name'=>'我的归档','url'=>'index.php?mod=fileCollect&type=1'];
-            }
-            if(isset($collectlis[0]['m']) && $collectlis[0]['m']){
-                $navlist[] = ['id'=>'fileCollect2','name'=>'我审核的','url'=>'index.php?mod=fileCollect&type=2'];
-            }
-        }
-        //我的收集
-        if($_G['adminid']==1 || C::t('pichome_vappmember')->checkuserperm_by_uid($_G['uid'])){
-            $navlist[]=array(
-                'id'=>'fileCollectSetting',
-                'name'=>'我的收集',
-                'url'=>'index.php?mod=fileCollect&op=setting'
-            );
-        }
-        $navlist[] = ['id'=>'myFile','name'=>'我的创作','url'=>'index.php?mod=myfile'];*/
     }
 
 
@@ -57,7 +39,7 @@ if($do=='getNavigation'){
     $navlist[] = ['id'=>'downloads','name'=>'我的下载','url'=>'index.php?mod=stats&op=downloads','number'=>$downloadnum];
     $viewsnum  = DB::result_first("select count(id) from %t where  idtype = %d and uid = %d ",['stats_view',0,$uid]);
     $navlist[] = ['id'=>'views','name'=>'浏览记录','url'=>'index.php?mod=stats&op=views','number'=>$viewsnum];
-
+    hook::listen('getMyNavigation',$navlist);
     exit(json_encode($navlist));
 
 }elseif ($do == 'uploadimg') {//上传用户头像

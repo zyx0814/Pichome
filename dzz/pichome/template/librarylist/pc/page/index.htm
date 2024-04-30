@@ -13,6 +13,10 @@
 <link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/index.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/files.css?{VERHASH}"/>
 <link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="dzz/pichome/template/librarylist/pc/assets/js/marked.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="dzz/pichome/template/librarylist/pc/assets/js/highlight.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
 <style>
 	.ImageRightMenu{
 		z-index: 9000 !important;
@@ -29,7 +33,7 @@
 				<!--{template librarylist/pc/components/left/index}-->
 			</el-aside>
 			<el-container>
-				<el-header v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;">
+				<el-header v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;position: relative;">
 					<dzz-screen
 						ref="ScreenBoxRef"
 						:resize="DocumentResize"
@@ -37,10 +41,11 @@
 						:headerkeyword="HeaderKeyword"
 						:defaultparam="ScreenParam"
 						@submit="CommonGetImageData"
-						@visible="screenvisible"
+						@visible="handleDocumentOverlay"
 						:appid="DocumentAppid"
 						:hassub="hassub">
 					</dzz-screen>
+					<div v-if="DocumentOverlay.screen" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 				</el-header>
 				<el-main 
 					class="dzz-container" 
@@ -61,9 +66,10 @@
 						</div>
 						
 					</el-scrollbar>
+					<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 				</el-main>
 			</el-container>
-			<el-aside class="mainRight" :width="RightWidth+'px'"  v-show="HeaderRightBtnShow.column.indexOf('right')>-1">
+			<el-aside class="mainRight" style="overflow: hidden;" :width="RightWidth+'px'"  v-show="HeaderRightBtnShow.column.indexOf('right')>-1">
 				<!--{template librarylist/pc/components/right/index}-->
 			</el-aside>
 			
@@ -90,6 +96,12 @@
 	var dzzoffice = createApp({
 		data(){
 			return {
+				DocumentOverlay:{
+					left:false,
+					screen:false,
+					main:false,
+					right:false
+				},
 				fMOD_URL:MOD_URL,
 				DocumentResize:0,
 				DocumentAppid:'',
@@ -111,6 +123,12 @@
 				},
 				deep:true,
 				// immediate:true
+			},
+			'ImageIcon.data':{
+				handler(newval){
+					this.ImageGetThumb();
+				},
+				deep:true
 			}
 		},
 		created(){
@@ -255,6 +273,14 @@
                     this.ispc = false;
                 }
             },
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			}
 		},
 		components: {
 		},
@@ -312,7 +338,9 @@
 	dzzoffice.component('comavatar', comavatar);
 	dzzoffice.use(ImageLayout);
 	dzzoffice.use(DzzCollectdialog);
+	
 	dzzoffice.use(ImageFile);
+	dzzoffice.component('language',language);
 	dzzoffice.component('comsort', comsort);
 	dzzoffice.mount('#dzzoffice');
 </script>

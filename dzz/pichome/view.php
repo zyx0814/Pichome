@@ -30,7 +30,7 @@ foreach ($vappdatas as $val) {
 
     //获取最新图片
     $resourcesdata = DB::fetch_first("select r.*,ra.path from %t r left join %t ra on r.rid = ra.rid 
-    where r.isdelete < 1 and r.appid = %s order by r.dateline desc ", ['pichome_resources', 'pichome_resources_attr', $val['appid']]);
+    where r.isdelete = 0 and r.appid = %s order by r.dateline desc ", ['pichome_resources', 'pichome_resources_attr', $val['appid']]);
     
     $icondata = C::t('pichome_resources')->getfileimageurl($resourcesdata, $val['path'], $val['type'], 1);
     $val['icon'] = $icondata['icondata'];

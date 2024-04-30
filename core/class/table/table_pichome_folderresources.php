@@ -14,7 +14,9 @@
             parent::__construct();
         }
         public function insert($setarr){
-
+            if(!isset($setarr['pathkey'])){
+                $setarr['pathkey'] = DB::result_first("select pathkey from %t where fid = %s",array('pichome_folder',$setarr['fid']));
+            }
             if($id = DB::result_first("select id from %t where rid = %s and fid = %s and appid = %s",array($this->_table,$setarr['rid'],$setarr['fid'],$setarr['appid']))){
                 $rid = $setarr['rid'];
                 unset($setarr['rid']);
@@ -100,9 +102,10 @@
         }
         public function get_foldername_by_rid($rid){
             $foldernames = [];
-            foreach(DB::fetch_all("select f.fid,f.fname,pathkey from %t  fr left join %t f on f.fid=fr.fid and !isnull(fr.id) where rid = %s",array($this->_table,'pichome_folder',$rid)) as $v){
+            foreach(DB::fetch_all("select f.fid,f.fname,f.pathkey from %t  fr left join %t f on f.fid=fr.fid and !isnull(fr.id) where rid = %s",array($this->_table,'pichome_folder',$rid)) as $v){
                 if(isset($v['fname'])) $foldernames[$v['fid']] = ['fname'=>$v['fname'],'pathkey'=>$v['pathkey']];
             }
+            Hook::listen('folderdataFilter',$foldernames,true);
             return $foldernames;
         }
         public function fetch_rid_by_fids($fids,$limit = 6,$rid=''){

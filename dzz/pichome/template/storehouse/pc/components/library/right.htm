@@ -32,7 +32,10 @@
 				label-width="140px" 
 				label-suffix="：">
 				<el-form-item label="库名称">
-					<el-input v-model="SettingForm.appname" @input="SettingEditStatus"></el-input>
+					<div class="language-box">
+						<el-input v-model="SettingForm.appname" @input="SettingEditStatus"></el-input>
+						<language v-if="langkey" :langkey="langkey" formhash="{FORMHASH}"></language>
+					</div>
 				</el-form-item>
 				<el-form-item label="访问地址" style="flex-wrap: unset;">
 					<div style="display: flex;flex: 1;">
@@ -476,7 +479,8 @@
 					isqrcode:false,
 					qrcodeurl:''
 				},
-				SettingAddressOld:''
+				SettingAddressOld:'',
+				langkey:{}
             }
         },
 		watch:{
@@ -696,6 +700,7 @@
 				var data = res.data;
 				if(data.success){
 					var ditem = data.data;
+					self.langkey = ditem.langkey&&ditem.langkey.appname?ditem.langkey.appname:'';
 					var showVal = ditem.convertpath.replace(/\\/g,"/");
 					var view = {
 						groups:[],

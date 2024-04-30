@@ -24,8 +24,8 @@
 	placement="bottom"
 	trigger="click"
 	popper-class="isdropdown header-dropdown-menu"
-	@show="screenvisible(true)"
-	@hide="screenvisible(false)">
+	@show="handleDocumentOverlay(true)"
+	@hide="handleDocumentOverlay(false)">
 	<comsort
 		:issort="true"
 		:isleftcolumn="classifyType"

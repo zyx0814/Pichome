@@ -13,7 +13,7 @@ if ($do == 'addsearch') {//增加关键词搜索次数
     $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $gid = isset($_GET['gid']) ? intval($_GET['gid']) : '';
-    $bid = isset($_GET['bid']) ? intval($_GET['bid']) : '';
+   // $bid = isset($_GET['bid']) ? intval($_GET['bid']) : '';
     if (!$keyword) exit(json_encode(array('success'=>false)));
     //增加统计关键词次数
         $arr1 = explode('+', $keyword);
@@ -70,14 +70,23 @@ if ($do == 'addsearch') {//增加关键词搜索次数
     }else{
         $folderdatanum = C::t('pichome_folder')->fetch_folder_by_appid_pfid($appid,$pfids);
     }
+    if(isset($folderdatanum['langkey'])) unset($folderdatanum['langkey']);
     exit(json_encode(array( 'folderdatanum' => $folderdatanum)));
+}elseif($do == 'getsearchfoldernum'){//获取左侧目录数字
+    $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
+    $pathkeys = isset($_GET['pathkeys']) ? trim($_GET['pathkeys']):'';
+    $pathkeyarr = explode(',',$pathkeys);
+    $data = C::t('pichome_folder')->getFolderNumByPathkey($appid,$pathkeyarr);
+    exit(json_encode(array( 'data' => $data)));
 }elseif($do == 'getleftnum'){//获取左侧文件数
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
     $data = ['all'=>0,'nocat'=>0];
     $data['nocat'] = DB::result_first("select count(rid) as num from %t 
-        where  appid = % and isdelete < 1 and (isnull(fids) or fids='')",array('pichome_resources',$appid));
+        where  appid = %s and isdelete = 0 and (isnull(fids) or fids='')",array('pichome_resources',$appid));
+
     $data['all'] = DB::result_first("select count(rid) as num  from %t 
-        where  appid = % and isdelete < 1",array('pichome_resources',$appid));
+        where  appid = %s and isdelete = 0",array('pichome_resources',$appid));
+
     exit(json_encode(['success'=>true,'data'=>$data]));
 }elseif($do == 'searchfolderbyname'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
@@ -110,7 +119,7 @@ elseif ($do == 'searchmenu_num') {
         $params = ['pichome_resources'];
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
+    if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
     else $wheresql = " r.isdelete =0  and r.level <= %d ";
     $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
     if($ismusic){
@@ -952,7 +961,7 @@ elseif ($do == 'search_menu') {
         exit(json_encode(array()));
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql = " r.isdelete < 1 and r.level <= %d ";
+    if(!$isrecycle) $wheresql = " r.isdelete = 0 and r.level <= %d ";
     else $wheresql = " r.isdelete =0  and r.level <= %d ";
     $ismusic = isset($_GET['ismusic']) ? intval($_GET['ismusic']) : 0;
     if($ismusic){
@@ -1403,7 +1412,7 @@ elseif ($do == 'search_menu') {
         }
     }
     $isrecycle = isset($_GET['isrecycle']) ? intval($_GET['isrecycle']):0;
-    if(!$isrecycle) $wheresql .= " and r.isdelete < 1 ";
+    if(!$isrecycle) $wheresql .= " and r.isdelete = 0 ";
     else $wheresql .= " and r.isdelete =0 ";
     $data = array();
     if ($skey == 'tag') {
@@ -1533,12 +1542,13 @@ elseif($do == 'getpagesetting'){
     $shapes = explode(',', $shape);
     $shapelable = [];
     if($shape && !empty($shapes)){
-        $lableshape = [];
-        foreach($shapedataarr as $v){
-            $lableshape[$v['lablename']] = $v;
-        }
+        $shapes = explode(',', $shape);
+        // $lableshape = [];
+        // foreach($shapedataarr as $v){
+        //     $lableshape[$v['lablename']] = $v;
+        // }
         foreach($shapes as $s){
-            $shapelable[] = $lableshape[$s]['val'];
+            $shapelable[] = $shapedataarr[$s];
         }
     }
     $tagdata=[];

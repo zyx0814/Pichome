@@ -76,54 +76,52 @@
         <div class="container">
 				<div class="content" >
 					<el-form ref="form" :model="formdata" label-width="200px">
-						<el-form-item label="版本信息：">
+						<el-form-item label="{lang version_information}：">
 							<el-input class="maxWidth" disabled v-model="formdata.versions"></el-input>
 						</el-form-item>
-						<el-form-item label="授权用户数：">
+						<el-form-item label="{lang license_user_sum}：">
 							<el-input class="maxWidth" disabled v-model="formdata.num"></el-input>
 							<!--{if !defined('NOLIMITUSER')}-->
-							<el-button icon="Plus" style="margin-left: 6px;width: 122px;" type="primary" @click="handleAddUser()">增购用户</el-button>
+							<el-button icon="Plus" style="margin-left: 6px;width: 122px;" type="primary" @click="handleAddUser()">{lang system1}</el-button>
 							<!--{/if}-->
-							<p class="tipTxt">增购任意数量用户后，系统即可升级为团队版</p>
+							<p class="tipTxt">{lang system2}</p>
 						</el-form-item>
-						<el-form-item label="机器识别码：">
+						<el-form-item label="{lang system3}：">
 							<el-input class="maxWidth" disabled v-model="formdata.code"></el-input>
-							<el-button icon="Copy-Document" style="margin-left: 6px;width: 122px;" type="primary"  @click="handleCopyCode">复制识别码</el-button>
-							<p class="tipTxt">增购用户时需复制机器识别码，用于授权文件绑定</p>
+							<el-button icon="Copy-Document" style="margin-left: 6px;width: 122px;" type="primary"  @click="handleCopyCode">{lang system4}</el-button>
+							<p class="tipTxt">{lang system5}</p>
 						</el-form-item>
-						<el-form-item label="授权时间：">
+						<el-form-item label="{lang system6}：">
 							<el-input class="maxWidth" disabled v-model="formdata.time"></el-input>
-							<el-button type="primary" icon="Download"  style="margin-left: 6px;width: 122px;" @click="handleupdate">在线获取授权</el-button>
+							<el-button type="primary" icon="Download"  style="margin-left: 6px;width: 122px;" @click="handleupdate">{lang system7}</el-button>
 							<el-upload
 								style="display:inline-block;margin-left: 6px;"
 								:show-file-list="false"
 								accept=".lic"
 								action="{MOD_URL}&do=authorize&operation=upload"
 								:on-success="handleUploadSuccess">
-								<el-button type="success" ><el-icon><Upload /></el-icon>上传授权文件</el-button>
+								<el-button type="success" ><el-icon><Upload /></el-icon>{lang system8}</el-button>
 							</el-upload>
-							<p class="tipTxt">点击在线获取授权，或手动上传授权文件</p>
+							<p class="tipTxt">{lang system9}</p>
 						</el-form-item>
 					</el-form>
 					<div style="padding-top: 20px;">
 						<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-bottom: 10px;">
-							<div style="width: 200px;text-align:right;padding-right: 12px;">购买规则：</div>
+							<div style="width: 200px;text-align:right;padding-right: 12px;">{lang system10}：</div>
 						</div>
 						<div class="tipTxt" style="padding-left: 117px;line-height: 25px;font-size: 14px;">
-							<p class="">1、个人版1用户永久免费使用，增购1用户，系统即可升级为团队版</p>
-							<p class="">2、99元/用户，需要多少用户购买多少即可。也可以随着人员增加陆续增购用户。累计购买100用户后，系统自动升级为无限用户</p>
-							<p class="">3、如果是首次增购用户，增购用户后可在系统工具中在线更新系统到团队版程序</p>
+							{lang system11}
 						</div>
 						<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-top: 20px;margin-bottom: 10px;">
-							<div style="width: 200px;text-align:right;padding-right: 12px;">购买方法：</div>
+							<div style="width: 200px;text-align:right;padding-right: 12px;">{lang system12}：</div>
 						</div>
 						<div class="tipTxt" style="padding-left: 117px;font-size: 14px;">
-								<p class="">1、在线购买自动更新方法：</p>
+								<p class="">1、{lang system13}：</p>
 								<el-image
 									src="{MOD_PATH}/images/authorize1.png"
 									fit="contain"></el-image>
 
-								<p class="">2、手动购买上传更新方法：</p>
+								<p class="">2、{lang system14}：</p>
 								<el-image
 									src="{MOD_PATH}/images/authorize2.png"
 									fit="contain"></el-image>
@@ -140,20 +138,20 @@
 		:show-close="false"
 		@closed="registerdialogClose"
 		width="410px">
-		<div class="main-title">输入<a href="https://oaooa.com/member" target="_blank">欧奥官网用户中心</a>的账号密码</div>
-		<div class="sub-title">验证后自动更新授权文件</div>
+		<div class="main-title">{lang input}<a href="https://oaooa.com/member" target="_blank">{lang system15}</a>{lang system16}</div>
+		<div class="sub-title">{lang system17}</div>
 		<el-form :model="registerform" @submit.native.prevent style="width: 350px;margin: 0 auto;padding-top: 30px;" :rules="rules" ref="ruleForm">
 			<el-form-item label="" prop="username">
-				<el-input v-model="registerform.username" type="text" placeholder="欧奥用户中心账号"></el-input>
+				<el-input v-model="registerform.username" type="text" placeholder="{lang system18}"></el-input>
 			</el-form-item>
 			<el-form-item label="" prop="password">
-				<el-input v-model="registerform.password" type="password" placeholder="欧奥用户中心密码" autocomplete="new-password"></el-input>
+				<el-input v-model="registerform.password" type="password" placeholder="{lang system19}" autocomplete="new-password"></el-input>
 			</el-form-item>
 			<el-form-item style="margin: 0;">
-				<el-button type="primary" native-type="submit" style="width: 100%;" @click="registerSubmit()">提交获取</el-button>
+				<el-button type="primary" native-type="submit" style="width: 100%;" @click="registerSubmit()">{lang system20}</el-button>
 			</el-form-item>
 		</el-form>
-		<a class="tip" href="https://oaooa.com/user.php?mod=login&op=logging&action=lostpasswd" target="_blank">如忘记密码可在欧奥用户中心使用找回密码</a>
+		<a class="tip" href="https://oaooa.com/user.php?mod=login&op=logging&action=lostpasswd" target="_blank">{lang system21}</a>
 	</el-dialog>
 </div>
 <script type="text/javascript">
@@ -164,7 +162,7 @@
 		document.getElementById('copyInput').select();
 		document.execCommand('copy')
 		item.$message({
-		  message: '成功复制到剪切板',
+		  message: __lang.copy_clipboard,
 		  type: 'success'
 		});
 		document.getElementById('copyInput').remove();
@@ -188,10 +186,10 @@
 				},
 				rules: {
 					username: [
-						{ required: true, message: '请输入账号', trigger: 'blur' },
+						{ required: true, message: __lang.enter_account, trigger: 'blur' },
 					],
 					password: [
-						{ required: true, message: '请输入密码', trigger: 'blur' },
+						{ required: true, message: __lang.enter_password, trigger: 'blur' },
 					],
 				},
             }
@@ -206,9 +204,9 @@
 			}
 			let self = this;
 			<!--{if defined('LICENSE_VERSION') && LICENSE_VERSION != CORE_VERSION_LEVEL}-->
-			self.$alert('您的系统现在为个人版，可以升级到团队版程序。', '授权文件更新成功', {
-				confirmButtonText: '开始升级',
-				cancelButtonText:'关闭窗口',
+			self.$alert(__lang.system22, __lang.system23, {
+				confirmButtonText: __lang.system24,
+				cancelButtonText:__lang.system25,
 				showCancelButton:true,
 				callback: function(action ){
 					if(action == 'confirm'){
@@ -248,7 +246,7 @@
 				if(response.success){
 					window.location.reload();
 				}else{
-					self.$message.error('上传文件失败');
+					self.$message.error(__lang.uploading_files_error);
 				}
 			},
 			registerSubmit(){

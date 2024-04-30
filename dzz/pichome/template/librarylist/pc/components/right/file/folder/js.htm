@@ -73,7 +73,7 @@
 			},
 			async RightFolderPopverHide(){
 				var self = this;
-				this.DocumentOverlay = false;
+				this.handleDocumentOverlay(false);
 				var fnew = JSON.parse(JSON.stringify(this.RightFolderPopverParam.activeNodes));
 				var old = JSON.parse(JSON.stringify(this.RightData.folder));
 				if(JSON.stringify(fnew) != JSON.stringify(old)){
@@ -103,7 +103,7 @@
 				var expanded = [];
 				var checked = [];
 				this.RightFolderPopverParam.loading = true;
-				this.DocumentOverlay = true;
+				this.handleDocumentOverlay(true);
 
 				if(this.RightData.folder.length){
 					for(var i in this.RightData.folder){

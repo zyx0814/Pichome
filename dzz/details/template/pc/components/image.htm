@@ -1,4 +1,4 @@
-<div class="picture-box">
+<div class="picture-box el-container is-vertical">
 	<template v-if="imagesData.iniframe">
 		<template v-if="DocumentThemeColor == 'dark'">
 			<iframe 
@@ -17,20 +17,73 @@
 		
 	</template>
 	<template v-else>
-		<el-scrollbar class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="imageDrag">
-			<!-- <img
-				:src="imagesData.icondata"
-				class="image-viewer__img thumbnail" /> -->
-			<img
-				v-show="imagesSize.show"
-				@load="imageload"
-				:src="imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
-				class="image-viewer__img max" />
-		</el-scrollbar>
+		<div class="el-carousel" style="position: relative;flex: 1;overflow: hidden;">
+			<el-scrollbar class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="imageDrag">
+				<!-- <img
+					:src="imagesData.icondata"
+					class="image-viewer__img thumbnail" /> -->
+				<img
+					v-show="imagesSize.show"
+					@load="imageload"
+					:src="imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
+					class="image-viewer__img max" />
+				
+			</el-scrollbar>
+			<template v-if="previews.data.length">
+				<el-button 
+					v-if="previews.active > 0"
+					style="left: 0;"
+					class="el-carousel__arrow" 
+					@click="previewClick(previews.active - 1 )" 
+					icon="ArrowLeftBold"></el-button>
+				<el-button 
+					v-if="previews.active + 1 < previews.data.length"
+					class="el-carousel__arrow" 
+					style="right: 0;"
+					@click="previewClick(previews.active + 1)" 
+					icon="ArrowRightBold"></el-button>
+			</template>
+		</div>
 	</template>
+	<div class="album-box" v-if="previews.data.length">
+		<el-button 
+			v-if="previews.size"
+			class="slider-btn slider-btn-prev" 
+			@click="previewSwitch('left')" 
+			text 
+			icon="ArrowLeftBold"></el-button>
+		<div class="album-imgs" ref="previewBox">
+			<ul 
+				class="album-imglist" 
+				ref="previewChild"
+				:style="{transform: 'translate('+previews.transform+'px, 0px)'}">
+				<li 
+					v-for="(item,index) in previews.data" 
+					:key="index" 
+					:ref="'previewImage'+index"
+					@click="previewClick(index)">
+					<div class="album-img" :class="{'active':index==previews.active}" >
+						<el-image  :src="item.spath?item.spath:'dzz/images/extimg/'+imagesData.filetype+'.png'" fit="contain" ><template #error><div class="el-image__placeholder"></div></template></el-image>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<el-button 
+			v-if="previews.size" 
+			class="slider-btn slider-btn-next" 
+			@click="previewSwitch('right')" 
+			text 
+			icon="ArrowRightBold"></el-button>
+	</div>
+	
 </div>
 <script type="text/javascript">
 	var ImageMixin = {
+		watch:{
+			'previews.active':function(val){
+				this.previewPosition();
+			},
+		},
 		methods:{
 			imageSize(proportion){
 				var self = this;
@@ -203,6 +256,65 @@
 					self.imageproportion();
 				});
 				
+			},
+			previewClick(index){
+				let self = this;
+				if(this.previews.active == index || this.previews.data.length <= index || index <= -1)return false;
+				this.previews.active = index;
+				this.imagesData.originalimg = this.previews.data[index].lpath;
+				
+			},
+			previewPosition(){
+				let self = this;
+				if(!self.previews.size)return false;
+				let index = this.previews.active;
+				let WBox = self.$refs.previewBox.offsetWidth;
+				let fWBox = self.$refs.previewBox.offsetWidth / 2;
+				let WChild = self.$refs.previewChild.offsetWidth;
+				let offsetLeft = self.$refs['previewImage'+index][0].offsetLeft - 34;
+				if(offsetLeft < fWBox){
+					self.previews.transform = 0;
+				}else if(offsetLeft > (WChild - WBox)){
+					self.previews.transform = -(WChild - WBox);
+				}else{
+					self.previews.transform = -(offsetLeft - fWBox);
+				}
+			},
+			previewSwitch(type){
+				let self = this;
+				let WBox = self.$refs.previewBox.offsetWidth;
+				let WChild = self.$refs.previewChild.offsetWidth;
+				if(type == 'left'){
+					if(self.previews.transform == 0){
+						return;
+					}else{
+						let fw = this.previews.transform + WBox;
+						if(fw > 0){
+							self.previews.transform = 0;
+						}else{
+							this.previews.transform = fw;
+						}
+					}	
+				}else{
+					let fw = self.previews.transform - WBox;
+					if(fw < -(WChild - WBox)){
+						self.previews.transform = -(WChild - WBox);
+					}else{
+						self.previews.transform = fw;
+					}
+				}
+				
+			},
+			previewSize(){
+				let self = this;
+				if(!self.$refs.previewBox || !self.$refs.previewChild)return false;
+				let WBox = self.$refs.previewBox.offsetWidth;
+				let WChild = self.$refs.previewChild.offsetWidth;
+				if(WChild > WBox){
+					self.previews.size = true;
+				}else{
+					self.previews.size = false;
+				}
 			},
 		}
 	};

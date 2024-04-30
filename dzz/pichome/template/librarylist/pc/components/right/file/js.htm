@@ -2,10 +2,87 @@
 <!--{template librarylist/pc/components/right/file/color/js}-->
 <!--{template librarylist/pc/components/right/file/folder/js}-->
 <!--{template librarylist/pc/components/right/file/tab/js}-->
+<!--{template librarylist/pc/components/right/file/view/js}-->
 <script type="text/javascript">
 	let RightFileMixin = {
-		mixins:[RightTagMixin,RightColorMixin,RightFolderMixin,RightTabMixin],
+		mixins:[RightTagMixin,RightColorMixin,RightFolderMixin,RightTabMixin,RightPreviewMixin],
 		methods:{
+			async RightCoverUploadChange(uploadFile){
+				let self = this;
+				let fileName = uploadFile.name;
+				const fileSize = uploadFile.size || 0;
+				const chunkSize=this.maxChunkSize;
+				let chunkTotals = Math.ceil(fileSize / chunkSize);
+				if (chunkTotals>0){
+					for(let chunkNumber = 0, start = 0; chunkNumber < chunkTotals;chunkNumber++,start+=chunkSize){
+					  let end = Math.min(fileSize,start + chunkSize);
+					  const filedata = uploadFile.raw.slice(start, end);
+					  const result = await this.uploadFileToServer(uploadFile,filedata,start,end);
+					  	if(chunkNumber == chunkTotals-1){
+							let fres=result.data['files'][0];
+							if(fres.error){
+								self.$message.error(fres.error || '上传失败');
+								return false;
+							}
+							let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=editCover',{
+								rid:this.RightActiveRid[0],
+								aid:fres.data.aid
+							});
+							if(res.success){
+								this.RightData.img[0] = res.data;
+								let img = new Image();
+								img.src = res.data;
+								img.onload = function() {
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'hasthumb',1);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'icondata',res.data);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbwidth',this.width);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbheight',this.height);
+									self.$nextTick(function(){
+										self.$refs.RefImageLayout.updateImageData()
+									})
+								}
+								self.$message({
+									type:'success',
+									message:'更换成功'
+								})
+							}else{
+								self.$message.error(res.msg || '更换失败');
+							}
+						  
+					  	}
+					}
+				}
+			},
+			async RightCoverRecovery(){//恢复封面
+				let self = this;
+				let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=delCover',{
+						rid:this.RightActiveRid[0],
+					});
+					if(res.success){
+						this.RightData.img[0] = res.data;
+						let img = new Image();
+						img.src = res.data;
+						img.onload = function() {
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'hasthumb',1);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'icondata',res.data);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbwidth',this.width);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbheight',this.height);
+							self.$nextTick(function(){
+								self.$refs.RefImageLayout.updateImageData()
+							})
+						}
+
+						self.$message({
+							type:'success',
+							message:'恢复成功'
+						})
+					}else{
+						self.$message({
+							type:'error',
+							message:res.msg || '已经是默认封面'
+						});
+					}
+			},
 			async RightFileNameChange(val){//文件名称修改
 				var self = this;
 				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=name',{

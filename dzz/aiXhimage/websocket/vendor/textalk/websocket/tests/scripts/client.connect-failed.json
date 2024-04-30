@@ -1,0 +1,19 @@
+[
+    {
+        "function": "stream_context_create",
+        "params": [],
+        "return": "@mock-stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            4,
+            "@mock-stream-context"
+        ],
+        "return": false
+    }
+]

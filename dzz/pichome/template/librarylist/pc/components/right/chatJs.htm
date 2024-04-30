@@ -1,0 +1,258 @@
+<script type="text/javascript">
+	let RightChatMixin = {
+        data(){
+            return {
+
+                answer:'',
+                answerBox:false,
+                answerloading:false,
+                answerdisabled:true,
+                answerParam:{
+                    params:'',
+                    recordurl:'',
+                    type:'',
+                    url:'',
+                    delhistoryurl:''
+                },
+                answerData: [],
+                Chatparameter:{
+                    typingTimer:null,
+                    typing:false,
+                    typingIdx:0,
+                    contentIdx:0,
+                    contentEnd:false,
+                    codeStart:false,
+                    lastWord:'',
+                    lastLastWord:'',
+                    qaIdx : 0,
+                    answerContent:'',
+                    answerWords:[]
+                },
+
+            }
+        },
+		methods:{
+            async answerOlddata(){
+                let self = this;
+                let param = {
+                    type:this.answerParam.type
+                };
+                param[this.answerParam.params] = this.RightActiveRid.join(',');
+                let {data :res} = await axios.post(this.answerParam.recordurl,param);
+                if(res.success){
+                    for (const key in res.data) {
+                        const element = res.data[key];
+                        if(element.role == 'user'){
+                            this.answerData.push({
+                                type:element.role,
+                                name:'我',
+                                time:element.dateline,
+                                content:marked.parse(element.content),
+                                loading:false,
+                                id:'question'+this.Chatparameter.qaIdx
+                            });
+                        } else{
+                            this.answerData.push({
+                                type:element.role,
+                                name:'AI助手',
+                                time:element.dateline,
+                                content:marked.parse(element.content),
+                                loading:false,
+                                id:'question'+this.Chatparameter.qaIdx
+                            });
+                        }
+                        this.Chatparameter.qaIdx++;
+                    }
+                    self.$nextTick(function(){
+                        this.answerScrollbar()
+                    })
+                }
+            },
+			sendMessage(e){
+                // 浏览器阻止默认事件兼容
+                if (e && e.preventDefault) {
+                    if(e.keyCode == 13 && !e.shiftKey){
+                        e.preventDefault();
+                    }
+                    if(e.keyCode == 13 && e.shiftKey){
+                        return false;
+                    }
+                }
+                if (!this.answer || this.answerdisabled) {
+                    return;
+                }
+                marked.setOptions({
+                    highlight: function (code, language) {
+                        const validLanguage = hljs.getLanguage(language) ? language : 'javascript';
+                        return hljs.highlight(code, { language: validLanguage }).value;
+                    },
+                });
+                this.answerData.push({
+                    type:'user',
+                    name:'我',
+                    time:this.answerTime(),
+                    content:this.answer,
+                    loading:false,
+                    id:'question'+this.Chatparameter.qaIdx
+                });
+                this.answerData.push({
+                    type:'assistant',
+                    name:'AI助手',
+                    time:'',
+                    content:'',
+                    loading:true,
+                    id:'answer'+this.Chatparameter.qaIdx
+                });
+                this.Chatparameter.typingTimer = setInterval(this.typingWords, 50);
+                this.getAnswer(this.answer,this.Chatparameter.qaIdx);
+                
+			},
+            getAnswer(inputValue,qaIdx){
+                let self = this;
+                inputValue = encodeURIComponent(inputValue.replace(/\+/g, '{[$add$]}'));
+                const url = this.answerParam.url+'&q='+inputValue+'&type='+this.answerParam.type+'&'+this.answerParam.params+'='+this.RightActiveRid.join(',');
+                this.answer = '';
+                this.answerdisabled = true;
+                const eventSource = new EventSource(url);
+                eventSource.addEventListener("open", (event) => {
+                    console.log("连接已建立", JSON.stringify(event));
+                });
+
+                eventSource.addEventListener("message", (event) => {
+                    //console.log("接收数据：", event);
+                    try {
+                        var result = JSON.parse(event.data);
+                        if(result.time && result.content ){
+                            let curr = this.answerData.find(function(current){
+                                return current.id == 'answer'+self.Chatparameter.qaIdx;
+                            });
+                            if(curr){
+                                curr.time = result.time 
+                            }
+                            this.Chatparameter.answerWords.push(result.content);
+                            this.Chatparameter.contentIdx += 1;
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    }
+                });
+
+                eventSource.addEventListener("error", (event) => {
+                    console.error("发生错误：", JSON.stringify(event));
+                });
+
+                eventSource.addEventListener("close", (event) => {
+                    console.log("连接已关闭", JSON.stringify(event.data));
+                    eventSource.close();
+                    this.Chatparameter.contentEnd = true;
+                });
+            },
+            typingWords(){
+                let self = this;
+                if(this.Chatparameter.contentEnd && this.Chatparameter.contentIdx==this.Chatparameter.typingIdx){
+                    let qaIdx = this.Chatparameter.qaIdx + 1;
+                    
+                    this.Chatparameter = {
+                        typingTimer:null,
+                        typing:false,
+                        typingIdx:0,
+                        contentIdx:0,
+                        contentEnd:false,
+                        codeStart:false,
+                        lastWord:'',
+                        lastLastWord:'',
+                        qaIdx : qaIdx,
+                        answerContent:'',
+                        answerWords:[]
+                    }
+                    clearInterval(this.Chatparameter.typingTimer);
+                    return;
+                }
+                if(this.Chatparameter.contentIdx<=this.Chatparameter.typingIdx){
+                    return;
+                }
+                if(this.Chatparameter.typing){
+                    return;
+                }
+                this.Chatparameter.typing = true;
+
+                const content = this.Chatparameter.answerWords[this.Chatparameter.typingIdx];
+                if(content.indexOf('`') != -1){
+                    if(content.indexOf('```') != -1){
+                        this.Chatparameter.codeStart = !this.Chatparameter.codeStart;
+                    }else if(content.indexOf('``') != -1 && (this.Chatparameter.lastWord + content).indexOf('```') != -1){
+                        this.Chatparameter.codeStart = !this.Chatparameter.codeStart;
+                    }else if(content.indexOf('`') != -1 && (this.Chatparameter.lastLastWord + this.Chatparameter.lastWord + content).indexOf('```') != -1){
+                        this.Chatparameter.codeStart = !this.Chatparameter.codeStart;
+                    }
+                }
+
+                this.Chatparameter.lastLastWord = this.Chatparameter.lastWord;
+                this.Chatparameter.lastWord = content;
+
+                this.Chatparameter.answerContent += content;
+
+
+                let curr = this.answerData.find(function(current){
+                    return current.id == 'answer'+self.Chatparameter.qaIdx;
+                });
+                if(curr){
+                    curr.content = marked.parse(this.Chatparameter.answerContent+(this.Chatparameter.codeStart?'\n\n```':''));
+                    curr.loading = false;
+                }
+                this.Chatparameter.typingIdx += 1;
+                this.Chatparameter.typing = false;
+                self.$nextTick(function(){
+                    this.answerScrollbar()
+                })
+            },
+            answerScrollbar(){
+                let self = this;
+                self.$nextTick(function(){
+                    let H = self.$refs.rightscrollbar.offsetHeight;
+                    self.$refs.rightscrollbar.scrollTop = H;
+                });
+            },
+            
+            answerTime(){
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = ('0' + (now.getMonth() + 1)).slice(-2);
+                const day = ('0' + now.getDate()).slice(-2);
+                const hours = ('0' + now.getHours()).slice(-2);
+                const minutes = ('0' + now.getMinutes()).slice(-2);
+                const seconds = ('0' + now.getSeconds()).slice(-2);
+                return  year +'-'+ month +'-'+ day +' '+ hours +':'+ minutes+':'+seconds;
+                
+            },
+            async answersdeleteMessage(){
+                if(!this.answerParam.delhistoryurl)return false;
+                let self = this;
+                let param = {
+                    type:this.answerParam.type
+                };
+                param[this.answerParam.params] = this.RightActiveRid.join(',');
+                let {data :res} = await axios.post(this.answerParam.delhistoryurl,param);
+                if(res.success){
+                    this.answerData = [];
+                }else{
+                    self.$message.error(res.msg || '清空失败');
+                }
+            },
+            answerFocus(){
+                this.answerBox = true;
+                if(!this.answerloading){
+                    this.answerloading = true;
+                    this.answerOlddata();
+                }
+            },
+            answerInput(){
+                if(this.answer){
+                    this.answerdisabled = false;
+                }else{
+                    this.answerdisabled = true;
+                }
+            }
+		}
+	}
+</script>

@@ -24,6 +24,7 @@
         $return = $localexport->initExport();
     }elseif ($data['type'] == 2){
         if(!extension_loaded('pdo_sqlite')){
+            C::t('pichome_vapp')->update($appid,['state'=>0]);
             exit(json_encode(array('error'=>'缺少 pdo_sqlite拓展')));
         }
         include_once DZZ_ROOT.'dzz'.BS.'billfish'.BS.'class'.BS.'class_billfishexport.php';
@@ -31,6 +32,7 @@
         $return = $billfishxport->initExport();
     }
     if(isset($return['error'])){
+        C::t('pichome_vapp')->update($appid,['state'=>0]);
         exit(json_encode($return));
     }
     $data = C::t('pichome_vapp')->fetch($appid);

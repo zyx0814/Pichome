@@ -275,7 +275,8 @@ class billfishxport
                 }
                 //文件总数减1
                 $this->filenum -= 1;
-            } else {
+            }
+            else {
                 //获取文件后缀
                 $ext = strtolower(substr(strrchr($v['name'], '.'), 1));
                 //获取文件类型
@@ -325,32 +326,7 @@ class billfishxport
                         $pathdir = ($this->iscloud) ? $this->path . '/.bf/.preview/' . $thumbdir . '/' : $this->path . BS . '.bf' . BS . '.preview' . BS . $thumbdir . BS;
                         $savepatdir = str_replace(array(DZZ_ROOT, BS), array('', '/'), $pathdir);
                         $smallfile = $pathdir . $v['id'] . '.small.webp';
-                       /* $thumbrecorddata = [
-                            'rid' => $rid,
-                            'ext' => $setarr['ext'],
-                            'filesize'=>$setarr['size'],
-                            'width'=>$setarr['width'],
-                            'height'=>$setarr['height']
-                        ];
-                        if (IO::checkfileexists($smallfile)) {
-                            $imgdata = @getimagesize($smallfile);
-                            $swidth = isset($imgdata[0]) ? $imgdata[0] : 0;
-                            $sheight = isset($imgdata[1]) ? $imgdata[1] : 0;
-                            $thumbrecorddata['spath'] =  $savepatdir . $v['id'] . '.small.webp';
-                            $thumbrecorddata['sstatus'] =  1;
-                            $thumbrecorddata['swidth'] =  $swidth;
-                            $thumbrecorddata['sheight'] =  $sheight;
 
-                        }
-                        if (in_array($setarr['ext'], explode(',', getglobal('config/pichomespecialimgext')))) {
-                            $hdfile = $pathdir . $v['id'] . '.hd.webp';
-                            if (IO::checkfileexists($hdfile)) {
-                                $thumbrecorddata = [
-                                    'opath' => $savepatdir . $v['id'] . '.hd.webp',
-                                ];
-                            }
-                        }
-                        C::t('thumb_record')->insert($thumbrecorddata);*/
 
                     }
                     //定义属性表变量
@@ -393,7 +369,9 @@ class billfishxport
                     foreach ($tiddata as $val) {
                         $tids[] = $val['tag_id'];
                     }
-                    if (!empty($tids)) {
+
+
+                   // if (!empty($tids)) {
                         $tidstr = dimplode($tids);
                        /* //查询标签分类数据
                         $sql = "select jg.gid,g.name from bf_tag_join_group jg 
@@ -410,6 +388,7 @@ class billfishxport
                         //查询标签名称,id 插入标签对照表 返回原标签id对应pichome标签id 将标签加入searchval
                         $sql = " select id,name from bf_tag_v2 t where t.id in($tidstr)";
                         $tagdata = $this->fetch_all($sql);
+
                         $tagrelativedata = [];
                         $taggroups = [];
                         foreach ($tagdata as $val) {
@@ -421,17 +400,24 @@ class billfishxport
                         }
 
                         //处理标签文件关系数据
-                        $inserttids = $ftids = array_values($tagrelativedata);
+                        $ftids = array_values($tagrelativedata);
+                        $ftids = empty($ftids) ? []:$ftids;
+                        $oattrtag = [];
                         //查询pichome是否有标签数据
-                        $oattrtag = DB::result_first("select tag from %t where rid = %s", array('pichome_resources_attr', $rid));
-                        if ($oattrtag) {
-                            $ottids = explode(',', $oattrtag);
+                        foreach(DB::fetch_all("select tid from %t where rid = %s", array('pichome_resourcestag', $rid)) as $tago){
+                            $oattrtag[] = $tago['tid'];
+                        }
+
+                       // if ($oattrtag) {
+                            $ottids = $oattrtag;
+
                             //取得删除的标签
-                            $deltids = array_diff($ftids, $ottids);
+                            $deltids = array_diff($ottids,$ftids);
                             if (!empty($deltids)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltids);
                             //取得插入的标签
-                            $inserttids = $deltids = array_diff($ottids, $ftids);
-                        }
+                            $inserttids  = array_diff($ftids,$ottids );
+                       // }
+
                         //插入标签关系表
                         foreach ($inserttids as $val) {
                             $tagresourcesattr = ['tid' => $val, 'rid' => $rid, 'appid' => $this->appid];
@@ -439,7 +425,7 @@ class billfishxport
                         }
                         //更新属性表标签数据
                         $attrdata['tag'] = implode(',', $ftids);
-                    }
+                   // }
 
 
                     //标签数据结束
@@ -534,7 +520,7 @@ class billfishxport
 
                 } else {
                     //文件总数减1
-                    $this->filenum -= 1;
+                   // $this->filenum -= 1;
                 }
             }
 
@@ -774,10 +760,10 @@ class billfishxport
                         if ($oattrtag) {
                             $ottids = explode(',', $oattrtag);
                             //取得删除的标签
-                            $deltids = array_diff($ftids, $ottids);
+                            $deltids = array_diff($ottids,$ftids);
                             if (!empty($deltids)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltids);
                             //取得插入的标签
-                            $inserttids = $deltids = array_diff($ottids, $ftids);
+                            $inserttids  = array_diff($ftids,$ottids);
                         }
                         //插入标签关系表
                         foreach ($inserttids as $val) {
@@ -870,7 +856,7 @@ class billfishxport
 
                 } else {
                     //文件总数减1
-                    $this->filenum -= 1;
+                    //$this->filenum -= 1;
                 }
             }
 
@@ -1104,10 +1090,10 @@ class billfishxport
                         if ($oattrtag) {
                             $ottids = explode(',', $oattrtag);
                             //取得删除的标签
-                            $deltids = array_diff($ftids, $ottids);
+                            $deltids = array_diff($ottids,$ftids);
                             if (!empty($deltids)) C::t('pichome_resourcestag')->delete_by_ridtid($rid, $deltids);
                             //取得插入的标签
-                            $inserttids = $deltids = array_diff($ottids, $ftids);
+                            $inserttids  = array_diff($ftids,$ottids);
                         }
                         //插入标签关系表
                         foreach ($inserttids as $val) {
@@ -1200,7 +1186,7 @@ class billfishxport
 
                 } else {
                     //文件总数减1
-                    $this->filenum -= 1;
+                   // $this->filenum -= 1;
                 }
             }
 

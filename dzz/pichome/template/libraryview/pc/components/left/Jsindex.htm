@@ -18,6 +18,7 @@
 					defaultOpenkeysInit:[],
 					TopLevelNode:null,
 				},
+				LeftTreePathKeys:[],
 				letnumber: {
 					all:0,
 					nocat:0
@@ -138,12 +139,55 @@
 						item['pfname'] = item['fname'];
 						arr.push(item);
 					}
-
+					let folderVal = self.LeftTreePathKeys.findIndex(function(current){
+						return current.fid == item.fid;
+					});
+					if(folderVal < 0){
+						self.LeftTreePathKeys.push({
+							pathkey:item.pathkey,
+							fid:item.fid
+						})
+					}
 					// this.LeftTree.defaultOpenkeysSearch.push(new_data[i].fid);
 				}
 				resolve(arr);
-				if(level == 0){
-					this.getleftnum();
+				self.$nextTick(function(){
+					if(level == 0){
+						this.getleftnum();
+					}
+					self.LeftTreeGetFolderNum();
+				})
+				
+			},
+			async LeftTreeGetFolderNum(){
+				let self = this;
+				if(!self.LeftTreePathKeys.length)return false;
+				let pathkeys = [];
+				self.LeftTreePathKeys.forEach(element => {
+					pathkeys.push(element.pathkey)
+				});		
+				let {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfoldernum',{
+					appid:this.DocumentAppid,
+					pathkeys:pathkeys.join(',')
+				});
+				if(res.data && res.data.length){
+					for (let index = 0; index < res.data.length; index++) {
+						const element = res.data[index];
+						let curr = self.LeftTreePathKeys.find(function(current){
+							return current.pathkey == element.pathkey;
+						});
+						let findex = self.LeftTreePathKeys.findIndex(function(current){
+							return current.pathkey == element.pathkey;
+						});
+						if(findex>-1){
+							self.LeftTreePathKeys.splice(findex,1);
+						}
+						if(!curr)continue;
+						let node = self.$refs.LeftTreeRef.getNode(curr.fid);
+						if(node){
+							node.data.filenum = element.filenum;
+						}
+					}
 				}
 			},
 			LeftClassifyFilterInput:debounce(async function(val){//输入

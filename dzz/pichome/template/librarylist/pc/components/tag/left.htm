@@ -34,7 +34,7 @@
 				@click="TagLeftClick(item.cid)">
 				<el-icon  class="icon"><Collection-Tag /></el-icon>
 				<div class="el-text">
-					<template v-if="item.edit">
+					<!-- <template v-if="item.edit">
 						<el-input
 							:ref="'tagleftinput'+item.cid" 
 							v-model.trim="item.text" 
@@ -45,14 +45,15 @@
 							@keyup.enter.native="TagLeftinputRename"
 							@blur="TagLeftinputRename" />
 					</template>
-					<template v-else>
+					<template v-else> -->
 						{{item.text}}
-					</template>
+					<!-- </template> -->
 				</div>
 				<span class="num">{{item.num}}</span>
 			</el-menu-item>
 		</el-menu>
 	</el-scrollbar>
+	<div v-if="DocumentOverlay.group" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
 </div>
 <el-popover
 	popper-class="isdropdown header-dropdown-menu"
@@ -60,8 +61,8 @@
 	ref="tagLeftMenu"
 	:popper-style="{top: tagLeftMenu.top, left: tagLeftMenu.left}"
     v-model:visible="tagLeftMenu.show"
-	@after-enter="screenvisible(true)"
-	@before-leave="screenvisible(false)"
+	@after-enter="handleDocumentOverlay(true,'group')"
+	@before-leave="handleDocumentOverlay(false,'group')"
 	width="auto"
 	:show-arrow="false">
     <ul class="el-dropdown-menu">
@@ -86,6 +87,30 @@
 		</li>
 	</ul>
 </el-popover>
+
+<el-dialog
+    v-model="tagLeftAddClass.Visible"
+    :title="tagLeftAddClass.title"
+	:close-on-click-modal="false"
+	:close-on-press-escape="false"
+	:show-close="!tagLeftAddClass.loading">
+	<el-form>
+		<el-form-item label="名称：">
+			<div class="language-box">
+				<el-input v-model="tagLeftAddClass.name" clearable></el-input>
+				<language v-if="tagLeftAddClass.langkey" :langkey="tagLeftAddClass.langkey" formhash="{FORMHASH}"></language>
+			</div>
+		  	
+		</el-form-item>
+	  	</el-form>
+    <template #footer>
+      <span class="dialog-footer">
+			<el-button @click="tagLeftAddClass.Visible = false" :disabled="tagLeftAddClass.loading">取消</el-button>
+			<el-button type="primary" @click="tagLeftAddClassSubmit" :loading="tagLeftAddClass.loading">确定</el-button>
+      </span>
+    </template>
+</el-dialog>
+
 <script>
 	const TagLeftMixin = {
 		data(){
@@ -101,6 +126,13 @@
 					left:0
 				},
 				TagLeftAddloading:false,
+				tagLeftAddClass:{
+					title:'',
+					Visible:false,
+					langkey:'',
+					name:'',
+					loading:false,
+				},
 			}
 		},
 		created(){
@@ -116,6 +148,7 @@
 					ptext:arr.data[i].text,
 					edit:false,
 					num:arr.data[i].num,
+					langkey:arr.data[i].langkey?arr.data[i].langkey:''
 				})
 			}
 			this.TagLeftData = TagLeftData;
@@ -127,60 +160,71 @@
 			this.TagCententGetData();
 		},
 		methods:{
+			async tagLeftAddClassSubmit(type){
+				let self = this;
+				if(!this.tagLeftAddClass.name)return false;
+				this.tagLeftAddClass.loading = true;
+				if(this.tagLeftAddClass.type == 'add'){
+					let {data: res} = await axios.post(MOD_URL+'&op=library&do=tags&operation=addgroup',{
+						formhash:'{FORMHASH}',
+						classifysubmit:true,
+						appid:this.DocumentAppid,
+						name:this.tagLeftAddClass.name,
+					});
+					if(!res.success){
+						self.$message.error(res.msg || '群组添加失败');
+						return false;
+					}
+					this.TagLeftData.push({
+						text:this.tagLeftAddClass.name,
+						cid:res.cid,
+						num:0,
+						langkey:res.data.langkey&&res.data.langkey.name?res.data.langkey.name:''
+					});
+					this.tagLeftAddClass.loading = false;
+					this.tagLeftAddClass.Visible = false;
+				}else{
+					this.TagLeftinputRename();
+				}
+			},
 			async TagLeftAdd(){
 				var self = this;
-				if(this.TagLeftAddloading){
-					return false;
-				}
-				this.TagLeftAddloading = true;
-				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=addgroup',{
-					formhash:'{FORMHASH}',
-					classifysubmit:true,
-					appid:this.DocumentAppid,
-					name:'未命名群组',
-				});
-				if(!res.data.success){
-					self.$message.error(res.data.msg || '群组添加失败');
-					return false;
-				}
-				this.TagLeftData.push({
-					text:'未命名群组',
-					cid:res.data.cid,
-					ptext:'未命名群组',
-					edit:true,
-					num:0,
-				});
-				this.tagLeftMenu.data = this.TagLeftData.find(function(current){
-					return current.cid == res.data.cid;
-				});
-				this.TagLeftAddloading = false;
-				self.$nextTick(function(){
-					var box = document.querySelector('.left-tag-main').clientHeight;
-					var View = document.querySelector('.TagLeftScrollView').clientHeight;
-					if(View>box){
-						self.$refs.TagLeftScroll.setScrollTop(View-box);
-					}
-					self.$refs['tagleftinput'+res.data.cid][0].select();
-				});
+				// tagLeftAddClass:{
+				// 	title:'',
+				// 	Visible:false,
+				// 	langkey:'',
+				// 	name:'',
+				// 	loading:false
+				// },
+
+				this.tagLeftAddClass.title = '添加';
+				this.tagLeftAddClass.langkey = '';
+				this.tagLeftAddClass.name = '';
+				this.tagLeftAddClass.type = 'add';
+				this.tagLeftAddClass.loading = false;
+				this.tagLeftAddClass.Visible = true;
+				
 			},
 			async TagLeftinputRename(){
+
 				var self = this;
-				this.tagLeftMenu.data.edit = false;
-				if(this.tagLeftMenu.data.text == ''){
-					this.tagLeftMenu.data.text = this.tagLeftMenu.data.ptext;
+				if(this.tagLeftAddClass.name == ''){
 					return false;
 				}
 				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=renametaggroup',{
 					appid:this.DocumentAppid,
-					catname:this.tagLeftMenu.data.text,
+					catname:this.tagLeftAddClass.name,
 					cid:this.tagLeftMenu.data.cid,
 				});
+				this.tagLeftAddClass.loading = false;
 				if(res.data.success){
-					this.tagLeftMenu.data.ptext = this.tagLeftMenu.data.text;
+					this.tagLeftMenu.data.text = this.tagLeftAddClass.name;
+					this.tagLeftAddClass.Visible = false;
 				}else{
-					this.tagLeftMenu.data.text = this.tagLeftMenu.data.ptext;
 					self.$message.error(res.data.msg || '修改失败');
 				}
+				
+				
 			},
 			async TagLeftDelete(){//群组删除
 				var self = this;
@@ -212,10 +256,20 @@
 				var self = this;
 				this.tagLeftMenu.show = false;
 				if(type == 'rename'){
-					this.tagLeftMenu.data.edit = true;
-					self.$nextTick(function(){
-						self.$refs['tagleftinput'+this.tagLeftMenu.data.cid][0].select();
-					});
+					// console.log(this.tagLeftMenu.data);
+					// this.tagLeftMenu.data.edit = true;
+					// self.$nextTick(function(){
+					// 	self.$refs['tagleftinput'+this.tagLeftMenu.data.cid][0].select();
+					// });
+
+					this.tagLeftAddClass.title = '重命名';
+					this.tagLeftAddClass.langkey = this.tagLeftMenu.data.langkey&&this.tagLeftMenu.data.langkey.name?this.tagLeftMenu.data.langkey.name:'';
+					this.tagLeftAddClass.name = this.tagLeftMenu.data.text;
+					this.tagLeftAddClass.type = 'edit';
+					this.tagLeftAddClass.loading = false;
+					this.tagLeftAddClass.Visible = true;
+
+
 				}else if(type == 'search'){
 					var tags = [];
 					if(this.TagLeftActive == this.tagLeftMenu.data.cid){

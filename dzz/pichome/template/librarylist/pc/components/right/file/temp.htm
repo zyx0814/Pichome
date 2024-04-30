@@ -1,39 +1,138 @@
-<el-scrollbar>
-	<div style="padding: 8px 18px;">
+<div class="answer-box-top" v-if="answerBox">
+	<el-popconfirm title="该操作无法恢复，确定清空聊天记录？"  @confirm="answersdeleteMessage" width="200">
+		<template #reference>
+			<el-text>
+				<el-icon><Delete /></el-icon>
+				清空
+			</el-text>
+		</template>
+	</el-popconfirm>
+	<el-text @click="answerBox=false">
+		<el-icon><Close-Bold /></el-icon>
+		关闭
+	</el-text>
+</div>
+<!-- <el-scrollbar ref="rightscrollbar"> -->
+	<div  ref="rightscrollbar" style="padding: 8px 18px;overflow: auto;position: relative;flex: 1;">
 		<div class="top-image " :class="{'top-images':RightActiveRid.length>1}">
 			<template v-for="img in RightData.img">
-				<el-image :src="img">
+				<el-image :src="img?img:'dzz/images/extimg/'+RightData.filetype+'.png'">
 					<template #error><div class="el-image__placeholder"></div></template>
 				</el-image>
 			</template>
-		</div>
-		<template v-if="RightActiveRid.length == 1">
-			<!--{template librarylist/pc/components/right/file/color/temp}-->
-			<div class="marginTop">
-				<el-input
-					v-model="RightData.title"
-					type="textarea"
-					:disabled="DocumentVapp.type != 3"
-					@change="RightFileNameChange"
-					:autosize="{  maxRows: 8 }"
-					placeholder="文件名称"></el-input>
+			<div class="upload-box" v-if="Rightallowcover">
+				<el-upload
+					action=""
+					name="files[]"
+					:auto-upload="false"
+					accept=".gif,.jpeg,.jpg,.png,.svg,.webp"
+					:show-file-list="false"
+					:on-change="RightCoverUploadChange">
+					<template #trigger>
+						<el-button type="primary" size="small">更换封面</el-button>
+					</template>
+					
+				</el-upload>
+				<el-tooltip content="恢复默认封面">
+					<el-button type="primary" icon="RefreshRight" @click="RightCoverRecovery" size="small"></el-button>
+				</el-tooltip>
+				
 			</div>
-		</template>
-		<div 
-			v-if="RightActiveRid.length>1" 
-			class="marginTop" 
-			style="text-align: center;font-size: 12px;color: var(--el-text-color-regular);">
-			{{RightActiveRid.length}}个文件已选
+			
 		</div>
-		<template v-for="(item,key) in RightData.filedsData">
-			<template v-if="item.flag == 'tag'">
+		<div v-show="answerBox" class="marginTop">
+			<!--{template librarylist/pc/components/right/chat}-->
+		</div>
+		<div v-show="!answerBox">
+			<template v-if="RightActiveRid.length == 1">
+				<!--{template librarylist/pc/components/right/file/color/temp}-->
+				<p class="marginTop title">
+					文件名
+					<template v-if="RightActiveRid.length < 2 && RightData.Aikey && RightData.Aikey.filedkey && RightData.Aikey.filedkey.name"> 
+						<template v-if="RightData.Aikey.filedkey.name.tpls.length > 1">
+							<el-popover
+								placement="left"
+								:width="150"
+								popper-class="isdropdown"
+								popper-style="padding: 0"
+								:disabled="RightNameaiload">
+								<ul class="el-dropdown-menu">
+									<li class="el-dropdown-menu__item" v-for="hitem in RightData.Aikey.filedkey.name.tpls"  @click="!RightNameaiload && RightFileAikeyChange(hitem,RightData.Aikey.key,'name')">{{hitem.name}}</li>
+								</ul>
+								<template #reference>
+									<el-icon style="float: right;--el-loading-spinner-size:18px;"  size="large" v-loading="RightNameaiload">
+										<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M39 6H9C7.34315 6 6 7.34315 6 9V39C6 40.6569 7.34315 42 9 42H39C40.6569 42 42 40.6569 42 39V9C42 7.34315 40.6569 6 39 6Z" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 15L14 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 33V25" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 20V19" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15L26 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 27H24" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+									</el-icon>
+								</template>
+							</el-popover>
+						</template>
+						<template v-else>
+							<el-icon style="float: right;--el-loading-spinner-size:18px;cursor: pointer;" v-loading="RightNameaiload" @click="!RightNameaiload && RightFileAikeyChange(RightData.Aikey.filedkey.name.tpls[0],RightData.Aikey.key,'name')" size="large">
+								<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M39 6H9C7.34315 6 6 7.34315 6 9V39C6 40.6569 7.34315 42 9 42H39C40.6569 42 42 40.6569 42 39V9C42 7.34315 40.6569 6 39 6Z" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 15L14 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 33V25" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 20V19" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15L26 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 27H24" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</el-icon>
+						</template>
+						
+					</template>
+				</p>
 				<div class="marginTop">
-					<!--{template librarylist/pc/components/right/file/tag/temp}-->
+					<div class="language-box">
+						<el-input
+							v-model="RightData.title"
+							type="textarea"
+							:disabled="DocumentVapp.type != 3"
+							@change="RightFileNameChange"
+							:autosize="{  maxRows: 8 }"
+							placeholder="文件名称"></el-input>
+						<!-- <language v-if="RightData.langkey&&RightData.langkey.name" :langkey="RightData.langkey.name" type="textarea" formhash="{FORMHASH}"></language> -->
+					</div>
 				</div>
 			</template>
-			<template v-else-if="item.flag == 'level'">
-				<div class="marginTop">
-					<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);">{{item.name}}</p>
+			<div 
+				v-if="RightActiveRid.length>1" 
+				class="marginTop" 
+				style="text-align: center;font-size: 12px;color: var(--el-text-color-regular);">
+				{{RightActiveRid.length}}个文件已选
+			</div>
+				
+			<template v-for="(item,key) in RightData.filedsData">
+				<p class="marginTop title">
+					{{item.name}}
+					<template v-if="RightActiveRid.length < 2 && RightData.Aikey && RightData.Aikey.filedkey && RightData.Aikey.filedkey[item.flag]"> 
+						<template v-if="RightData.Aikey.filedkey[item.flag].tpls.length > 1">
+							<el-popover
+								placement="left"
+								:width="150"
+								popper-class="isdropdown"
+								popper-style="padding: 0"
+								:disabled="item.aiload">
+								<ul class="el-dropdown-menu">
+									<li class="el-dropdown-menu__item" v-for="hitem in RightData.Aikey.filedkey[item.flag].tpls"  @click="!item.aiload && RightFileAikeyChange(hitem,RightData.Aikey.key,item.flag)">{{hitem.name}}</li>
+								</ul>
+								<template #reference>
+									<el-icon style="float: right;--el-loading-spinner-size:18px;"  size="large" v-loading="item.aiload">
+										<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M39 6H9C7.34315 6 6 7.34315 6 9V39C6 40.6569 7.34315 42 9 42H39C40.6569 42 42 40.6569 42 39V9C42 7.34315 40.6569 6 39 6Z" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 15L14 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 33V25" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 20V19" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15L26 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 27H24" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+									</el-icon>
+								</template>
+							</el-popover>
+						</template>
+						<template v-else>
+							<el-icon style="float: right;--el-loading-spinner-size:18px;cursor: pointer;" v-loading="item.aiload" @click="!item.aiload && RightFileAikeyChange(RightData.Aikey.filedkey[item.flag].tpls[0],RightData.Aikey.key,item.flag)" size="large">
+								<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M39 6H9C7.34315 6 6 7.34315 6 9V39C6 40.6569 7.34315 42 9 42H39C40.6569 42 42 40.6569 42 39V9C42 7.34315 40.6569 6 39 6Z" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 15L14 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 33V25" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 20V19" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15L26 33" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 27H24" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</el-icon>
+						</template>
+						
+					</template>
+				</p>
+				<template v-if="item.flag == 'tag'">
+					<div class="marginTop">
+						<!--{template librarylist/pc/components/right/file/tag/temp}-->
+					</div>
+				</template>
+				<template v-if="item.flag == 'preview'">
+					<!--{template librarylist/pc/components/right/file/view/temp}-->
+				</template>
+				
+				<template v-else-if="item.flag == 'level'">
 					<div class="marginTop">
 						<el-dropdown  
 							@command="RightFileLevelChange">
@@ -51,123 +150,151 @@
 							</template>
 						</el-dropdown>
 					</div>
-				</div>
-			</template>
-			<template v-else-if="item.flag == 'grade'">
-				
-				<div class="marginTop">
-					<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);">{{item.name}}</p>
-					<template v-if="DocumentVapp.type == 0 || DocumentVapp.type == 2">
-						<div class="el-rate">
-							<span class="el-rate__item" v-for="s in parseInt(RightData.grade)" style="cursor: default;">
-								<el-icon class="el-rate__icon is-active"><Star-Filled></Star-Filled></el-icon>
-							</span>
-							<span class="el-rate__item" v-for="s in 5-parseInt(RightData.grade)" style="cursor: default;">
-								<el-icon class="el-rate__icon"><Star></Star></el-icon>
-							</span>
-						</div>
-					</template>	
-					<template v-else>
-						<el-rate 
-							v-model="RightData.grade" 
-							@change="RightFileGradeChange"
-							clearable></el-rate>
-					</template>
-				</div>
-			</template>
-			<template v-else-if="item.flag == 'desc'">
-				<div class="marginTop">
-					<el-input
-						v-model="item.value"
-						@change="RightFileDescChange"
-						:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
-						type="textarea"
-						:autosize="{  maxRows: 8 }"
-						:placeholder="item.name"></el-input>
-				</div>
-			</template>
-			<template v-else-if="item.flag == 'fid'">
-				<div class="ascription-file marginTop">
-					<!--{template librarylist/pc/components/right/file/folder/temp}-->
-				</div>
-			</template>
-			<template v-else-if="item.flag == 'link'">
-				<div class="marginTop">
-					<el-input
-						class=""
-						v-model="item.value"
-						@change="RightFileLinkChange"
-						:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
-						:placeholder="item.name">
-							<template #suffix>
-								<el-icon style="cursor: pointer;" v-if="textarea1" class="el-input__icon"><Connection /></el-icon>
-							</template>
-						</el-input>
-				</div>
-			</template>
-			<template v-else-if="item.flag.indexOf('tabgroup')>-1">
-				<!--{template librarylist/pc/components/right/file/tab/temp}-->
-			</template>
-			<!-- <template v-else-if="item.flag == 'level'">
-				<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">密级</p>
-				<div class="marginTop">
-					<div class="tag-box" style="min-height: 31px;">
+				</template>
+				<template v-else-if="item.flag == 'grade'">
+					<div class="marginTop">
 						<template v-if="DocumentVapp.type == 0 || DocumentVapp.type == 2">
-							<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+item.value+'.png'" fit="contain">
-								<template #error><div class="el-image__placeholder"></div></template>
-							</el-image>
-						</template>
+							<div class="el-rate">
+								<span class="el-rate__item" v-for="s in parseInt(RightData.grade)" style="cursor: default;">
+									<el-icon class="el-rate__icon is-active"><Star-Filled></Star-Filled></el-icon>
+								</span>
+								<span class="el-rate__item" v-for="s in 5-parseInt(RightData.grade)" style="cursor: default;">
+									<el-icon class="el-rate__icon"><Star></Star></el-icon>
+								</span>
+							</div>
+						</template>	
 						<template v-else>
-							<el-dropdown  
-								@command="RightFileLevelChange">
+							<el-rate 
+								v-model="RightData.grade" 
+								@change="RightFileGradeChange"
+								clearable></el-rate>
+						</template>
+					</div>
+				</template>
+				<template v-else-if="item.flag == 'desc'">
+					<div class="language-box marginTop">
+						<el-input
+							v-model="item.value"
+							@change="RightFileDescChange"
+							:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+							type="textarea"
+							:autosize="{  maxRows: 8 }"
+							:placeholder="item.name"></el-input>
+						<!-- <language v-if="RightData.langkey&&RightData.langkey.desc" type="textarea" :langkey="RightData.langkey.desc" formhash="{FORMHASH}"></language> -->
+					</div>
+				</template>
+				<template v-else-if="item.flag == 'fid'">
+					<div class="ascription-file">
+						<!--{template librarylist/pc/components/right/file/folder/temp}-->
+					</div>
+				</template>
+				<template v-else-if="item.flag == 'link'">
+					<div class="marginTop">
+						<el-input
+							class=""
+							v-model="item.value"
+							@change="RightFileLinkChange"
+							:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+							:placeholder="item.name">
+								<template #suffix>
+									<el-icon style="cursor: pointer;" v-if="textarea1" class="el-input__icon"><Connection /></el-icon>
+								</template>
+							</el-input>
+					</div>
+				</template>
+				
+				<template v-else-if="item.flag.indexOf('tabgroup')>-1">
+					<!--{template librarylist/pc/components/right/file/tab/temp}-->
+				</template>
+				<!-- <template v-else-if="item.flag == 'level'">
+					<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">密级</p>
+					<div class="marginTop">
+						<div class="tag-box" style="min-height: 31px;">
+							<template v-if="DocumentVapp.type == 0 || DocumentVapp.type == 2">
 								<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+item.value+'.png'" fit="contain">
 									<template #error><div class="el-image__placeholder"></div></template>
 								</el-image>
-								<template #dropdown>
-									<el-dropdown-menu>
-										<el-dropdown-item v-for="(item,key) in 6" :command="key">
-											<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+key+'.png'" fit="contain">
-												<template #error><div class="el-image__placeholder"></div></template>
-											</el-image>
-										</el-dropdown-item>
-									</el-dropdown-menu>
-								</template>
-							</el-dropdown>
-						</template>
-						
+							</template>
+							<template v-else>
+								<el-dropdown  
+									@command="RightFileLevelChange">
+									<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+item.value+'.png'" fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+									<template #dropdown>
+										<el-dropdown-menu>
+											<el-dropdown-item v-for="(item,key) in 6" :command="key">
+												<el-image style="width: 24px; height: 24px" :src="'static/vue_components/avatar/image/'+key+'.png'" fit="contain">
+													<template #error><div class="el-image__placeholder"></div></template>
+												</el-image>
+											</el-dropdown-item>
+										</el-dropdown-menu>
+									</template>
+								</el-dropdown>
+							</template>
+							
+						</div>
 					</div>
+				</template> -->
+			</template>
+	
+			<div class="basic-file marginTop">
+				<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+				<div class="marginTop">
+					<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+						<el-col :span="8">格式</el-col>
+						<el-col :span="16" class="message">{{RightData.format}}</el-col>
+					</el-row>
+					<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+						<el-col :span="8">尺寸</el-col>
+						<el-col :span="16" class="message">{{RightData.size}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">文件大小</el-col>
+						<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+					</el-row>
+					<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+						<el-col :span="8">添加日期</el-col>
+						<el-col :span="16" class="message">{{RightData.btime}}</el-col>
+					</el-row>
+					<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+						<el-col :span="8">创建时间</el-col>
+						<el-col :span="16" class="message">{{RightData.mtime}}</el-col>
+					</el-row>
+					<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
+						<el-col :span="8">修改时间</el-col>
+						<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
+					</el-row>
 				</div>
-			</template> -->
-		</template>
-
-		<div class="basic-file marginTop">
-			<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
-			<div class="marginTop">
-				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
-					<el-col :span="8">格式</el-col>
-					<el-col :span="16" class="message">{{RightData.format}}</el-col>
-				</el-row>
-				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
-					<el-col :span="8">尺寸</el-col>
-					<el-col :span="16" class="message">{{RightData.size}}</el-col>
-				</el-row>
-				<el-row class="single" :gutter="12">
-					<el-col :span="8">文件大小</el-col>
-					<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
-				</el-row>
-				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
-					<el-col :span="8">添加日期</el-col>
-					<el-col :span="16" class="message">{{RightData.btime}}</el-col>
-				</el-row>
-				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
-					<el-col :span="8">创建时间</el-col>
-					<el-col :span="16" class="message">{{RightData.mtime}}</el-col>
-				</el-row>
-				<el-row v-if="RightActiveRid.length == 1" class="single" :gutter="12">
-					<el-col :span="8">修改时间</el-col>
-					<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
-				</el-row>
 			</div>
 		</div>
 	</div>
-</el-scrollbar>	
+<!-- </el-scrollbar>	 -->
+
+<div class="answer-box" v-if="RightData.Aichat">
+	<div class="case">
+		<div class="textarea-box">
+			<el-input
+				class="textarea-input"
+				v-model.trim="answer"
+				autosize
+				type="textarea"
+				@focus="answerFocus"
+				@input="answerInput"
+				@keydown.enter.native="sendMessage"
+				placeholder="Enter 发送；Shift + Enter 换行"
+			></el-input>
+			<div class="textarea-copy el-textarea">
+				<div class="el-textarea__inner" style="min-height: 32px;opacity: 0;">{{answer}}</div>
+			</div>
+
+		</div>
+		<div class="grade">
+			<div class="icon">
+				<el-icon class="promotion" :class="{'disabled':answerdisabled}" @click="sendMessage"><Promotion /></el-icon>
+			</div>
+		</div>
+
+	</div>
+</div>
+<!--{template librarylist/pc/components/right/Aikeys}-->

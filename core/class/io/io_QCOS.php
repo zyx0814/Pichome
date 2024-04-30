@@ -885,7 +885,7 @@
             else{
                 $qcosimageexts = getglobal('config/qcosimage') ? explode(',',getglobal('config/qcosimage')):array('jpeg','jpg', 'png', 'gif', 'webp','bmp');
                 if(!in_array($filedirextension,$qcosimageexts)){
-                    return false;
+                    return io_dzz::createThumbByOriginal($path, $data,$width, $height ,$thumbtype, $original , $extraparams,$filesize);
                 }
                 if($filedirextension == 'gif'){
                     $thumbext = 'gif';

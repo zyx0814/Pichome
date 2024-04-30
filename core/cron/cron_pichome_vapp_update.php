@@ -9,7 +9,7 @@ foreach(DB::fetch_all("select * from %t where isdelete = 0 and `type` != %d and 
     //固定频率时
     if($v['crontype']){
         $corntime = $v['crontime']*60*60;
-
+       // $corntime = 60;
         if($corntime+$v['dateline'] <= TIMESTAMP ){
             dfsockopen(getglobal('localurl') . 'misc.php?mod=initexport&appid=' . $appid, 0, '', '', false, '', 1);
         }

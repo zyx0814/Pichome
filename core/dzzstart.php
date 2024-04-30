@@ -14,7 +14,6 @@ $dzz->init();
 Hook::listen('dzz_initafter');//初始化后钩子
 
 $files = Hook::listen('dzz_route',$_GET);//路由钩子，返回文件路径
-
 foreach($files as $v){
     require $v;//包含文件
 }

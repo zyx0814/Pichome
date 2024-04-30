@@ -106,6 +106,11 @@
             if ($io = self::initIO($path)) return $io->getThumb($path, $thumbsign, $original, $returnurl, $create, $thumbtype, $extpramas);
         }
 
+        function getPreviewThumb($path, $thumbsign, $original, $returnurl = false, $create = 0, $thumbtype = 1, $extpramas = array()){
+            $path = self::clean($path);
+            if ($io = self::initIO($path)) return $io->getPreviewThumb($path, $thumbsign, $original, $returnurl, $create, $thumbtype, $extpramas);
+        }
+
         //获取文件信息
         function getfilesinfo($path){
             $path = self::clean($path);

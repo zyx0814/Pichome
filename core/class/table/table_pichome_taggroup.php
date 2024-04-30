@@ -20,12 +20,18 @@
             $cid = ($setarr['cid']) ? $setarr['cid']:$this->createcid($setarr['appid']);
             if ($taggroup = DB::fetch_first("select * from %t  where cid = %s and appid = %s", array($this->_table, $cid,$setarr['appid']))) {
                 unset($setarr['cid']);
-                if ($taggroup['catname'] != $setarr['catname']) parent::update($cid, $setarr);
+                if ($taggroup['catname'] != $setarr['catname']) $this->updateBycid($cid, $setarr);
                 return $cid;
             } else {
                 $setarr['cid'] = $cid;
                 if (parent::insert($setarr)) return $cid;
             }
+        }
+        public function updateBycid($cid,$setarr){
+            $setarr['cid'] = $cid;
+            Hook::listen('taggroupupdateBefore',$setarr);
+            if($setarr) parent::update($cid, $setarr);
+            return true;
         }
         public function createcid($appid){
             $cid = random(13).$appid;

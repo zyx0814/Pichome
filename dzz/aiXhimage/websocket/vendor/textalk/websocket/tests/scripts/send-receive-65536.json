@@ -1,0 +1,113 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 65546
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [129, 127]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            8
+        ],
+        "return-op": "chr-array",
+        "return": [0, 0, 0, 0, 0, 1, 0, 0]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            65536
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 0, 16374]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            49162
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 16374, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            40970
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 24566, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            32778
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 32758, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            24586
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 40950, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            16394
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 49142, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            8202
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 57334, 8192]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            10
+        ],
+        "return-op": "file",
+        "return": ["payload.65536.txt", 65526, 10]
+    }
+]

@@ -1,33 +1,48 @@
 <el-scrollbar>
 	<div style="padding: 8px 18px;">
 		<template v-if="RightActivefid.length == 1">
+			<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+				文件名
+			</p>
 			<div class="marginTop">
-				<el-input
-					class=""
-					v-model="RightData.title"
-					type="textarea"
-					:disabled="DocumentVapp.type != 3"
-					@change="RightFolderNameChange"
-					:autosize="{  maxRows: 8 }"
-					placeholder="文件名称"></el-input>
+				<div class="language-box">
+					<el-input
+						class=""
+						v-model="RightData.title"
+						type="textarea"
+						:disabled="DocumentVapp.type != 3"
+						@change="RightFolderNameChange"
+						:autosize="{  maxRows: 8 }"
+						placeholder="文件名称"></el-input>
+					<!-- <language v-if="RightData.langkey&&RightData.langkey.fname" :langkey="RightData.langkey.fname" type="textarea" formhash="{FORMHASH}"></language> -->
+				</div>
 			</div>
 		</template>
 		
-
+		<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+			描述
+		</p>
 		<div class="marginTop">
-			<el-input
-				v-model="RightData.message"
-				@change="RightFileDescChange"
-				type="textarea"
-				:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
-				:autosize="{  maxRows: 8 }"
-				placeholder="描述"></el-input>
+			
+			<div class="language-box">
+				<el-input
+					v-model="RightData.message"
+					@change="RightFileDescChange"
+					type="textarea"
+					:disabled="DocumentVapp.type == 0 || DocumentVapp.type == 2"
+					:autosize="{  maxRows: 8 }"
+					placeholder="描述"></el-input>
+				<!-- <language v-if="RightData.langkey&&RightData.langkey.desc" :langkey="RightData.langkey.desc" type="textarea" formhash="{FORMHASH}"></language> -->
+			</div>
 		</div>
 
 
 
 		<template v-for="(item,key) in RightData.filedsData">
 			<template v-if="item.flag == 'tag'">
+				<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+					{{item.name}}
+				</p>
 				<div class="marginTop">
 					<!--{template librarylist/pc/components/right/file/tag/temp}-->
 				</div>
@@ -55,3 +70,4 @@
 		</div>
 	</div>
 </el-scrollbar>
+<!--{template librarylist/pc/components/right/Aikeys}-->

@@ -1,13 +1,11 @@
-<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;">
-	<div class="h-left" style="margin-top: -30px;height: 60px;">
-		<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
-			<template #error><div class="el-image__placeholder"></div></template>
-		</el-image>
-		<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
-	</div>
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;height: 60px;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
 </a>
-<div class="h-center" style="overflow: hidden;flex-direction: column;">
-	<div class="h-center" style="min-height: 60px;width: 100%;">
+<div class="h-center" style="overflow: hidden;flex-direction: column;width: 100%;align-items: flex-start;">
+	<div style="height: 60px;display: flex;min-height: 60px;align-items: center;width: 100%;justify-content: flex-start;">
 		<el-autocomplete
 			ref="headerkeyword"
 			style="width: 600px;min-width: 600px;"
@@ -23,77 +21,78 @@
 		</el-autocomplete>
 	</div>
 	
-	<div style="width: 100%;height: 100%;overflow: hidden;margin-top: -10px;padding-left: 20px;">
-		<el-menu
-			class="dzz-menu"
-			:default-active="bannerData.active"
-			mode="horizontal"
-			@select="menuChange"
-			style="border:0;height: 100%;background: transparent;">
-			<template v-for="item in bannerData.data">
-				<el-menu-item :index="item.tid" style="background-color: transparent;">
-					<template #title>
-						{{item.title}}
-					</template>
-				</el-menu-item>
-			</template>
-		</el-menu>
-	</div>
+	<template v-if="bannerData.data && bannerData.data.length > 1">
+		<div style="width: 100%;overflow: hidden;padding-bottom: 10px;">
+			<el-menu
+				class="dzz-menu"
+				:default-active="bannerData.active"
+				mode="horizontal"
+				@select="menuChange"
+				style="border:0;height: 100%;background: transparent;">
+				<template v-for="item in bannerData.data">
+					<el-menu-item :index="item.tid" style="background-color: transparent;">
+						<template #title>
+							{{item.title}}
+						</template>
+					</el-menu-item>
+				</template>
+			</el-menu>
+		</div>
+	</template>
+	
 </div>
-<div class="h-right" style="margin-top: -30px;"> 
-	<div class="h-right" style="height: 60px;">
-		<el-tooltip content="切换页面配色" placement="bottom">
-			<el-button 
-				text 
-				:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
-				style="font-size: var(--el-font-size-extra-large);" 
-				circle  
-				size="large"
-				@click="DocumentThemeChange">
-			</el-button>
-		</el-tooltip>
-		<el-tooltip :content="Screenshow?'隐藏筛选':'显示筛选'" placement="bottom">
-			<el-button 
-				text 
-				icon="Filter" 
-				style="font-size: var(--el-font-size-extra-large);" 
-				circle  
-				size="large"
-				@click="Screenshow = !Screenshow"
-				:bg="!Screenshow">
-			</el-button>
-		</el-tooltip>
-		<el-popover
-			placement="bottom"
-			trigger="click"
-			popper-class="isdropdown header-dropdown-menu">
-			<comsort
-				:iscolumn="false"
-				:defaultval="HeaderRightBtnShow"
-				@change.self="HeaderShowChange">
-			</comsort>
-			<template #reference>
-				<div style="margin-left: 12px;">
-					<el-tooltip content="偏好设置" placement="bottom">
-						<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
-					</el-tooltip>
-				</div>
-			</template>
-		</el-popover>
-		<comavatar
-			:level="parseInt($_G[pichomelevel])"
-			iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
-			:adminid="parseInt($_G[adminid])"
-			PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
-			:uid="parseInt($_G[uid])"
-			upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
-			version="$_G[setting][version]"
-			formhash="{FORMHASH}">
-			<el-avatar size="40">
-				{eval echo avatar_block($_G[uid]);}
-			</el-avatar>
-		</comavatar>
-	</div>
+<div class="h-right" style="height: 60px;"> 
+	<el-tooltip content="切换页面配色" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<el-tooltip :content="Screenshow?'隐藏筛选':'显示筛选'" placement="bottom">
+		<el-button 
+			text 
+			icon="Filter" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="Screenshow = !Screenshow"
+			:bg="!Screenshow">
+		</el-button>
+	</el-tooltip>
+	<el-popover
+		placement="bottom"
+		trigger="click"
+		popper-class="isdropdown header-dropdown-menu">
+		<comsort
+			:iscolumn="false"
+			:defaultval="HeaderRightBtnShow"
+			@change.self="HeaderShowChange">
+		</comsort>
+		<template #reference>
+			<div style="margin-left: 12px;">
+				<el-tooltip content="偏好设置" placement="bottom">
+					<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+				</el-tooltip>
+			</div>
+		</template>
+	</el-popover>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
 </div>
 <script>
 	const HeaderMixins = {

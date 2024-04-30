@@ -17,7 +17,7 @@
 		placement="left"
 		:ref="'RightTagPopverRef'+item.flag"
 		@before-enter="RightTagPopverShow(item)"
-		@hide="DocumentOverlay = false;"
+		@hide="handleDocumentOverlay(false);"
 		width="auto"
 		trigger="click">
 		<div style="height: 400px" v-loading="RightTagPopver.loading">

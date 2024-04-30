@@ -64,7 +64,7 @@ $datas = DB::fetch_all("select r.rid,r.appid,t.rid,t.schk,t.lchk,t.lchktimes,t.s
 from %t t left join %t r on t.rid = r.rid  
 left join %t ra on ra.rid=r.rid 
 left join %t v on r.appid = v.appid 
-where (t.schk = 1 or t.lchk = 1) and  ((t.lchktimes+t.schktimes) < %d) and v.isdelete < 1   and r.isdelete < 1 and r.appid in(%n)
+where (t.schk = 1 or t.lchk = 1) and  ((t.lchktimes+t.schktimes) < %d) and v.isdelete < 1   and r.isdelete = 0 and r.appid in(%n)
 order by r.dateline asc,mintimes asc limit $start,$limit",array('thumb_record','pichome_resources','pichome_resources_attr','pichome_vapp',6,$appids));
 if($datas){
     foreach($datas as $v){
@@ -87,6 +87,11 @@ if($datas){
             dzz_process::unlock($processname1);
             continue;
         }
+        $metadata = IO::getMeta($v['rid']);
+        if (!$thunbdata[$metadata['bz']]) {
+            dzz_process::unlock($processname1);
+            continue;
+        }
         //调用系统获取缩略图
         $returnurl = IO::getThumb($v['rid'],$thumbsign,0,1,1);
         dzz_process::unlock($processname1);
@@ -97,7 +102,7 @@ if($datas){
 from %t t left join %t r on t.rid = r.rid  
 left join %t ra on ra.rid=r.rid 
 left join %t v on r.appid = v.appid 
-where (t.schk = 1 or t.lchk = 1) and  ((t.lchktimes+t.schktimes) < %d) and v.isdelete < 1   and r.isdelete < 1 and r.appid in(%n)",array('thumb_record','pichome_resources','pichome_resources_attr','pichome_vapp',6,$appids))){
+where (t.schk = 1 or t.lchk = 1) and  ((t.lchktimes+t.schktimes) < %d) and v.isdelete < 1   and r.isdelete = 0 and r.appid in(%n)",array('thumb_record','pichome_resources','pichome_resources_attr','pichome_vapp',6,$appids))){
         sleep(2);
          dfsockopen(getglobal('localurl') . 'misc.php?mod=doupdatethumb', 0, '', '', false, '',1);
     }

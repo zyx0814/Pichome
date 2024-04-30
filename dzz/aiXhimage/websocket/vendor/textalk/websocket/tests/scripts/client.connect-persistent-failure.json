@@ -1,0 +1,34 @@
+[
+    {
+        "function": "stream_context_create",
+        "params": [],
+        "return": "@mock-stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            5,
+            "@mock-stream-context"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "persistent stream"
+    },
+    {
+        "function": "ftell",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    }
+]
+

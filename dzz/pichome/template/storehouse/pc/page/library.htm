@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
 <script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
 <script type="text/javascript" src="static/vue_components/OrguserSelect/index.js?{VERHASH}"></script>
-
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
 <script>
 	function debounce(fun, delay) {
 		var time;
@@ -85,7 +85,8 @@
 			}
 		},
 		components: {
-			'orguser-select':orguserselect
+			'orguser-select':orguserselect,
+			language
 		},
 		mounted(){
 
@@ -98,6 +99,7 @@
 	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 		dzzoffice.component(key, component)
 	}
+	
 	// 屏蔽警告信息
 	dzzoffice.config.warnHandler = function(){return null};
 	dzzoffice.mount('#dzzoffice');
