@@ -495,7 +495,7 @@ if ($_GET['step'] == 'start') {
                 'description' => 'ImagetagAnddesc',
                 'type' => 1,
                 'update_time' => 0,
-                'addons' => 'dzz\aiXhimage\classes\ImagetagAnddes',
+                'addons' => 'dzz\aiXhimage\classes\ImagetagAnddesc',
                 'status' => 1,
                 'priority' => 0
             ), false, true);
