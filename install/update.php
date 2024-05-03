@@ -415,7 +415,7 @@ if ($_GET['step'] == 'start') {
 
         ];
         foreach ($cornarr as $v) {
-            if (DB::result_first("select cronid from %t where filename = %s", array('cron', $v['filename']))) {
+            if (!DB::result_first("select cronid from %t where filename = %s", array('cron', $v['filename']))) {
                 DB::insert('cron', $v);
             }
         }

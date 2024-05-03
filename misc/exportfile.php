@@ -43,7 +43,7 @@
         try{
             $return = $eagleexport->execExport($force);
         }catch (Exception $e){
-            C::t('pichome_vapp')->update($appid,['state'=>0]);
+           // C::t('pichome_vapp')->update($appid,['state'=>0]);
             runlog('eagleexporterror',$appid.$e->getMessage());
             dzz_process::unlock($processname);
         }
@@ -57,7 +57,7 @@
         try{
             $return = $localexport->execExport($force);
         }catch (Exception $e){
-            C::t('pichome_vapp')->update($appid,['state'=>0]);
+            //C::t('pichome_vapp')->update($appid,['state'=>0]);
             runlog('localexporterror',$appid.$e->getMessage());
             dzz_process::unlock($processname);
         }
@@ -67,7 +67,7 @@
         try{
             $return = $billfishxport->execExport($force);
         }catch (Exception $e){
-            C::t('pichome_vapp')->update($appid,['state'=>0]);
+           // C::t('pichome_vapp')->update($appid,['state'=>0]);
             runlog('billfishexporterror',$appid.$e->getMessage());
             dzz_process::unlock($processname);
         }

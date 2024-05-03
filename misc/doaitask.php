@@ -22,11 +22,15 @@ if ($locked) {
 }
 $limit = 100;
 foreach (DB::fetch_all("select * from %t where 1 limit 0,$limit ", array('ai_task')) as $v) {
+
     if ($v['aikey'] == 'aiXh::chatImage') {
         require_once DZZ_ROOT . './dzz/aiXhimage/class/xhChat.php';
         $tplid = $v['tplid'];
         $promptdata = C::t('#aiXhimage#ai_xhimageprompt')->fetch($tplid);
-        if (!$promptdata) continue;
+        if (!$promptdata){
+            C::t('ai_task')->delete($v['id']);
+            continue;
+        }
         $getType = $promptdata['cate'];
         if ($promptdata['cate'] == 1) {
             $question = $promptdata['prompt'] . '。返回结果的格式为“标签1,标签2,标签3”，其中标签之间使用逗号分割。';
@@ -40,6 +44,7 @@ foreach (DB::fetch_all("select * from %t where 1 limit 0,$limit ", array('ai_tas
             C::t('ai_task')->delete($v['id']);
             continue;
         }
+
         $imgurl = FALSE;
         $thumbdata = DB::fetch_first("select * from %t where rid =%s", array('thumb_record', $rid));
         if ($thumbdata['sstatus']) {
@@ -56,6 +61,7 @@ foreach (DB::fetch_all("select * from %t where 1 limit 0,$limit ", array('ai_tas
             if(!$metadata['aid']) $metadata['aid'] = 0;
             $setarr = ['aid' => $metadata['aid'], 'rid' => $rid, 'gettype' => $getType, 'tplid' => $tplid, 'aikey' => $v['aikey']];
             $cachedata = C::t('ai_imageparse')->insertData($setarr);
+
             if ($cachedata) {
                 if ($cachedata['isget'] && $cachedata['data']) {
                     $content = $cachedata['data'];
@@ -69,8 +75,14 @@ foreach (DB::fetch_all("select * from %t where 1 limit 0,$limit ", array('ai_tas
                         $params['processname'] = $return;
                     }
                     $chatclinet = new xhChat();
+
                     $aireturn = $chatclinet->getApiData('aiXh::chatImage', $params);
-                    if ($aireturn['error_msg']) return ['error' => $aireturn['error_msg']];
+
+                    if ($aireturn['error_msg']){
+                        C::t('ai_imageparse')->update($cachedata['id'], ['isget' => 1, 'data' => '']);
+                        C::t('ai_task')->delete($v['id']);
+                        continue;
+                    }
                     if ($aireturn['result']) {
                         if ($aireturn['totaltoken']) {
                             $tokendatas = [
@@ -120,14 +132,19 @@ foreach (DB::fetch_all("select * from %t where 1 limit 0,$limit ", array('ai_tas
                     C::t('ai_task')->delete($v['id']);
                 } elseif ($getType == 2) {
                     $desc = getstr($content);
-                    C::t('pichome_resources_attr')->update_by_rids($metadata['appid'], $rid, ['desc' => $desc]);
+                    if($desc)C::t('pichome_resources_attr')->update_by_rids($metadata['appid'], $rid, ['desc' => $desc]);
                     C::t('ai_task')->delete($v['id']);
                 } elseif ($getType == 0) {
+
                     $name = trim(name_filter($content));
                     $name = str_replace([',','，','.','。'],'',$name);
                     $name = getstr($name,30);
-                    C::t('pichome_resources')->update_by_rids($metadata['appid'], $rid, ['name' => $name.'.'.$metadata['ext']]);
+                    if($content){
+                        C::t('pichome_resources')->update_by_rids($metadata['appid'], $rid, ['name' => $name.'.'.$metadata['ext']]);
+                    }
                     C::t('ai_task')->delete($v['id']);
+
+
                 }
 
             }

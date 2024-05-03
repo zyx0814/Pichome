@@ -24,12 +24,11 @@ if (!$data) exit(json_encode(array('error' => 'no data')));
 if ($data['state'] != 3 || $data['isdelete'] > 0) exit(json_encode(array('error' => 'is deleted or state is not allow')));
 if ($data['type'] == 0) {
     include_once DZZ_ROOT.'dzz'.BS.'eagle'.BS.'class'.BS.'class_eagleexport.php';
-    //include_once dzz_libfile('eagleexport');
     $eagleexport = new eagleexport($data);
     try{
         $return = $eagleexport->execCheckFile();
     }catch (Exception $e){
-        C::t('pichome_vapp')->update($appid,['state'=>0]);
+        //C::t('pichome_vapp')->update($appid,['state'=>0]);
         runlog('eagleexporterror', $appid . $e->getMessage());
         dzz_process::unlock($processname);
     }
@@ -41,7 +40,7 @@ if ($data['type'] == 0) {
     try{
         $return = $localexport->execCheckFile();
     }catch (Exception $e){
-        C::t('pichome_vapp')->update($appid,['state'=>0]);
+        //C::t('pichome_vapp')->update($appid,['state'=>0]);
         runlog('localexporterror', $appid . $e->getMessage());
         dzz_process::unlock($processname);
     }
@@ -52,7 +51,7 @@ if ($data['type'] == 0) {
     try{
         $return = $billfishxport->execCheckFile();
     }catch (Exception $e){
-        C::t('pichome_vapp')->update($appid,['state'=>0]);
+        //C::t('pichome_vapp')->update($appid,['state'=>0]);
         runlog('billfishexporterror', $appid . $e->getMessage());
         dzz_process::unlock($processname);
     }
