@@ -50,6 +50,7 @@ class image {
 
 	function Thumb($source, $target, $thumbwidth, $thumbheight, $thumbtype = 1, $nosuffix = 0) {
 		$return = $this->init('thumb', $source, $target,$nosuffix);
+
 		if($return <= 0) {
 			return $this->returncode($return);
 		}
@@ -275,9 +276,81 @@ class image {
 		}
 		return array($x, $y, $w, $h);
 	}
+    function webpinfo($file) {
+        if (!is_file($file)) {
+            return false;
+        } else {
+            $file = realpath($file);
+        }
+
+        $fp = fopen($file, 'rb');
+        if (!$fp) {
+            return false;
+        }
+
+        $data = fread($fp, 90);
+
+        fclose($fp);
+        unset($fp);
+
+        $header_format = 'A4Riff/' . // 获取4个字符的字符串
+            'I1Filesize/' . // 获取一个整数（文件大小，但不是实际大小）
+            'A4Webp/' . // 获取4个字符的字符串
+            'A4Vp/' . // 获取4个字符的字符串
+            'A74Chunk'; // 获取74个字符的字符串
+        $header = unpack($header_format, $data);
+        unset($data, $header_format);
+
+        if (!isset($header['Riff']) || strtoupper($header['Riff']) !== 'RIFF') {
+            return false;
+        }
+        if (!isset($header['Webp']) || strtoupper($header['Webp']) !== 'WEBP') {
+            return false;
+        }
+        if (!isset($header['Vp']) || strpos(strtoupper($header['Vp']), 'VP8') === false) {
+            return false;
+        }
+
+        if (
+            strpos(strtoupper($header['Chunk']), 'ANIM') !== false ||
+            strpos(strtoupper($header['Chunk']), 'ANMF') !== false
+        ) {
+            $header['Animation'] = true;
+        } else {
+            $header['Animation'] = false;
+        }
+
+        if (strpos(strtoupper($header['Chunk']), 'ALPH') !== false) {
+            $header['Alpha'] = true;
+        } else {
+            if (strpos(strtoupper($header['Vp']), 'VP8L') !== false) {
+                // 如果是VP8L，假设该图像会有透明度
+                // 如Google文档中描述的WebP简单文件格式无损部分
+                $header['Alpha'] = true;
+            } else {
+                $header['Alpha'] = false;
+            }
+        }
+
+        unset($header['Chunk']);
+        return $header;
+    }
 
 	function loadsource() {
 		$imagecreatefromfunc = &$this->imagecreatefromfunc;
+        if($imagecreatefromfunc == 'imagecreatefromwebp'){
+            $info = $this->webpinfo($this->source);
+            if ($info !== false) {
+                if ($info['Animation']) {
+                   return -1;
+                }
+                if ($info['Alpha']) {
+                    return -1;
+                }
+            }else{
+                return -1;
+            }
+        }
 		$im = @$imagecreatefromfunc($this->source);
 		if(!$im) {
 			if(!function_exists('imagecreatefromstring')) {
@@ -299,7 +372,6 @@ class image {
 		if(!function_exists('imagecreatetruecolor') || !function_exists('imagecopyresampled') || !function_exists('imagejpeg') || !function_exists('imagecopymerge')) {
 			return -4;
 		}
-
 		$imagefunc = &$this->imagefunc;
 		$attach_photo = $this->loadsource();
 		if($attach_photo < 0) {

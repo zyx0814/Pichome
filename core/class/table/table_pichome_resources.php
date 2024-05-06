@@ -387,6 +387,7 @@ class table_pichome_resources extends dzz_table
                         $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
                             'thumbsign' => '0', 'path'=>$resourcesdata['path'],'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
                         $imgdata['iconimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($smallthumbparams, 0, '') . '&' . VERHASH;
+                        $imgdata['originalimg'] =  (!$return) ? false: getglobal('siteurl') . 'index.php?mod=io&op=createThumb&path='.$resourcesdata['dpath'].'&size=large';
                     }else{
 
                         $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
@@ -474,7 +475,7 @@ class table_pichome_resources extends dzz_table
                             $smallthumbparams = ['rid' => $resourcesdata['rid'], 'hash' => VERHASH, 'download' => $download,
                                 'thumbsign' => '0', 'path'=>$resourcesdata['path'],'ext' => $resourcesdata['ext'], 'appid' => $resourcesdata['appid'],'hasthumb'=>$resourcesdata['hasthumb']];
                             $imgdata['iconimg'] = getglobal('siteurl') . 'index.php?mod=io&op=getImg&path=' . Pencode($smallthumbparams, 0, '') . '&' . VERHASH;
-
+                            $imgdata['originalimg'] =  (!$return) ? false: getglobal('siteurl') . 'index.php?mod=io&op=createThumb&path='.$resourcesdata['dpath'].'&size=large';
                         }else{
                             $thumbdata = C::t('thumb_record')->fetch($resourcesdata['rid']);
                             if ($thumbdata['sstatus']) $imgdata['icondata'] =  IO::getFileUri($thumbdata['spath']);
@@ -812,7 +813,7 @@ class table_pichome_resources extends dzz_table
         $setarr = [];
         $setarr['lastdate'] = TIMESTAMP;
         //如果当前库有该文件,则使用当前文件
-        if ($rid = DB::result_first("select rid from %t where path = %d and appid = %s ", array('pichome_resources_attr', $aid, $appid))) {
+        if ($rid = DB::result_first("select rid from %t where path = %s and appid = %s ", array('pichome_resources_attr', $aid, $appid))) {
             $resourcesdata = C::t('pichome_resources')->fetch($rid);
             $nfids = explode(',', $resourcesdata['fids']);
             $setarr['rid'] = $rid;
@@ -897,7 +898,7 @@ class table_pichome_resources extends dzz_table
             } else {
                 return false;
             }
-        } elseif ($rid = DB::result_first("select rid from %t where path = %d ", array('pichome_resources_attr', $aid))) {
+        } elseif ($rid = DB::result_first("select rid from %t where path = %s ", array('pichome_resources_attr', $aid))) {
             //如果当前库无该文件但其它库有
             //获取原文件基本数据
             $resourcesdata = C::t('pichome_resources')->fetch($rid);

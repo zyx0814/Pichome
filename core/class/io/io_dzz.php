@@ -976,15 +976,16 @@ class io_dzz extends io_api
         if($extraparams['istmp']){
             return $thumbpath;
         }
-        $defaultspace = $_G['setting']['defaultspacesetting'];
-        if($defaultspace['bz'] != 'dzz'){
-            $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':' .$thumbpath;
-            $return = IO::moveThumbFile($cloudpath,$thumbpath);
-            //$thumbpath = $return;
-
-        }
-        if(isset($return['error'])){
-            return false;
+        if($thumbpath){
+            $defaultspace = $_G['setting']['defaultspacesetting'];
+            if($defaultspace['bz'] != 'dzz'){
+                $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':' .$thumbpath;
+                $return = IO::moveThumbFile($cloudpath,$thumbpath);
+                //$thumbpath = $return;
+            }
+            if(isset($return['error'])){
+                return false;
+            }
         }
         return $thumbpath;
 
@@ -1091,7 +1092,7 @@ class io_dzz extends io_api
         $extraparams['nomark'] = 1;
         $thumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, 0,  $extraparams);
         $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
-        $thumbpath = $bz.$thumbpath;
+        if($thumbpath)$thumbpath = $bz.$thumbpath;
         if($thumbpath){
             $img = IO::getFileUri($thumbpath);
             if ($returnurl) return $img;
@@ -1305,7 +1306,7 @@ class io_dzz extends io_api
             if(!$thumbpath){
                 $cthumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, $original, $extraparams, $filesize);
                 $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
-                $thumbpath = $bz.$cthumbpath;
+                if($cthumbpath)$thumbpath = $bz.$cthumbpath;
                 if($cthumbpath){
                     $cacheid = '';
                     if($data['aid']){
@@ -1434,7 +1435,7 @@ class io_dzz extends io_api
                     //创建缩略图
                     $cthumbpath = IO::createThumbByOriginal($filepath, $data, $width, $height, $thumbtype, $original, $extraparams, $filesize);
                     $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
-                    $thumbpath = $bz.$cthumbpath;
+                    if($cthumbpath)$thumbpath = $bz.$cthumbpath;
                     if($cthumbpath){
                         $cacheid = '';
                         if($rdata['aid']){

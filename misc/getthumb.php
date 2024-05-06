@@ -26,7 +26,6 @@ $start = $i * $limit;
 if ($locked) {
     exit(json_encode(array('error' => '进程已被锁定请稍后再试')));
 }
-
 $imageCacheName = 'PICHOMETHUMBSTATUS';
 $docCacheName = 'PICHOMEDOCSTATUS';
 $mediaCacheName = 'PICHOMECONVERTSTATUS';
@@ -79,16 +78,18 @@ foreach (DB::fetch_all("select appid,path,`type` from %t where (`type` = %d or `
 }
 
 if (empty($appids)) {
+    dzz_process::unlock($processname);
     exit('success');
 }
 
-$datas = DB::fetch_all("select r.rid,r.appid,t.rid,t.sstatus,t.lstatus,t.ltimes,t.stimes,least(t.ltimes,t.stimes) as mintimes
+$datas = DB::fetch_all("select r.rid,r.appid,t.rid,t.sstatus,t.lstatus,t.ltimes,t.stimes,t.ltimes+t.stimes as mintimes
 from %t t left join %t r on t.rid = r.rid   
-where (t.sstatus < 1 or t.lstatus < 1) and  ((t.ltimes+t.stimes) < %d)  and r.isdelete = 0 and r.appid in(%n)
+where (t.sstatus < 1 or t.lstatus < 1) and  ((t.ltimes+t.stimes) < %d)  and r.isdelete = 0 and r.appid in(%n) 
 order by mintimes asc,r.dateline asc limit $start,$limit", array('thumb_record', 'pichome_resources', 6, $appids));
 
 if ($datas) {
     foreach ($datas as $v) {
+
         $processname1 = 'PICHOMEGETTHUMB_' . $v['rid'];
         //dzz_process::unlock($processname1);
         //如果当前数据是锁定状态则跳过
@@ -124,10 +125,14 @@ if ($datas) {
             dzz_process::unlock($processname1);
             continue;
         }
-
-        //调用系统获取缩略图
-        $returnurl = IO::getThumb($v['rid'], $thumbsign, 0, 1, 1);
-        dzz_process::unlock($processname1);
+        try{
+            //调用系统获取缩略图
+            $returnurl = IO::getThumb($v['rid'], $thumbsign, 0, 1, 1);
+            dzz_process::unlock($processname1);
+        }catch (Exception $e){
+            runlog('createThumbError',$e->getMessage()."\t".$v['rid']);
+            dzz_process::unlock($processname1);
+        }
         //exit('aaaa');
 
     }
@@ -155,6 +160,7 @@ function getDzzExt($ext){
     }else{
         $imageext = $gdlimitext;
     }
+    $imageext[] = 'webp';
     $mediaext = explode(',',$_G['config']['pichomeconvertext']);
     if(in_array($ext,$docext)){
         $type = 'docstatus';
