@@ -351,8 +351,8 @@ class dzz_upgrade
             if (!@mkdir($dir, 0777)) {
                 return false;
             }
-            @touch($dir . '/index.htm');
-            @chmod($dir . '/index.htm', 0777);
+           // @touch($dir . '/index.html');
+           // @chmod($dir . '/index.html', 0777);
         }
         return true;
     }

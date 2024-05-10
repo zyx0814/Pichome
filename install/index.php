@@ -420,7 +420,7 @@ elseif($method == 'admin_init') {
 		$ctype = 1;
 		$data = addslashes(serialize($userstats));
 		$db->query("REPLACE INTO {$tablepre}syscache (cname, ctype, dateline, data) VALUES ('userstats', '$ctype', '".time()."', '$data')");
-
+        exit("<script>window.location.href='index.php?step=5';</script>");
 		header("location: index.php?step=5");
 		exit();
 	}

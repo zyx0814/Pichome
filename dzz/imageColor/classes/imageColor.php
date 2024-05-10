@@ -71,7 +71,7 @@ class imageColor
         }
         $width = 64;
         $height = 64;
-        $img = IO::gettmpThumb($data['rid'], $width, $height, 1, 1);
+        $img = IO::gettmpThumb($data['rid'], $width, $height, 2, 1);
         $img = IO::getStream($img);
         if (!$img) {
             C::t('pichome_resources_attr')->update($data['rid'], array('isget' => -1));

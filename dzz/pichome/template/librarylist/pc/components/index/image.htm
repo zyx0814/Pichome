@@ -413,17 +413,18 @@
 		      	this.ImagePageTurning(event.data.dpath);
 			},
 			ImageClick({id,CheckedKeys}){//单击事件
+				return false;
 				const self = this;
 				if(this.LeftCurrenType == 'filelist'){
 					self.$refs.ImageFileRef.EmpytActivefid();
 				}
 				
-				if(CheckedKeys && !CheckedKeys.length){
-					this.Imagedragselect({
-						CheckedKeys:[]
-					})
-					return false;
-				}
+				// if(CheckedKeys && !CheckedKeys.length){
+				// 	this.Imagedragselect({
+				// 		CheckedKeys:[]
+				// 	})
+				// 	return false;
+				// }
 				this.ImageParam.checkedKdys = CheckedKeys;
 				if(this.RightActiveRid.length==1 && this.RightActiveRid[0] == id){
 					return false;

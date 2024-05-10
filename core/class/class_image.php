@@ -338,7 +338,7 @@ class image {
 
 	function loadsource() {
 		$imagecreatefromfunc = &$this->imagecreatefromfunc;
-        if($imagecreatefromfunc == 'imagecreatefromwebp'){
+        /*if($imagecreatefromfunc == 'imagecreatefromwebp'){
             $info = $this->webpinfo($this->source);
             if ($info !== false) {
                 if ($info['Animation']) {
@@ -350,7 +350,7 @@ class image {
             }else{
                 return -1;
             }
-        }
+        }*/
 		$im = @$imagecreatefromfunc($this->source);
 		if(!$im) {
 			if(!function_exists('imagecreatefromstring')) {

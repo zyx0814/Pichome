@@ -233,7 +233,7 @@
 					pathkey:res.data.pathkey,
 					pfid:pfid
 				};
-				if(this.LeftCurrenType == 'filelist' && this.hassub){
+				if(this.LeftCurrenType == 'filelist' && type == 'addchild' && this.hassub){
 					var str1 = {
 						fid:res.data.fid,
 						fname:this.LeftTreeDialogAdd.name,

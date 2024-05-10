@@ -23,46 +23,48 @@
 	</el-button>
 </el-tooltip>
 
-
-<el-popover
-	placement="bottom"
-	trigger="click"
-	width="220"
-	@show="HeaderRightBtntaskShow(true)"
-    @hide="HeaderRightBtntaskHide">
-	<el-text tag="p" size="large" style="margin-bottom: 10px;" v-cloak>待完成的任务</el-text>
-	<el-space 
-		direction="vertical" 
-		alignment="flex-start"
-		style="width: 100%;" 
-		size="large"
-		:fill="true">
-		<template v-if="HeaderRightBtnTask.loading">
-			<div style="width: 100px;height: 100px;" v-loading="HeaderRightBtnTask.loading"></div>
-		</template>
-		<template v-else>
-			<template v-for="item in HeaderRightBtnTask.data" :key="item.id">
-				<div style="display: flex;align-items: center;justify-content: space-between;">
-					<el-text tag="b">{{item.lablename}}</el-text>
-					<el-text>{{item.data}}</el-text>
-				</div>
+<template  v-if="DocumentVapp.type == 3 || DocumentVapp.type == 1">
+	<el-popover
+		placement="bottom"
+		trigger="click"
+		width="220"
+		@show="HeaderRightBtntaskShow(true)"
+		@hide="HeaderRightBtntaskHide">
+		<el-text tag="p" size="large" style="margin-bottom: 10px;" v-cloak>待完成的任务</el-text>
+		<el-space 
+			direction="vertical" 
+			alignment="flex-start"
+			style="width: 100%;" 
+			size="large"
+			:fill="true">
+			<template v-if="HeaderRightBtnTask.loading">
+				<div style="width: 100px;height: 100px;" v-loading="HeaderRightBtnTask.loading"></div>
 			</template>
-		</template>
-	</el-space>
-	<template #reference>
-		<div style="margin-left: 12px;">
-			<el-tooltip content="任务列表" placement="bottom">
+			<template v-else>
+				<template v-for="item in HeaderRightBtnTask.data" :key="item.id">
+					<div style="display: flex;align-items: center;justify-content: space-between;">
+						<el-text tag="b">{{item.lablename}}</el-text>
+						<el-text>{{item.data}}</el-text>
+					</div>
+				</template>
+			</template>
+		</el-space>
+		<template #reference>
+			<div style="margin-left: 12px;">
+				<el-tooltip content="任务列表" placement="bottom">
 
-				<button class="el-button el-button--large is-circle is-text" style="font-size: var(--el-font-size-extra-large);" >
-					<el-icon>
-						<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6 42H42V6H32H30C28.6758 9.15854 26.6758 10.7378 24 10.7378C21.3242 10.7378 19.3242 9.15854 18 6H16H6V42Z" fill="none" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linejoin="round"/><path d="M15 24L21 30L33 18" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linecap="butt" stroke-linejoin="round"/></svg>
-					</el-icon>
-				</button>
-				
-			</el-tooltip>
-		</div>
-	</template>
-</el-popover>
+					<button class="el-button el-button--large is-circle is-text" style="font-size: var(--el-font-size-extra-large);" >
+						<el-icon>
+							<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6 42H42V6H32H30C28.6758 9.15854 26.6758 10.7378 24 10.7378C21.3242 10.7378 19.3242 9.15854 18 6H16H6V42Z" fill="none" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linejoin="round"/><path d="M15 24L21 30L33 18" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linecap="butt" stroke-linejoin="round"/></svg>
+						</el-icon>
+					</button>
+					
+				</el-tooltip>
+			</div>
+		</template>
+	</el-popover>
+</template>
+
 <el-popover
 	placement="bottom"
 	trigger="click"

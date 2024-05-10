@@ -2112,6 +2112,8 @@ elseif($operation == 'realfianllypath'){
 
 }elseif($operation == 'getTaskByAppid'){
     $appid = isset($_GET['appid']) ? trim($_GET['appid']):'';
+    $appdata = C::t('pichome_vapp')->fetch($appid);
+    if($appdata['type'] == 1 || $appdata['type'] == 3){
     $taskarr = [
         '改名',
         '打标签',
@@ -2122,12 +2124,9 @@ elseif($operation == 'realfianllypath'){
     foreach($taskarr as $k=>$v){
         $datanums[] = ['lablename'=>$taskarr[$k],'data'=>$aitaskdata[$k] ? intval($aitaskdata[$k]):0];
     }
+    if($appdata['type'] == 1) unset($datanums[0]);
     $queryInterval = 0;
-    //计算待生成缩略图总文件数
-    $filenum = DB::result_first("select count(rid) as num from %t where appid = %s and isdelete = 0",array('pichome_resources',$appid));
-    $getthumbnum = DB::result_first("select count(t.rid) from %t t left join %t r on r.rid=t.rid where
-      r.appid = %s and t.sstatus = %d and r.isdelete = 0",['thumb_record','pichome_resources',$appid,1]);
-    if($getthumbnum < $filenum) $queryInterval = 3;
+
     if(!$queryInterval){
         foreach($datanums as $v){
             if($v['data']){
@@ -2136,6 +2135,13 @@ elseif($operation == 'realfianllypath'){
             }
         }
     }
-    $datanums[] = ['lablename'=>'生成缩略图','data'=>$getthumbnum.'/'.$filenum];
+
+        //计算待生成缩略图总文件数
+        $filenum = DB::result_first("select count(rid) as num from %t where appid = %s and isdelete = 0",array('pichome_resources',$appid));
+        $getthumbnum = DB::result_first("select count(t.rid) from %t t left join %t r on r.rid=t.rid where
+      r.appid = %s and t.sstatus = %d and r.isdelete = 0",['thumb_record','pichome_resources',$appid,1]);
+        if($getthumbnum < $filenum) $queryInterval = 3;
+        $datanums[] = ['lablename'=>'生成缩略图','data'=>$getthumbnum.'/'.$filenum];
+    }
     exit(json_encode(['success'=>true,'data'=>$datanums,'queryInterval'=>$queryInterval]));
 }

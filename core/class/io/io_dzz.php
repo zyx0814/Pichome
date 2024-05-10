@@ -879,6 +879,65 @@ class io_dzz extends io_api
         $target = $dir . '/' . $subdir;
         return $target;
     }
+    function webpinfo($file) {
+        if (!is_file($file)) {
+            return false;
+        } else {
+            $file = realpath($file);
+        }
+
+        $fp = fopen($file, 'rb');
+        if (!$fp) {
+            return false;
+        }
+
+        $data = fread($fp, 90);
+
+        fclose($fp);
+        unset($fp);
+
+        $header_format = 'A4Riff/' . // 获取4个字符的字符串
+            'I1Filesize/' . // 获取一个整数（文件大小，但不是实际大小）
+            'A4Webp/' . // 获取4个字符的字符串
+            'A4Vp/' . // 获取4个字符的字符串
+            'A74Chunk'; // 获取74个字符的字符串
+        $header = unpack($header_format, $data);
+        unset($data, $header_format);
+
+        if (!isset($header['Riff']) || strtoupper($header['Riff']) !== 'RIFF') {
+            return false;
+        }
+        if (!isset($header['Webp']) || strtoupper($header['Webp']) !== 'WEBP') {
+            return false;
+        }
+        if (!isset($header['Vp']) || strpos(strtoupper($header['Vp']), 'VP8') === false) {
+            return false;
+        }
+
+        if (
+            strpos(strtoupper($header['Chunk']), 'ANIM') !== false ||
+            strpos(strtoupper($header['Chunk']), 'ANMF') !== false
+        ) {
+            $header['Animation'] = true;
+        } else {
+            $header['Animation'] = false;
+        }
+
+        if (strpos(strtoupper($header['Chunk']), 'ALPH') !== false) {
+            $header['Alpha'] = true;
+        } else {
+            if (strpos(strtoupper($header['Vp']), 'VP8L') !== false) {
+                // 如果是VP8L，假设该图像会有透明度
+                // 如Google文档中描述的WebP简单文件格式无损部分
+                $header['Alpha'] = true;
+            } else {
+                $header['Alpha'] = false;
+            }
+        }
+
+        unset($header['Chunk']);
+        return $header;
+    }
     public function createThumbByOriginal($path, $data, $width = 0, $height = 0, $thumbtype = 1, $original = 0, $extraparams = array(), $filesize = 0)
     {
         global $_G;
@@ -898,7 +957,7 @@ class io_dzz extends io_api
             fclose($fp);
             $fileuri = $cachefile;
         }
-
+        $thumbpath = false;
         //如果服务器处理完成后，路径非图片类文件的时候，直接获取文件后缀对应的图片
         if (!in_array($ext, array('png', 'jpg', 'gif', 'jpeg','webp')) || !$imginfo = @getimagesize($fileuri)) {
             $thumbpath = false;
@@ -920,54 +979,77 @@ class io_dzz extends io_api
                     $extraflag .= '_' . $extraparams['watermarktext'];
                 }
 
-                if(in_array($data['ext'],array('gif'))){
+                if(in_array($ext,array('gif'))){
                     $thumbext = 'gif';
                 }else{
                     $thumbext = 'webp';
                 }
-                $thumbpath = self::getthumbpath('pichomethumb');
+                $thumbpathdir = self::getthumbpath('pichomethumb');
                 if($data['aid']) $thumbname = md5($data['aid'].$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
                 else $thumbname = md5($path.$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
-                $targetpath = $thumbpath.$thumbname;
+                $targetpath = $thumbpathdir.$thumbname;
             }
             $target = $targetpath;
-            //图片小于最小水印最小设置时，不生成水印
-            if ($extraparams['nomark'] ||($_G['setting']['IsWatermarkstatus'] == 0 || ($imginfo[0] < $_G['setting']['watermarkminwidth'] || $imginfo[1] < $_G['setting']['watermarkminheight']))) {
-                $nomark = 1;
-            }
-            //返回原图的时候 或者图片小于缩略图宽高的不生成直接返回原图
-            if ($original || ($imginfo[0] < $width || $imginfo[1] < $height)) {
-                $target_attach = $_G['setting']['attachdir'] . './' . $target;
-                $targetpath = dirname($target_attach);
-                dmkdir($targetpath);
+            if($ext == 'webp'){
+                $info = $this->webpinfo($fileuri);
+                if ($info !== false) {
+                    if ($info['Animation'] || $info['Alpha']) {
+                        $target_attach = $_G['setting']['attachdir'] . './' . $target;
+                        $targetpath = dirname($target_attach);
+                        dmkdir($targetpath);
 
-                if(copy($fileuri, $target_attach)){
-                    $thumbpath = $target_attach;
-                    if (!$nomark) self::watermark($target_attach = $_G['setting']['attachdir'] . './' . $target, '', $extraparams);
-                    $thumbpath =  $target;
+                        if(copy($fileuri, $target_attach)){
+                            $thumbpath = $target_attach;
+                            $thumbpath =  $target;
+                        }else{
+                            $thumbpath = false;
+                        }
+                    }
+                }else{
+                    $thumbpath =  false;
                 }
-            } else {
-                //生成缩略图
-                include_once libfile('class/image');
-                $target_attach = $_G['setting']['attachdir'] . './' . $target;
-                $targetpath = dirname($target_attach);
-                dmkdir($targetpath);
-                $image = new image();
-                try {
-                    $thumb = $image->Thumb($fileuri, $target, $width, $height, $thumbtype, 0, $extraparams);
+            }
+            if(!$thumbpath){
+                //图片小于最小水印最小设置时，不生成水印
+                if ($extraparams['nomark'] ||($_G['setting']['IsWatermarkstatus'] == 0 || ($imginfo[0] < $_G['setting']['watermarkminwidth'] || $imginfo[1] < $_G['setting']['watermarkminheight']))) {
+                    $nomark = 1;
+                }
+                //返回原图的时候 或者图片小于缩略图宽高的不生成直接返回原图
+                if ($original || ($imginfo[0] < $width || $imginfo[1] < $height)) {
+                    $target_attach = $_G['setting']['attachdir'] . './' . $target;
+                    $targetpath = dirname($target_attach);
+                    dmkdir($targetpath);
 
-                    if ($thumb) {
+                    if(copy($fileuri, $target_attach)){
+                        $thumbpath = $target_attach;
                         if (!$nomark) self::watermark($target_attach = $_G['setting']['attachdir'] . './' . $target, '', $extraparams);
                         $thumbpath =  $target;
-                    } else {
-                        $thumbpath = false;
                     }
-                } catch (\Exception $e) {
-                    $thumbpath = false;
+                } else {
+                    //生成缩略图
+                    include_once libfile('class/image');
+                    $target_attach = $_G['setting']['attachdir'] . './' . $target;
+                    $targetpath = dirname($target_attach);
+                    dmkdir($targetpath);
+                    $image = new image();
+                    try {
+                        $thumb = $image->Thumb($fileuri, $target, $width, $height, $thumbtype, 0, $extraparams);
 
+                        if ($thumb) {
+                            if (!$nomark) self::watermark($target_attach = $_G['setting']['attachdir'] . './' . $target, '', $extraparams);
+                            $thumbpath =  $target;
+                        } else {
+                            $thumbpath = false;
+                        }
+                    } catch (\Exception $e) {
+                        $thumbpath = false;
+
+                    }
                 }
             }
-        }
+            }
+
+
         //echo $thumbpath;die;
         if($cachefile){
             @unlink($cachefile);
@@ -1094,9 +1176,14 @@ class io_dzz extends io_api
         $bz = io_remote::getBzByRemoteid($defaultspace['remoteid']);
         if($thumbpath)$thumbpath = $bz.$thumbpath;
         if($thumbpath){
-            $img = IO::getFileUri($thumbpath);
-            if ($returnurl) return $img;
-            else IO::output_thumb($img);
+            if($returnurl == 1){
+                return  IO::getFileUri($thumbpath);
+            }elseif($returnurl == 2){
+                return  $thumbpath;
+            }else {
+                $img = IO::getStream($thumbpath);
+                IO::output_thumb($img);
+            }
         }else{
             return false;
         }
