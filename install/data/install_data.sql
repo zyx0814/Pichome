@@ -20,7 +20,7 @@ INSERT INTO `dzz_app_market` (`appid`, `mid`, `appname`, `appico`, `appdesc`, `a
 -- 转存表中的数据 `dzz_cron`
 --
 
-INSERT INTO `pichome_cron` (`cronid`, `available`, `type`, `name`, `filename`, `lastrun`, `nextrun`, `weekday`, `day`, `hour`, `minute`) VALUES
+INSERT INTO `dzz_cron` (`cronid`, `available`, `type`, `name`, `filename`, `lastrun`, `nextrun`, `weekday`, `day`, `hour`, `minute`) VALUES
 (1, 1, 'system', '每月通知清理', 'cron_clean_notification_month.php', 1711936031, 1714510800, -1, 1, 5, '0'),
 (2, 1, 'system', '每周清理缓存文件', 'cron_cache_cleanup_week.php', 1714354813, 1714942800, 1, -1, 5, '0'),
 (3, 1, 'system', '定时删除删除状态库', 'cron_pichome_delete.php', 1714468813, 1714469100, -1, -1, -1, '0	5	10	15	20	25	30	35	40	45	50	55'),
