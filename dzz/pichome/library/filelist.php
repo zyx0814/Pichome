@@ -3,7 +3,7 @@
 if (!defined('IN_OAOOA')) {
     exit('Access Denied');
 }
-
+$_G['setting']['sitename']=addslashes($_G['setting']['sitename']);
 $operation = isset($_GET['operation']) ? trim($_GET['operation']) : '';
 global $_G;
 if ($operation == 'filelist') {
