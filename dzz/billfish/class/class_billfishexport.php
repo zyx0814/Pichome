@@ -451,7 +451,7 @@ class billfishxport
                             //$rgbarr = [$rgbcolor['r'],$rgbcolor['g'],$rgbcolor['b']];
                             // $color = new Color($rgbarr);
                             $palettesnum[] = $p = $this->getPaletteNumber($intcolor);
-                            $colorarr = ['rid' => $rid,
+                            $pcolorarr = ['rid' => $rid,
                                 'color' => $tmpcolor[1],
                                 'weight' => $tmpcolor[0],
                                 'r' => $rgbcolor['r'],
@@ -459,9 +459,10 @@ class billfishxport
                                 'b' => $rgbcolor['b'],
                                 'p' => $p
                             ];
+                            C::t('pichome_palette')->insert($pcolorarr);
                         }
 
-                        C::t('pichome_palette')->insert($colorarr);
+
                     }
                     $isgray = $this->isgray($intcolorsarr);
                     $attrcolorsetarr = [
