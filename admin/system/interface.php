@@ -33,6 +33,7 @@
 			$type = explode('_', $_GET['type']);
 			if (in_array('data', $type)) {
 				updatecache();
+                C::t('pichome_route')->update_route();
 			}
 			if (in_array('tpl', $type) && $_G['config']['output']['tplrefresh']) {
 				cleartemplatecache();
