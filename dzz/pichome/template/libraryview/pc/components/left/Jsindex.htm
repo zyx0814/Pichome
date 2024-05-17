@@ -166,7 +166,7 @@
 				self.LeftTreePathKeys.forEach(element => {
 					pathkeys.push(element.pathkey)
 				});		
-				let {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfoldernum',{
+				let {data: res} = await axios.post('index.php?mod=banner&op=appajax&do=getsearchfoldernum',{
 					appid:this.DocumentAppid,
 					pathkeys:pathkeys.join(',')
 				});
