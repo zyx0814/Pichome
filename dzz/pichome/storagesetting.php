@@ -102,7 +102,7 @@ if ($do == 'addspace') {
             C::t('connect_storage')->update($id, $setarr);
             updateMediaStatus('dzz::', $setarr['mediastatus']);
         } else {
-            exit(json_encode(array('error' => true, 'msg' => 'ffmpeg开启失败')));
+            exit(json_encode(array('success' => false, 'msg' => 'ffmpeg开启失败')));
         }
     } elseif ($connectdata['bz'] == 'QCOS') {
         if ($setarr['mediastatus']) {
@@ -121,7 +121,7 @@ if ($do == 'addspace') {
                 updateMediaStatus('QCOS:' . $id . ':', $setarr['mediastatus']);
                 // dfsockopen(getglobal('localurl') . 'index.php?mod=pichome&op=convert', 0, '', '', false, '', 1);
             } else {
-                exit(json_encode(array('error' => true, 'msg' => '请检查存储桶是否开启媒体处理')));
+                exit(json_encode(array('success' => false, 'msg' => '请检查存储桶是否开启媒体处理')));
             }
         } else {
             C::t('connect_storage')->update($id, $setarr);
@@ -145,9 +145,9 @@ if ($do == 'addspace') {
         C::t("app_market")->update($app['appid'], array("extra" => serialize($extra)));
         if ($setarr['docstatus']) {
             $onlyDocumentUrl = rtrim(str_replace('web-apps/apps/api/documents/api.js', '', $extra["DocumentUrl"]), '/') . '/web-apps/apps/api/documents/api.js';
-            C::t('app_market')->update_by_identifier($app['appid'], ['available' => 1]);
+            C::t('app_market')->update($app['appid'], ['available' => 1]);
         } else {
-            C::t('app_market')->update_by_identifier($app['appid'], ['available' => 0]);
+            C::t('app_market')->update($app['appid'], ['available' => 0]);
         }
         //updatesetting($setting, $settingnew);
         C::t('connect_storage')->update($id, $setarr);
@@ -168,7 +168,7 @@ if ($do == 'addspace') {
                 C::t('connect_storage')->update($id, $setarr);
                 updateDocStatus('QCOS:' . $id . ':', $setarr['docstatus']);
             } else {
-                exit(json_encode(array('error' => true, 'msg' => '请检查存储桶是否开启文档处理')));
+                exit(json_encode(array('success' => false, 'msg' => '请检查存储桶是否开启文档处理')));
             }
         } else {
 
