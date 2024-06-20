@@ -362,8 +362,8 @@ if($operation == 'save'){
                     //$attrs['searchval'] = $resourcesattrdata['link'].$resourcesattrdata['name'].getstr($val,255).implode('',$annotationdatas);
                     C::t('pichome_resources_attr')->update_by_rids($appid,$rid,$attrs);
                 }elseif($flag == 'link'){
-                   /* $attrs['searchval'] = $resourcesattrdata['name'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);
-                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);*/
+                   /* $attrs['searchval'] = $resourcesattrdata['name'].getstr($resourcesattrdata['desc'],255).htmlspecialchars($val).implode('',$annotationdatas);*/
+                    C::t('pichome_resources_attr')->update_by_rid($appid,$rid,$attrs);
                 }
                 $returndata[] = ['rid'=>$rid,$flag=>$val];
             }
