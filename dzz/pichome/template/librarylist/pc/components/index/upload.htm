@@ -305,13 +305,10 @@
 				});
 				if(item){
 					if(!item['md5']){
-						let buffer = await this.fileToBuffer(item.raw)
-						// 根据文件内容生成 hash 值
-						const spark = new SparkMD5.ArrayBuffer()
-						spark.append(buffer)
-						item['md5'] = spark.end();
+						item['fileStatus'] = 1;
+						item['md5'] = await this.getSparkMd5(item.raw,item.id);
 					}
-					item['fileStatus'] = 1;
+
 					let param = {
 						md5:item['md5'],
 						appid:this.DocumentAppid,
@@ -341,6 +338,7 @@
 							item['Md5Status'] = 4;
 						}
 						item['fileStatus'] = 2;
+						item['percentage'] = 0;
 						switch (item.Md5Status){
 							// case 1:
 							// 	if(self.UploaderData.FileType==1){
@@ -679,17 +677,40 @@
 					 if(findex>-1)	self.UploaderData.fdata.splice(findex,1);
 				 },time);
 			},
-			fileToBuffer(file) {
+
+			getSparkMd5(file,fileid) {
+				let self=this;
 				return new Promise((resolve, reject) => {
-					const fr = new FileReader()
-					fr.onload = e => {
-						resolve(e.target.result)
+					let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
+					chunkSize = 20097152,                             // Read in chunks of 2MB
+							chunks = Math.ceil(file.size / chunkSize),
+							currentChunk = 0,
+							spark = new SparkMD5.ArrayBuffer(),
+							fileReader = new FileReader();
+					let item = self.UploaderData.data[fileid];
+					fileReader.onload = function (e) {
+						spark.append(e.target.result);                   // Append array buffer
+						currentChunk++;
+						if (currentChunk < chunks) {
+							loadNext();
+							if(item) item['percentage']=currentChunk*chunkSize;
+						} else {
+							let sparkmd5 = spark.end();
+							resolve(sparkmd5);
+						}
+					};
+
+					fileReader.onerror = function () {
+						reject(new Error('spark md5 error'))
+					};
+
+					function loadNext() {
+						let start = currentChunk * chunkSize,
+								end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+						fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
 					}
-					fr.readAsArrayBuffer(file)
-					fr.onerror = () => {
-						reject(new Error('转换文件格式发生错误'))
-					}
-				})
+					loadNext();
+				});
 			},
 			uploaderdrawerOperation(action,item){
 				let self=this;
