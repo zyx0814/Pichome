@@ -15,6 +15,10 @@ $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
 if(!C::t('pichome_vapp')->getpermbypermdata($appdata['download'],$resourcesdata['appid'],'download')){
     exit(lang('no_perm'));
 }
+$extension =  substr($resourcesdata['name'], strrpos($resourcesdata['name'], '.') + 1);
+if($extension != $resourcesdata['ext']){
+    $resourcesdata['name'] = $resourcesdata['name'].'.'.$resourcesdata['ext'];
+}
 $resourcesdata['name'] = '"' . (strtolower(CHARSET) == 'utf-8' && (strexists($_SERVER['HTTP_USER_AGENT'], 'MSIE') || strexists($_SERVER['HTTP_USER_AGENT'], 'Edge') || strexists($_SERVER['HTTP_USER_AGENT'], 'rv:11')) ? urlencode($resourcesdata['name']) : ($resourcesdata['name'])) . '"';
 $attach = DB::fetch_first("select path,appid from %t where rid = %s",array('pichome_resources_attr',$rid));
 if(is_numeric($attach['path'])){
