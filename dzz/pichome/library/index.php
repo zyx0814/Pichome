@@ -1031,7 +1031,7 @@ where r.isdelete = 0 and r.appid = %s order by r.dateline desc ", ['pichome_reso
     $appid = isset($_GET['appid']) ? trim($_GET['appid']) : '';
     $url = 'index.php?mod=pichome&op=fileview#appid=' . $appid;
     $sid = 'vapp_'.$appid;
-    $qrcode = C::t('pichome_route')->getQRcodeBySid($url, $appid);
+    $qrcode = C::t('pichome_route')->getQRcodeBySid($url, $sid);
     exit(json_encode(['success' => true, 'qrcode' => $qrcode]));
 } else {
     $theme = GetThemeColor();

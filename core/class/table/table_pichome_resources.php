@@ -331,15 +331,18 @@ class table_pichome_resources extends dzz_table
             $hascoverrids[] = $v['rid'];
         }
         $rids = array_diff($rids, $hascoverrids);
-        foreach (DB::fetch_all("select * from %t where rid in(%n)", array('thumb_record', $rids)) as $v) {
-            if ($v['rid']) $return[$v['rid']]['imgstatus'] = 1;
-            if ($v['sstatus']) {
-                $return[$v['rid']]['icondata'] =IO::getFileUri($v['spath']);
-            } else $return[$v['rid']]['icondata'] = false;
-            if ($v['lstatus']) {
-                $return[$v['rid']]['originalimg'] =IO::getFileUri($v['lpath']);
-            } else $return[$v['rid']]['originalimg'] = false;
+        if(!empty($rids)){
+            foreach (DB::fetch_all("select * from %t where rid in(%n)", array('thumb_record', $rids)) as $v) {
+                if ($v['rid']) $return[$v['rid']]['imgstatus'] = 1;
+                if ($v['sstatus']) {
+                    $return[$v['rid']]['icondata'] =IO::getFileUri($v['spath']);
+                } else $return[$v['rid']]['icondata'] = false;
+                if ($v['lstatus']) {
+                    $return[$v['rid']]['originalimg'] =IO::getFileUri($v['lpath']);
+                } else $return[$v['rid']]['originalimg'] = false;
+            }
         }
+
         return $return;
     }
 
