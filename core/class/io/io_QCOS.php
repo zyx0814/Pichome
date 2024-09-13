@@ -271,6 +271,7 @@
                 C::t('cache')->insert_cachedata_by_cachename($setarr,3600);
                 return $readperm;
             }
+
         }
         
         
@@ -683,10 +684,10 @@
                 }
                 if ($oscale > $nscale) {
                     //按宽度等比缩放
-                    return 'imageMogr2/format/'.$format.'/thumbnail/' . $width . 'x' . '/interlace/0 ';
+                    return 'imageMogr2/format/'.$format.'/thumbnail/' . $width . 'x' . '/interlace/0';
                 } else {
                     //按高度度等比缩放
-                    return 'imageMogr2/format/'.$format.'/thumbnail/x' . $height . '/interlace/0 ';
+                    return 'imageMogr2/format/'.$format.'/thumbnail/x' . $height . '/interlace/0';
                 }
             }
             
@@ -933,7 +934,12 @@
             else $thumbname = md5($data['path'].$data['thumbsign'].$extraflag).'_'.$data['thumbsign'].'.'.$thumbext;
             $thumbpath = $thumbpath.$thumbname;
             $defaultspace = $_G['setting']['defaultspacesetting'];
-            $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$thumbpath;
+            if($defaultspace['bz'] == 'dzz::'){
+                $cloudpath = $defaultspace['bz'].'::/' .$thumbpath;
+            }else{
+                $cloudpath = $defaultspace['bz'].':'.$defaultspace['did'] . ':/' .$thumbpath;
+            }
+
             $return = IO::moveThumbFile($cloudpath,$url);
             if(isset($return['error'])){
                 return false;
@@ -1036,13 +1042,25 @@
             $hostdata = explode(':',$arr['hostname']);
             $bucketurl = $hostdata[0].'://'.$arr['bucket'].'.cos.'.$hostdata[1].'.myqcloud.com';
             if($readperm == 2  ){
-                $d = ($this->host) ? $this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
+                $d = ($this->host) ? 'https://'.$this->host .'/'. $arr['object']:$bucketurl.'/'.$arr['object'];
             }else{
 
                 $d = $qcos->getObjectUrl($arr['bucket'], $arr['object'], '+120 minutes');
-                if($this->host) $d = str_replace($bucketurl,$this->host,$d);
-            }
+                if($this->host) {
+                    $secret_id = $this->qcos_config['credentials']['secretId'];
+                    $secret_key = $this->qcos_config['credentials']['secretKey'];
+                    $StartTimestamp = time();
+                    $EndTimestamp = $StartTimestamp + 7200;
 
+                    //请求头
+                    $headers = [];
+                    $fileUri = '/'. $arr['object'];
+                    $authorization = $this->get_authorization($secret_key,$secret_id,$StartTimestamp, $EndTimestamp, $fileUri, $headers);
+                    $d = 'https://'.$this->host .'/'. $arr['object'].'?'. $authorization;
+
+                }
+            }
+            $d = str_replace('#','%23',$d);
 
             return $d;
         }
