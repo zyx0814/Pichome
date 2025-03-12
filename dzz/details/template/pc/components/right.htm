@@ -246,7 +246,7 @@
 			async rightShare() {
 				var self = this;
 				if (self.imagesData.dpath){
-					var res = await axios.post('index.php?mod=pichome&op=library&do=ajax&operation=createshare',{path: self.imagesData.dpath});
+					var res = await axios.post('index.php?mod=banner&op=appajax&do=createshare',{path: self.imagesData.dpath});
 					var data = res.data;
 					if (data.success) {
 						CopyTxt(self, data.success);
