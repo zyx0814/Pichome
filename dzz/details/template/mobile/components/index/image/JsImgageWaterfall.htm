@@ -1,0 +1,99 @@
+<script type="text/javascript">
+	var ImgageWaterfallMixin = {
+		methods:{
+			ImagesWaterfalllayoutCompute(){
+				var self = this;
+				var boxWidth = document.querySelector('.img-container').clientWidth - 8;
+				if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
+					self.ParamImages.imgageWaterfall.imgArr = [];
+					self.ParamImages.imgageWaterfall.perpage = 0;
+					self.ParamImages.imgageWaterfall.StoreImgdatas = [];
+					self.ParamImages.Newdatas = [];
+					var documentW = document.body.clientWidth;
+					if(documentW<768){
+						self.ParamImages.imgageWaterfall.isMax = false;
+						self.ParamImages.imgageWaterfall.columns = 2;
+						self.ParamImages.imgageWaterfall.imgWidth = boxWidth/2;
+					}else{
+						self.ParamImages.imgageWaterfall.isMax = true;
+						self.ParamImages.imgageWaterfall.imgWidth = 252;
+						self.ParamImages.imgageWaterfall.columns = parseInt(boxWidth/self.ParamImages.imgageWaterfall.imgWidth);
+					}
+					var OtherHeight = 0;
+					if(!self.ParamImages.checked){
+						OtherHeight = 30;
+					}
+					if(self.ParamSort.showinformation.value.indexOf('name')>-1 || self.ParamSort.showinformation.value.indexOf('extension')>-1){
+						OtherHeight = 45;
+					}
+					if(self.ParamSort.showinformation.value.indexOf('other')>-1){
+						OtherHeight += 20;
+					}
+					self.ParamImages.imgageWaterfall.OtherHeight = OtherHeight;
+				}
+				if(!self.ParamImages.data.length){
+					document.querySelector('#imgContainer').style.height = 0;
+					return false;
+				}
+				
+				var pwidth = self.ParamImages.imgageWaterfall.imgWidth;
+				var arr = [];
+				var i = 0;
+				for (var index = self.ParamImages.imgageWaterfall.perpage; index < self.ParamImages.data.length; index++){
+					arr[i] = JSON.parse(JSON.stringify(self.ParamImages.data[index]));
+					var ppwidth = pwidth-8;
+					if(self.ParamImages.imgageWaterfall.isMax){
+						arr[i]['pwidth'] = 252;
+					}else{
+						arr[i]['pwidth'] = pwidth;
+					}
+					var h = ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height)>120?ppwidth/parseFloat(arr[i].width)*parseInt(arr[i].height):120;
+					arr[i]['pheight'] = h;
+					if (index < self.ParamImages.imgageWaterfall.columns) {
+						arr[i]['ptop'] = 0;
+						arr[i]['pleft'] = pwidth*index;
+						arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ParamImages.imgageWaterfall.Margin+self.ParamImages.imgageWaterfall.OtherHeight;
+						var imgArr = JSON.parse(JSON.stringify(arr[i]));
+						self.ParamImages.imgageWaterfall.imgArr.push(imgArr);
+						
+					}else{
+						var minHeight = self.ParamImages.imgageWaterfall.imgArr[0]['pbottom'];
+						var findex = 0;
+						for (var j = 0; j < self.ParamImages.imgageWaterfall.imgArr.length; j++) {
+							if (minHeight > self.ParamImages.imgageWaterfall.imgArr[j]['pbottom']) {
+								minHeight = self.ParamImages.imgageWaterfall.imgArr[j]['pbottom'];
+								findex = j;
+							}
+						}
+						arr[i]['ptop'] = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.imgArr[findex]['pbottom']));
+						arr[i]['pleft'] = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.imgArr[findex]['pleft']));
+						arr[i]['pbottom'] = arr[i]['ptop']+arr[i]['pheight']+self.ParamImages.imgageWaterfall.Margin+self.ParamImages.imgageWaterfall.OtherHeight;
+				
+						var imgArr = JSON.parse(JSON.stringify(arr[i]));
+						self.ParamImages.imgageWaterfall.imgArr[findex] = imgArr;
+						
+					}
+					i++;
+				}
+				self.ParamImages.imgageWaterfall.perpage = self.ParamImages.data.length;
+				if(self.ParamImages.type == 'append'){
+					self.ParamImages.imgageWaterfall.StoreImgdatas.push.apply(self.ParamImages.imgageWaterfall.StoreImgdatas,arr);
+				}else{
+					self.ParamImages.imgageWaterfall.StoreImgdatas = arr;
+				}
+				
+				var fminHeight = self.ParamImages.imgageWaterfall.imgArr[0]['pbottom'];
+				for (var j = 0; j < self.ParamImages.imgageWaterfall.imgArr.length; j++) {
+					if (fminHeight < self.ParamImages.imgageWaterfall.imgArr[j]['pbottom']) {
+						fminHeight = self.ParamImages.imgageWaterfall.imgArr[j]['pbottom'];
+					}
+				}
+				self.ParamImages.imgageWaterfall.boxHeight = fminHeight;
+				document.querySelector('#imgContainer').style.height = self.ParamImages.imgageWaterfall.boxHeight+60+'px';
+				document.querySelector('#imgContainer').style.width = self.ParamImages.imgageWaterfall.columns*pwidth+'px';
+				self.ImagesLayoutScrollShow();
+				
+			}
+		}
+	}
+</script>

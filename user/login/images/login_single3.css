@@ -1,0 +1,155 @@
+body{
+	height: 100%;
+   
+}
+body:before{
+	position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    content: '';
+}
+body:after{
+	position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    content: '';
+    background-color: rgba(38,50,56,.6);
+}   
+a{
+	color:inherit;
+}
+.form-group {
+    margin-bottom: 30px;
+}
+
+
+.page {
+    height: 100%;
+    padding: 0;
+    margin: 0!important;
+    background-color: transparent;
+    z-index: 10;
+	overflow:auto
+}
+
+.animsition, .animsition-overlay {
+	position: relative;
+    -webkit-animation-fill-mode: both;
+    -o-animation-fill-mode: both;
+    animation-fill-mode: both;
+}
+.page-login-main {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: auto;
+    min-height: 100%;
+    padding: 50px 30px 30px;
+    color: #76838f;
+    background: #fff;
+	text-align:center;
+	overflow:auto;
+	min-width:320px;
+	max-width:410px
+}
+
+
+.brand {
+   margin:15px 0;
+}
+.brand img {
+	max-width:300px;
+	max-height:300px;
+}
+ .main-title {
+   font-size:26px;
+    margin: 11px 0;
+    color: #CA846C;
+    vertical-align: middle;
+}
+ .sub-title {
+   font-size:18px;
+    margin: 11px 0;
+    color: #CA846C;
+    vertical-align: middle;
+}
+
+.loginForm{
+	width: 350px;
+    margin: 80px 0;
+	
+}
+span.spacer{
+	margin:0 5px;
+	color:#eee;
+}
+.seccode-wrapper{
+	text-align:left;
+}
+p.error-msg{
+	text-align:left;
+	margin:20px 0;
+}
+.btn-lg{
+	margin-top:20px;
+}
+
+@media (max-width: 410px){
+    .page-login-main {
+        width: 100%;
+    }
+    .loginForm {
+        width: auto;
+    }
+}
+
+.checkbox-custom {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.checkbox-custom label, .radio-custom label{
+	font-size:14px;
+	padding-left: 5px;
+}
+.checkbox-custom input[type=radio]:focus+label::before, .checkbox-custom input[type=checkbox]:focus+label::before{
+	outline:none;
+}
+.checkbox-primary input[type=radio]:checked+label::before, .checkbox-primary input[type=checkbox]:checked+label::before{
+	border-color: #CA846C;
+	outline:none
+}
+footer.page-copyright {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 30px 10px 20px 10px;
+    font-size: 12px;
+	color:#999;
+}
+
+.third-wrapper{
+	margin-bottom:20px;
+	text-align: left;
+}
+.third-wrapper>a{
+	display: inline-block;
+	width:52px;
+	height:52px;
+	padding:10px;
+}
+.third-wrapper>a:hover{
+	background-color: RGBA(0,0,0,.05);
+}
+.third-wrapper>a>img{
+	max-width:32px;
+	max-height:32px;
+	vertical-align: middle
+}
+

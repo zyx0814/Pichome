@@ -1,0 +1,186 @@
+
+body{
+	height: 100%;
+	color:#FFF;
+}
+a{
+	color:inherit;
+}
+.el-input__inner{
+	padding:0
+}
+input:-internal-autofill-selected {
+	-webkit-appearance: menulist-button;
+    background-color:  transparent !important;
+    background-image: none !important;
+  
+}
+.el-message-box{
+	width:auto;
+	max-width: 100%;
+}
+.el-message-box__btns{
+	text-align: center
+}
+.el-message-box__header{
+	text-align: center
+}
+ .mainContainer{
+	animation-duration: 800ms;
+    position: relative;
+    animation-fill-mode: both;
+	height: 100%;
+	text-align: center;
+	 /*display: flex;
+	 justify-content: center;
+	 align-content: center;*/
+
+}
+.mainContainer:before{
+	display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    content: "";
+}
+   
+.modal-content{
+	position:relative;
+	z-index:100;
+	padding: 30px;
+	vertical-align: middle;
+	display: inline-block;
+    max-width: 100%;
+	width:500px;
+    border-radius: 20px;
+    border: none;
+
+	box-shadow: 0 5px 15px RGBA(0,0,0,0.3);
+}
+ .mask{
+	position: absolute;
+	 border-radius: 20px;
+	right:0;
+	top:0;
+	width:500px;
+	height:100%;
+
+     max-width: 100%;
+	background: var(--el-bg-color);
+	opacity: 0.85;
+	 z-index:-1;
+} 
+.modal-content .themebtn{
+	position: absolute;
+	top:0px;
+	right:0px;
+}
+
+
+
+.brand {
+   margin-bottom:15px;
+}
+.brand img {
+	max-width:128px;
+	max-height:128px;
+}
+ .main-title {
+   font-size:26px;
+    margin: 15px 0;
+    color:var(--el-text-color-primary);
+    vertical-align: middle;
+}
+ .sub-title {
+   font-size:18px;
+    margin: 10px 0;
+    color:var(--el-text-color-primary);
+    vertical-align: middle;
+}
+
+.loginForm{
+	width: 100%;
+    margin: 30px 0 0 0;
+}
+
+
+
+@media (max-width: 414px){
+	.modal-content{
+		padding:20px;
+		margin-top:10px;
+	}
+	.mainContainer:before{
+		display:none;
+    }
+}
+@media (max-width: 375px){
+  
+	.modal-content{
+		padding:15px;
+		min-width:300px
+	}
+	
+   .loginForm {
+        width: 320px;
+    }
+}
+
+@media (max-width: 320px){
+   
+	.modal-content{
+		margin:10px;
+		padding:20px;
+		min-width:300px
+	}
+	
+   .loginForm {
+        width: auto;
+    }
+}
+
+.copyright-container{
+   position: absolute;
+    bottom: 0;
+	width:100%;
+	left:0;
+}
+footer.page-copyright {
+    position: absolute;
+	width:100%;
+	left:0;
+	top:0;
+    margin: 10px;
+    line-height: 1.5;
+	font-size:var(--el-font-size-small);
+	color:#FFF;
+	text-shadow:1px 1px 1px RGBA(0,0,0,.5);
+}
+footer.page-copyright a{
+	color:#FFF;
+	text-decoration: none;
+}
+
+footer.page-copyright a:hover{
+	color:var(--el-color-primary);;
+}
+.third-wrapper{
+	margin-top:20px;
+	text-align: left;
+}
+.third-wrapper:empty{
+	margin:0;
+}
+.third-wrapper>a{
+	display: inline-block;
+	width:52px;
+	height:52px;
+	padding:10px;
+}
+.third-wrapper>a:hover{
+	background-color: RGBA(0,0,0,.05);
+}
+.third-wrapper>a>img{
+	max-width:32px;
+	max-height:32px;
+	vertical-align: middle
+}

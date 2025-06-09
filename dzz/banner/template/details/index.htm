@@ -1,0 +1,415 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/header.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/details.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/xuanzhuan/index.css?{VERHASH}"/>
+<script>
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy');
+		item.$message({
+		  message: '成功复制到剪切板',
+		  type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice" style="background: var(--el-bg-color-page);">
+	<el-container>
+		<el-header class="page-header" height="70px" style="padding: 0;z-index: 10;">
+			<!--{template details/header}-->
+		</el-header>
+		<el-main>
+			<div class="page-content" v-loading="HtmlLoading" style="display: flex;flex-direction: column;height: 100%;overflow: hidden;">
+				<div class="details-top" v-if="!HtmlLoading" style="padding-right: 0;">
+					<div class="details-maincontainer">
+						<div class="floating-layer clearfix" :class="HideInformation?'HideInformation':''"  v-cloak>
+							<!--{template details/image}-->
+							<!--{template details/right}-->
+						</div>
+					</div>
+				</div>
+			</div>
+		</el-main>
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		el: '#dzzoffice',
+		data() {
+			return {
+				path:'',
+				HtmlLoading:true,
+				ColorPopver: {
+					base: '',
+					rgb: '',
+					rgba: '',
+					hsl: '',
+					hsv: '',
+					cmyk: ''
+				},
+				DocumentBack:true,
+				DocumentRefresh:1,
+				DocumentAdminId:'$_G[adminid]',
+				HideInformation:false,
+				IsFullScreen:false,
+				imagesData: {},
+				currentData:[],
+				paths:[],
+				selectindex:0,
+				ImgParam:{
+					slider:0,
+					proportion:0,
+					fproportion:0,
+					index:0,
+					LoadFirst:false,
+					scaleX:0,
+					scaleY:0,
+					rotate:0,
+					total:0,
+					iswait:false
+				},
+				ImageCollect:{
+					show:false,
+					name:'',
+					dialogVisible:false,
+					AdddialogVisible:false,
+					rids:[],
+					quick:false
+				},
+				GetParam:null,
+				DocumentThemeColor:'',//dark
+			}
+		},
+		watch: {
+			path:{
+				handler(val){
+					if(val){
+						sessionStorage.setItem('detailpath',self.path);
+					}
+					window.location.hash = 'path='+val;
+					
+				},
+				deep:true,
+			},
+			
+			'ImgParam.proportion':function(val){
+				
+			},
+			'ImgParam.rotate':function(val){
+				this.imageTransform();
+			},
+			'ImgParam.scaleX':function(val){
+				this.imageTransform();
+			},
+			'ImgParam.scaleY':function(val){
+				this.imageTransform();
+			},
+			paths:{
+				handler(data){
+					if(data && data.length){
+						this.ImgParam.total = data.length;
+						// this.ImgParam.index = data.indexOf(this.path)+1;
+					}else{
+						this.ImgParam.total = 1;
+						// this.ImgParam.index = 1;
+					}
+				},
+				deep:true,
+				immediate:true
+			},
+			imagesData:{
+				handler(dasta){
+					var self = this;
+					self.$nextTick(function(){
+						if(!dasta.iniframe){
+							self.imageSet();
+						}
+					});
+				},
+				deep:true,
+			},
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		mixins:[headerMixin,rightMixin,ImageMixin],
+		created() {
+			var self = this;
+			axios.interceptors.response.use(function(response){
+				if(response.data && response.data.isuser && parseInt(response.data.loginstatus)==0){
+					self.LoginFormhash = response.data.hash;
+					self.LoginVisible = true;
+					return 'intercept';
+				}
+				return response;
+			});
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			var arr = (location.hash || "").replace(/^\?/,'').split("&");
+			if(arr.length){
+				path=arr[0].replace("#","").split('=')[1];
+				this.path = path;
+			}
+			if(!this.path){
+				var storpath = sessionStorage.getItem('detailpath');
+				if(storpath){
+					this.path = storpath;
+				}
+			}
+			var paths = sessionStorage.getItem('imgs');
+			if(paths){
+				this.paths = paths.split(',');
+			}
+			this.ImgParam.index = parseInt(sessionStorage.getItem('selectindex'))+1;
+			var imgparam = JSON.parse(sessionStorage.getItem('imgparam'));
+			this.GetParam = imgparam;
+			if(this.path){
+				this.GetData();
+			}else{
+				self.$message.error('页面错误');
+			}
+		},
+		
+		
+		methods: {
+			
+			ImageQuickChangeCollect(rid){
+				// this.ImageCollect.rids = [rid];
+				this.ImageCollect.dialogVisible = true;
+			},
+			ImageCloseAddcollectdialog(){
+				this.ImageCollect.AdddialogVisible = false;
+			},
+			ImageClosecollectdialog(){
+				this.ImageCollect.dialogVisible = false;
+			},
+			ImageOpenAddCollect(val){
+				// this.ImageCollect.rids = [val];
+				this.ImageCollect.dialogVisible = false;
+				this.ImageCollect.AdddialogVisible = true;
+			},
+
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			async GetData(){
+				var self = this;
+				// self.imagesData.icondata = '';
+				// self.imagesData.originalimg = '';
+				self.HtmlLoading = true;
+				if(self.DocumentRefresh == 1){
+					self.LoginFunc = 'refresh';
+				}else{
+					self.LoginFunc = self.GetData;
+				}
+				self.DocumentRefresh ++;
+				self.LoginParam = null;
+				var res = await axios.post(MOD_URL+'&op=details&operation=fetch',{path:self.path});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.error){
+					self.$confirm(json.error, '提示', {
+						closeOnPressEscape:false,
+						showClose:false,
+						confirmButtonText: '确定',
+						showCancelButton:false,
+						closeOnClickModal:false,
+						showConfirmButton:parseInt(json.status)==2?false:true,
+						type: 'warning'
+					}).then(function(){
+						if(parseInt(json.status) == 2){
+							// window.location.href = MOD_URL;
+						}else if(parseInt(json.status) == 0){
+							sessionStorage.setItem('detailpath',self.path);
+							window.location.href = 'user.php?mod=login';
+						}
+					});          
+					
+					return false;
+				}
+				var item = json.resourcesdata;
+				// if(item.opentype=='image' || item.opentype=='other'){
+				// 	item['icondata'] = (item['icondata']);
+				// 	item['realpath'] = (item['realpath']);
+				// 	item['originalimg'] = (item['originalimg']);
+				// }
+				document.title = item.name+'-'+json.sitename;
+				self.ImageCollect.rids = [item.rid];
+				var colors = [];
+				if(item.colors){
+					for(var c in item.colors){
+						var cstr = {
+							key:c,
+							val:item.colors[c]
+						};
+						colors.push(cstr);
+					}
+				}
+				item.colors = colors;
+				
+				var tags = [];
+				if(item.tag){
+					for(var t in item.tag){
+						var tstr = {
+							key:t,
+							val:item.tag[t]
+						};
+						tags.push(tstr);
+					}
+				}
+				item.tag = tags;
+				
+				item['level'] = parseInt(item.level);
+				var foldernames = [];
+				if(item.foldernames){
+					for(var f in item.foldernames){
+						var fstr = {
+							key:f,
+							val:item.foldernames[f]
+						};
+						foldernames.push(fstr);
+					}
+				}
+				item.foldernames = foldernames;
+				self.imagesData = item
+				self.HtmlLoading = false;
+				var paths = sessionStorage.getItem('imgs');
+
+		      	if(paths){
+					paths = paths.split(',');
+					if(this.paths.length != paths.length){
+						this.paths = paths;
+						var imgparam = sessionStorage.getItem('imgparam');
+						this.GetParam = imgparam;
+					}
+					
+				}
+
+				if(self.GetParam.ispage && (parseInt(self.ImgParam.total)-parseInt(self.ImgParam.index))<=5){
+					self.GetDatafilelist();
+				}
+					
+			},
+			async GetDatafilelist(param1,param2){
+				var self = this;
+				var url = 'index.php?mod=alonepage&op=view&do=gettagdata';
+	
+				
+				var params = JSON.parse(JSON.stringify(self.GetParam));
+				delete params.ispage;
+				
+				self.LoginFunc = self.GetDatafilelist;
+				self.LoginParam = null;
+				var res = await axios.post(url,params);
+				if(res == 'intercept'){
+					return false;
+				}
+				if(param2 != 'login' && parseInt(self.GetParam.page)){
+					self.GetParam.page += 1;
+				}
+				var json = res.data.data;
+				for(var i in json.data){
+					self.paths.push(json.data[i].dpath);
+				}
+				self.GetParam.ispage = json.next;
+				sessionStorage.setItem('imgparam',JSON.stringify(self.GetParam));
+				sessionStorage.setItem('imgs',self.paths.join(','));
+				
+			},
+		},
+		mounted() {
+			var self = this;
+			if(document.body.clientWidth>992){
+				this.HideInformation = false;
+			}else{
+				this.HideInformation = true;
+			}
+			window.onkeydown = function(event){ //event可以简写成 e
+				var code = event.keyCode
+				if(code == 37){//左边
+					self.headerCarouselArrow('left')
+				}else if(code == 39){//右边
+					self.headerCarouselArrow('right')
+				}
+			}
+
+			// $(document).on('click', '.copy-share-btn', function() {
+			// 	var txt = $(this).parent().siblings('.address').text()
+			// 	CopyTxt(self, txt);
+			// });
+
+			
+			window.onresize = function(){
+				var h = document.getElementById('ImgScroll').clientHeight;
+				document.querySelector('#ImgScroll .el-scrollbar__view').style.lineHeight = h+'px';
+			}
+
+		
+			//禁止鼠标右击
+			document.oncontextmenu = function() {
+				event.returnValue = false;
+				// alert('请不要右击');
+				return false;
+			};
+			//禁用开发者工具F12
+			// document.onkeydown = document.onkeyup = document.onkeypress = function(event) {
+			// 	let e = event || window.event || arguments.callee.caller.arguments[0];
+			// 	if (e && e.keyCode == 123) {
+			// 		e.returnValue = false;
+			// 		// alert('F12是不礼貌的');
+			// 		return false;
+			// 	}
+			// };
+			window.onhashchange = function(){
+				if(self.DocumentBack){
+					var arr = (location.hash || "").replace(/^\?/,'').split("&");
+					if(arr.length){
+						path=arr[0].replace("#","").split('=')[1];
+						var index = self.paths.indexOf(path);
+						sessionStorage.setItem('selectindex',index);
+					}
+					document.location.reload();
+					return false;
+				}
+				self.DocumentBack = true;
+			}
+		},
+
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

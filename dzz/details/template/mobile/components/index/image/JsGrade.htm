@@ -1,0 +1,104 @@
+<van-action-sheet
+	v-model="MoreGradedata.Visible"
+	cancel-text="取消"
+	close-on-click-action>
+	<div class="vam-popup-title">密级</div>
+	<button type="button" class="van-action-sheet__item" v-for="item in MoreGradedata.actions" @click="gradeselect(item.value)">
+		<van-image
+			style="vertical-align: sub;"
+			width="20px"
+			height="20px"
+			fit="contain"
+			:src="item.image"
+		/>
+	</button>
+</van-action-sheet>
+<script type="text/javascript">
+	var MoreGradeMixin = {
+		data(){
+			return {
+				MoreGradedata:{
+					actions:[
+						{value:0,image:'dzz/pichome/image/grade/0.png'},
+						{value:1,image:'dzz/pichome/image/grade/1.png'},
+						{value:2,image:'dzz/pichome/image/grade/2.png'},
+						{value:3,image:'dzz/pichome/image/grade/3.png'},
+						{value:4,image:'dzz/pichome/image/grade/4.png'},
+						{value:5,image:'dzz/pichome/image/grade/5.png'}
+					],
+					Visible:false
+				}
+			}
+		},
+		methods:{
+			async gradeselect(val){
+				var self = this;
+				self.MoreGradedata.Visible = false;
+				showLoadingToast({
+				  message: '提交中...',
+				  forbidClick: true,
+				  duration:0
+				});
+				if(!self.ImagesMore.item.dpath){
+					showFailToast('参数错误');
+					return false;
+				}
+				var rid = self.ParamImages.operation.rids[0];
+				var res = await axios.post(MOD_URL+'&op=ajax&operation=setfilelevel',{
+					paths:self.ImagesMore.item.dpath,
+					level:val
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					var currdata =  self.ParamImages.data.find(function(curr){
+						return curr.rid == rid;
+					});
+					if(currdata){
+						currdata.level = val;
+					}
+					var currdata1 = self.ParamImages.Newdatas.find(function(curr){
+						return curr.rid == rid;
+					});
+					if(currdata1){
+						currdata1.level = val;
+					}
+					if(self.ParamSort.layout.value == 'waterFall'){
+						var returnitem = self.ParamImages.imgageWaterfall.StoreImgdatas.find(function(curr){
+							return curr.rid == rid;
+						});
+						if(returnitem){
+							returnitem.level = val;
+						}
+					}else if(self.ParamSort.layout.value == 'rowGrid'){
+						var returnitem = self.ParamImages.imagerowGrid.StoreImgdatas.find(function(curr){
+							return curr.rid == rid;
+						});
+						if(returnitem){
+							returnitem.level = val;
+						}
+					}else if(self.ParamSort.layout.value == 'table'){
+						var returnitem = self.ParamImages.imgageTable.StoreImgdatas.find(function(curr){
+							return curr.rid == rid;
+						});
+						if(returnitem){
+							returnitem.level = val;
+						}
+					}else{
+						var returnitem = self.ParamImages.imageList.StoreImgdatas.find(function(curr){
+							return curr.rid == rid;
+						});
+						if(returnitem){
+							returnitem.level = val;
+						}
+					}
+					showSuccessToast('提交成功');
+				}else{
+					showFailToast('提交失败');
+				}
+			}
+		}
+	};
+</script>

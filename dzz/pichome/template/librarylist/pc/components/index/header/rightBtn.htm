@@ -1,0 +1,226 @@
+
+<el-tooltip content="{lang theme_color}" placement="bottom">
+    <el-button 
+		text 
+		:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+		style="font-size: var(--el-font-size-extra-large);" 
+		circle  
+		size="large"
+		@click="DocumentThemeChange">
+	</el-button>
+</el-tooltip>
+
+<!--{if $_GET['do'] != 'tags'}-->
+<el-tooltip :content="HeaderRightBtnScreen.active?'{lang hide_filter}':'{lang show_filter}'" placement="bottom">
+	<el-button 
+		text 
+		icon="Filter" 
+		style="font-size: var(--el-font-size-extra-large);" 
+		circle  
+		size="large"
+		@click="HeaderRightBtnScreenClick(HeaderRightBtnScreen.active>0?0:1)"
+		:bg="!HeaderRightBtnScreen.active">
+	</el-button>
+</el-tooltip>
+<template v-if="DocumentVapp.type != 2">
+	<el-popover
+		placement="bottom"
+		trigger="click"
+		width="220"
+		@show="HeaderRightBtntaskShow(true)"
+		@hide="HeaderRightBtntaskHide">
+		<el-text tag="p" size="large" style="margin-bottom: 10px;" v-cloak>{lang Tasks_be_completed}</el-text>
+		<el-space 
+			direction="vertical" 
+			alignment="flex-start"
+			style="width: 100%;" 
+			size="large"
+			:fill="true">
+			<template v-if="HeaderRightBtnTask.loading">
+				<div style="width: 100px;height: 100px;" v-loading="HeaderRightBtnTask.loading"></div>
+			</template>
+			<template v-else>
+				<template v-for="item in HeaderRightBtnTask.data" :key="item.id">
+					<div style="display: flex;align-items: center;justify-content: space-between;">
+						<el-text tag="b">{{item.lablename}}</el-text>
+						<el-text>{{item.data}}</el-text>
+					</div>
+				</template>
+			</template>
+		</el-space>
+		<template #reference>
+			<div style="margin-left: 12px;">
+				<el-tooltip content="{lang task_list}" placement="bottom">
+
+					<button class="el-button el-button--large is-circle is-text" style="font-size: var(--el-font-size-extra-large);" >
+						<el-icon>
+							<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6 42H42V6H32H30C28.6758 9.15854 26.6758 10.7378 24 10.7378C21.3242 10.7378 19.3242 9.15854 18 6H16H6V42Z" fill="none" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linejoin="round"/><path d="M15 24L21 30L33 18" stroke="var(--el-button-text-color)" stroke-width="3.5" stroke-linecap="butt" stroke-linejoin="round"/></svg>
+						</el-icon>
+					</button>
+					
+				</el-tooltip>
+			</div>
+		</template>
+	</el-popover>
+</template>
+
+
+<el-popover
+	placement="bottom"
+	trigger="click"
+	popper-class="isdropdown header-dropdown-menu"
+	@show="handleDocumentOverlay(true)"
+    @hide="handleDocumentOverlay(false)">
+	<comsort
+		isrightcolumn
+		isleftcolumn
+		:defaultval="HeaderRightBtnShow"
+		issort
+		@change.self="HeaderShowChange">
+	</comsort>
+	<template #reference>
+		<div style="margin-left: 12px;">
+			<el-tooltip content="{lang preferences}" placement="bottom">
+				<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+			</el-tooltip>
+		</div>
+	</template>
+</el-popover>
+<!--{/if}-->
+
+
+
+
+
+<script type="text/javascript">
+	var HeaderRightBtnMixin = {
+		data(){
+			return {
+				HeaderRightBtnScreen:{
+					active:1,
+					show:true
+				},
+				HeaderRightBtnTask:{
+					loading:true,
+					data:[],
+					time:'',
+					second:6000,
+					open:0,
+				},
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					column:['left','right'],//侧边栏
+					layout:'waterFall'//图片布局方式
+				},
+			}
+		},
+		methods:{
+			async HeaderShowChange(data){
+				const self = this;
+				this.HeaderRightBtnShow[data.type] = data.value;
+				switch(data.type){
+					case 'display':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							self.ImageProps.ShowMessage.other = '';
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							self.ImageProps.ShowMessage.other = this.HeaderRightBtnShow.other; 
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+						self.ImageProps.ShowMessage.display = display;
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+						self.ImageProps.ShowMessage.other = data.value;
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.HeaderRightBtnSubmit();
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						this.ImageProps.layout = data.value;
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+			},
+
+			HeaderRightBtnScreenClick(val){//设置筛选显示或隐藏
+				var self = this;
+				if(this.HeaderRightBtnScreen.active == val){
+					return false;
+				}
+				sessionStorage.setItem('showscreen',val);
+				this.HeaderRightBtnScreen.active = val;
+				if(val){
+					this.Screenshow = true;
+				}else{
+					this.Screenshow = false;
+				}
+			},
+			async HeaderRightBtntaskShow(status){
+				let self = this;
+
+				if(status){
+					self.HeaderRightBtnTask.open=true;
+					self.HeaderRightBtnTask.loading = true;
+				}
+				if(self.HeaderRightBtnTask.time) clearInterval(self.HeaderRightBtnTask.time);
+				let {data :res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getTaskByAppid',{
+					appid:self.DocumentAppid
+				});
+				if(res.success){
+					self.HeaderRightBtnTask.data = res.data;
+					this.HeaderRightBtnTask.second = parseFloat(res.queryInterval) * 1000;
+					if(self.HeaderRightBtnTask.second && self.HeaderRightBtnTask.open){
+						self.HeaderRightBtnTask.time = setInterval(self.HeaderRightBtntaskShow,self.HeaderRightBtnTask.second);
+					}
+				}
+
+				this.HeaderRightBtnTask.loading = false;
+			},
+			HeaderRightBtntaskHide(){
+				if(this.HeaderRightBtnTask.time){
+					clearInterval(this.HeaderRightBtnTask.time);
+					this.HeaderRightBtnTask.time = null;
+				}
+				this.HeaderRightBtnTask.open=false;
+				this.HeaderRightBtnTask.loading = true;
+				this.HeaderRightBtnTask.data = [];
+				
+			},
+			HeaderRightBtnGetParam(){
+				var param = {
+					order:this.HeaderRightBtnShow.order,
+					asc:this.HeaderRightBtnShow.sort,
+				};
+				return param;
+			},
+			HeaderRightBtnSubmit(){
+				this.CommonGetImageData();
+			},
+			HeaderRightBtnCreate(){
+				
+			},
+			HeaderRightBtnRefreshHash(){
+				
+			}
+		}
+	}
+</script>

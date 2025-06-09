@@ -1,0 +1,41 @@
+<el-scrollbar>
+	<div style="padding: 8px 18px;">
+		<div class="marginTop">
+			<template v-if="RightType=='notclassify'">
+				<el-input
+					readonly
+					model-value="未分类"></el-input>
+			</template>
+			<template v-else-if="RightType=='nottag'">
+				<el-input
+					readonly
+					model-value="未标签"></el-input>
+			</template>
+			<template v-else-if="RightType=='recycle'">
+				<el-input
+					readonly
+					model-value="回收站"></el-input>
+			</template>
+			<template v-else>
+				<el-input
+					readonly
+					model-value="全部"></el-input>
+			</template>
+		</div>
+		
+		
+		<div class="basic-file marginTop">
+			<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+			<div class="marginTop">
+				<el-row class="single" :gutter="12">
+					<el-col :span="8">文件数</el-col>
+					<el-col :span="16" class="message">{{RightData.foldenum}}</el-col>
+				</el-row>
+				<el-row class="single" :gutter="12">
+					<el-col :span="8">文件大小</el-col>
+					<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+				</el-row>
+			</div>
+		</div>
+	</div>
+</el-scrollbar>

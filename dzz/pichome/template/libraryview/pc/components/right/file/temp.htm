@@ -1,0 +1,134 @@
+<el-scrollbar>
+	<div style="padding: 8px 18px;">
+		<template v-if="RightActiveRid.length>1">
+			<div class="top-image top-images">
+				<template v-for="item in RightData.img">
+					<el-image :src="item"></el-image>
+				</template>
+			</div>
+			<div class="marginTop" style="text-align: center;font-size: 12px;color: var(--el-text-color-regular);">{{RightActiveRid.length}}个文件已选</div>
+			<div class="marginTop">
+				<el-input
+					v-model="RightData.message"
+					type="textarea"
+					readonly
+					:autosize="{  maxRows: 8 }"
+					placeholder="描述"></el-input>
+			</div>
+			<div class="marginTop">
+				<!--{template libraryview/pc/components/right/file/tag/temp}-->
+			</div>
+			<div class="marginTop">
+				<el-input
+					v-model="RightData.link"
+					readonly
+					placeholder="链接">
+						<template #suffix>
+							<el-icon style="cursor: pointer;" v-if="textarea1" class="el-input__icon"><Connection /></el-icon>
+						</template>
+					</el-input>
+			</div>
+			<div class="ascription-file marginTop">
+				<!--{template libraryview/pc/components/right/file/folder/temp}-->
+			</div>
+			<div class="basic-file marginTop">
+				<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+				<div class="marginTop">
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">评分</el-col>
+						<el-col :span="16" class="message">
+							<el-rate 
+								v-model="RightData.grade" 
+								disabled
+								size="small"></el-rate>
+						</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">文件大小</el-col>
+						<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+					</el-row>
+				</div>
+			</div>
+			
+		</template>
+		<template v-else>
+			<div class="top-image">
+				<el-image :src="RightData.img[0]"></el-image>
+			</div>
+			<!--{template libraryview/pc/components/right/file/color/temp}-->
+			<div class="marginTop">
+				<el-input
+					v-model="RightData.title"
+					type="textarea"
+					readonly
+					:autosize="{  maxRows: 8 }"
+					placeholder="文件名称"></el-input>
+			</div>
+			<div class="marginTop">
+				<el-input
+					v-model="RightData.message"
+					readonly
+					type="textarea"
+					:autosize="{  maxRows: 8 }"
+					placeholder="描述"></el-input>
+			</div>
+			<div class="marginTop">
+				<!--{template libraryview/pc/components/right/file/tag/temp}-->
+			</div>
+			<div class="marginTop">
+				<el-input
+					class=""
+					v-model="RightData.link"
+					readonly
+					placeholder="链接">
+						<template #suffix>
+							<el-icon style="cursor: pointer;" v-if="textarea1" class="el-input__icon"><Connection /></el-icon>
+						</template>
+					</el-input>
+			</div>
+			<div class="ascription-file marginTop">
+				<!--{template libraryview/pc/components/right/file/folder/temp}-->
+			</div>
+			<div class="basic-file marginTop">
+				<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">基本信息</p>
+				<div class="marginTop">
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">评分</el-col>
+						<el-col :span="16" class="message">
+							<el-rate 
+							v-model="RightData.grade" 
+							disabled
+							size="small" 
+							clearable></el-rate>
+						</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">格式</el-col>
+						<el-col :span="16" class="message">{{RightData.format}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">尺寸</el-col>
+						<el-col :span="16" class="message">{{RightData.size}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">文件大小</el-col>
+						<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">添加日期</el-col>
+						<el-col :span="16" class="message">{{RightData.btime}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">创建时间</el-col>
+						<el-col :span="16" class="message">{{RightData.mtime}}</el-col>
+					</el-row>
+					<el-row class="single" :gutter="12">
+						<el-col :span="8">修改时间</el-col>
+						<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
+					</el-row>
+				</div>
+			</div>
+		</template>
+		
+	</div>
+</el-scrollbar>	

@@ -1,0 +1,477 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;margin-right: 20px;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" title="$_G[setting][sitename]" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text class="sitename" tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="overflow: hidden;padding: 0;">
+		<el-menu
+			class="dzz-menu"
+			:default-active="bannerData.active"
+			mode="horizontal"
+			style="border:0;height: 100%;max-width: 100%;">
+			<template v-for="item in bannerData.data.top">
+				<template v-if="item.children && item.children.length">
+					<el-sub-menu 
+					:index="item.id" 
+					:class="{'is-active':bannerData.active==item.id}">
+						<template #title>
+							<el-image v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+						</template>
+						<menuitem 
+							:datalist="item.children" 
+							@handleselect="handleSelect"
+							:active="bannerData.active"></menuitem>
+					</el-sub-menu>
+				</template>
+				<template v-else>
+					<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3 || parseInt(item.btype) == 5">
+						<template #title>
+							<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+						</template>
+					</el-menu-item>
+					
+				</template>
+			</template>
+		</el-menu>
+	
+</div>
+<div class="h-right"> 
+	<template v-if="PageType == 'ku'">
+		<el-autocomplete
+			ref="headerkeyword"
+			class="headerkeyword"
+			style="width: 450px;padding-right: 20px;z-index: 1000;"
+			v-model="fheaderkeyword"
+			:fetch-suggestions="querySearch"
+			@keydown.enter="headerkeywordInput"
+			placeholder="{lang search}"
+			size="large">
+			<template #prefix>
+				<el-image v-if="searchdata.img" style="width: 26px; height: 26px;border-radius: var(--el-border-radius-base);" :src="searchdata.img" fit="cover" ></el-image>
+			</template>
+			<template #suffix>
+				<el-button v-if="fheaderkeyword || searchdata.img" link icon="Close" style="font-size: 20px;" @click.stop="clearkeyword"></el-button>
+				<!--{if intval($_G['setting']['imageSearch_setting']['status'])}-->
+				<el-popover
+					ref="cameraPopover"
+					popper-class="camera-popover"
+					placement="bottom"
+					width="100%"
+					:show-arrow="false"
+					trigger="click"
+					popper-style="{let:0}"
+					:teleported="false"
+					:tabindex="1000"
+					@show="SearchUploadPopoverShow">
+					<div class="camera-dropdown">
+						<el-upload
+							class="camera-upload"
+							drag
+							:show-file-list="false"
+							:on-change="SearchUploadChange"
+							:on-progress="SearchUploadProgress"
+							:auto-upload="false"
+							accept="image/png, image/jpeg,image/jpg, image/webp">
+							<div 
+								style="display: flex;align-items: center;justify-content: center;flex-direction: column;">
+								<el-icon class="el-icon--upload"><upload-filled /></el-icon>
+								<div class="el-upload__text">
+									<el-text tag="p" style="
+									font-size: 14px;
+									line-height: 20px;">{lang drop_the_image}</el-text>
+									<el-text tag="p" type="info" size="small" style="line-height: 20px;margin-top: 8px;">{lang Image_format_support} jpg、jpeg、png、webp</el-text>
+								</div>
+							</div>
+						</el-upload>
+					</div>
+					<template #reference>
+						<el-button link icon="Camera" style="font-size: 20px;"></el-button>
+					</template>
+				</el-popover>
+				<!--{/if}-->
+			</template>
+			<template #append>
+				<el-button 
+					@click="headerkeywordInput" 
+					type="primary" 
+					icon="Search" 
+					style="font-size: 20px;padding-top: 0;padding-bottom: 0;display: flex;align-items: center;justify-content: center;"></el-button>
+			</template>
+
+		</el-autocomplete>
+	</template>
+	<template v-else-if="PageType == 'tab'">
+		<el-autocomplete
+			ref="headerkeyword"
+			class="headerkeyword"
+			style="width: 450px;padding-right: 20px;z-index: 1000;"
+			v-model="fheaderkeyword"
+			:fetch-suggestions="querySearch"
+			@keydown.enter="headerkeywordInput"
+			placeholder="{lang search}"
+			size="large">
+			<template #suffix>
+				<el-button v-if="fheaderkeyword" link icon="Close" style="font-size: 20px;" @click.stop="clearkeyword"></el-button>
+			</template>
+			<template #append>
+				<el-button 
+					@click="headerkeywordInput" 
+					type="primary" 
+					icon="Search" 
+					style="font-size: 20px;padding-top: 0;padding-bottom: 0;display: flex;align-items: center;justify-content: center;"></el-button>
+			</template>
+
+		</el-autocomplete>
+	</template>
+	<!--{if PICHOME_LIENCE == 2}-->
+	<el-dropdown v-if="(tabarr && tabarr.length) || (collectlisarr && collectlisarr.length)" @command="handleCollectCommand" style="margin-left: 12px;" max-height="300">
+		<el-button 
+			text 
+			style="font-size: var(--el-font-size-extra-large);outline:0;;outline-offset:0;" 
+			circle  
+			size="large">
+			<el-icon>
+				<svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="6" y="6" width="36" height="36" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+					<path d="M24 16V32" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+					<path d="M16 24L32 24" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+				</svg>
+			</el-icon>
+		</el-button>
+		<template #dropdown>
+			<el-dropdown-menu>
+				<el-dropdown-item v-for="(item,key) in tabarr" :command="CollectCommand('tab',key)">{{item.name}}</el-dropdown-item>
+				<template v-if="tabarr && tabarr.length">
+					<div class="el-divider el-divider--horizontal adjust-divider"></div>
+				</template>
+				<el-dropdown-item v-for="(item,key) in collectlisarr" :command="CollectCommand('collect',key)">{{item.name}}</el-dropdown-item>
+			</el-dropdown-menu>
+		</template>
+	</el-dropdown>
+	<!--{/if}-->
+	<el-tooltip content="{lang change_page_color}" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);margin-left: 12px;" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<template v-if="PageType != 'page' && PageType != 'tab'">
+		<el-tooltip :content="Screenshow?'{lang hide_filter}':'{lang show_filter}'" placement="bottom">
+			<el-button 
+				text 
+				icon="Filter" 
+				style="font-size: var(--el-font-size-extra-large);" 
+				circle  
+				size="large"
+				@click="Screenshow = !Screenshow"
+				:bg="!Screenshow">
+			</el-button>
+		</el-tooltip>
+	</template>
+	<template v-if="PageType != 'page' && PageType != 'tab'">
+		<el-popover
+			placement="bottom"
+			trigger="click"
+			popper-class="isdropdown header-dropdown-menu">
+			<comsort
+				:iscolumn="false"
+				:defaultval="HeaderRightBtnShow"
+				@change.self="HeaderShowChange">
+			</comsort>
+			<template #reference>
+				<div style="margin-left: 12px;">
+					<el-tooltip content="{lang preferences}" placement="bottom">
+						<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+					</el-tooltip>
+				</div>
+			</template>
+		</el-popover>
+	</template>
+	<international current="$_G['language']"></international>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="PICHOME_LIENCE"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+	<el-dialog 
+		v-model="headerTabmessage.visible" 
+		width="50%"
+		@open="OpenHeaderMessage"
+		custom-class="tabmessage-dialog"
+		:close-on-press-escape="false"
+		:close-on-click-modal="false">
+		<template #header>
+			<span role="heading" class="el-dialog__title">{lang Edit_information_cover}</span>
+			<div style="padding-right: 16px;" v-if="manageperm">
+				<el-button plain icon="Lock" type="info" size="small" @click="AllLocked(1)">{lang All_locked}</el-button>
+				<el-button plain icon="Unlock" type="danger" size="small" @click="AllLocked(0)">{lang All_unlock}</el-button>
+			</div>
+		</template>
+		<tab_message 
+			ref="tabheadermessage"
+			:allsubmit="true"
+			icotype="1"
+			formhash="{FORMHASH}"
+			:create="true"
+			:gid="headerTabmessage.gid"></tab_message>
+		<template #footer>
+			<div class="dialog-footer">
+				<el-button @click="headerTabmessage.visible = false">{lang close}</el-button>
+				<el-button type="primary" @click="tabheadermessageSave">{lang confirms}</el-button>
+			</div>
+		</template>
+	</el-dialog>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerdrawer_m:false,
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:'',
+				collectlisarr:$collectlisarr,
+				tabarr:$tabarr,
+				headerTabmessage:{
+					gid:0,
+					visible:false
+				},
+				searchdata:{
+					aid:0,
+					loading:false,
+					img:'',
+				},
+				CropBase:''
+			}
+		},
+		methods:{
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+			handleSelect(data){
+				let self = this;
+				if(parseInt(data.btype) == 3){
+					if(data.realurl){
+						window.open(data.realurl)
+					}else if(data.url){
+						window.open(data.url)
+					}else{
+						self.$message.error('{lang no_link_address}');
+					}
+					
+					return false;
+				}
+
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+
+				}
+
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data,load){
+				const self = this;
+				if(data.type == 'show'){
+					this.HeaderRightBtnShow.display = data.value;
+				}else{
+					this.HeaderRightBtnShow[data.type] = data.value;
+				}
+				switch(data.type){
+					case 'display':
+					case 'show':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							sessionStorage.removeItem('app_'+this.bannerData.item.bdata+'other');
+						}else{
+							display.splice(index,1);
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'display','empty');
+						}
+					break;
+					case 'other':
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+'other',data.value);
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+data.type,data.value);
+						this.imagereload = true;
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+'layout',data.value);
+					break;
+				}
+				if(!load){
+					self.$refs.MainDomRef.settingpreference(data.type,data.value)
+				}
+				
+			},
+			handleCollectCommand(data){
+				let self = this;
+				if(data.type == 'collect'){
+					var curr = this.collectlisarr[data.key];
+				}else{
+					var curr = this.tabarr[data.key];
+				}
+				if(data.type == 'tab'){
+					this.headerTabmessage.gid = curr.value;
+					this.headerTabmessage.visible = true;
+				}else{
+					window.open(curr.value);
+				}
+			},
+			CollectCommand(type,key){
+				return {type,key}
+			},
+			headerkeywordInput(){
+				let self = this;
+				if(this.fheaderkeyword == this.headerkeyword)return false;
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				if(this.PageType != 'ku' && this.PageType != 'tab'){
+					this.bannerData.active = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+				}
+				self.$nextTick(() => {
+					self.$refs.MainDomRef.Init();
+				})
+			},
+			tabheadermessageSave(val){
+                let self = this;
+                self.$refs.tabheadermessage.SaveAllData();
+            },
+			OpenHeaderMessage(type,key){
+				let self = this;
+                self.$refs.tabheadermessage.CreateData();
+			},
+			CreatTabGroup(data,flag){
+				let self = this;
+				let flags = flag.split('__');
+				flag = flags[0];
+				let index = flags[1];
+				self.$refs.tabheadermessage.handTabVal(data,flag,index);
+			},
+			SearchUploadChange(response,uploadFile){
+				
+				let self = this;
+				self.searchdata.loading = true;
+				self.$refs.cameraPopover.hide();
+				let img = new Image();
+				// 设置图片的源（URL）
+				img.src = URL.createObjectURL(response.raw);
+				// 当图片加载完成时，获取其宽度和高度
+				img.onload = function() {
+					// 创建 canvas 并将图片绘制到 canvas 上
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					// // 设置 canvas 的宽高为图片的宽高
+					canvas.width = img.width;
+					canvas.height = img.height;
+
+					// // 将图片绘制到 canvas 上
+					ctx.drawImage(img, 0, 0);
+					// 将 canvas 内容转换为 JPG 格式的 Base64
+					const jpgBase64 = canvas.toDataURL('image/jpeg', 0.8); // 0.8 是图片质量
+
+					if(self.CropBase){
+						self.CropBase();
+					}
+					let CancelToken = axios.CancelToken;
+					axios.post('index.php?mod=io&op=getAidByBase64', {
+						base64:jpgBase64
+					},{
+						cancelToken: new CancelToken(function executor(c) {
+							self.CropBase = c;
+						})
+					}).then(function (res) {
+						if(res.data.success){
+							self.searchdata.aid = res.data.aid;
+							self.searchdata.loading = false;
+							self.searchdata.img = res.data.img;
+							sessionStorage.setItem('cropimg',res.data.img);
+							self.$nextTick(() => {
+								self.$refs.MainDomRef.Init();
+							})
+						}else{
+							self.$message.error(res.data.msg || __lang.upload_failed);
+						}
+					}).catch(function (error) {
+						// console.log(error);
+					});
+					
+				};
+				img.onerror = () => {
+					self.searchdata.loading = false;
+					self.$message.error(__lang.upload_unsuccess);
+				};
+				return false;
+			},
+			
+		},
+	}
+</script>

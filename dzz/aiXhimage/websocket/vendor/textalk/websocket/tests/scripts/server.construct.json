@@ -1,0 +1,11 @@
+[
+    {
+        "function": "stream_socket_server",
+        "params": [
+            "tcp://0.0.0.0:8000",
+            null,
+            null
+        ],
+        "return": "@mock-socket"
+    }
+]

@@ -1,0 +1,307 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<style type="text/css">
+	.title .el-form-item__label{
+		color: var(--starsActive);
+		font-size: 18px;
+	}
+	.maxWidth {
+		width: 100%;
+	}
+	.el-tag{
+		background: transparent !important;
+		border: 0;
+	}
+	.el-tooltip__popper .popper__arrow {
+	    display: none;
+	}
+	.notification{
+		position: relative;
+		background: var(--el-bg-color);
+		 border: var(--el-border);
+		border-radius: 5px;
+
+	}
+    .cell-display .cell{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .table-add{
+        height: 49px;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+    
+    .table-add:hover{
+        background-color: var(--el-fill-color-light);
+    }
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+        <el-main>
+            <div class="container">
+                <div style="display: flex;">
+                    <div class="breadcrumb-wrapper" style="margin:15px 0;flex: 1;">
+                        <el-breadcrumb separator-icon="ArrowRight">
+                        <el-breadcrumb-item><el-link href="/index.php?mod=manage">{lang system_tool}</el-link></el-breadcrumb-item>
+                        <el-breadcrumb-item>{lang title_language_manage}</el-breadcrumb-item>
+                        </el-breadcrumb>
+                    </div>
+                    <el-text type="danger">{lang title_language_manage_tips}</el-text>
+                </div>
+                <div class="notification ">
+                    <el-table 
+                        :data="tableData" 
+                        style="width: 100%"
+                        ref="BoxRef"
+                        row-key="langflag">
+                        <el-table-column label="{lang sort}" width="60px">
+                            <template #default="scope">
+                                <el-icon class="dzz-move"><Rank /></el-icon>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="icon" label="{lang icon}" align="center" width="80px" class-name="cell-display">
+                            <template #default="scope">
+                                <el-image style="width: 28px; height: 23px" :src="scope.row.icon" fit="contain" ></el-image>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="langval" label="{lang name}" ></el-table-column>
+                        <el-table-column 
+                            prop="address" 
+                            align="center" 
+                            label="{lang lang_default}"
+                            width="80px">
+                            <template #default="scope">
+                                <el-checkbox 
+                                    v-model="scope.row.isdefault" 
+                                    true-label="1"
+                                    false-label="0"
+                                    :disabled="!parseInt(scope.row.state)"
+                                    @change="isdefaultChange(scope.row.langflag)"></el-checkbox>
+                            </template>
+                        </el-table-column>
+                        <el-table-column 
+                            prop="address" 
+                            align="center" 
+                            label="{lang status}"  
+                            width="80px">
+                            <template #default="scope">
+                                <el-switch 
+                                    v-model="scope.row.state" 
+                                    active-value="1" 
+                                    inactive-value="0"
+                                    @change="stateChange(scope.row.langflag,scope.row.state)"></el-switch>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="table-add" @click="FormEdit.dialogVisible=true">
+                        <el-text><el-icon style="margin-right: 6px;"><Circle-Plus /></el-icon>{lang add}</el-text>
+                    </div>
+                </div>
+            </div>
+        </el-main>
+        <el-dialog
+            title="{lang add}"
+            width="500"
+            @closed="FormEditClose"
+            v-model="FormEdit.dialogVisible">
+            <el-select v-model="FormEdit.value" filterable style="width: 100%">
+                <el-option
+                  v-for="item in LanguageList"
+                  :key="item.langflag"
+                  :label="item.langval"
+                  :value="item.langflag"
+
+                >
+                    <span style="display: inline-block;width:50px" style="text-align: center"><img :src="item.icon" style="width:40px;vertical-align: middle" /></span>
+                    <span style="display: inline-block;margin-left:5px;line-height: 30px;">{{item.langval}}</span>
+
+
+                </el-option>
+            </el-select>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="FormEdit.dialogVisible = false">{lang cancel}</el-button>
+                    <el-button type="primary" @click="FormEditSubmit">{lang confirms}</el-button>
+                </div>
+            </template>
+        </el-dialog>
+	</el-container>
+</div>
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+                fLanguageList:$LanguageList,
+                LanguageList:{},
+				tableData:$langlist,
+				DocumentThemeColor:'',
+				FormEdit:{
+					dialogVisible:false,
+					value:''
+				},
+			}
+		},
+		watch: {
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true
+			}
+		},
+		created(){
+            for (const key in this.fLanguageList) {
+                const element = this.fLanguageList[key];
+                element['langflag']=key;
+                let curr = this.tableData.find(function(current){
+                    return key == current.langflag;
+                });
+                if(!curr){
+                    this.LanguageList[key] = element;    
+                }
+                
+            }
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+
+		},
+		methods:{
+            async isdefaultChange(flag){
+                let self = this;
+                let curr = this.tableData.find(function(current){
+                    return flag == current.langflag;
+                });
+                if(curr){
+                    if(parseInt(curr.isdefault) == 0){
+                        curr.isdefault = '1'
+                        return false;
+                    }
+                }
+                const {data: res} = await axios.post('index.php?mod=lang&op=admin&operation=setDefaultLanguage',{langflag:flag });
+                if(res.success){
+                    this.tableData.forEach(element => {
+                        if(element.langflag != flag){
+                            element.isdefault = '0';
+                        }
+                    });
+                }else{
+                    self.$message.error(res.msg || '{lang do_failed}');
+                }
+            },
+            async stateChange(flag,value){
+                let self = this;
+                if(parseFloat(value)){
+                    var url = 'index.php?mod=lang&op=admin&operation=enableLanguage';
+                }else{
+
+                    let num = 0;
+                    for (const key in this.tableData) {
+                        const element = this.tableData[key];
+                        if(parseInt(element.state)){
+                            num ++;
+                        }
+                    }
+                    let curr = this.tableData.find(function(current){
+                        return flag == current.langflag;
+                    });
+                    if(num < 1 || parseInt(curr.isdefault)){
+                        curr.state = '1';
+                        return false;
+                    }
+                    
+                    var url = 'index.php?mod=lang&op=admin&operation=unEnableLanguage';
+                }
+                const {data: res} = await axios.post(url,{langflag:flag });
+                if(res.success){
+                    if(res.refresh=='needrefresh'){
+                        window.location.reload();
+                    }
+                }else{
+                    self.$message.error(res.msg || '{lang do_failed}');
+                }
+            },
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+
+            async FormEditSubmit(){
+                let self = this;
+                if(!this.FormEdit.value)return false;
+                let data = this.LanguageList[this.FormEdit.value];
+                const {data: res} = await axios.post('index.php?mod=lang&op=admin&operation=addLanguage',{langflag:this.FormEdit.value });
+                if(res.success){
+                    self.FormEdit.dialogVisible = false;
+                    this.tableData.push({
+                        langflag:data.langflag,
+                        langval:data.langval,
+                        langname:data.name,
+                        icon:data.icon,
+                        isdefault:'0',
+                        state:'0',
+                        elementflag:data.elementflag,
+                    });
+                }else{
+                    self.$message.error(res.msg || '{lang add_unsuccess}')
+                }
+            },
+            FormEditClose(){
+                this.FormEdit.value = ''
+            },
+            handleSortable(id){//字段拖动
+                let self = this;
+                const tbody = self.$refs.BoxRef.scrollBarRef.wrapRef.querySelector('tbody');
+                Sortable.create(tbody, {
+                    handle:'.dzz-move',
+                    forcefallback:"true",
+                    //  指定父元素下可被拖拽的子元素
+                    draggable: ".el-table__row",
+                    animation: 150,
+                    onUpdate ({ newIndex, oldIndex }) {
+                        const currRow = self.tableData.splice(oldIndex, 1)[0]
+                        self.tableData.splice(newIndex, 0, currRow);
+                    }
+                });
+            }
+		},
+		components: {
+		},
+		mounted(){
+            this.handleSortable();
+		}
+	});
+
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+		
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

@@ -1,0 +1,311 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;margin-right: 20px;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" title="$_G[setting][sitename]" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text class="sitename" tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="overflow: hidden;padding: 0;">
+		<el-menu
+			class="dzz-menu"
+			:default-active="bannerData.active"
+			mode="horizontal"
+			style="border:0;height: 100%;max-width: 100%;">
+			<template v-for="item in bannerData.data.top">
+				<template v-if="item.children && item.children.length">
+					<el-sub-menu 
+					:index="item.id" 
+					:class="{'is-active':bannerData.active==item.id}">
+						<template #title>
+							<el-image v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+						</template>
+						<menuitem 
+							:datalist="item.children" 
+							@handleselect="handleSelect"
+							:active="bannerData.active"></menuitem>
+					</el-sub-menu>
+				</template>
+				<template v-else>
+					<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3 || parseInt(item.btype) == 5">
+						<template #title>
+							<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+						</template>
+					</el-menu-item>
+					
+				</template>
+			</template>
+		</el-menu>
+	
+</div>
+<div class="h-right"> 
+	<el-autocomplete
+		ref="headerkeyword"
+		v-if="PageType == 'ku' || PageType == 'tab'"
+		style="min-width: 150px;padding-right: 20px;"
+		v-model="fheaderkeyword"
+		:fetch-suggestions="querySearch"
+		@clear="headerkeywordInput"
+		@keydown.enter.native="headerkeywordInput"
+		placeholder="{lang search}"
+		clearable>
+		<template #suffix>
+			<el-icon class="el-input__icon" @click="headerkeywordInput">
+				<Search />
+			</el-icon>
+		</template>
+
+	</el-autocomplete>
+	<el-dropdown v-if="(tabarr && tabarr.length) || (collectlisarr && collectlisarr.length)" @command="handleCollectCommand" style="margin-left: 12px;">
+		<el-button 
+			text 
+			style="font-size: var(--el-font-size-extra-large);outline:0;;outline-offset:0;" 
+			circle  
+			size="large">
+			<el-icon>
+				<svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="6" y="6" width="36" height="36" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+					<path d="M24 16V32" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+					<path d="M16 24L32 24" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+				</svg>
+			</el-icon>
+		</el-button>
+		<template #dropdown>
+			<el-dropdown-menu>
+				<el-dropdown-item v-for="(item,key) in tabarr" :command="CollectCommand('tab',key)">{{item.name}}</el-dropdown-item>
+				<template v-if="tabarr && tabarr.length">
+					<div class="el-divider el-divider--horizontal adjust-divider"></div>
+				</template>
+				<el-dropdown-item v-for="(item,key) in collectlisarr" :command="CollectCommand('collect',key)">{{item.name}}</el-dropdown-item>
+			</el-dropdown-menu>
+		</template>
+	</el-dropdown>
+	
+	<el-tooltip content="{lang change_page_color}" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);margin-left: 12px;" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<template v-if="PageType != 'page' && PageType != 'tab'">
+		<el-tooltip :content="Screenshow?'{lang hide_filter}':'{lang show_filter}'" placement="bottom">
+			<el-button 
+				text 
+				icon="Filter" 
+				style="font-size: var(--el-font-size-extra-large);" 
+				circle  
+				size="large"
+				@click="Screenshow = !Screenshow"
+				:bg="!Screenshow">
+			</el-button>
+		</el-tooltip>
+	</template>
+	<template v-if="PageType != 'page' && PageType != 'tab'">
+		<el-popover
+			placement="bottom"
+			trigger="click"
+			popper-class="isdropdown header-dropdown-menu">
+			<comsort
+				:iscolumn="false"
+				:defaultval="HeaderRightBtnShow"
+				@change.self="HeaderShowChange">
+			</comsort>
+			<template #reference>
+				<div style="margin-left: 12px;">
+					<el-tooltip content="偏好设置" placement="bottom">
+						<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+					</el-tooltip>
+				</div>
+			</template>
+		</el-popover>
+	</template>
+	<international current="$_G['language']"></international>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerdrawer_m:false,
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:'',
+				collectlisarr:$collectlisarr,
+				tabarr:$tabarr
+			}
+		},
+		methods:{
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+			handleSelect(data){
+				let self = this;
+				if(parseInt(data.btype) == 3){
+					if(data.realurl){
+						window.open(data.realurl)
+					}else if(data.url){
+						window.open(data.url)
+					}else{
+						self.$message.error('{lang no_link_address}');
+					}
+					
+					return false;
+				}
+
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+
+				}
+
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data,load){
+				const self = this;
+				if(data.type == 'show'){
+					this.HeaderRightBtnShow.display = data.value;
+				}else{
+					this.HeaderRightBtnShow[data.type] = data.value;
+				}
+				switch(data.type){
+					case 'display':
+					case 'show':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.imagereload = true;
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+				if(!load){
+					self.$refs.MainDomRef.settingpreference(data.type,data.value)
+				}
+				
+			},
+			handleCollectCommand(data){
+				let self = this;
+				if(data.type == 'collect'){
+					var curr = this.collectlisarr[data.key];
+				}else{
+					var curr = this.tabarr[data.key];
+				}
+				if(data.type == 'tab'){
+					self.$messageBox.prompt('', '{lang add}', {
+						confirmButtonText: '{lang confirms}',
+						cancelButtonText: '{lang cancel}',
+						inputPattern:/\S/,
+						inputErrorMessage: '{lang name_cannot_empty}',
+						validator: (value) => {
+							return !!value.trim();
+						} 
+					}).then(async ({ value }) => {
+						const {data: res} = await axios.post('index.php?mod=tab&op=tabeditinterface&do=addtab',{
+							gid:curr.value,
+							tabname:value,
+						});
+						if(res.success){
+							window.open('index.php?mod=tab&op=information&kid=tb_'+res.data.gid+'&gid='+res.data.gid+'&tid='+res.data.tid)
+						}else{
+							self.$message.error(data.msg || '{lang add_unsuccess}');
+						}
+					}).catch(() => {
+				
+					})
+				}else{
+					window.open(curr.value);
+				}
+			},
+			CollectCommand(type,key){
+				return {type,key}
+			},
+			headerkeywordInput(){
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				if(this.PageType != 'ku' && this.PageType != 'tab'){
+					this.bannerData.active = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+				}
+	
+				
+			}
+		},
+	}
+</script>

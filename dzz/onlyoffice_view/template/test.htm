@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>导出tab</title>
+</head>
+<body>
+<div class="container"style="text-align: center;width:100%;">
+<p ><h1>导出标题</h1></p>
+</div>
+<div>
+
+    <ol>
+        {loop $datas $data}
+        <li>
+
+                {loop $forms $k $v}
+                {if $data[showlist][$k][value]}
+            {$data[showlist][$k][value]}
+                {/if}
+
+                {/loop}
+
+
+        </li>
+        {/loop}
+    </ol>
+</div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style>
+	[v-cloak]{
+	    display: none;
+	}
+	.el-avatar--square{
+		background: #FFFFFF;
+	}
+	.el-progress{
+		flex: 1;
+	}
+	.el-progress-bar__outer{
+		border-radius: 4px;
+	}
+	.el-progress-bar__inner{
+		border-radius: 4px;
+	}
+	.el-progress-bar__innerText{
+		color: var(--el-color-black);
+		font-size: 14px;
+	}
+	body {
+		background: transparent;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" height="64px" style="border-bottom: var(--el-border);">
+			<div class="h-left">
+				<span v-cloak style="font-size: var(--el-font-size-large);margin-left: 6px;font-weight: 700;">{lang import}</span>
+			</div>
+			<div class="h-center"></div>
+			<div class="h-right">
+				<comavatar
+					:level="parseInt($_G[pichomelevel])"
+					iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+					:adminid="parseInt($_G[adminid])"
+					PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+					:uid="parseInt($_G[uid])"
+					upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+					version="$_G[setting][version]"
+					formhash="{FORMHASH}">
+					<el-avatar size="40">
+						{eval echo avatar_block($_G[uid]);}
+					</el-avatar>
+				</comavatar>
+			</div>
+		</el-header>
+		<el-container>
+			<el-main id="PageContent">
+				<el-table 
+					:data="tableData" 
+					style="width: 100%" height="100%" 
+					border 
+					empty-text="{lang upload_finish}">
+					<template v-for="(item,index) in tabHeader">
+						<template v-if="index == 'status'">
+							<el-table-column show-overflow-tooltip fixed="right" align="center" min-width="110" :label="item">
+								<template #default="scope">
+									<template v-if="scope.row.status == 0">
+										<el-tag disable-transitions effect="light" type="info">{lang wait}</el-tag>
+									</template>
+									<template v-if="scope.row.status == 1">
+										<el-tag disable-transitions effect="light" type="success">{lang in_import}</el-tag>
+									</template>
+									<template v-if="scope.row.status == 2">
+										<el-tag disable-transitions effect="light" type="primary">{lang finish}</el-tag>
+									</template>
+									<template v-if="scope.row.status == 3">
+										<span style="color: var(--el-color-danger);">{{scope.row.msg}}</span>
+									</template>
+									
+								</template>
+							</el-table-column>
+						</template>
+						<template v-else>
+							<el-table-column show-overflow-tooltip min-width="150" :prop="index" :label="item">
+								<template #default="scope">
+									<el-table-column prop="tagname" label="tagname">
+										<template #default="scope">
+											<template v-if="scope.row[index]['tagname']">
+												{{scope.row[index]['tagname']}}
+											</template>
+										</template>
+									</el-table-column>
+									<el-table-column prop="taggroup" label="taggroup">
+										<template #default="scope">
+											<template v-if="scope.row[index]['taggroup']">
+												{{scope.row[index]['taggroup']}}
+											</template>
+											
+										</template>
+									</el-table-column>
+								</template>
+									
+							</el-table-column>
+						</template>
+						
+					</template>
+				</el-table>
+			</el-main>
+			<el-footer style="display: flex;align-items: center;">
+				<el-progress :text-inside="true" :stroke-width="40" :percentage="TotalProgress" color="#CFFFBF">{lang schedule}{{TotalProgress}}%</el-progress>
+				<el-button v-if="ImportBtn" type="primary" style="margin-left: 8px;" size="large" @click="StartImport">{lang start_import}</el-button>
+			</el-footer>
+		</el-container>
+	</el-container>
+	
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, h } = Vue;
+	const dzzoffice = createApp({
+		setup(){
+			let TotalProgress = ref(0);
+			let ImportBtn = ref(true);
+			const tabHeader = reactive($h0);
+			tabHeader['status'] = '{lang upload_status}';
+			const tableData = reactive($list);
+			tableData.forEach(function(item,index){
+				item['status'] = 0;
+				item['id'] = index;
+				item['msg'] = '';
+			});
+			const tableDataLength = tableData.length;
+			const Percentage = 100/tableData.length;
+			let uploadid = 0;
+			let StartImport = async function(){
+				ImportBtn.value = false;
+				// 0:等待,1:导入2:完成,3导入失败
+				let itemData = tableData.find(function(item){
+					return item.id == uploadid;
+				});
+				let param = JSON.parse(JSON.stringify(itemData))
+				delete param['status'];
+				delete param['id'];
+				delete param['msg'];
+				let fparam = {
+					data:param,
+					appid:'$appid'
+				}
+				itemData.status = 1;
+				const {data: res} = await axios.post(MOD_URL+'&op=library&do=importtag&operation=importing',fparam);
+				if(res.success){
+					itemData.status = 2;
+					let fuploadid = uploadid;
+					let total = TotalProgress.value + Percentage;
+					if(total>100){
+						total = 100;
+					}
+					TotalProgress.value = total;
+					setTimeout(function(){
+						StartImportFinish(fuploadid)
+					},1000);
+				}else{
+					itemData.status = 3;
+					itemData.msg = res.msg || '{lang import_failure}';
+				}
+				uploadid ++;
+				if(tableDataLength > uploadid){
+					StartImport();
+				}
+			};
+			
+			let StartImportFinish = function(id){
+				let index = tableData.findIndex(function(item){
+					return item.id == id;
+				});
+				tableData.splice(index,1);
+			}
+			return {
+				tableData,
+				tabHeader,
+				StartImport,
+				TotalProgress,
+				ImportBtn
+			}
+			
+		},
+		components:{
+			comavatar,
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

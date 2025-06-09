@@ -1,0 +1,106 @@
+<ul class="imgitemtable imgitemmusic">
+	<template v-for="item in ParamImages.Newdatas">
+		<li
+			class="list-cell"
+			:class="{isodd:item.isodd}"
+			:key="item.rid"
+			:rid="item.rid"
+			:style="{top:item.ptop+'px'}"
+			@click="ImagesDetailClick(item.rid,item.dpath,item.index)">
+			<div :class="['left','imgbox-border',{play:item.playmusic?'play':''}]">
+				<div class="btn-paly" @click.stop="FooterMusiclayoutPlay(item.rid)">
+					<template v-if="FooterMusic.playing  && FooterMusic.loading && FooterMusic.rid == item.rid">
+						<van-loading type="spinner" color="#ffffff" size="18px"></van-loading>
+					</template>
+					<template v-else>
+						<template v-if="item.playmusic"><i class="ri-pause-fill"></i></template>
+						<template v-else><i class="ri-play-fill"></i></template>
+					</template>
+					
+				</div>
+			</div>
+			<div class="center">
+				<p class="title" :class="{'auto':ParamSort.showinformation.value.indexOf('other')<0}">
+					<template v-if="parseInt(item.level)==1">
+						<van-image
+							 style="vertical-align: sub;"
+							width="20px"
+							height="20px"
+							fit="contain"
+							src="dzz/pichome/image/grade/1.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(item.level)==2">
+						<van-image
+							style="vertical-align: sub;"
+							width="20px"
+							height="20px"
+							fit="contain"
+							src="dzz/pichome/image/grade/2.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(item.level)==3">
+						<van-image
+							style="vertical-align: sub;"
+							width="20px"
+							height="20px"
+							fit="contain"
+							src="dzz/pichome/image/grade/3.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(item.level)==4">
+						<van-image
+							style="vertical-align: sub;"
+							width="20px"
+							height="20px"
+							fit="contain"
+							src="dzz/pichome/image/grade/4.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(item.level)==5">
+						<van-image
+							style="vertical-align: sub;"
+							width="20px"
+							height="20px"
+							fit="contain"
+							src="dzz/pichome/image/grade/5.png"
+						/>
+					</template>
+					{{item.name}}
+					<template v-if="ParamSort.showinformation.value.indexOf('extension')>-1" v-cloak>.{{item.ext}}</template>
+				</p>
+				
+				<template v-if="ParamSort.showinformation.value.indexOf('other')>-1">
+					<p class="other">
+						<template v-if="ParamSort.otherinformation.value=='size'">
+							<span>{{item.width}} × {{item.height}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='filesize'">
+							<span>{{item.fsize}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='tag'">
+							<span v-if="!item.tags" class="label">-</span>
+							<span v-else class="label" v-for="tg in item.tags">•{{tg}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='grade'">
+							<van-icon v-for="item in parseInt(item.grade)" class="score active" name="star"></van-icon><van-icon v-for="item in 5-parseInt(item.grade)" class="score" name="star"></van-icon>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='btime'">
+							<span>{{item.btime}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='dateline'">
+							<span>{{item.dateline}}</span>
+						</template>
+						<template v-else-if="ParamSort.otherinformation.value=='mtime'">
+							<span>{{item.mtime}}</span>
+						</template>
+					</p>
+					
+				</template>
+			</div>
+			<div class="right" v-if="item.share || item.download || parseInt(DocumentAdminId) || parseInt(item.collection)"  @click.stop="ImagesMoreClick(item)">
+				<i class="ri-more-2-fill"></i>
+			</div>
+		</li>
+	</template>
+</ul>

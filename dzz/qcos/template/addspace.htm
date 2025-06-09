@@ -1,0 +1,140 @@
+<!--{template common/header_simple_start}-->
+<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/css/checkbox.css?{VERHASH}" rel="stylesheet" media="all">
+<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/jquery.textareaexplander.js?{VERHASH}"></script>
+<style>
+    #cpform {
+        margin-top: 15px;
+    }
+    i.dzz {
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 30px;
+    }
+
+    .vitem{
+        margin-bottom:10px;
+        max-width:600px;
+    }
+    .vitem .col-sm-5{
+        padding:0 2px;
+    }
+    .vitem .form-control{
+        max-width:100%;
+        border-width:1px;
+    }
+    .vitem-label{
+        line-height: 34px;
+        text-align: right
+    }
+
+    .ui-sortable-helper{
+        background-color: #FFF;
+        border:1px solid #e1e1e1;
+    }
+    .ui-state-highlight{
+        width:100%;
+        max-width:600px;
+        height: 34px;
+        background-color: blanchedalmond
+    }
+</style>
+<!--{template common/header_simple_end}-->
+<!--{template common/commer_header}-->
+<div class="bs-container clearfix">
+   <!-- <div class="bs-left-container  clearfix">
+        &lt;!&ndash;{template admin_left}&ndash;&gt;
+    </div>-->
+    <div class="left-drager">
+        <div class="left-drager-op">
+            <div class="left-drager-sub"></div>
+        </div>
+    </div>
+    <div class="bs-main-container  clearfix">
+
+        <div class="main-content">
+            <form id="cpform" action="{MOD_URL}&op=admin&do=addspace" class="form-horizontal-left" method="post" name="cpform">
+                <input type="hidden" value="{FORMHASH}" name="formhash">
+                <input type="hidden" value="true" name="addspace">
+                <input type="hidden" value="QCOS" name="bz">
+                <dl>
+                    <dt>存储名称:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="coludname"  class="form-control"
+                                 name="coludname" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>appid:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="appid"  class="form-control"
+                                 name="extra[appid]" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>access_id:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="access_id"  class="form-control"
+                                 name="access_id" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>access_key:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="access_key"   class="form-control"
+                                 name="access_key" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>region:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="region"  class="form-control"
+                                 name="region" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>bucket:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="bucket"  class="form-control"
+                                 name="bucket" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>host:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="host"  class="form-control"
+                                 name="host" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>cdnhost:</dt>
+                    <dd class="clearfix">
+                        <input   style="width:80%" id="cdnhost"  class="form-control"
+                                 name="extra[cdnhost]" value="" />
+                    </dd>
+                </dl>
+                <dl>
+                    <dd>
+                        <button class="btn btn-success btn-width" type="submit"
+                                onclick="document.getElementById('cpform').submit();">{lang save}
+                        </button>
+                    </dd>
+                </dl>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    jQuery('.left-drager').leftDrager_layout();
+    function values_add(obj){
+        var html='';
+        html+='<div class="vitem clearfix">'
+            +'   <div class="col-sm-5"><input type="text" class="form-control" name="values[key][]" value="" placeholder="key"></div>'
+            +'    <div class="col-sm-5"><input type="text" class="form-control" name="values[value][]" value="" placeholder="value"></div>'
+            +' <div class="col-sm-2"><a href="javascript:;" onclick="jQuery(this).closest(\'.vitem\').remove()"><i class="dzz dzz-close"></i></a></div>'
+            +'</div>';
+        jQuery(html).insertBefore(obj);
+    }
+</script>
+<!--{template common/footer_simple}-->

@@ -1,0 +1,447 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;height: 60px;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" title="$_G[setting][sitename]" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text class="sitename" tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="flex-direction: column;align-items: flex-start;position: relative;">
+	<div style="height: 60px;display: flex;min-height: 60px;align-items: center;width: 100%;justify-content: flex-start;position: relative;">
+		<el-autocomplete
+			class="headerkeyword"
+			ref="headerkeyword"
+			style="width: 450px;z-index: 10000;"
+			v-model="fheaderkeyword"
+			:fetch-suggestions="querySearch"
+			@clear="headerkeywordInput"
+			@keydown.enter.native="headerkeywordInput"
+			size="large">
+			<template #suffix>
+				<el-button v-if="fheaderkeyword" link icon="Close" style="font-size: 20px;" @click="headerkeywordInputClear"></el-button>
+				<!--{if intval($_G['setting']['imageSearch_setting']['status'])}-->
+				<el-popover
+					ref="cameraPopover"
+					popper-class="camera-popover"
+					placement="bottom"
+					width="100%"
+					:show-arrow="false"
+					trigger="click"
+					popper-style="{let:0}"
+					:teleported="false"
+					:tabindex="1000"
+					@show="SearchUploadPopoverShow">
+					<div class="camera-dropdown">
+						<el-upload
+							class="camera-upload"
+							drag
+							:show-file-list="false"
+							:on-change="SearchUploadChange"
+							:auto-upload="false"
+							accept="image/png, image/jpeg,image/jpg, image/webp">
+							<div 
+								style="display: flex;align-items: center;justify-content: center;flex-direction: column;">
+								<el-icon class="el-icon--upload"><upload-filled /></el-icon>
+								<div class="el-upload__text">
+									<el-text tag="p" style="
+									font-size: 14px;
+									line-height: 20px;">{lang drop_the_image}</el-text>
+									<el-text tag="p" type="info" size="small" style="line-height: 20px;margin-top: 8px;">{lang Image_format_support} jpg、jpeg、png、webp</el-text>
+								</div>
+							</div>
+						</el-upload>
+					</div>
+					<template #reference>
+						<el-button link icon="Camera" style="font-size: 20px;"></el-button>
+					</template>
+				</el-popover>
+				<!--{/if}-->
+			</template>
+			<template #append>
+				<el-button 
+					@click="headerkeywordInput" 
+					type="primary" 
+					icon="Search" 
+					style="font-size: 20px;padding-top: 0;padding-bottom: 0;display: flex;align-items: center;justify-content: center;"></el-button>
+			</template>
+		</el-autocomplete>
+		
+	</div>
+	
+	<template v-if="bannerData.data && bannerData.data.length > 1">
+		<div style="width: 100%;overflow: hidden;padding-bottom: 10px;">
+			<el-menu
+				class="dzz-menu"
+				:default-active="bannerData.active"
+				mode="horizontal"
+				@select="menuChange"
+				style="border:0;height: 100%;background: transparent;">
+				<template v-for="item in bannerData.data">
+					<el-menu-item :index="item.tid" style="background-color: transparent;">
+						<template #title>
+							{{item.title}}
+						</template>
+					</el-menu-item>
+				</template>
+			</el-menu>
+		</div>
+	</template>
+	
+</div>
+<div class="h-right" style="height: 60px;"> 
+	<el-tooltip content="{lang change_page_color}" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<el-tooltip :content="Screenshow?'{lang hide_filter}':'{lang show_filter}'" placement="bottom">
+		<el-button 
+			text 
+			icon="Filter" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="Screenshow = !Screenshow"
+			:bg="!Screenshow">
+		</el-button>
+	</el-tooltip>
+	<el-popover
+		placement="bottom"
+		trigger="click"
+		popper-class="isdropdown header-dropdown-menu">
+		<comsort
+			:iscolumn="false"
+			:defaultval="HeaderRightBtnShow"
+			@change.self="HeaderShowChange">
+		</comsort>
+		<template #reference>
+			<div style="margin-left: 12px;">
+				<el-tooltip content="{lang preferences}" placement="bottom">
+					<el-button text icon="Sort" style="font-size: var(--el-font-size-extra-large);" circle  size="large"></el-button>
+				</el-tooltip>
+			</div>
+		</template>
+	</el-popover>
+	<international current="$_G['language']"></international>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerdrawer_m:false,
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:'',
+				searchInt:{
+					status:false,
+					img:''
+				},
+				searchData:{
+					visible:false,
+					aid:0,
+					percentage:0,
+					img:'',
+					width:0,
+					height:0,
+					boxW:0,
+					boxH:0,
+					loading:false,
+					submit:false,
+				},
+				CropTime: null,
+				CropBase:''
+			}
+		},
+		methods:{
+			SearchUploadPopoverShow(){
+				let self = this;
+				self.$refs.headerkeyword.blur();//失去焦点
+			},
+
+
+			SearchUploadChange(response,uploadFile){
+				let self = this;
+				self.searchInt.status = true;
+				self.searchData.loading = true;
+				let img = new Image();
+				// 设置图片的源（URL）
+				img.src = URL.createObjectURL(response.raw);
+				// 当图片加载完成时，获取其宽度和高度
+				img.onload = function() {
+					let ImageSize= self.resizeImage(img);
+					self.searchData.width = parseInt(ImageSize.width);
+					self.searchData.height = parseInt(ImageSize.height);
+					self.searchData.boxW = parseInt(ImageSize.width);
+					self.searchData.boxH = parseInt(ImageSize.height);
+					self.$nextTick(() => {
+						self.searchData.img = img.src;
+						self.screenvisible(false);
+						self.$refs.cameraPopover.hide();
+					})
+					
+					
+				};
+				
+			},
+
+			
+			handlecropimgload() {
+				this.searchData.loading = false;
+				this.handlecropSubmit();
+			},
+
+			handlecropSubmit(){
+				let self = this;
+				self.searchData.submit = true;
+				self.$refs.vuecropper.getCropBlob(async (data) => {
+					let CropData = self.$refs.vuecropper.getCropAxis();
+					let ImgW = Math.ceil(self.$refs.vuecropper.cropW);
+					let ImgH = Math.ceil(self.$refs.vuecropper.cropH);
+					sessionStorage.setItem('cropsize',JSON.stringify({
+						x1:CropData.x1,
+						x2:CropData.x2,
+						y1:CropData.y1,
+						y2:CropData.y2,
+						w:ImgW,
+						h:ImgH,
+						bw:self.searchData.boxW,
+						bh:self.searchData.boxH
+					}));
+					let img = new Image();
+					// 设置图片的源（URL）
+					img.src = URL.createObjectURL(data);
+					// // 当图片加载完成时，获取其宽度和高度
+					img.onload = async function() {
+						// 创建 canvas 并将图片绘制到 canvas 上
+						const canvas = document.createElement('canvas');
+						const ctx = canvas.getContext('2d');
+
+						// // 设置 canvas 的宽高为图片的宽高
+						canvas.width = img.width;
+						canvas.height = img.height;
+
+						// // 将图片绘制到 canvas 上
+						ctx.drawImage(img, 0, 0);
+						// 将 canvas 内容转换为 JPG 格式的 Base64
+						const jpgBase64 = canvas.toDataURL('image/jpeg', 0.8); // 0.8 是图片质量
+
+						if(self.CropBase){
+							self.CropBase();
+						}
+						let CancelToken = axios.CancelToken;
+						axios.post('index.php?mod=io&op=getAidByBase64', {
+							base64:jpgBase64
+						},{
+							cancelToken: new CancelToken(function executor(c) {
+								self.CropBase = c;
+							})
+						}).then(function (res) {
+							if(res.data.success){
+								self.searchData.aid = res.data.aid;
+								if(self.searchInt.status){
+									sessionStorage.setItem('cropimg',res.data.img);
+									self.searchInt.status = false;
+								}
+								self.CommonGetImageData();
+								self.searchData.submit = false;
+							}else{
+								self.$message.error(res.data.msg || __lang.upload_failed);
+							}
+						}).catch(function (error) {
+							// console.log(error);
+						});
+			
+						
+						
+					};
+					img.onerror = () => {
+						self.$message.error(__lang.upload_unsuccess);
+					};
+					return false;
+					
+					
+				});
+				
+				
+			},
+			resizeImage(img, maxWidth = 487, maxHeight = 651) {
+				// 获取图片的原始宽度和高度
+				const originalWidth = img.width;
+				const originalHeight = img.height;
+
+				// 计算缩放比例
+				let scaleRatio = 1;
+
+				if (originalWidth > maxWidth || originalHeight > maxHeight) {
+					// 如果宽度或高度超过限制，则按比例缩小
+					const widthRatio = maxWidth / originalWidth;
+					const heightRatio = maxHeight / originalHeight;
+
+					// 选择较小的比例，确保图片不会超过最大宽度和高度
+					scaleRatio = Math.min(widthRatio, heightRatio);
+				}
+
+				// 计算缩放后的宽度和高度
+				const newWidth = originalWidth * scaleRatio;
+				const newHeight = originalHeight * scaleRatio;
+
+				// 返回缩放后的尺寸
+				return {
+					width: newWidth,
+					height: newHeight,
+				};
+			},
+			menuChange(id){
+				if(parseInt(this.bannerData.active) == parseInt(id)){
+					return false;
+				}
+				let str = 'index.php?mod=search#id='+id;
+				if(this.fheaderkeyword){
+					str += '&keyword='+this.fheaderkeyword;
+				}
+				window.location.href = str;
+				window.location.reload();
+			},
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+			handleSelect(data){
+				let self = this;
+				if(parseInt(data.btype) == 3){
+					if(data.realurl){
+						window.open(data.realurl)
+					}else{
+						self.$message.error('{lang no_link_address}');
+					}
+					return false;
+				}
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+				}
+				setTimeout(() => {
+					window.location.reload();
+				}, 300);
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data){
+				const self = this;
+				this.HeaderRightBtnShow[data.type] = data.value;
+				switch(data.type){
+					case 'display':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							self.ImageProps.ShowMessage.other = '';
+							// sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							self.ImageProps.ShowMessage.other = this.HeaderRightBtnShow.other; 
+							// sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						// if(data.value && data.value.length){
+						// 	sessionStorage.setItem('display',data.value.join(','));
+						// }else{
+						// 	sessionStorage.setItem('display','empty');
+						// }
+						self.ImageProps.ShowMessage.display = display;
+					break;
+					case 'other':
+						// sessionStorage.setItem('other',data.value);
+						self.ImageProps.ShowMessage.other = data.value;
+					break;
+					case 'sort':
+					case 'order':
+						// sessionStorage.setItem(data.type,data.value);
+						this.HeaderRightBtnSubmit();
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						this.ImageProps.layout = data.value;
+						// sessionStorage.setItem('layout',data.value);
+					break;
+				}
+			},
+			headerkeywordInputClear(){
+				this.fheaderkeyword = '';
+				this.headerkeyword = '';
+				this.handlecropClear();
+			},
+			handlecropClear(){
+				this.searchData = {
+					visible:false,
+					aid:0,
+					percentage:0,
+					img:'',
+					width:0,
+					height:0,
+					boxW:0,
+					boxH:0,
+					loading:false,
+					submit:false,
+				};
+				this.CommonGetImageData();
+			},
+			headerkeywordInput(){
+				if(this.fheaderkeyword == this.headerkeyword){
+					return false;
+				}
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				this.CommonGetImageData();
+				
+			}
+		},
+	}
+</script>

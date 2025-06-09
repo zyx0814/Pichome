@@ -1,0 +1,34 @@
+<div class="color-sequence" :gutter="2" style="margin-top: 20px;">
+	<template v-for="(item,key) in RightData.color">
+		<el-col>
+			<el-dropdown 
+				style="width: 100%;height: 100%;" 
+				trigger="click"
+				@command="RightColorCommand"
+				@visible-change="RightColorDropdown(item)">
+				<div class="color-item">
+					<el-tooltip
+						effect="dark"
+						:content="item"
+						placement="top">
+						<div style="width: 100%;height: 100%;" :style="{'background-color': item}"></div>
+					</el-tooltip>
+				</div>
+				<template #dropdown>
+					<el-dropdown-menu class="el-popover-color">
+						<el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item>
+						<el-divider></el-divider>
+						<el-dropdown-item :command="RightColorParam.base">复制&nbsp;{{RightColorParam.base}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.rgb">复制&nbsp;{{RightColorParam.rgb}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.rgba">复制&nbsp;{{RightColorParam.rgba}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.hsl">复制&nbsp;{{RightColorParam.hsl}}</el-dropdown-item>
+						<el-divider></el-divider>
+						<el-dropdown-item :command="RightColorParam.hsv">复制&nbsp;{{RightColorParam.hsv}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.cmyk">复制&nbsp;{{RightColorParam.cmyk}}</el-dropdown-item>
+					   </el-dropdown-menu>
+				</template>
+			</el-dropdown>
+			
+		</el-col>
+	</template>
+</div>

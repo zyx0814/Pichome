@@ -1,0 +1,61 @@
+
+<div class="ucenter-header">
+	<el-space  class="uinfo" alignment="center">
+		<el-avatar :size="120"  alt="$_G['username']">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+		<div class="utitle">
+			<div><el-text size="large" tag="b">$_G['username']</el-text></div>
+			<div><el-text type="info" size="small">$_G['group']['grouptitle']</el-text></div>
+		</div>
+	</el-space>
+	<div class="uedit" >
+		<!--{if $_GET['mod'] != 'my'}-->
+		<el-link href="user.php?mod=my"><el-icon :size="20"><Edit /></el-icon></el-link>
+		<!--{/if}-->
+	</div>
+	<div class="unav" style="height:58px">
+		<el-menu
+		:default-active="UcenterHeaderMenuIndex"
+		class="el-menu-userCenterHeader"
+		mode="horizontal"
+		@select="handleSelectUserCenterMenu"
+	  >
+		<template  v-for="(item,index) in UcenterNavigations">
+		<el-menu-item  :Index="item.id" :path="item.url">{{item.name}}</el-menu-item>
+		</template>
+	  </el-menu>
+	</div>
+</div>
+
+<script>
+	// -1更新失败,0未导入,1准备中,2导入中,3校验中,4完成
+    const UcenterHeader = {
+		data(){
+			return {
+				UcenterNavigations:null
+			};
+		},
+		created(){
+			let self=this;
+			axios.get('user.php?mod=my&do=getNavigation').then(function(res){
+					self.UcenterNavigations=res.data;
+				}).catch(function (error) {
+				    console.log(error);
+				});
+		},
+		 methods:{
+			 handleSelectUserCenterMenu:function(index,indexPath,item){
+				let url='';
+				this.UcenterNavigations.map((item)=>{
+					if(item.id==index) url=item.url;
+					return;
+				});
+				location.href=url;
+			 }
+		 },
+		 mounted(){
+            
+        }
+	}
+</script>

@@ -1,0 +1,305 @@
+<script>
+	let RightTagMixin = {
+		data(){
+			return {
+				RightTagPopver:{
+					leftactive:'all',
+					loading:true,
+					keyword:'',
+					left:[],
+					right:{
+						loading:true,
+						recent:[],
+						data:[],
+						arr:[],
+						searchdata:[],
+						searchCongruent:false,
+						active:[]
+					},
+				}
+			}
+		},
+		methods:{
+			RightTagPopverSearch(val){
+				const self = this;
+				this.RightTagPopver.right.searchdata = [];
+				this.RightTagPopver.right.searchCongruent = true;
+				let Congruent = false;
+				if(val &&  this.RightTagPopver.right.arr.length){
+					let countData = this.RightTagPopver.right.arr.filter(item => {
+						if(item.tagname){
+							if(item.tagname == val){
+								Congruent = true;
+							}
+							return item.tagname.indexOf(val)>-1;
+						}
+					});
+					this.RightTagPopver.right.searchdata = countData;
+				}
+				self.RightTagPopver.right.searchCongruent = Congruent;
+				
+			},
+			async RightTagPopverChange(item,data,key){//标签点击
+				var self = this;
+				var txtDel = '';
+				var index = this.RightTagPopver.right.active.indexOf(data.tid);
+				if(index>-1){
+					this.RightTagPopver.right.active.splice(index,1);
+				}else{
+					this.RightTagPopver.right.active.push(data.tid);
+				}
+				if(item.flag == 'lefttreetag'){
+					let currIndex = item.data.findIndex(function(current,index){return current.tid == data.tid})
+					if(currIndex > -1){
+						item.data.splice(currIndex,1);
+					}else{
+						item.data.push(data);
+					}
+					item.value = JSON.parse(JSON.stringify(this.RightTagPopver.right.active));
+					return false;
+				}
+
+
+				
+				if(this.RightType == 'folder'){
+					var param = {
+						flag:item.flag,
+						val:this.RightTagPopver.right.active.join(','),
+						fid:this.RightActivefid.join(','),
+						appid:this.DocumentAppid,
+					}
+				}else{
+					var param = {
+						flag:item.flag,
+						val:this.RightTagPopver.right.active.join(','),
+						rid:this.RightActiveRid.join(','),
+						appid:this.DocumentAppid,
+					}
+				}
+				let {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=save',param);
+				if(res.success){
+					if(self.LeftCurrenType == 'nottag'){
+						self.$refs.RefImageLayout.DeleteData(self.RightActiveRid);
+						return false;
+					}
+					let text = [];
+					let val = [];
+					for (let findex = 0; findex < res.data.tag.length; findex++) {
+						const element = res.data.tag[findex];
+						text.push(element.tagname);
+						val.push(element.tid);
+					}
+					if(this.RightType == 'folder'){
+						
+					}else{
+						for (let index = 0; index < res.data.rid.length; index++) {
+							const element = res.data.rid[index];
+							let curr = this.ImageDataParam.data.find(function(current){
+								return current.rid == element;
+							});
+							if(curr){
+								self.$refs.RefImageLayout.UpdateData(element,'tags',text);
+								curr.tags = text;
+							}
+						}
+					}
+					
+					item.data = res.data.tag;
+					item.value = val;
+				}else{
+					self.$message.error(res.msg || '{lang do_failed}');
+				}
+			},
+			async RightTagPopverSearchEnter(item){
+				var self = this;
+				if(!this.RightTagPopver.right.searchCongruent && this.RightTagPopver.keyword){
+					if(!this.RightTagPopver.right.searchCongruent){
+						let {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_add',{
+							appid:self.DocumentAppid,
+							tags:this.RightTagPopver.keyword,
+							
+						});res.data.tag
+						if(res.success){
+							for (let index = 0; index < res.data.length; index++) {
+								const element = res.data[index];
+								element['tid'] = element.tid + '';
+								let domtag = document.querySelector('.tagcontent'+element.tid);
+								if(domtag){
+									self.$message.error('{lang Label_duplication}');
+									continue;
+								}
+								this.RightTagPopver.right.arr.push(element);
+								var curr = this.RightTagPopver.right.data.find(function(current){
+									return current.text == element.initial;
+								});
+								if(curr){
+									curr.data.push(element);
+								}
+								if(item.flag == 'lefttreetag'){
+									item.value.push(element.tid);
+									item.data.push(element);
+									this.RightTagPopver.right.active.push(element.tid);
+								}else{
+									this.RightTagPopverChange(item,element);
+								}
+								
+							}
+							this.RightTagPopver.right.searchdata = [];
+							this.RightTagPopver.right.searchCongruent = false;
+							this.RightTagPopver.keyword = '';
+						
+						}else{
+							self.$message.error(data.msg || '{lang add_unsuccess}');
+						}
+					}
+				}else{
+					if(this.RightTagPopver.right.searchdata.length){
+						this.RightTagPopverChange(item,this.RightTagPopver.right.searchdata[0]);
+						this.RightTagPopver.right.searchdata = [];
+						this.RightTagPopver.right.searchCongruent = false;
+						this.RightTagPopver.keyword = '';
+					}
+				}
+			},
+			RightTagPopverAddTag(data){
+				var self = this;
+				if(data.flag == 'lefttreetag'){
+					var dom = self.$refs['RightTagPopverRef'+data.flag].popperRef.contentRef;
+				}else{
+					var dom = self.$refs['RightTagPopverRef'+data.flag][0].popperRef.contentRef;
+				}
+				
+				self.$messageBox.prompt('', '{lang add_tag}', {
+					confirmButtonText: '{lang confirms}',
+					cancelButtonText: '{lang cancel}',
+					inputPattern:/\S/,
+					inputErrorMessage: '{lang name_cannot_empty}',
+					appendTo:dom,
+					validator: (value) => {
+						return !!value.trim();
+					} 
+				}).then(async ({ value }) => {
+					const {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_add',{
+						appid:self.DocumentAppid,
+						tags:value,
+						cid:self.RightTagPopver.leftactive,
+					});
+					if(res.success){
+						let fdata = res.data;
+						for (let index = 0; index < fdata.length; index++) {
+							const element = fdata[index];
+							element['tid'] = element.tid+'';
+							
+							let domtag = document.querySelector('.tagcontent'+element.tid);
+							if(domtag){
+								self.$message.error('{lang Label_duplication}');
+								continue;
+							}
+							console.log(element);
+							let findex = self.RightTagPopver.right.data.findIndex(function(current){
+								return parseInt(current.tid) == parseInt(element.tid);
+							});
+							if(findex < 0){
+								self.RightTagPopver.right.data.push(element);
+								let curr = self.RightTagPopver.left.find(function(current){
+									return current.cid == self.RightTagPopver.leftactive;
+								});
+								if(curr)curr.num = parseInt(curr.num) + 1;
+							}
+						}
+					}else{
+						self.$message.error(data.msg || '{lang add_unsuccess}');
+					}
+				}).catch(() => {
+			
+				})
+			},
+			async RightTagPopverShow(value){
+				let self = this;
+				this.handleDocumentOverlay(true);
+				self.RightTagPopver = {
+					leftactive:'all',
+					loading:true,
+					keyword:'',
+					left:[],
+					right:{
+						loading:true,
+						recent:[],
+						data:[],
+						arr:[],
+						searchdata:[],
+						searchCongruent:false,
+						active:[]
+					},
+				};
+				var res = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_popbox',{
+					appid:self.DocumentAppid
+				});
+				
+				this.RightTagRightData(value);
+				let data = res.data;
+				if(data.success){
+					self.RightTagPopver.left = data.arr;
+				}else{
+					self.$message.error(data.msg || '{lang get_data_fail}');
+				}
+				self.RightTagPopver.loading = false;
+			},
+			async RightTagRightData(value){
+				let self = this;
+				self.RightTagPopver.right.loading = true;
+				let tids = [];
+
+				for(var j in value.data){
+					tids.push(value.data[j].tid)
+				}
+				self.RightTagPopver.right.active = tids;
+				let param = {
+					appid:this.DocumentAppid,
+					tids:tids.join(',')
+				}
+				if(this.RightTagPopver.leftactive != 'all'){
+					param['cid'] = this.RightTagPopver.leftactive
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=lable&operation=getRigehtdata',param);
+				let data = res.data;
+				if(data.success){
+					if(this.RightTagPopver.leftactive == 'all'){
+						
+						let arr = [];
+						let recent = [];
+						let fdata = [];
+						for(var i in data.arr){
+							arr.push(data.arr[i]);
+						}
+						this.RightTagPopver.right.arr = arr;
+						for(var x in data.recent){
+							recent.push(data.recent[x]);
+						}
+						this.RightTagPopver.right.recent = recent;
+						for(var t in data.data){
+							let item  = data.data[t];
+							var str = {
+								text:t,
+								num:0,
+								data:[]
+							}
+							for(var b in item){
+								str.data.push(item[b]);
+							}
+							str.num = str.data.length;
+							fdata.push(str);
+						}
+						this.RightTagPopver.right.data = fdata;
+					}else{
+						this.RightTagPopver.right.data = data.arr;
+					}
+					self.RightTagPopver.right.loading = false;
+				}else{
+					self.$message.error(data.msg || '{lang get_data_fail}');
+				}
+				
+			},
+		}
+	}
+</script>

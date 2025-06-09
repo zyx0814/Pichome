@@ -1,0 +1,486 @@
+<div class="tag-group-box">
+	<template v-if="!TagLeftActive || TagLeftActive=='nocat'">
+		<el-skeleton :loading="tagCententLoading" animated>
+			<template #template>
+				<div 
+					v-for="item in 5" 
+					class="tag-group">
+					<div class="title">
+						<el-skeleton-item variant="text" style="width: 80px;height: 29px;"></el-skeleton-item>
+					</div>
+					<div class="clearfix">
+						<el-skeleton-item v-for="key in 6" variant="text" style="width: 55px;height: 24px;border-radius: 9999px;margin-right: 8px;"></el-skeleton-item>
+					</div>
+				</div>
+			</template>
+			<template #default>
+				<template v-for="(item,key) in tagCententData">
+					<div 
+					class="tag-group" 
+					:class="'tag-group_'+key" 
+					v-if="item.data.length"
+					:ref="'taggroup_'+key">
+						<el-affix :target="'.tag-group_'+key" :offset="60">
+							<p class="title">{{ item.text }}
+								<span class="num">（{{item.num}}）</span>
+							</p>
+							
+						</el-affix>
+						<div style="padding-top: 1px;display: flex;flex-wrap: wrap;gap: 8px;">
+							<template v-for="fitem in item.data">
+								<el-button 
+									:class="['tagcontent'+fitem.tid]"
+									@contextmenu.prevent="TagContentContextmenu(fitem)"
+									@dblclick="TagContentSearch(fitem.tid)"
+									style="margin: 0;"
+									:key="fitem.tid"
+									>
+									<span class="text">{{ fitem.tagname }}</span>
+									({{fitem.hots}})
+								</el-button>
+							</template>
+						</div>
+					</div>
+				</template>
+				
+				<div id="WordList_box">
+					<ul class="WordList">
+						<li v-for="(item,key) in tagContextWordList" @click="tagWordListClick(key)">{{item}}</li>
+					</ul>
+				</div>
+			</template>
+		</el-skeleton>
+	</template>
+	<template v-else>
+		<el-skeleton :loading="tagCententLoading" animated>
+			<template #template>
+				<div class="tag-group" style="border: 0;padding-right: 0;">
+					<div class="title">
+						<el-skeleton-item variant="text" style="width: 80px;height: 29px;"></el-skeleton-item>
+					</div>
+					<div class="clearfix">
+						<el-skeleton-item v-for="key in 6" variant="text" style="width: 55px;height: 24px;border-radius: 9999px;margin-right: 8px;"></el-skeleton-item>
+					</div>
+				</div>
+			</template>
+			<template #default>
+				<div class="tag-group tag-group-single" style="border: 0;padding-right: 0;">
+					<template v-for="item in TagLeftData">
+						<el-affix target=".tag-group-single" :offset="60">
+							<p 
+								v-if="item.cid == TagLeftActive" 
+								class="title">{{ item.text }}
+								<span class="num">（{{item.num}}）</span>
+								<!-- <el-icon 
+									style="vertical-align: middle;margin-left: 8px;cursor: pointer;"><Upload /></el-icon>
+								<el-icon 
+									@click="TagContextDownload"
+									style="vertical-align: middle;margin-left: 8px;cursor: pointer;"><Download /></el-icon>
+								<el-icon 
+									@click="TagContextAddTag" 
+									style="vertical-align: middle;margin-left: 8px;cursor: pointer;"><Plus /></el-icon> -->
+							</p>
+						</el-affix>
+					</template>
+					<el-tag
+						v-for="item in tagCententData"
+						disable-transitions
+						:class="['tagcontent'+item.tid]"
+						@dblclick="TagContentSearch(fitem.tid)"
+						@contextmenu.prevent="TagContentContextmenu(item)"
+						style="margin-right: 8px;"
+						effect="plain"
+						round>
+						<span class="text">{{ item.tagname }}</span>
+						<span style="margin-left: 3px;">({{ item.hots }})</span>
+					</el-tag>
+				</div>
+			</template>
+		</el-skeleton>
+	</template>
+	<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
+</div>
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	trigger="click"
+	ref="tagContextMenu"
+	:popper-style="{top: tagContextMenu.top, left: tagContextMenu.left}"
+    v-model:visible="tagContextMenu.show"
+	width="auto"
+	@after-enter="handleDocumentOverlay(true)"
+	@before-leave="handleDocumentOverlay(false)"
+	:show-arrow="false">
+    <ul class="el-dropdown-menu">
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('search')">
+			<el-icon><Search /></el-icon>
+            {lang search_contain_tag_file}
+		</li>
+		<el-divider style="margin: 4px 0;"></el-divider>
+		<el-popover v-if="TagLeftData.length>0"
+			popper-class="isdropdown header-dropdown-menu"
+			ref="TagContentMenuChildMove"
+			:offset="-5"
+		    placement="left-start"
+		    :width="auto">
+			<el-scrollbar max-height="260px">
+			    <ul class="el-dropdown-menu">
+					<li 
+						v-for="item in TagLeftData" 
+						:key="item.cid"
+						class="el-dropdown-menu__item"
+						@click="TagContentOperationMove(item.cid)">
+						{{item.text}}
+					</li>
+			    </ul>
+			</el-scrollbar>
+		    <template #reference>
+				<li
+					class="el-dropdown-menu__item" >
+					<el-icon><Rank /></el-icon>
+                    {lang move_to_taggroup}
+					<el-icon style="margin: 0;position: absolute;right: 3px;"><Caret-Right /></el-icon>
+				</li>
+		    </template>
+		</el-popover>
+		<el-popover v-if="TagLeftData.length>0"
+			popper-class="isdropdown header-dropdown-menu"
+			ref="TagContentMenuChildAdd"
+			:offset="-5"
+		    placement="left-start"
+		    :width="auto">
+			<el-scrollbar max-height="260px">
+			    <ul class="el-dropdown-menu">
+					<li 
+						v-for="item in TagLeftData" 
+						:key="item.cid"
+						class="el-dropdown-menu__item"
+						@click="TagContentOperationAdd(item.cid)">
+						{{item.text}}
+					</li>
+			    </ul>
+			</el-scrollbar>
+		    <template #reference>
+				<li
+					class="el-dropdown-menu__item">
+					<el-icon><Circle-Plus /></el-icon>
+                    {lang add_to_taggroup}
+					<el-icon style="margin: 0;position: absolute;right: 3px;"><Caret-Right /></el-icon>
+				</li>
+		    </template>
+		</el-popover>
+		<li
+			v-if="tagContextMenu.data&&tagContextMenu.data.langkey&&tagContextMenu.data.langkey.tagname"
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('lang',tagContextMenu.data.langkey.tagname)">
+			<el-icon>
+				<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M28.2857 37H39.7143M42 42L39.7143 37L42 42ZM26 42L28.2857 37L26 42ZM28.2857 37L34 24L39.7143 37H28.2857Z" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 6L17 9" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 11H28" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 16C10 16 11.7895 22.2609 16.2632 25.7391C20.7368 29.2174 28 32 28 32" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 11C24 11 22.2105 19.2174 17.7368 23.7826C13.2632 28.3478 6 32 6 32" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			</el-icon>
+            {lang Language_Editing}
+		</li>
+		<li
+			v-show="tagContextMenu.remove"
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('remove')">
+			<el-icon><Remove /></el-icon>
+            {lang remove_from_taggroup}
+		</li>
+		<el-divider style="margin: 4px 0;" v-if="TagLeftData.length>0"></el-divider>
+		<li
+			class="el-dropdown-menu__item" 
+			@click="TagContentOperation('delete')">
+			<el-icon><Delete /></el-icon>
+            {lang del_tag}
+		</li>
+	</ul>
+</el-popover>
+<language 
+	:isbtn="false"
+	:visible="languageVisible.show" 
+	:langkey="languageVisible.langkey"
+	@change="tagContentAddClassName"
+	@modelvalue="tagContentmodelvalue"></language>
+<script>
+	var TagContentMixin = {
+		data(){
+			return {
+				languageVisible:{
+					show:false,
+					langkey:null
+				},
+				tagCententLoading:true,
+				tagCententData:[],
+				tagContextMenu:{
+					show:false,
+					data:null,
+					remove:true,
+					top:0,
+					left:0
+				},
+				tagContextWordList:[]
+			}
+		},
+		methods:{
+			TagContextAddTag(){
+				const self = this;
+				self.$messageBox.prompt('', '{lang add_tag}', {
+					confirmButtonText: '{lang confirms}',
+					cancelButtonText: '{lang cancel}',
+					inputPattern:/\S/,
+					inputErrorMessage: '{lang conetnt_not_null}',
+					validator: (value) => {
+						return !!value.trim();
+					} 
+				}).then(async ({ value }) => {
+					value = value.replace(/，/g, ',');
+					let {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=label_add',{
+						appid:self.DocumentAppid,
+						tags:value,
+						cid:self.TagLeftActive
+					});
+					if(res.success){
+
+						for (let index = 0; index < res.data.length; index++) {
+							const element = res.data[index];
+							let domtag = document.querySelector('.tagcontent'+element.tid);
+							if(domtag){
+								self.$message.error('{lang tag_exist}');
+								continue;
+							}
+							self.TagLeftTotal = parseInt(self.TagLeftTotal) + 1;
+							if(self.TagLeftActive){
+								self.tagCententData.push(element);
+							}else{
+								let curr = self.tagCententData.find(function(current){
+									return current.text == element.initial;
+								});
+								if(curr){
+									curr.data.push(element)
+								}else{
+									var str = {
+										text:element.initial,
+										num:1,
+										data:[element]
+									}
+									if(str.data.length){
+										self.tagCententData.push(str);
+										this.tagContextWordList.push(element.initial);
+									}
+								}
+							}
+						}
+						let curr = self.TagLeftData.find(function(current){
+							return current.cid == self.TagLeftActive;
+						});
+						if(curr){
+							curr.num = parseInt(curr.num) + 1;
+						}
+					}else{
+						self.$message.error(res.data.msg || '{lang add_tag_fail}');
+					}
+				}).catch(() => {
+			
+				})
+			},
+			async TagContentOperationMove(cid){//移动标签到群组
+				var self = this;
+				this.tagContextMenu.show = false;
+				self.$refs.TagContentMenuChildMove.hide();
+				if(cid == this.TagLeftActive){
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=movetagtogroup',{
+					appid:this.DocumentAppid,
+					cid:cid,
+					tid:this.tagContextMenu.data.tid,
+				});
+				if(res.data.success){
+					if(this.TagLeftActive){
+						var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+						if(tag){
+							tag.remove();
+						}
+					}
+					this.TagLeftHandleNum(res.data.arr);
+				}else{
+					self.$message.error(res.data.msg || '{lang move_taggroup_fail}')
+				}
+			},
+			async TagContentOperationAdd(cid){//添加标签到群组
+				var self = this;
+				this.tagContextMenu.show = false;
+				self.$refs.TagContentMenuChildAdd.hide();
+				if(cid == this.TagLeftActive){
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=addtagtogroup',{
+					appid:this.DocumentAppid,
+					cid:cid,
+					tid:this.tagContextMenu.data.tid,
+				});
+				if(res.data.success){
+					if(this.TagLeftActive == 'nocat'){
+						var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+						if(tag){
+							tag.remove();
+						}
+					}
+					this.TagLeftHandleNum(res.data.arr);
+				}else{
+					self.$message.error(res.data.msg || '{lang add_taggroup_fail}')
+				}
+			},
+			async TagContentOperation(type,val){
+				var self = this;
+				this.tagContextMenu.show = false;
+				switch(type){
+					case 'search':
+						self.TagContentSearch(this.tagContextMenu.data.tid)
+					break;
+					case 'lang':
+						this.languageVisible.langkey = val;
+						this.languageVisible.show = true;
+						
+					break;
+					case 'remove':
+						var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=removetagfromgroup',{
+							appid:this.DocumentAppid,
+							cid:this.TagLeftActive,
+							tid:this.tagContextMenu.data.tid,
+						});
+						if(res.data.success){
+							var index = this.tagCententData.findIndex(function(current){
+								return current.tid == self.tagContextMenu.data.tid;
+							});
+							this.tagCententData.splice(index,1);
+							this.TagLeftHandleNum(res.data.arr);
+						}else{
+							self.$message.error(res.data.msg || '{lang del_taggroup_fail}')
+						}
+					break;
+					case 'delete':
+						self.$messageBox.confirm(
+						    '{lang del_tag_confirm}',
+						    '{lang delete_tag}',
+						    {
+								confirmButtonText: '{lang delete_tag}',
+								cancelButtonText: '{lang cancel}',
+								type: 'warning',
+								icon:'QuestionFilled'
+						    }).then(async () => {
+								var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=deltag',{
+									appid:this.DocumentAppid,
+									tid:this.tagContextMenu.data.tid,
+								});
+								if(res.data.success){
+									var tag = document.querySelector('.tagcontent'+this.tagContextMenu.data.tid);
+									if(tag){
+										tag.remove();
+									}
+									this.TagLeftHandleNum(res.data.arr)
+								}else{
+									self.$message.error(res.data.msg || '{lang delete_unsuccess}')
+								}
+						    });
+					break;
+				}
+			},
+			tagContentmodelvalue(val){
+				this.languageVisible.show = val;
+			},
+			tagContentAddClassName(val){
+				this.tagContextMenu.data.tagname = val
+			},
+			TagContentSearch(tid){
+				window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.DocumentAppid+'&tag='+tid;
+			},
+			async TagCententGetData(){
+				this.tagCententLoading = true;
+				var param = {
+					appid:this.DocumentAppid
+				}
+				if(this.TagLeftActive && this.TagLeftActive!='nocat'){
+					param['cid'] = this.TagLeftActive;
+				}
+				if(this.TagLeftActive && this.TagLeftActive=='nocat'){
+					param['nocat'] = 1;
+				}
+				this.tagContextWordList = [];
+				var res = await axios.post(MOD_URL+'&op=library&do=tags&operation=gettaggroup',param);
+				var data = res.data.data;
+				var arr = [];
+				if(!this.TagLeftActive || this.TagLeftActive=='nocat'){
+					for(var i in data){
+						if(!i)continue;
+						var str = {
+							text:i,
+							num:0,
+							data:[]
+						}
+						var item = data[i];
+						for(var x in item){
+							str.data.push(item[x])
+						}
+						
+						if(str.data.length){
+							str.num = str.data.length;
+							arr.push(str);
+							this.tagContextWordList.push(i);
+						}
+					}
+				}else{
+					for(var i in data){
+						arr.push(data[i]);
+					}
+				}
+				this.tagCententData = arr;
+				this.tagCententLoading = false;
+			},
+			TagContentContextmenu(item){
+				var self = this;
+				this.DocumentHideAllPop();
+				if(this.LeftTreePopover && this.LeftTreePopover.show){
+					this.LeftTreePopover.show = false;
+				}
+				if(this.tagLeftMenu && this.tagLeftMenu.show){
+					this.tagLeftMenu.show = false;
+				}
+				let menu = self.$refs.tagContextMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+							 
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				//给left和top分别赋值为鼠标的位置；
+				self.tagContextMenu.left = evt.pageX+"px";
+				self.tagContextMenu.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					self.tagContextMenu.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					self.tagContextMenu.top = top1+"px";
+				}
+				this.tagContextMenu.data = item;
+				this.tagContextMenu.remove = true;
+				if(!this.TagLeftActive || this.TagLeftActive =='nocat'){
+					this.tagContextMenu.remove = false;
+				}
+				self.$nextTick(function(){
+					self.tagContextMenu.show = true;
+				});
+				
+			},
+			tagWordListClick(val){
+				const self = this;
+				let offsetTop = self.$refs['taggroup_'+val][0].offsetTop;
+				self.$refs.scrollbar.setScrollTop(offsetTop+1);
+			},
+		}
+	}
+</script>

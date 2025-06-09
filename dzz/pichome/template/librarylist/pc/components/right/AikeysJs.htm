@@ -1,0 +1,65 @@
+<script>
+    let AikeysMixin = {
+        data(){
+            return {
+                Aikeys:{
+                    visible:false,
+                },
+                AikeysForm:[]
+            }
+        },
+        methods:{
+            AikeysOpen(){
+                this.AikeysForm = [];
+                for (const key in this.RightData.Aikey.filedkey) {
+                    if (Object.hasOwnProperty.call(this.RightData.Aikey.filedkey, key)){
+                        const element = this.RightData.Aikey.filedkey[key];
+                        this.AikeysForm.push({
+                            data:element.tpls,
+                            flag:element.flag,
+                            value:'',
+                            title:element.lablename,
+                        });
+                    }
+                }
+            },
+            async AikeysSubmit(){
+                let self = this;
+                let getContent = [];
+                for (let index = 0; index < this.AikeysForm.length; index++) {
+                    const element = this.AikeysForm[index];
+                    if(!element.value)continue;
+                    getContent.push({
+                        flag:element.flag,
+                        tplid:element.value,
+                        key:this.RightData.Aikey.key
+                    });
+                }
+                let param = {
+                    getContent:getContent,
+                };
+               
+                if(this.RightType == 'file'){
+					param['rid'] = this.RightActiveRid.join(',');
+				}else if(this.RightType == 'folder'){
+					param['fid'] = this.RightActivefid.join(',');
+				}else{
+                    param['appid'] = this.DocumentAppid;
+                }
+                const {data :res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getImageAiData',param);
+                if(res.success){
+                    self.$message({
+                        type:'success',
+                        message:'{lang submit_success}'
+                    });
+                    this.Aikeys.visible = false;
+                }else{
+                    self.$message({
+                        type:'error',
+                        message:res.msg || '{lang submit_error}'
+                    })
+                }
+            }
+        }
+    }
+</script>

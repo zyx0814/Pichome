@@ -1,0 +1,378 @@
+<div class="information-box">
+	<el-scrollbar class="page-component__scroll">
+		<div style="padding-right: 20px;">
+			<div class="title">
+				<template v-if="parseInt(imagesData.level)==1">
+					<el-image style="width: 25px; height: 25px;vertical-align: bottom;" src="dzz/pichome/image/grade/1.png" fit="contain"></el-image>
+				</template>
+				<template v-else-if="parseInt(imagesData.level)==2">
+					<el-image style="width: 25px; height: 25px;vertical-align: bottom;" src="dzz/pichome/image/grade/2.png" fit="contain"></el-image>
+				</template>
+				<template v-else-if="parseInt(imagesData.level)==3">
+					<el-image style="width: 25px; height: 25px;vertical-align: bottom;" src="dzz/pichome/image/grade/3.png" fit="contain"></el-image>
+				</template>
+				<template v-else-if="parseInt(imagesData.level)==4">
+					<el-image style="width: 25px; height: 25px;vertical-align: bottom;" src="dzz/pichome/image/grade/4.png" fit="contain"></el-image>
+				</template>
+				<template v-else-if="parseInt(imagesData.level)==5">
+					<el-image style="width: 25px; height: 25px;vertical-align: bottom;" src="dzz/pichome/image/grade/5.png" fit="contain"></el-image>
+				</template>
+				<el-text v-cloak truncated tag="b" style="color: var(--el-text-color-primary);">{{imagesData.name}}.{{imagesData.ext}}</el-text>
+				<!-- <span v-cloak>{{imagesData.name}}</span>.<span v-cloak>{{imagesData.ext}}</span> -->
+			</div>
+			<div class="operation clearfix" >
+				<el-button 
+					plain 
+					v-cloak 
+					v-if="parseInt(imagesData.download)"
+					@click="rightDown">立即下载</el-button>
+				<el-tooltip v-if="imagesData.iniframe && parseInt(imagesData.download)" class="item" effect="dark" content="查看原图" placement="bottom">
+					<el-button plain circle icon="View" @click="rightView"></el-button>
+				</el-tooltip>
+				
+				<el-tooltip v-if="parseInt(imagesData.share)" class="item" effect="dark" content="分享" placement="bottom">
+					<el-button plain @click="rightShare" v-if="parseInt(imagesData.share)" circle icon="Share"></el-button>
+				</el-tooltip>
+				<!--{if $_G['adminid']==1}-->
+				<el-dropdown trigger="click" style="margin-left: 12px;" @command="rightGradePopoverSubmit" placement="bottom">
+					<div>
+						<el-tooltip class="item" effect="dark" content="密级" placement="bottom">
+							<el-button 
+								plain
+								circle >
+								<el-icon style="font-size: 16px;">
+									<svg t="1669566176949" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 170.666667c110.933333 59.733333 204.8 110.933333 298.666667 162.133333 0 213.333333-98.133333 430.933333-298.666667 563.2-200.533333-132.266667-298.666667-349.866667-298.666667-563.2C298.666667 281.6 401.066667 230.4 512 170.666667z m-55.466667 115.2l-34.133333 17.066666c-12.8 8.533333-21.333333 12.8-29.866667 17.066667-42.666667 21.333333-72.533333 38.4-102.4 55.466667 4.266667 166.4 85.333333 320 221.866667 418.133333 136.533333-98.133333 213.333333-251.733333 221.866667-418.133333-21.333333-12.8-46.933333-25.6-72.533334-38.4-25.6-12.8-110.933333-59.733333-149.333333-81.066667-17.066667 12.8-34.133333 21.333333-55.466667 29.866667z"></path></svg>
+								</el-icon>
+							</el-button>
+						</el-tooltip>
+					</div>
+					<template #dropdown>
+						<el-dropdown-menu style="min-width: 100px;">
+							<el-dropdown-item :command="0" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/0.png" fit="contain"></el-image>
+							</el-dropdown-item>
+							<el-dropdown-item :command="1" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/1.png" fit="contain"></el-image>
+							</el-dropdown-item>
+							<el-dropdown-item :command="2" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/2.png" fit="contain"></el-image>
+							</el-dropdown-item>
+							<el-dropdown-item :command="3" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/3.png" fit="contain"></el-image>
+							</el-dropdown-item>
+							<el-dropdown-item :command="4" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/4.png" fit="contain"></el-image>
+							</el-dropdown-item>
+							<el-dropdown-item :command="5" style="justify-content: center;">
+								<el-image style="width: 25px; height: 25px;vertical-align: middle;" src="dzz/pichome/image/grade/5.png" fit="contain"></el-image>
+							</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+					
+				</el-dropdown>
+					
+				<!--{/if}-->
+			</div>
+			
+			<div class="message">
+				<div class="thesis-wrap" v-if="imagesData.colors && imagesData.colors.length">
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">颜色</el-text>
+					<ul class="color clearfix" v-cloak>
+						<li class="color-list" v-for="citem in imagesData.colors">
+							<el-dropdown v-cloak trigger="click" @visible-change="rightShowPopoverColor(citem.val)" @command="rightCommandColor" placement="bottom">
+								<div style="width: 100%;">
+									<el-tooltip :content="'#'+citem.val" effect="light" placement="top" popper-class="color-top">
+										<div class="bg" :style="{background: '#'+citem.val}"></div>
+									</el-tooltip>
+								</div>
+								<template #dropdown>
+									<el-dropdown-menu class="el-popover-color">
+										<el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item>
+										<el-divider></el-divider>
+										<el-dropdown-item :command="ColorPopver.base">复制&nbsp;{{ColorPopver.base}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.rgb">复制&nbsp;{{ColorPopver.rgb}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.rgba">复制&nbsp;{{ColorPopver.rgba}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.hsl">复制&nbsp;{{ColorPopver.hsl}}</el-dropdown-item>
+										<el-divider></el-divider>
+										<el-dropdown-item :command="ColorPopver.hsv">复制&nbsp;{{ColorPopver.hsv}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.cmyk">复制&nbsp;{{ColorPopver.cmyk}}</el-dropdown-item>
+									</el-dropdown-menu>
+								</template>
+								
+							</el-dropdown>
+						</li>
+					</ul>
+				</div>
+				
+				<div class="thesis-wrap" v-if="imagesData.tag && imagesData.tag.length">
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">标签</el-text>
+					<div v-if="imagesData.tag" class="label clearfix" v-cloak>
+						<el-tag v-for="item in imagesData.tag" effect="light" type="info" @click="rightClickTag(item.key)">{{item.val}}</el-tag>
+					</div>
+				</div>
+				<div class="thesis-wrap" v-if="imagesData.desc" v-cloak>
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">注释</el-text>
+					<div v-if="imagesData.desc" class="notes">{{imagesData.desc}}</div>
+				</div>
+			
+				<div class="thesis-wrap" v-if="imagesData.link" v-cloak>
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">链接</el-text>
+					<p class="link">
+						<el-link :underline="false" :href="imagesData.link" truncated style="font-size: 12px;" target="_blank">{{imagesData.link}}</el-link>
+
+						<el-icon size="small" @click="rightcopyText(imagesData.link)"><Copy-Document /></el-icon>
+					</p>
+				</div>
+				<div class="thesis-wrap" v-if="imagesData.realfianllypath" v-cloak>
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">固定地址</el-text>
+					<p class="link">
+						<el-text v-cloak truncated size="small">{{imagesData.realfianllypath}}</el-text>
+						<el-icon size="small" @click="rightrealfianllypath(imagesData.realfianllypath)"><Copy-Document /></el-icon>
+					</p>
+				</div>
+				<div class="thesis-wrap" v-if="imagesData.foldernames && imagesData.foldernames.length">
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);">分类</el-text>
+					<div class="label clearfix" style="padding: 0;" v-cloak>
+						<el-tag v-for="item in imagesData.foldernames" effect="light" type="info" @click="rightClickClass(item.key)">
+							{{item.val.fname}}</el-tag>
+					</div>
+				</div>
+			
+			</div>
+			<div class="information">
+				<el-text v-cloak truncated tag="b" class="tip" style="color: var(--el-text-color-primary);">基本信息</el-text>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">评分</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<div class="record" v-cloak>
+							<el-rate size="small" :model-value="parseInt(imagesData.grade)" disabled></el-rate>
+						</div>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">尺寸</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.width}}×{{imagesData.height}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">文件大小</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.fsize}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">类型</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.ext}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">创建时间</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.mtime}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">添加时间</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.btime}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">修改时间</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.dateline}}</el-text>
+					</el-col>
+				</el-row>
+			</div>
+		</div>
+		
+	</el-scrollbar>
+</div>
+<script type="text/javascript">
+	var rightMixin = {
+		methods:{
+			async rightGradePopoverSubmit(level){
+				var self = this;
+				self.LoginFunc = self.rightGradePopoverSubmit;
+				self.LoginParam = level;
+				var res = await axios.post(MOD_URL+'&op=ajax&operation=setfilelevel',{
+					paths:self.path,
+					level:level
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.imagesData.level = level;
+					self.$message({
+						message:'设置成功',
+						type:'success'
+					});
+				}else{
+					self.$message.error('设置失败');
+				}
+			},
+			rightShowPopoverColor(val) {
+				var rgb = this.rightColorHexToRgb('#' + val);
+				var hsl = this.rightColorRgbToHsl(rgb.r, rgb.g, rgb.b);
+				var cmyk = this.rightColorRgbToCmyk(rgb.r, rgb.g, rgb.b);
+				var hsv = this.rightColorRgbToHsv(rgb.r, rgb.g, rgb.b);
+				this.ColorPopver = {
+					base: '#' + val,
+					rgb: 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')',
+					rgba: 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 1)',
+					hsl: hsl,
+					hsv: hsv,
+					cmyk: cmyk
+				};
+			},
+			
+			async rightCommandColor(val){
+				var self = this;
+				if(val == 'common'){
+					window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.GetParam.appid+'&color=' + this.ColorPopver.base;
+				}else{
+					CopyTxt(this,val)
+				}
+			},
+			rightView(){
+				window.open(this.imagesData.originalimg);
+			},
+			async rightShare() {
+				var self = this;
+				if (self.imagesData.dpath){
+
+					var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=createshare',{path: self.imagesData.dpath});
+					var data = res.data;
+					if (data.success) {
+						CopyTxt(self, data.success);
+					} else {
+						self.$message({
+							message: '分享失败',
+							type: 'error'
+						});
+					}
+				} else {
+					this.$message({
+						message: '数据错误',
+						type: 'error'
+					});
+				}
+			
+			},
+			async rightDown() {
+				var self = this;
+				if (self.imagesData.dpath) {
+					window.open(SITEURL + MOD_URL + '&op=download&dpath=' + self.imagesData.dpath)
+				} else {
+					self.$message({
+						message: '数据错误',
+						type: 'error'
+					});
+				}
+			
+			},
+			async rightClickTag(tid){
+				var self = this;
+				window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.GetParam.appid+'&tag=' + tid;
+			},
+			async rightClickClass(cid){
+				var self = this;
+				window.location.href = MOD_URL+'&op=library&do=filelist#appid='+this.GetParam.appid+'&fid=' + cid;
+			},
+			rightcopyText(val) {
+				CopyTxt(this, val);
+			},
+			rightrealfianllypath(val) {
+				CopyTxt(this, val);
+			},
+			rightColorHexToRgb(hex) {
+				var str = {
+					r: parseInt('0x' + hex.slice(1, 3)),
+					g: parseInt('0x' + hex.slice(3, 5)),
+					b: parseInt('0x' + hex.slice(5, 7))
+				};
+				return str;
+			},
+			rightColorRgbToHsl(r, g, b) {
+				r /= 255, g /= 255, b /= 255;
+				var max = Math.max(r, g, b),
+					min = Math.min(r, g, b);
+				var h, s, l = (max + min) / 2;
+				if (max == min) {
+					h = s = 0; // achromatic
+				} else {
+					var d = max - min;
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0);
+							break;
+						case g:
+							h = (b - r) / d + 2;
+							break;
+						case b:
+							h = (r - g) / d + 4;
+							break;
+					}
+					h *= 6;
+				}
+				return 'hsl(' + Math.round(parseInt(h * 100) / 10) + ', ' + Math.round(parseInt(s * 1000) / 10) +
+					'%, ' + Math.round(parseInt(l * 1000) / 10) + '%)';
+			},
+			rightColorRgbToHsv(R, G, B) {
+				R /= 255
+				G /= 255
+				B /= 255
+				var max = Math.max(R, G, B)
+				var min = Math.min(R, G, B)
+				var range = max - min
+				var V = max
+				var S = V === 0 ? 0 : range / V
+				var H = 0
+				if (R === V) H = (60 * (G - B)) / range
+				if (G === V) H = 120 + (60 * (B - R)) / range
+				if (B === V) H = 240 + (60 * (R - G)) / range
+				if (range === 0) H = 0
+				if (H < 0) H += 360
+				return 'hsv(' + Math.round(H) + ', ' + Math.round(parseInt(S * 1000) / 10) + '%, ' + Math.round(
+					parseInt(V * 1000) / 10) + '%)';
+			},
+			rightColorRgbToCmyk(R, G, B) {
+				if ((R == 0) && (G == 0) && (B == 0)) {
+					return [0, 0, 0, 1];
+				} else {
+					var calcR = 1 - (R / 255),
+						calcG = 1 - (G / 255),
+						calcB = 1 - (B / 255);
+			
+					var K = Math.min(calcR, Math.min(calcG, calcB)),
+						C = (calcR - K) / (1 - K),
+						M = (calcG - K) / (1 - K),
+						Y = (calcB - K) / (1 - K);
+			
+					return 'cmyk(' + Math.round(parseInt(C * 1000) / 10) + '%, ' + Math.round(parseInt(M * 1000) /
+						10) + '%, ' + Math.round(parseInt(Y * 1000) / 10) + '%, ' + Math.round(parseInt(K *
+						1000) / 10) + '%)';
+				}
+			},
+		}
+	};
+</script>

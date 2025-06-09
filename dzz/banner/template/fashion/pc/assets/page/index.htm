@@ -1,0 +1,331 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/theme/default/index.js?{VERHASH}"></script> 
+
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/fashion/pc/assets/js/menu.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+
+<link href="static/prismjs/index.css?{VERHASH}" rel="stylesheet">
+<script src="static/prismjs/index.js?{VERHASH}"></script>
+<script src="static/prismjs/prism-autoloader.js?{VERHASH}"></script>
+<link rel="stylesheet" href="{MOD_PATH}/template/fashion/pc/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/sharedialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/screendir/index.js?{VERHASH}"></script>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+	function obtainData(arr,realurl){
+		if(!arr.length)return false;
+		if(arr[0].realurl == realurl) return arr[0];
+		return obtainData(arr.slice(1), realurl) || obtainData(arr[0].children, realurl);
+	}
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy')
+		item.$message({
+		message: '{lang copy_clipboard}',
+		type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px" :class="{ku:PageType == 'ku' || PageType == 'search'}">
+			<!--{template fashion/pc/components/header}-->
+        </el-header>
+		<el-container class="page-main is-vertical">
+			<theme-default 
+				ref="MainDomRef"
+				:tilebanner="tilebanner"
+				:pagetype="PageType"
+				:contentdata="ContentData"
+				:screenshow="Screenshow"
+				:preference="HeaderRightBtnShow"
+				:itemdata="bannerData.item"
+				@handlepreference="handlepreference"
+				@clearkeyword="clearkeyword"
+				:keyword="headerkeyword"
+				:headeralldata="headeralldata"></theme-default>
+		</el-container>
+	</el-container>
+
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch,defineAsyncComponent, onBeforeUpdate } = Vue;
+	var dzzoffice = createApp({
+		data(){
+			return {
+				bannerData:{
+					data:{},
+					active:null,
+					item:'',
+					show:false
+				}, 
+				PageType:'',
+				DocumentThemeColor:'',
+				ContentData:[],
+				headeralldata:{
+					data:[],
+					message:{
+						sitebeiantxt:'{$_G[setting][sitebeiantxt]}',
+						sitebeian:'{$_G[setting][sitebeian]}',
+					}
+				},
+				tilebanner:[]
+				// scrollref:'',
+				// rollingdire:'up',
+				// beforeScrollTop:0
+			}
+		},
+		created(){
+			const self = this;
+			let data = '$bannerdata';
+			let childdata = $tilebanner;
+			for (const key in childdata) {
+				const element = childdata[key];
+				this.tilebanner.push(element);
+			}
+			if(!data){
+				return false;
+			}
+			this.bannerData.data = JSON.parse(data);
+			this.headeralldata.data = this.bannerData.data.bottom?this.bannerData.data.bottom:[];
+			let keys = Object.keys(this.bannerData.data);
+			if(keys && keys.length){
+				this.GetBannerData();
+			}
+		},
+		mixins:[HeaderMixins],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval;
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods:{
+			// HandleElScrollbar(data){
+			// 	const self = this;
+			// 	self.$refs.MainDomRef.HandleElScrollbar();
+			// 	if(!self.ispc){
+            //         let afterScrollTop = data.scrollTop;
+            //         let updown = afterScrollTop - self.beforeScrollTop;
+            //         if(afterScrollTop == 0){
+            //             self.rollingdire = 'up';
+            //             return false; 
+            //         }
+            //         if( updown === 0 ) {
+            //             return false;
+            //         }            
+            //         self.beforeScrollTop = afterScrollTop;
+            //         self.rollingdire = updown > 0 ? "down" : "up";  //判断往上还是往下
+            //     }
+			// },
+
+			banncomplete(data,type){
+				this.bannerData.item = data;
+				this.bannerData.active = data.id;
+				let keyword = this.GetUrlParam('keyword');
+				if(keyword){
+					this.headerkeyword = keyword;
+					this.fheaderkeyword = keyword;
+				}
+				let btype = parseInt(this.bannerData.item.btype);
+				if(this.headerkeyword && btype != 0 && btype != 4){
+					this.bannerData.active = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+					return false;
+				}
+				if(btype == 0){//库
+					this.ContentData = [];
+					this.PageType = 'ku';
+				}else if(btype == 1){//智能数据
+					this.ContentData = [];
+					this.PageType = 'sources';
+				}else if(btype == 4){//专辑
+					this.ContentData = [];
+					this.PageType = 'tab';
+				}else if(btype == 2){//单页
+					this.ContentData = [];
+					this.PageType = 'page';
+					this.GetContentData();
+				}else{
+					return false;
+				}
+			},
+			//获取栏目数据
+			GetBannerData(){
+				const self = this;
+				let href = window.location.href;
+				let reg1 = new RegExp(SITEURL,"g");
+				let active = href.replace(reg1,"");
+				if(active){
+					<!--{if intval($_G[setting][pathinfo])}-->
+					let param = '{$_GET[hashparams]}';
+					if(param){
+						param = JSON.parse(param);
+						let url = 'index.php?mod=banner&op=index&id='+param.id+'#id='+param.id;
+						let curr = obtainData(this.bannerData.data.top,url);
+						if(curr){
+							this.banncomplete(curr);
+						}
+					}else{
+						let curr = obtainData(this.bannerData.data.top,active);
+						if(curr){
+							this.banncomplete(curr);
+						}else{
+							let pageid = this.GetUrlParam('id');
+							if(pageid){
+								let url = 'index.php?mod=banner&op=index&id='+pageid+'#id='+pageid
+								let curr = obtainData(this.bannerData.data.top,url);
+								if(curr){
+									this.banncomplete(curr);
+								}
+							}
+						}
+					}
+					<!--{else}-->
+					let curr = obtainData(this.bannerData.data.top,active);
+					if(curr){
+						this.banncomplete(curr);
+					}else{
+						let pageid = this.GetUrlParam('id');
+						if(pageid){
+							let url = 'index.php?mod=banner&op=index&id='+pageid+'#id='+pageid
+							let curr = obtainData(this.bannerData.data.top,url);
+							if(curr){
+								this.banncomplete(curr);
+							}
+						}
+					}
+					<!--{/if}-->
+				}else{
+					if(this.bannerData.data && this.bannerData.data.top && this.bannerData.data.top.length){
+						if(parseInt(this.bannerData.data.top[0].btype) == 3){
+							for (let index = 0; index < this.bannerData.data.top.length; index++) {
+								const element = this.bannerData.data.top[index];
+								if(parseInt(element.btype) != 3){
+									this.banncomplete(element);
+									break;
+								}
+							}
+						}else{
+							this.banncomplete(this.bannerData.data.top[0]);
+						}
+						
+					}
+				}
+			},
+			clearkeyword(){
+                this.headerkeyword = '';
+                this.fheaderkeyword = '';
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			//获取栏目内容
+			async GetContentData(){
+				const {data: res} = await axios.get('index.php?mod=alonepage&op=view&do=getdata&id='+this.bannerData.item.bdata);
+				this.ContentData = res.data;
+			},
+			//获取哈希参数
+			GetUrlParam(name){
+				let hash = location.hash;
+				hash = hash.replace(/^#/i, '');
+				if (!name) {
+					return false;
+				}
+				var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+				if (!hash) {
+					return false;
+				}
+				var r = hash.match(reg);
+
+				if (r !== null) {
+					return decodeURIComponent(r[2]);
+				}
+			},
+			ImagePageTurning(path){
+				const self = this;
+				self.$refs.MainDomRef.ImagePageTurning(path);
+			},
+			hideIframe(){
+				const self = this;
+				self.$refs.MainDomRef.hideIframe();
+			},
+		},
+		
+		mounted(){
+			const self = this;
+			dzzoffice.WindowThis = this;
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			//筛选显示隐藏
+			let showscreen = sessionStorage.getItem('showscreen');
+			if(parseInt(showscreen) > -1){
+				this.Screenshow = parseInt(showscreen)?true:false;
+			}
+			// this.scrollref = self.$refs.scrollref;
+		},
+		components:{
+			comavatar,
+			menuitem
+		}
+	});
+	
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('international',international);
+	dzzoffice.use(ThemeDefault);
+	dzzoffice.use(DzzScreen);
+	dzzoffice.use(DzzScreendir);
+	dzzoffice.component('comsort', comsort);
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(ImageLayoutlimit);
+	dzzoffice.use(DzzCollectdialog);
+	dzzoffice.use(DzzShareDialog);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+
+<!--{template common/container/pc/footer}-->

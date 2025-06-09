@@ -1,0 +1,765 @@
+
+<template v-if="DocumentVapp.type == 3 && LeftCurrenType!='recycle'">
+
+	<el-popover
+		ref="popoverUploadBtn"
+		placement="left"
+		v-model:visible="UploaderData.visible"
+		width="780px"
+		popper-class="uploaderdrawermodal ContextMenu"
+		trigger="click">
+		<el-container>
+			<el-container>
+				<el-aside width="130px" style="border-right: 1px solid var(--el-border-color);padding: 10px 10px 10px 0;">
+					<!-- <p style="padding-bottom: 17px;">如果遇到重复文件</p>
+					<el-radio-group v-model="UploaderData.FileType" class="ml-4">
+						<el-radio :label="1" >采用已有文件</el-radio>
+						<el-radio :label="2" >不使用已有文件</el-radio>
+					</el-radio-group>
+					<el-divider></el-divider> -->
+					
+					<el-button text size="large" style="width: 100%;justify-content: left;padding: 10px;margin-bottom:10px;position: relative;">
+						<input style="position: absolute;opacity: 0;width: 100%;height: 100%;left: 0;top: 0;" type="file" name="files" @change="UploadChange" multiple="multiple">
+						<el-icon class="el-icon--left"><Upload /></el-icon>
+                        {lang uploading_files}
+					</el-button>
+					
+					<el-button text size="large" style="width: 100%;justify-content: left;margin: 0;padding: 10px;position: relative;">
+						<input style="position: absolute;opacity: 0;width: 100%;height: 100%;left: 0;top: 0;" type="file" name="files" multiple webkitdirectory="" @change="UploadFileChange">
+						<el-icon class="el-icon--left">
+							<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M529.664 213.333333H896a42.666667 42.666667 0 0 1 42.666667 42.666667v597.333333a42.666667 42.666667 0 0 1-42.666667 42.666667H128a42.666667 42.666667 0 0 1-42.666667-42.666667V170.666667a42.666667 42.666667 0 0 1 42.666667-42.666667h316.330667l85.333333 85.333333zM170.666667 213.333333v597.333334h682.666666V298.666667h-358.997333l-85.333333-85.333334H170.666667z m384 341.333334v170.666666h-85.333334v-170.666666H341.333333l170.666667-170.666667 170.666667 170.666667h-128z"></path></svg>
+						</el-icon>
+                        {lang upload_folder}
+					</el-button>
+					
+				</el-aside>
+				<el-container>
+					<el-header height="40px" style="display: flex;justify-content: space-between;padding: 0 10px;align-items: center;border-bottom: 1px solid var(--el-border-color);">
+						<div>{lang are_uploading1}[ {{UploaderData.Total}} / {{UploaderData.Already}} ]</div>
+						<el-button type="primary"  text style="justify-content: left;padding: 8px 12px;" @click="UploadOperation('cancelall')">
+                            {lang all_cancel}
+						</el-button>
+					</el-header>
+					<el-main style="padding: 0 10px;">
+						<el-table :data="UploaderData.fdata" style="width: 100%;" height="350"  empty-text="{lang No_data_uploaded_yet}">
+							<el-table-column fixed  show-overflow-tooltip prop="fileName" label="{lang FileFolder_name}" ></el-table-column>
+							<el-table-column show-overflow-tooltip label="{lang extent}" width="80">
+								<template #default="scope">
+									{{scope.row.fileSize}}
+								</template>
+							</el-table-column>
+							<el-table-column show-overflow-tooltip label="{lang schedule}" width="90">
+								<template #default="scope">
+									{{uploadSingleProgress(scope.row.percentage,scope.row.size)}}%
+								</template>
+							</el-table-column>
+							<el-table-column label="{lang status}" align="center" width="100">
+								<!-- 1：上传中 2：等待上传 3：已暂停 4：上传失败 5：已完成 -->
+								<template #default="scope">
+									<template v-if="scope.row.fileStatus == 0">{lang wait}</template>
+									<template v-else-if="scope.row.fileStatus == 1">{lang check_md5}</template>
+									<template v-else-if="scope.row.fileStatus == 2">{lang uploading}</template>
+									<template v-else-if="scope.row.fileStatus == 3">{lang is_done}</template>
+									<template v-else-if="scope.row.fileStatus == 4" :title="scope.row.error">{lang upload_fail}</template>
+									<template v-else-if="scope.row.fileStatus == 5">{lang is_cancel}</template>
+								</template>
+							</el-table-column>
+							<el-table-column label="{lang operation}" width="100">
+								<template #default="scope">
+									<div class="head_btn">
+										<!-- <el-button type="info" size="small" v-if="scope.row.fileStatus == 2" @click.stop="uploaderdrawerOperation('change',scope.row)">选择</el-button> -->
+										<!-- <el-button type="warning" size="small" v-if="scope.row.fileStatus < 3" @click.stop="uploaderdrawerOperation('cancel',scope.row)">取消</el-button> -->
+																				
+										<el-button type="danger" size="small" title="{lang delete}" circle v-if="scope.row.fileStatus>3 || scope.row.fileStatus<1" @click.stop="uploaderdrawerOperation('delete',scope.row)"><el-icon><Delete /></el-icon></el-button>
+										<el-button type="warning" size="small" title="{lang try_agains}"  circle v-if="scope.row.fileStatus>=4" @click.stop="uploaderdrawerOperation('retry',scope.row)"><el-icon><Promotion /></el-icon></el-button>
+									</div>
+								</template>
+							</el-table-column>
+						</el-table>
+					</el-main>
+				</el-container>
+			</el-container>
+		</el-container>
+		<template #reference>
+			<div class="file-uploader">
+				<el-button type="primary" style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;" circle size="large">
+					<template v-if="(parseInt(UploaderData.Total) - parseInt(UploaderData.Already)) == 0">
+						<el-icon><Plus /></el-icon>
+					</template>
+					<template v-else>
+						{{parseInt(UploaderData.Total) - parseInt(UploaderData.Already)}}
+					</template>
+				</el-button>
+			</div>
+		</template>
+	</el-popover>
+</template>
+
+<script>
+	//0等待中  1验证md5 2上传中 3上传成功 4上传失败
+	//Md5Status: 0:未验证；1：已经有相同文件（本库）；2：已经有相同文件（非本库）；
+	const UploaderMinxins = {
+		data() {
+			return {
+				UploaderData:{
+					queuenumber:5,//控制上传个数
+					listnumber:100,//控制列表个数
+					Total:0,//总上传文件树
+					fTotal:0,//总上传文件树
+					
+					TotalSize: 0,//总上传文件大小
+					
+					Already:0,//已经上传文件树
+					AlreadySize:0,//已经上传进度
+					
+					Error:0,//上传错误数量
+					
+					FileType:1,//遇到重复文件的处理方式；
+					data:[],//储存上传数据
+					fdata:[],//储存上传数据
+					IsCancel:false,//是否全部取消
+					queue:[],//上传队列
+					fqueue:[],//上传队列
+					queuenid:0,//当前上传的id
+					folderData:[],//储存文件夹数据
+					visible:false
+				},
+				clouddata:{
+					bz:"$_G['setting']['defaultspacesetting']['bz']",
+					Bucket: "$_G['setting']['defaultspacesetting']['bucket']",
+					Region: "$_G['setting']['defaultspacesetting']['region']",
+					did:parseInt("$_G['setting']['defaultspacesetting']['did']"),
+					remoteid:parseInt("$_G['setting']['defaultspacesetting']['remoteid']"),
+					uid:"$_G['uid']",
+				}
+			}
+		},
+		
+		computed:{
+			uploadTotalProgress(){
+				return (this.UploaderData.AlreadySize/this.UploaderData.TotalSize).toFixed(2)*100;
+			},
+			uploadSingleProgress(){
+				return (val1,val2) => {
+					let per=parseInt((val1/val2).toFixed(2)*100);
+					if(per>100) per=100;
+					return per;
+				}
+			}
+		},
+		methods: {
+			// 选择文件夹
+			UploadFileChange(event,type){
+				var self = this;
+				this.UploaderData.visible=true;
+				let fkey = Date.parse(new Date());
+			
+				
+				if(type == 'drop'){
+					var files = event;
+				}else{
+					var files = event.target.files;
+				}
+				let fid = this.LeftCurrenType=='filelist'?this.LeftTree.Currentkey:'';
+				
+				for(let index=0;index<files.length;index++){
+					this.UploaderData.fTotal ++;
+					let fitem = files[index];
+					let item = {};
+					item['raw'] = files[index];
+					item['id'] = fkey+'_'+this.UploaderData.fTotal;
+					item['fkey'] = fkey;
+					item['fid'] = fid;
+					item['isfolder'] = true;
+					item['size'] = fitem['size'];
+					item['webkitRelativePath'] = type == 'drop'?fitem['fullPath']:fitem['webkitRelativePath'];
+					item['fileStatus'] = 0;
+					//md5状态
+					item['Md5Status'] = 0;
+					//计算大小
+					item['fileSize'] = handleSize(fitem.size);
+					this.UploaderData.TotalSize += fitem.size;
+					//获取文件名
+					item['fileName'] = fitem.name.substring(0, fitem.name.lastIndexOf("."));
+					item['percentage'] = 0;
+					item['FileData'] = '';
+					
+					if(type == 'drop'){
+						var relativePath = item.raw.fullPath.split('/');
+					}else{
+						var relativePath = item.raw.webkitRelativePath.split('/');
+					}
+					relativePath.pop();
+					item['relativePath'] = relativePath.join('/');
+					/*let buffer;
+					try {
+						buffer = await this.fileToBuffer(item.raw)
+					} catch (e) {
+						return false;
+					}
+					// 根据文件内容生成 hash 值
+					const spark = new SparkMD5.ArrayBuffer()
+					spark.append(buffer)
+					item['md5'] = spark.end();*/
+					//分片数据
+					//item['burst'] = this.UploadBurst(item.raw);//文件分片
+					
+					this.UploaderData.data[item.id]=item;
+					this.UploaderData.Total += 1;
+					this.UploaderData.fqueue.push(item.id);
+					if(this.UploaderData.fdata.length-this.UploaderData.Error<this.UploaderData.listnumber){
+						this.UploaderData.fdata.push(item);
+					}
+					self.UploadQueuenids();
+				}
+				
+			},
+			// 选择文件
+			UploadChange(event,type) {
+				var self = this;
+				this.UploaderData.visible=true;
+				if(type == 'drop'){
+					var files = event;
+				}else{
+					var files = event.target.files;
+				}
+				let fkey = Date.parse(new Date());
+
+				let fid = this.LeftCurrenType=='filelist'?this.LeftTree.Currentkey:'';
+				
+				for(let index=0;index<files.length;index++){
+					this.UploaderData.fTotal ++;
+					let fitem = files[index];
+					let item = {};
+					item['raw'] = files[index];
+					item['id'] = fkey+'_'+this.UploaderData.fTotal;
+					item['fkey'] = fkey;
+					item['isfolder'] = false;
+					item['fileStatus'] = 0;
+					item['size'] = fitem.size;
+					item['fid'] = fid;
+					item['webkitRelativePath']='';
+					//md5状态
+					item['Md5Status'] = 0;
+					//计算大小
+					item['fileSize'] = handleSize(fitem.size);
+					this.UploaderData.TotalSize += fitem.size;
+					//获取文件名
+					item['fileName'] = fitem.name.substring(0, fitem.name.lastIndexOf("."));
+					item['percentage'] = 0;
+					item['FileData'] = '';
+					
+					
+				
+					this.UploaderData.data[item.id]=item;
+					
+					this.UploaderData.Total += 1;
+					if(this.UploaderData.fdata.length-this.UploaderData.Error<this.UploaderData.listnumber){
+						this.UploaderData.fdata.push(item);
+					}
+					this.UploaderData.fqueue.push(item.id);
+					this.UploadQueuenids();
+				}
+				
+			},
+			UploadList(){
+				let num=this.UploaderData.listnumber-(this.UploaderData.fdata.length-this.UploaderData.Error);
+				let p=0;
+				for(let i=0;i<this.UploaderData.fqueue.length;i++){
+					if(p>=num) break;
+					let findex = this.UploaderData.fdata.findIndex((current) => {
+						return current.id == this.UploaderData.fqueue[i];
+					});
+					if(findex<0){
+						this.UploaderData.fdata.push(this.UploaderData.data[this.UploaderData.fqueue[i]]);
+						p++;
+					}
+				}
+			},
+			UploadQueuenids(index){
+				let self=this;
+				if(!this.UploaderData.fqueue.length){
+					return false;
+				}
+				this.UploadList();
+				if(this.UploaderData.queue.length < this.UploaderData.queuenumber){
+					for(let i=0;i<this.UploaderData.queuenumber-this.UploaderData.queue.length;i++){
+						if(this.UploaderData.fqueue.length){
+							let id = this.UploaderData.fqueue.shift();
+							this.UploaderData.queue.push(id);
+							let findex = this.UploaderData.fdata.findIndex((current) => {
+								return current.id == id;
+							});
+							if(findex<0){
+								this.UploaderData.fdata.push(this.UploaderData.data[id]);
+							}
+							self.UploadCarryOut(id);
+						}
+					}
+				}
+			},
+			async UploadCarryOut(key,item){
+				
+				let self = this;
+				item = this.UploaderData.fdata.find((current) => {
+					return current.id == key;
+				});
+				if(item){
+					if(!item['md5']){
+						item['fileStatus'] = 1;
+						item['md5'] = await this.getSparkMd5(item.raw,item.id);
+					}
+
+					let param = {
+						md5:item['md5'],
+						appid:this.DocumentAppid,
+					}
+				
+					let argments = this.UploadExportLocation(this.UploaderData.folderData,item);
+					if(argments.fid){
+						param.pfid = argments.fid;
+					}
+					if(argments.relativePath){
+						param.relativePath = argments.relativePath;
+					}
+					axios.post(MOD_URL+'&op=library&do=upload&operation=chkmd5',param)
+					.then(({data: res})=>{
+						if(res.success){
+							item['rid'] = res.data.rid;
+							// if(res.data.rid){
+							// 	item['Md5Status'] = 1;
+							// }else if(res.data.data){
+								item['Md5Status'] = 2;
+								item['icoarr'] = [res.data]
+								item['FileData'] = res.data;
+							// }
+						}else if(!res.success){
+							item['Md5Status'] = 3;
+						}else{
+							item['Md5Status'] = 4;
+						}
+						item['fileStatus'] = 2;
+						item['percentage'] = 0;
+						switch (item.Md5Status){
+							// case 1:
+							// 	if(self.UploaderData.FileType==1){
+							// 		item['fileStatus']=3;
+							// 		self.UploadAccomplish(item);
+							// 		item['percentage'] += item.size;
+							// 	}else{
+							// 		self.UploadRequestCopyuploadfile(item);
+							// 	}
+							// break;
+							case 2:
+								item['fileStatus']=3;
+								self.UploadAccomplish(item);
+								item['percentage'] += item.size;
+							break;
+							default:
+		
+								self.multiupload(item);
+							break;
+						}
+					}).catch(function(error){
+						self.multiupload(item);
+					});
+					
+				}
+				
+			},
+		
+			UploadRequestCopyuploadfile(item){//不使用已有文件的请求
+				const self = this;
+				let param = {
+					rid:item.rid,
+					appid:this.DocumentAppid,
+				}
+				let argments = this.UploadExportLocation(self.UploaderData.folderData,item);
+				if(argments.fid){
+					param['pfid'] = argments.fid;
+				}
+				if(argments.relativePath){
+					param['relativePath'] = argments.relativePath;
+				}
+				axios.post(MOD_URL+'&op=library&do=upload&operation=copyuploadfile',param)
+				.then((res) => {
+					item['FileData'] = res.data;
+					self.UploadAccomplish(item);
+					item['percentage'] = item.size;
+				}).catch(function (error) {
+					item['fileStatus'] = 4;
+					item['error']=error;
+					self.UploadAccomplish(item);
+				});
+				
+			},
+			
+			
+			UploadAccomplish(item){//完成上传
+				const self = this;
+				
+				if(item){
+					if(item.fileStatus != 4){
+						item.fileStatus = 3;
+						this.UploaderData.Already += 1;
+						item.percentage = item.size;
+					}else{
+						this.UploaderData.Error += 1;
+						item.percentage = item.size;
+					}
+					//this.UploaderData.Already += 1;
+					
+					let findex=self.UploaderData.fqueue.indexOf(item.id);
+					let findex1=self.UploaderData.queue.indexOf(item.id);
+					if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+					if(findex1>-1) self.UploaderData.queue.splice(findex1,1);
+					if(item.FileData){
+						let fdata=null;
+						let addnum=0;
+						if(item.FileData.icoarr){
+							fdata=item.FileData.icoarr[0];
+							addnum=parseInt(fdata.addnum);
+						}else{
+							fdata=item.FileData;
+							addnum=parseInt(fdata.addnum);
+						}
+						let node = self.$refs.LeftTreeRef.getNode(self.LeftTree.Currentkey);
+						if(item.isfolder){
+							let folder = item.FileData.folder;
+							if(folder && folder.length){
+								
+								// 文件夹数据放到数组里面
+								this.UploadImportLocation(item,folder);
+								if(item.fid){
+									if(node){
+										node.loaded = false;
+										node.expand();
+									}
+									
+									let status = true;
+									for(var f in folder){
+										if(folder[f].fid == self.LeftTree.Currentkey){
+											status = false;
+											continue;
+										}
+										if(status){
+											continue;
+										}
+										let curr = self.filedata.data.find(function(current){
+											return current.fid == folder[f].fid;
+										});
+										if(!curr){
+											var str1 = {
+												fid:folder[f].fid,
+												fname:folder[f].fname,
+												pfname:folder[f].fname,
+												filenum:folder[f].filenum?folder[f].filenum:0,
+												nosubfilenum:folder[f].nosubfilenum?folder[f].nosubfilenum:0,
+												children:[],
+												isRename:true,
+												pathkey:folder[f].pathkey,
+												icon: "dzz/images/extimg/unknow.png"
+											};
+											self.filedata.data.push(str1);
+											self.$refs.ImageFileRef.appendData(str1);
+											
+										}
+										
+										if(!parseInt(self.hassub)){
+											status = true;
+										}
+										
+									}
+								}else{
+									let node = self.$refs.LeftTreeRef.getNode(folder[0].fid);
+									if(node){
+										node.loaded = false;
+										node.expand();
+										// self.$nextTick(function(){
+										// 	self.LeftParentFilenum(node);
+										// });
+									}else{
+										var str = {
+											fid:folder[0].fid,
+											fname:folder[0].fname,
+											pfname:folder[0].fname,
+											filenum:0,
+											nosubfilenum:0,
+											children:[],
+											leaf:true,
+											isRename:false,
+											pathkey:folder[0].pathkey,
+											pfid:0
+										};
+										self.$refs.LeftTreeRef.append(str,self.LeftTree.TopLevelNode);
+									}
+								}
+							}
+							
+							if(addnum){
+								let index = self.ImageIcon.data.findIndex(function(current){
+									return current == fdata.rid;
+								});
+								if(!fdata.icondata && index < 0){
+									self.ImageIcon.data.push(fdata.rid)
+								}
+								if(!self.LeftCurrenType){
+									self.$refs.RefImageLayout.AppendData(fdata,'unshift');
+									
+								}else{
+									if(parseInt(self.hassub)){
+										self.$refs.RefImageLayout.AppendData(fdata,'unshift');
+									}
+								}
+								self.$nextTick(() => {
+									let xnode = self.$refs.LeftTreeRef.getNode(folder[0].fid);
+									if(xnode) {
+										if(fdata.fids == xnode.data.fid){
+											xnode.data.nosubfilenum = parseInt(xnode.data.nosubfilenum) + 1;
+										}
+										xnode.data.filenum = parseInt(xnode.data.filenum) + 1;
+										self.LeftParentFilenum(xnode.parent);
+									
+									}
+									
+								});
+								if(!fdata.onlyfolderadd){
+									self.LeftTreeSidebar.all = parseInt(self.LeftTreeSidebar.all) + 1;
+									self.LeftTreeSidebar.notag = parseInt(self.LeftTreeSidebar.notag) + 1;
+								}
+							}
+						}else{
+							if(addnum){
+								let index = self.ImageIcon.data.findIndex(function(current){
+									return current == fdata.rid;
+								});
+								if(!fdata.icondata && index < 0){
+									self.ImageIcon.data.push(fdata.rid)
+								}
+
+								self.$refs.RefImageLayout.AppendData(fdata,'unshift');
+								if(self.LeftCurrenType == 'filelist'){
+									let node = self.$refs.LeftTreeRef.getNode(self.LeftTree.Currentkey);
+									if(node ){
+										node.data.nosubfilenum = parseInt(node.data.nosubfilenum) + 1;
+										node.data.filenum = parseInt(node.data.filenum) + 1;
+										self.LeftParentFilenum(node.parent);
+									}
+								}else{
+
+									if(item.FileData.fids==''){
+										self.LeftTreeSidebar.nocat = parseInt(self.LeftTreeSidebar.nocat) + 1;
+									}
+								}
+								if(!fdata.onlyfolderadd){
+									self.LeftTreeSidebar.all = parseInt(self.LeftTreeSidebar.all) + 1;
+									self.LeftTreeSidebar.notag = parseInt(self.LeftTreeSidebar.notag) + 1;
+								}
+							}
+						}
+					}
+					if(item.fileStatus != 4){
+						this.UploadCompleteDelete(item.id);
+					}
+					this.UploadQueuenids();
+				}
+			},
+			encode:function(keyword) {
+				const reg = /[\[\(\$\^\.\]\*\\\?\+\{\}\\|\)]/gi
+				return keyword.replace(reg, (key) => `\\${key}`)
+			},
+
+			UploadExportLocation(data,item,curr){//判断路径获取fid
+				let param = {
+					fid:null,
+					relativePath:null
+				};
+				if(item.isfolder){
+					if(data && data.length){
+						let frelativepath='';
+						if(item.fid){
+							fpath = data.find((curent) => {
+								return curent.fid == item.fid;
+							});
+							
+							if(fpath && fpath.relativePath){
+								frelativepath=fpath.relativePath+'/';
+							}
+						}
+						let newp=frelativepath+item.relativePath;
+						let rarr=newp.split('/');
+						const newarr=[];
+						const max=rarr.length;
+						for(let i=0;i<max-1;i++){
+							rarr.pop();
+							if(rarr.length) newarr.push(rarr.join('/'));
+						}
+						for(let i=0;i<newarr.length;i++){
+							curr = data.find((curent) => {
+								return curent.relativePath == newarr[i];
+							});
+							if(curr) break;
+						}
+						if(curr){
+							param.fid = curr.fid;
+							let reg=new RegExp('^'+this.encode(curr.relativePath+'/'),'i');
+							param.relativePath = (frelativepath+item.webkitRelativePath).replace(reg,'');
+						}else{
+							if(item.webkitRelativePath){
+								relativePath = item.webkitRelativePath;
+							}
+							if(item.fullPath){
+								relativePath = item.fullPath;
+							}
+							param.relativePath = relativePath;
+							param.fid = item.fid;
+							
+						}
+					}else{
+						let relativePath = '';
+						if(item.webkitRelativePath){
+							relativePath = item.webkitRelativePath;
+						}
+						if(item.fullPath){
+							relativePath = item.fullPath;
+						}
+						param.relativePath = relativePath;
+						param.fid = item.fid;
+					}	
+				}else{
+					param.fid = item.fid;
+				}
+				
+				return param;
+			},
+			UploadImportLocation(item,folder,arr){//储存路径
+				if(Array.isArray(this.UploaderData.folderData)){
+					
+					/*arr = this.UploaderData.folderData['key_'+item.fkey].find(function(current){
+						return current.relativePath == item.relativePath;
+					});
+					if(!arr){
+						var status = true;
+						var status = true;*/
+						let str = ''
+						for(let i in folder){
+							/*if(item.fid && status){
+								if(item.fid == folder[i].fid){
+									status = false;
+									continue;
+								}
+								if(status){
+									continue;
+								}
+							}*/
+							str += str?'/'+folder[i].fname:folder[i].fname;
+							let isstr = this.UploaderData.folderData.find(function(current){
+								return current.relativePath == str;
+							});
+							
+							if(!isstr){
+								this.UploaderData.folderData.push({
+									fid:folder[i].fid,
+									relativePath:str
+								});
+							}
+							
+						}
+					}
+				//}
+			},
+			UploadCompleteDelete(key,time=1000){//删除
+				let self=this;
+				
+				 setTimeout(() => {
+				 	let findex = self.UploaderData.fdata.findIndex((current) => {
+				 		return current.id == key;
+				 	});
+					 if(findex>-1)	self.UploaderData.fdata.splice(findex,1);
+				 },time);
+			},
+
+			getSparkMd5(file,fileid) {
+				let self=this;
+				return new Promise((resolve, reject) => {
+					let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
+					chunkSize = 20097152,                             // Read in chunks of 2MB
+							chunks = Math.ceil(file.size / chunkSize),
+							currentChunk = 0,
+							spark = new SparkMD5.ArrayBuffer(),
+							fileReader = new FileReader();
+					let item = self.UploaderData.data[fileid];
+					fileReader.onload = function (e) {
+						spark.append(e.target.result);                   // Append array buffer
+						currentChunk++;
+						if (currentChunk < chunks) {
+							loadNext();
+							if(item) item['percentage']=currentChunk*chunkSize;
+						} else {
+							let sparkmd5 = spark.end();
+							resolve(sparkmd5);
+						}
+					};
+
+					fileReader.onerror = function () {
+						reject(new Error('spark md5 error'))
+					};
+
+					function loadNext() {
+						let start = currentChunk * chunkSize,
+								end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+						fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+					}
+					loadNext();
+				});
+			},
+			uploaderdrawerOperation(action,item){
+				let self=this;
+				switch(action){
+					case 'delete':
+						let findex = this.UploaderData.fdata.findIndex((current) => {
+							return current.id == item.id;
+						});
+						if(findex>-1){
+							
+							let findex1 = self.UploaderData.fqueue.findIndex((id) => {
+								return id == item.id;
+							});
+							self.UploaderData.fdata.splice(findex,1);
+							self.UploaderData.Total--;
+							if(findex1>-1) self.UploaderData.fqueue.splice(findex1,1); 
+						}
+						break;
+					case 'retry':
+						self.UploaderData.fqueue.push(item.id); 
+						this.UploadQueuenids();
+						break;
+				}
+				
+			},
+			UploadOperation(action,item){
+				let self=this;
+				switch(action){
+					case 'cancel':
+						if(item.fileStatus>0) return;
+						item.fileStatus=5;
+						let findex=self.UploaderData.fqueue.indexOf(item.id);
+						if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+						break;
+					case 'cancelall':
+						this.UploaderData.fdata.forEach((item,index)=>{
+							if(item.fileStatus>0) return;
+							item.fileStatus=5;
+							let findex=self.UploaderData.fqueue.indexOf(item.id);
+							if(findex>-1) self.UploaderData.fqueue.splice(findex,1);
+						});
+						this.UploaderData.data.forEach((item,index)=>{
+							if(item.fileStatus>0) return;
+							item.fileStatus=5;
+						});
+						break;
+				}
+			}
+		}
+	}
+</script>

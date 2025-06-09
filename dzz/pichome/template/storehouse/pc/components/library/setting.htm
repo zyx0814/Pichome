@@ -1,0 +1,509 @@
+<el-dialog 
+    :title="SettingDialog.title" 
+    v-model="SettingDialog.Visible" 
+    :close-on-click-modal="false" 
+    :show-close="SettingForm.loading?false:true">
+	<el-form :model="SettingForm" label-width="140px">
+		<el-form-item label="库名称：">
+			<el-input v-model="SettingForm.appname"></el-input>
+		  </el-form-item>
+		<el-form-item label="库位置：">
+			<el-input v-model="SettingForm.path" readonly style="border: 0;">
+				<i slot="suffix" style="cursor: pointer;" class="el-input__icon el-icon-edit" @click="SettingFormPathClick"></i>
+			</el-input>
+		</el-form-item>
+		<el-form-item label="访问权限：">
+			<orguser-select 
+				v-if="SettingDialog.Visible" 
+				:defaulttype="'view_'+SettingForm.appid" 
+				@change="SettingTreeVisitChange" 
+				:defaultheckeds="SettingFormvisit.checked" 
+				:defaultexpanded="SettingFormvisit.expanded" 
+				:defaultdata="SettingFormvisit.data"></orguser-select>
+			<p class="tipTxt">没有访问权限的人在库列表中看不到本库</p>
+		</el-form-item>
+		<el-form-item label="下载权限：">
+			 <orguser-select v-if="SettingDialog.Visible" :defaulttype="'down_'+SettingForm.appid" @change="SettingTreeDownChange" :defaultheckeds="SettingFormdownload.checked" :defaultexpanded="SettingFormdownload.expanded" :defaultdata="SettingFormdownload.data"></orguser-select>
+			 <p class="tipTxt">没有下载权限的人同时无法查看原图，浏览时仅能查看缩略图，也无法下载文件</p>
+		</el-form-item>
+		<el-form-item label="分享权限：">
+			<orguser-select v-if="SettingDialog.Visible" :defaulttype="'share_'+SettingForm.appid" @change="SettingTreeShareChange" :defaultheckeds="SettingFormshare.checked" :defaultexpanded="SettingFormshare.expanded" :defaultdata="SettingFormshare.data"></orguser-select>
+			<p class="tipTxt">没有分享权限的人员无法使用分享功能</p>
+		</el-form-item>
+		<template v-if="parseInt(SettingForm.eagle)==1">
+			<el-form-item label="允许导入文件：">
+				<el-input type="textarea" v-model="SettingForm.allowext"></el-input>
+				<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+			</el-form-item>
+			<el-form-item label="禁止导入文件：">
+				<el-input type="textarea" v-model="SettingForm.notallowext"></el-input>
+				<p class="tipTxt">多个使用英文 " , " 隔开。1、"*.png" 代表所有png文件，2、"风景*.jpg"代表所有风景开头的png文件</p>
+			</el-form-item>
+			<!-- <el-form-item label="开启缩略图转换：">
+				<el-switch v-model="SettingForm.getinfo" active-value="1" inactive-value="0"></el-switch>
+				<p class="tipTxt">缩略图转换需要较长时间，转换时会增加会增加服务器CPU与内存占用，转换缩略图对于大尺寸图片的列表显示速度有大幅度提升</p>
+			</el-form-item> -->
+		</template>
+		
+	</el-form>
+    <template #footer>
+        <div class="dialog-footer">
+            <el-button @click="SettingDialog.Visible = false" :disabled="SettingForm.loading">取 消</el-button>
+            <el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading">确 定</el-button>
+        </div>
+    </template>
+	
+</el-dialog>
+<script type="text/javascript">
+	var SettingMixin = {
+		data(){
+			return{
+				SettingForm:{
+					appname:'',
+					loading:false,
+					appid:'',
+					path:'',
+					getinfo:'0',
+					eagle:0,
+					allowext:'',
+					notallowext:'',
+					charset:'',
+					
+				},
+				SettingDialog:{
+					title:'',
+					Visible:false,
+					pathinfo:0,
+				},
+				SettingFormvisit:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormshare:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+				SettingFormdownload:{
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				},
+			}
+		},
+		methods:{
+			async SettingGetData(appid,title){
+				var self = this;
+				this.SettingDialog.title = '设置'+title+'库';
+				
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',{appid:appid});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				
+				if(data.success){
+					var ditem = data.data;
+					var showVal = ditem.convertpath.replace(/\\/g,"/");
+					self.SettingDialog.Visible = true;
+					var view = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					var download = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					var share = {
+						groups:[],
+						uids:[],
+						data:[],
+						checked:[],
+						expanded:[],
+						status:0
+					};
+					if(ditem.view){
+						
+						if(parseInt(ditem.view) == 1){
+							view.groups.push('unlimit');
+							view.checked.push('unlimit');
+							view.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.view.data){
+								view.data = ditem.view.data;
+							}
+							if(ditem.view.groups){
+								for(var vg in ditem.view.groups){
+									view.checked.push(ditem.view.groups[vg]);
+									view.groups.push(ditem.view.groups[vg])
+								}
+							}
+							if(ditem.view.uids){
+								for(var vu in ditem.view.uids){
+									if(view.checked.indexOf('uid_'+ditem.view.uids[vu])<0){
+										view.checked.push('uid_'+ditem.view.uids[vu]);
+										view.uids.push(ditem.view.uids[vu]);
+									}
+								}
+							}
+							if(ditem.view.other){
+							// 	for(var vo in ditem.view.other){
+							// 		if(view.checked.indexOf('uid_'+ditem.view.other[vo])<0){
+							// 			view.checked.push('uid_'+ditem.view.other[vo]);
+							// 		}
+							// 	}
+								if(view.expanded.indexOf('other')<0){
+									view.expanded.push('other');
+								}
+							}
+							if(ditem.view.vorgids){
+								for(var vv in ditem.view.vorgids){
+									if(view.expanded.indexOf(ditem.view.vorgids[vv])<0){
+										view.expanded.push(ditem.view.vorgids[vv]);
+									}
+								}
+							}
+						}
+						
+					}else{
+						view.status = 1;
+					}
+					if(ditem.download){
+						if(parseInt(ditem.download) == 1){
+							download.groups.push('unlimit');
+							download.checked.push('unlimit');
+							download.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.download.data){
+								download.data = ditem.download.data;
+							}
+							if(ditem.download.groups){
+								for(var dg in ditem.download.groups){
+									download.checked.push(ditem.download.groups[dg]);
+									download.groups.push(ditem.download.groups[dg])
+								}
+							}
+							if(ditem.download.uids){
+								for(var du in ditem.download.uids){
+									if(download.checked.indexOf('uid_'+ditem.download.uids[du])<0){
+										download.checked.push('uid_'+ditem.download.uids[du]);
+										download.uids.push(ditem.download.uids[du]);
+									}
+								}
+							}
+							if(ditem.download.other){
+							// 	for(var ddo in ditem.download.other){
+							// 		if(download.checked.indexOf('uid_'+ditem.download.other[ddo])<0){
+							// 			download.checked.push(ditem.download.other[ddo]);
+							// 		}
+							// 	}
+							// 	download.expanded.push('other');
+								if(download.expanded.indexOf('other')<0){
+									download.expanded.push('other');
+								}
+							}
+							if(ditem.download.dorgids){
+								for(var dv in ditem.download.dorgids){
+									if(download.expanded.indexOf(ditem.download.dorgids[dv])<0){
+										download.expanded.push(ditem.download.dorgids[dv])
+									}
+									
+								}
+							}
+						}
+						
+					}else{
+						download.status = 1;
+					}
+					
+					if(ditem.share){
+						
+						if(parseInt(ditem.share) == 1){
+							share.groups.push('unlimit');
+							share.checked.push('unlimit');
+							share.data = [{
+								id: "unlimit",
+								text: "任何人",
+								type: "unlimit"
+							}];
+						}else{
+							if(ditem.share.data){
+								share.data = ditem.share.data;
+							}
+							if(ditem.share.groups){
+								for(var sg in ditem.share.groups){
+									share.checked.push(ditem.share.groups[sg]);
+									share.groups.push(ditem.share.groups[sg]);
+								}
+							}
+							if(ditem.share.uids){
+								for(var su in ditem.share.uids){
+									if(share.checked.indexOf('uid_'+ditem.share.uids[su])<0){
+										share.checked.push('uid_'+ditem.share.uids[su]);
+										share.uids.push(ditem.share.uids[su]);
+									}
+								}
+							}
+							if(ditem.share.other){
+							// 	for(var so in ditem.share.other){
+							// 		if(share.checked.indexOf('uid_'+ditem.share.other[so])<0){
+							// 			share.checked.push('uid_'+ditem.share.other[so]);
+							// 		}
+							// 	}
+							// 	share.expanded.push('other');
+								if(share.expanded.indexOf('other')<0){
+									share.expanded.push('other');
+								}
+							}
+							if(ditem.share.sorgids){
+								for(var sv in ditem.share.sorgids){
+									if(share.expanded.indexOf(ditem.share.sorgids[sv])<0){
+										share.expanded.push(ditem.share.sorgids[sv])
+									}
+									
+								}
+							}
+						}
+						
+					}else{
+						share.status = 1;
+					}
+					self.SettingForm = {
+						appid:appid,
+						appname:data.data.appname,
+						path:showVal,
+						getinfo:data.data.getinfo,
+						charset:data.data.charset,
+						eagle:parseInt(data.data.type),
+						allowext:data.data.allowext,
+						notallowext:data.data.notallowext,
+						loading:false
+					};
+
+					self.SettingDialog.pathinfo = data.data.pathinfo?parseInt(data.data.pathinfo):0;
+					self.SettingFormvisit = view;
+					self.SettingFormshare = share;
+					self.SettingFormdownload = download;
+				}else{
+					self.$message.error('数据获取失败');
+				}
+			},
+			SettingFormPathClick(){
+				this.Catalogue.dialogtype = 'setting';
+				this.Catalogue.type = this.SettingForm.type;
+				this.Catalogue.appid = this.SettingForm.appid;
+				var showVal = this.SettingForm.path;
+				showVal = showVal.split('/');
+				showVal.pop();
+				var newshowVal = showVal.join('/');
+				this.Catalogue.showVal = '';
+				this.Catalogue.search = newshowVal;
+				this.Catalogue.defaultsearch = newshowVal;
+				this.Catalogue.searchStatus = true;
+				this.Catalogue.charset = this.SettingForm.charset;
+				this.SettingDialog.Visible = false;
+				this.Catalogue.dialogVisible = true;
+			},
+			async SettingSubmit(){
+				var self = this;
+				self.SettingForm.loading = true;
+				var visit = {};
+				var share = {};
+				var download = {};
+				if(parseInt(self.SettingFormvisit.status)){
+					visit = 0;
+				}else if(self.SettingFormvisit.groups && self.SettingFormvisit.groups.length && self.SettingFormvisit.groups.indexOf('unlimit')>-1){
+					visit = 1;
+				}else{
+					if(self.SettingFormvisit.groups && self.SettingFormvisit.groups.length){
+						visit['groups'] = self.SettingFormvisit.groups;
+					}
+					if(self.SettingFormvisit.uids && self.SettingFormvisit.uids.length){
+						visit['uids'] = self.SettingFormvisit.uids;
+					}
+					visit['data'] = self.SettingFormvisit.data;
+				}
+				
+				if(parseInt(self.SettingFormshare.status)){
+					share = 0;
+				}else if(self.SettingFormshare.groups && self.SettingFormshare.groups.length && self.SettingFormshare.groups.indexOf('unlimit')>-1){
+					share = 1;
+				}else{
+					if(self.SettingFormshare.groups && self.SettingFormshare.groups.length){
+						share['groups'] = self.SettingFormshare.groups;
+					}
+					if(self.SettingFormshare.uids && self.SettingFormshare.uids.length){
+						share['uids'] = self.SettingFormshare.uids;
+					}
+					share['data'] = self.SettingFormshare.data;
+				}
+			
+				if(parseInt(self.SettingFormdownload.status)){
+					download = 0;
+				}else if(self.SettingFormdownload.groups && self.SettingFormdownload.groups.length && self.SettingFormdownload.groups.indexOf('unlimit')>-1){
+					download = 1;
+				}else{
+					if(self.SettingFormdownload.groups && self.SettingFormdownload.groups.length){
+						download['groups'] = self.SettingFormdownload.groups;
+					}
+					if(self.SettingFormdownload.uids && self.SettingFormdownload.uids.length){
+						download['uids'] = self.SettingFormdownload.uids;
+					}
+					download['data'] = self.SettingFormdownload.data;
+				}
+			
+				
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appid:self.SettingForm.appid,
+					appname:self.SettingForm.appname,
+					getinfo:self.SettingForm.getinfo,
+					share:share,
+					download:download,
+					visit:visit,
+					allowext:self.SettingForm.allowext,
+					notallowext:self.SettingForm.notallowext,
+				};
+				
+				var res = await axios.post(MOD_URL+'&op=library&operation=fetch',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				
+				self.SettingDialog.Visible = false;
+				if(data.success){
+					for(var x in self.Table.data){
+						if(self.Table.data[x].appid == self.SettingForm.appid){
+							self.Table.data[x].getinfo = self.SettingForm.getinfo;
+							self.Table.data[x].appname = self.SettingForm.appname;
+							
+						}
+					}
+					self.TableDataForEach();
+					self.$message({
+						type:'success',
+						message:'设置成功'
+					});
+				}else{
+					self.$message.error('设置失败');
+				}
+				self.SettingForm.loading = false;
+			},
+			SettingTreeVisitChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormvisit = str;
+				}else{
+					str.status = 1;
+					this.SettingFormvisit = str;
+				}
+			},
+			SettingTreeDownChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormdownload = str;
+				}else{
+					str.status = 1;
+					this.SettingFormdownload = str;
+				}
+			},
+			SettingTreeShareChange(data){
+				var str = {
+					groups:[],
+					uids:[],
+					data:[],
+					checked:[],
+					expanded:[],
+					status:0
+				}
+				if(data && data.length){
+					for(var i in data){
+						var item = data[i];
+						if(item.type == 'unlimit'){
+							str.groups.push('unlimit');
+							break;
+						}
+						if(item.type == 'user'){
+							str.uids.push(item.id);
+						}else{
+							str.groups.push(item.id);
+						}
+						str.data.push(item);
+					}
+					this.SettingFormshare = str;
+				}else{
+					str.status = 1;
+					this.SettingFormshare = str;
+				}
+			},
+		}
+	};
+</script>

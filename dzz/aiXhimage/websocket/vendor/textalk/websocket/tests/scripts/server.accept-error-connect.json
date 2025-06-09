@@ -1,0 +1,18 @@
+[
+    {
+        "function": "stream_socket_accept",
+        "params": [],
+        "error": {
+            "msg": "A PHP error",
+            "type": 512
+        },
+        "return": false
+    },
+    {
+        "function": "fclose",
+        "params": [
+             false
+        ],
+        "return": true
+    }
+]

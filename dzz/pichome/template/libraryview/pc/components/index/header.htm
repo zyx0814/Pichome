@@ -1,0 +1,267 @@
+<div class="h-left" style="justify-content: start;padding-right: 20px;">
+    <template v-if="ispc">
+        <el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+			<template #error><div class="el-image__placeholder"></div></template>
+		</el-image>
+        <el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{{DocumentVapp.appname}}</el-text>
+        
+    </template>
+    <template v-else>
+        <a href="{$_G[siteurl]}">
+            <el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain" style="margin-right: 12px;width: 40px;height: 40px;">
+                <template #error><div class="el-image__placeholder"></div></template>
+            </el-image>
+        </a>
+    </template>
+    
+</div>
+<div class="h-center">
+    <!-- <el-autocomplete
+        ref="autoCompleteRef"
+        class=" "
+        style="width: 360px;"
+        :class="{'show-popper':keywordpopper}"
+        prefix-icon="Search"
+        v-model="HeaderKeyword"
+        clearable
+        @select="handleSelect"
+        size="large"
+        :teleported="false"
+        hide-loading
+        :fetch-suggestions="keywordsuggestions"
+        popper-class="keyword-autocomplete"
+        @visible-change="handleHighlight">
+      </el-autocomplete> -->
+        <el-input
+            ref="headerkeyword"
+			class="headerkeyword"
+			v-model="HeaderKeyword"
+			@keydown.enter="HeaderKeywordInput"
+            style="z-index: 1000;position: relative;width: 450px;"
+            placeholder="{lang search}"
+			size="large">
+            <template #prefix>
+                <el-image v-if="searchdata.img" style="width: 26px; height: 26px;border-radius: var(--el-border-radius-base);" :src="searchdata.img" fit="cover" ></el-image>
+            </template>
+            <template #suffix>
+				<el-button v-if="HeaderKeyword || searchdata.img" link icon="Close" style="font-size: 20px;" @click.stop="clearkeyword"></el-button>
+				<!--{if intval($_G['setting']['imageSearch_setting']['status'])}-->
+				<el-popover
+					ref="cameraPopover"
+					popper-class="camera-popover"
+					placement="bottom"
+					width="100%"
+					:show-arrow="false"
+					trigger="click"
+					popper-style="{let:0}"
+					:teleported="false"
+					:tabindex="1000"
+					@show="SearchUploadPopoverShow">
+					<div class="camera-dropdown">
+						<el-upload
+							class="camera-upload"
+							drag
+							:show-file-list="false"
+							:on-change="SearchUploadChange"
+							:on-progress="SearchUploadProgress"
+							:auto-upload="false"
+							accept="image/png, image/jpeg,image/jpg, image/webp">
+							<div 
+								style="display: flex;align-items: center;justify-content: center;flex-direction: column;">
+								<el-icon class="el-icon--upload"><upload-filled /></el-icon>
+								<div class="el-upload__text">
+									<el-text tag="p" style="
+									font-size: 14px;
+									line-height: 20px;">{lang drop_the_image}</el-text>
+									<el-text tag="p" type="info" size="small" style="line-height: 20px;margin-top: 8px;">{lang Image_format_support} jpg、jpeg、png、webp</el-text>
+								</div>
+							</div>
+						</el-upload>
+					</div>
+					<template #reference>
+						<el-button link icon="Camera" style="font-size: 20px;"></el-button>
+					</template>
+				</el-popover>
+				<!--{/if}-->
+			</template>
+			<template #append>
+				<el-button 
+					@click="HeaderKeywordInput" 
+					type="primary" 
+					icon="Search" 
+					style="font-size: 20px;padding-top: 0;padding-bottom: 0;display: flex;align-items: center;justify-content: center;"></el-button>
+			</template>
+        </el-input>
+</div>
+<div class="h-right"> 
+    <!--{template libraryview/pc/components/index/rightBtn}-->
+    <international current="$_G['language']"></international>
+    <comavatar
+        :level="parseInt($_G[pichomelevel])"
+        iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+        :adminid="parseInt($_G[adminid])"
+        PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+        :uid="parseInt($_G[uid])"
+        upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+        version="$_G[setting][version]"
+        formhash="{FORMHASH}">
+        <el-avatar size="40">
+            {eval echo avatar_block($_G[uid]);}
+        </el-avatar>
+    </comavatar>
+    
+</div>
+
+<script>
+    const HeaderMixin = {
+        data(){
+            return {
+                HeaderKeyword:'',
+                keywordpopper:false,
+                searchdata:{
+					aid:0,
+					loading:false,
+					img:'',
+				},
+            }
+        },
+        watch:{
+
+        },
+        mixins:[HeaderRightBtnMixin],
+        methods:{
+            HeaderKeywordInput(val){
+				this.CommonGetImageData();
+			},
+            keywordsuggestions(value,cb){
+                var host = window.sessionStorage.getItem('HostKeyword');
+                var HeaderSearchList = [];
+				if(value){
+					if(host){
+						host = host.split(',');
+						var index = host.indexOf(value);
+						
+						if(index>-1){
+							host.splice(index,1);
+						}else{
+							if(host.length>9){
+								host.pop();
+							}
+						}
+						
+						for(var i in host){
+							if(host[i].indexOf(value)>-1){
+								HeaderSearchList.push({
+									value:host[i]
+								});
+							}
+						}
+						
+						host.unshift(value);
+						var newhost = host.join(',');
+						
+						if(host){
+							window.sessionStorage.setItem("HostKeyword",newhost);
+						}else{
+							window.sessionStorage.removeItem("HostKeyword");
+						}
+					}else{
+						window.sessionStorage.setItem("HostKeyword",value);
+					}
+					
+				}else{
+					if(host){
+						var HeaderSearchList = [];
+						var newhost = host.split(',');
+						for(var i in newhost){
+							HeaderSearchList.push({
+								value:newhost[i]
+							});
+						}
+					}
+				}
+                if(HeaderSearchList.length){
+                    this.keywordpopper = true;
+                }else{
+                    this.keywordpopper = false;
+                }
+                // console.log(HeaderSearchList);
+                cb(HeaderSearchList);
+            },
+            handleSelect(){
+                
+            },
+            handleHighlight(item){
+            },
+            clearkeyword(){
+                let self = this;
+                this.HeaderKeyword = '';
+				this.searchdata.aid = 0;
+				this.searchdata.loading = false;
+				this.searchdata.img = '';
+				self.$nextTick(() => {
+					self.CommonGetImageData();
+				})
+            },
+            SearchUploadChange(response,uploadFile){
+				
+				let self = this;
+				self.searchdata.loading = true;
+				self.$refs.cameraPopover.hide();
+				let img = new Image();
+				// 设置图片的源（URL）
+				img.src = URL.createObjectURL(response.raw);
+				// 当图片加载完成时，获取其宽度和高度
+				img.onload = function() {
+					// 创建 canvas 并将图片绘制到 canvas 上
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					// // 设置 canvas 的宽高为图片的宽高
+					canvas.width = img.width;
+					canvas.height = img.height;
+
+					// // 将图片绘制到 canvas 上
+					ctx.drawImage(img, 0, 0);
+					// 将 canvas 内容转换为 JPG 格式的 Base64
+					const jpgBase64 = canvas.toDataURL('image/jpeg', 0.8); // 0.8 是图片质量
+
+					if(self.CropBase){
+						self.CropBase();
+					}
+					let CancelToken = axios.CancelToken;
+					axios.post('index.php?mod=io&op=getAidByBase64', {
+						base64:jpgBase64
+					},{
+						cancelToken: new CancelToken(function executor(c) {
+							self.CropBase = c;
+						})
+					}).then(function (res) {
+						if(res.data.success){
+							self.searchdata.aid = res.data.aid;
+							self.searchdata.loading = false;
+							self.searchdata.img = res.data.img;
+							sessionStorage.setItem('cropimg'+self.DocumentAppid,res.data.img);
+							self.$nextTick(() => {
+								self.CommonGetImageData();
+							})
+						}else{
+							self.$message.error(res.data.msg || __lang.upload_failed);
+						}
+					}).catch(function (error) {
+						// console.log(error);
+					});
+					
+				};
+				img.onerror = () => {
+					self.searchdata.loading = false;
+					self.$message.error(__lang.upload_unsuccess);
+				};
+				return false;
+			},
+        },
+        mounted(){
+            const self = this;
+        }
+    }
+</script>

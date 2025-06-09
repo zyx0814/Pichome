@@ -1,0 +1,50 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 132
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [129, 126]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return": [0, 128]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            128
+        ],
+        "return-op": "file",
+        "return": ["payload.128.txt", 0, 132]
+    }
+]

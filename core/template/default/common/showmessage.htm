@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset={CHARSET}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title><!--{if !empty($navtitle)}-->$navtitle - <!--{/if}--><!--{if !empty($_G[setting][sitename])}-->$_G[setting][sitename]<!--{/if}--></title>
+    <meta name="keywords" content="{if !empty($_G[setting][metakeywords])}{echo htmlspecialchars($_G[setting][metakeywords])}{/if}"/>
+    <meta name="description" content="{if !empty($_G[setting][metadescription])}{echo htmlspecialchars($_G[setting][metadescription])} {/if}"/>
+    <meta name="generator" content="oaooa"/>
+    <meta name="author" content="oaooa"/>
+    <meta name="copyright" content="2012-{eval echo dgmdate(TIMESTAMP,'Y-m-d');} www.oaooa.com"/>
+    <meta name="renderer" content="webkit">
+    <base href="{$_G['siteurl']}"/>
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #ct {
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .btn-jump {
+            line-height: 3;
+            color: #999999;
+            text-decoration: none;
+        }
+        .btn-jump:hover {
+
+            color:#0072ef
+        }
+        .messagetxt {
+            padding: 0 20px;
+            line-height: 2;
+            max-height: 300px;
+            overflow: hidden;
+            color: #999999;
+        }
+
+    </style>
+    <script type="text/javascript">
+        function jump(cont) {
+            window.setTimeout(function () {
+                cont--;
+                if (cont > 0) {
+                    document.getElementById('num').innerHTML = cont;
+                    jump(cont);
+                }
+            }, 1000)
+        }
+    </script>
+</head>
+<body id="nv_{$_G[basescript]}" class="$bodyClass">
+    <div id="ct">
+        <div id="main_message">
+
+            <!--{if $alerttype == 'alert_right'}-->
+            <img src="static/image/common/noFilePage-successful.png">
+            <!--{elseif $alerttype == 'alert_info'}-->
+            <img src="static/image/common/noFilePage-fail.png">
+            <!--{/if}-->
+            <div class="messagetxt">$show_message</div>
+            <!--{if $url_forward}-->
+            <a class="btn-jump " href="$url_forward">{lang immdeiate_jump}[<span id="num" class="num">{$refreshsecond}</span>s]</a>
+            <script type="text/javascript">
+                jump({$refreshsecond});
+            </script>
+            <!--{/if}-->
+
+        </div>
+    </div>
+    <!--{eval output();}-->
+    <!--{eval updatesession();}-->
+    <!--{if debuginfo()}-->
+    <script type="text/javascript">
+        try{
+            if(console && console.log){
+                console.log('Processed in $_G[debuginfo][time] second(s), $_G[debuginfo][queries] queries <!--{if $_G[gzipcompress]}-->, Gzip On<!--{/if}--><!--{if C::memory()->type}-->, <!--{echo ucwords(C::memory()->type)}--> On<!--{/if}-->.');
+            }
+        }catch(e){}
+    </script>
+    <!--{/if}-->
+    <!--{if !$_G['setting']['bbclosed']}-->
+    <!--{if !isset($_G['cookie']['sendmail'])}-->
+    <script type="text/javascript" src="misc.php?mod=sendmail&rand=$_G[timestamp]"></script>
+    <!--{/if}-->
+    <!--{/if}-->
+
+</body>
+</html>

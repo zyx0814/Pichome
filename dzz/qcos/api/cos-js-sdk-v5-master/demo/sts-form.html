@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Form 表单简单上传</title>
+    <style>h1, h2 {font-weight: normal;}#msg {margin-top:10px;}</style>
+</head>
+<body>
+
+<h1>Form 表单简单上传（兼容 IE8）</h1>
+<div>最低兼容到 IE6 上传，不支持 onprogress</div>
+
+<form id="form" target="submitTarget" action="" method="post" enctype="multipart/form-data" accept="*/*">
+    <input id="name" name="name" type="hidden" value="">
+    <input name="success_action_status" type="hidden" value="200">
+    <input id="success_action_redirect" name="success_action_redirect" type="hidden" value="">
+    <input id="key" name="key" type="hidden" value="">
+    <input id="Signature" name="Signature" type="hidden" value="">
+    <input name="Content-Type" type="hidden" value="">
+    <input id="x-cos-security-token" name="x-cos-security-token" type="hidden" value="">
+
+    <!-- file 字段放在表单最后，避免文件内容过长影响签名判断和鉴权 -->
+    <input id="fileSelector" name="file" type="file">
+    <input id="submitBtn" type="button" value="提交">
+</form>
+<iframe id="submitTarget" name="submitTarget" style="display:none;" frameborder="0"></iframe>
+
+<div id="msg"></div>
+
+<script src="common/cos-auth.min.js"></script>
+<script>
+    (function () {
+
+        // 请求用到的参数
+        var Bucket = 'test-1250000000';
+        var Region = 'ap-guangzhou';
+        var protocol = location.protocol === 'https:' ? 'https:' : 'http:';
+        var prefix = protocol + '//' + Bucket + '.cos.' + Region + '.myqcloud.com/';
+        var form = document.getElementById('form');
+        form.action = prefix;
+
+        // 对更多字符编码的 url encode 格式
+        var camSafeUrlEncode = function (str) {
+            return encodeURIComponent(str)
+                .replace(/!/g, '%21')
+                .replace(/'/g, '%27')
+                .replace(/\(/g, '%28')
+                .replace(/\)/g, '%29')
+                .replace(/\*/g, '%2A');
+        };
+
+        // 计算签名
+        var getAuthorization = function (options, callback) {
+            // var url = 'http://127.0.0.1:3000/sts';
+            var url = '../server/sts.php';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function (e) {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var credentials;
+                        try {
+                            credentials = (new Function('return ' + xhr.responseText))().credentials;
+                        } catch (e) {}
+                        if (credentials) {
+                            callback(null, {
+                                XCosSecurityToken: credentials.sessionToken,
+                                Authorization: CosAuth({
+                                    SecretId: credentials.tmpSecretId,
+                                    SecretKey: credentials.tmpSecretKey,
+                                    Method: options.Method,
+                                    Pathname: options.Pathname,
+                                })
+                            });
+                        } else {
+                            console.error(xhr.responseText);
+                            callback('获取签名出错');
+                        }
+                    } else {
+                        callback('获取签名出错');
+                    }
+                }
+            };
+            xhr.send();
+        };
+
+        // 监听上传完成
+        var Key;
+        var submitTarget = document.getElementById('submitTarget');
+        var showMessage = function (err, data) {
+            console.log(err || data);
+            document.getElementById('msg').innerText = err ? err : ('上传成功，ETag=' + data.ETag);
+        };
+        submitTarget.onload = function () {
+            var search;
+            try {
+                search = submitTarget.contentWindow.location.search.substr(1);
+            } catch (e) {
+                showMessage('文件 ' + Key + ' 上传失败');
+            }
+            if (search) {
+                var items = search.split('&');
+                var i, arr, data = {};
+                for (i = 0; i < items.length; i++) {
+                    arr = items[i].split('=');
+                    data[arr[0]] = decodeURIComponent(arr[1] || '');
+                }
+                showMessage(null, {url: prefix + camSafeUrlEncode(Key).replace(/%2F/g, '/'), ETag: data.etag});
+            } else {
+            }
+        };
+
+        // 发起上传
+        document.getElementById('submitBtn').onclick = function (e) {
+            var filePath = document.getElementById('fileSelector').value;
+            if (!filePath) {
+                document.getElementById('msg').innerText = '未选择上传文件';
+                return;
+            }
+            Key = 'dir/' + filePath.match(/[\\\/]?([^\\\/]+)$/)[1]; // 这里指定上传目录和文件名
+            getAuthorization({Method: 'POST', Pathname: '/'}, function (err, AuthData) {
+                // 在当前目录下放一个空的 empty.html 以便让接口上传完成跳转回来
+                document.getElementById('success_action_redirect').value = location.href.substr(0, location.href.lastIndexOf('/') + 1) + 'empty.html';
+                document.getElementById('key').value = Key;
+                document.getElementById('signature').value = AuthData.Authorization;
+                document.getElementById('x-cos-security-token').value = AuthData.XCosSecurityToken || '';
+                form.submit();
+            });
+        };
+    })();
+</script>
+
+</body>
+</html>

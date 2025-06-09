@@ -1,0 +1,234 @@
+<div ref="headerscrollbar" class="filters-row hidden-scrollbar" style="display: flex;gap: 8px;">
+	<template  v-for="item in bannerData.data.top">
+		<div class="dropdown-filter" :class="{'is-active':bannerActive==item.id}">
+			<el-button text style="flex: 1;" @click.stop="handleParentSelect(item)" :type="bannerActive==item.id?'primary':''" :bg="bannerActive==item.id">
+				{{item.bannername}}
+				<template v-if="item.children && item.children.length">
+					<el-icon style="margin-left: 5px;"><Arrow-Down /></el-icon>
+				</template>
+			</el-button>
+		</div>
+	</template>
+    
+</div>
+
+<el-drawer
+    v-model="headerDrawer.visble"
+    direction="btt"
+	size="85%"
+	title="导航"
+	custom-class="m-header-munu">
+	<el-menu
+        v-if="headerDrawer.visble"
+		class="dzz-menu-m"
+		:default-openeds="headerDrawer.defaultopeneds"
+		:default-active="bannerActive">
+            <el-sub-menu 
+            :index="headerDrawer.data.id" 
+            :class="{'is-active':bannerActive==headerDrawer.data.id}"
+            popper-class="dzz-sub-menu">
+                <template #title>
+                    <el-image  v-if="headerDrawer.data.icon" class="icon" :src="headerDrawer.data.icon" fit="cover">
+                        <template #error><div class="el-image__placeholder"></div></template>
+                    </el-image>
+                    {{headerDrawer.data.bannername}}
+                    <div class="title-text" @click.stop="parseInt(headerDrawer.data.btype) != 5 && handleSelect(headerDrawer.data)"></div>
+                </template>
+                <menuitem 
+                    :datalist="headerDrawer.data.children" 
+                    @handleselect="handleSelect"
+                    :active="bannerActive"></menuitem>
+            </el-sub-menu>
+	</el-menu>
+  </el-drawer>
+
+  <script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:'',
+				collectlisarr:$collectlisarr,
+				tabarr:$tabarr,
+                headerDrawer:{
+                    visble:false,
+                    data:[],
+					defaultopeneds:[]
+                },
+				headerCollect:{
+                    visble:false,
+                },
+				headerTabmessage:{
+					gid:0,
+					visible:false
+				}
+			}
+		},
+		methods:{
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+            handleParentSelect(data){
+				let self = this;
+				this.headerDrawer.defaultopeneds = [data.id];
+                if(data.children && data.children.length){
+					this.getAllIds(data.children);
+					self.$nextTick(function(){
+						self.headerDrawer.data = data;
+                    	self.headerDrawer.visble = true;
+					});
+                }else{
+                    this.handleSelect(data);
+                }
+				
+			},
+			getAllIds(tree) {
+				//遍历树  获取id数组
+				for (const i in tree) {
+					this.headerDrawer.defaultopeneds.push(tree[i].id); // 遍历项目满足条件后的操作
+					if (tree[i].children) {
+						//存在子节点就递归
+						this.getAllIds(tree[i].children);
+					}
+				}
+			},
+			handleSelect(data){
+				let self = this;
+				self.headerDrawer.visble = false;
+				self.$nextTick(function(){
+					if(parseInt(data.btype) == 3){
+						if(data.realurl){
+							window.open(data.realurl)
+						}else if(data.url){
+							window.open(data.url)
+						}else{
+							self.$message.error('{lang no_link_address}');
+						}
+						
+						return false;
+					}
+
+					if(data.url){
+						window.location.href = data.url;
+					}else{
+						window.location.href = data.realurl;
+
+					}
+				});
+				
+
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data,load){
+				const self = this;
+				if(data.type == 'show'){
+					this.HeaderRightBtnShow.display = data.value;
+				}else{
+					this.HeaderRightBtnShow[data.type] = data.value;
+				}
+				switch(data.type){
+					case 'display':
+					case 'show':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							sessionStorage.removeItem('app_'+this.bannerData.item.bdata+'other');
+						}else{
+							display.splice(index,1);
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('app_'+this.bannerData.item.bdata+'display','empty');
+						}
+					break;
+					case 'other':
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+'other',data.value);
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+data.type,data.value);
+						this.imagereload = true;
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						console.log(111111);
+						sessionStorage.setItem('app_'+this.bannerData.item.bdata+'layout',data.value);
+					break;
+				}
+				if(!load){
+					self.$refs.MainDomRef.settingpreference(data.type,data.value)
+				}
+				
+			},
+			handleCollectCommand(data){
+				let self = this;
+				if(data.type == 'tab'){
+					this.headerTabmessage.gid = data.value;
+					this.headerTabmessage.visible = true;
+				}else{
+					window.open(data.value);
+				}
+			},
+			headerkeywordInput(){
+				let self = this;
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				if(this.PageType != 'ku' && this.PageType != 'tab'){
+					this.bannerData.active = 0;
+                    this.bannerActive = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+				}
+				self.$nextTick(() => {
+					self.$refs.MainDomRef.Init();
+				})
+				
+			},
+			tabheadermessageSave(val){
+                let self = this;
+                self.$refs.tabheadermessage.SaveAllData();
+            },
+			OpenHeaderMessage(type,key){
+				let self = this;
+                self.$refs.tabheadermessage.CreateData();
+			},
+		},
+	}
+</script>

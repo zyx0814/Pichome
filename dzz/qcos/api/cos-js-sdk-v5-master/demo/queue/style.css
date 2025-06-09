@@ -1,0 +1,78 @@
+h1 {
+    font-family: "Microsoft YaHei";
+    font-weight: normal;
+}
+
+ul,
+li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: #0071ff;
+}
+
+.float-right {
+    float: right;
+}
+
+.page {
+    width: 960px;
+    margin: 0 auto;
+    font-size: 14px;
+}
+
+#form input[type="text"] {
+    width: 40px;
+    padding: 2px;
+    vertical-align: middle;
+}
+#form input[type="file"] {
+    vertical-align: middle;
+}
+
+.file-list {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.file-list {
+    width: 960px;
+    border-collapse: collapse;
+}
+
+.file-name {
+    display: inline-block;
+    width: 310px;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.file-item td {
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    font-size: 12px;
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.file-progress {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 6px;
+    background: #ddd;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.file-progress-loaded {
+    position: absolute;
+    display: inline-block;
+    height: 6px;
+    background: #0071ff;
+}

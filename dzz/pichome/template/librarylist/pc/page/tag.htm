@@ -1,0 +1,275 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script src="static/js/sortable.min.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/tag.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<style>
+	.taguploader [class*=el-icon]+span{
+		margin:0 ;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" id="top_header" height="60px">
+			<!--{template librarylist/pc/components/index/header/index}-->
+		</el-header>
+		<el-container>
+		    <el-aside class="page-left" :width="LeftWidth+'px'">
+				<!--{template librarylist/pc/components/left/index}-->
+		    </el-aside>
+			<el-aside class="page-left" width="200px">
+				<!--{template librarylist/pc/components/tag/left}-->
+			</el-aside>
+			<el-main style="overflow: hidden;padding: 0;position: relative;">
+				<el-scrollbar id="container_scroll" ref="scrollbar" @scroll="DocumentHideAllPop">
+					<div class="page-content">
+						<!--{template librarylist/pc/components/tag/content}-->
+					</div>
+				</el-scrollbar>
+				<div class="right-toolbar" style="width: 45px;">
+					
+					<el-tooltip
+						content="{lang add_tag}"
+						placement="left">
+						<el-button type="primary" 
+						style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;margin: 0;" 
+						circle 
+						icon="Plus" 
+						size="large" 
+						@click="TagContextAddTag"></el-button>
+					</el-tooltip>
+
+					  
+					<el-tooltip
+						content="{lang import_tag}"
+						placement="left">
+						<el-button type="primary" 
+							style="position:relative;box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;margin: 0;margin-top: 6px;"
+							circle 
+							icon="Upload"
+							class="taguploader"
+							size="large">
+							<input type="file" @change="TagImport" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel " style="position: absolute;width: 100%;height: 100%;opacity: 0;left: 0;top: 0;" />
+						</el-button>
+					</el-tooltip>
+					
+					<el-tooltip
+						content="{lang download_tag}"
+						placement="left">
+						<el-button type="primary" 
+							style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;margin: 0;margin-top: 6px;" 
+							circle 
+							icon="Download" 
+							size="large" 
+							@click="TagExport"></el-button>
+					</el-tooltip>
+					<template v-if="tagCententData && tagCententData.length">
+						<el-tooltip
+							content="{lang del_all_tag}"
+							placement="left">
+							<el-popconfirm title="{lang del_all_tag_tip}" width="200" @confirm="TagDelAll">
+								<template #reference>
+									<el-button type="primary" 
+										:loading="deleteallload"
+										style="box-shadow: var(--el-box-shadow-lighter);--el-button-size: 45px;font-size: 22px;margin: 0;margin-top: 6px;" 
+										circle 
+										icon="Delete" 
+										size="large" ></el-button>
+								</template>
+							</el-popconfirm>
+						</el-tooltip>
+					</template>
+					
+						
+					
+				</div>
+				<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
+			</el-main>
+		</el-container>
+	   
+	</el-container>
+	<!--{template librarylist/pc/components/left/Jsindex}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, watch } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+				DocumentResize:0,
+				DocumentAppid:'$_GET[appid]',
+				DocumentThemeColor:'',//dark
+				DocumentVapp:{appname:'',type:0},
+				deleteallload:false,
+				DocumentOverlay:{
+					left:false,
+					group:false,
+					main:false,
+				},
+			}
+		},
+		mixins:[leftMixins,HeaderMixins,TagLeftMixin,TagContentMixin],
+		created(){
+			var self = this;
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			this.LeftTree.show = true;
+			this.CommonInit()
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods:{
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			DocumentHideAllPop(){
+				const self = this;
+				//左侧树隐藏
+				self.LeftTreePopover.show = false;
+				//标签隐藏
+				this.tagContextMenu.show = false;
+				//标签群组隐藏
+				this.tagLeftMenu.show = false;
+			},
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			},
+			async CommonInit(){
+				const {data: res} = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getpagesetting',{
+					appid:this.DocumentAppid,
+					fids:this.LeftTree.Currentkey || ''
+				});
+				this.DocumentVapp = res.vappdata?res.vappdata:{appname:0,type:0};
+
+			},
+			async TagDelAll(){
+				const self = this;
+				this.deleteallload = true;
+				const {data: res} = await axios.post(MOD_URL+'&op=library&do=tags&operation=delalltag',{
+					appid:this.DocumentAppid,
+					cid:this.TagLeftActive
+				});
+				this.deleteallload = false;
+				if(res.success){
+					this.tagCententData = [];
+					if(!this.TagLeftActive){
+						this.TagLeftTotal = 0;
+						this.TagLeftNocatTotal = 0;
+						for (let index = 0; index < this.TagLeftData.length; index++) {
+							const element = this.TagLeftData[index];
+							element.num = 0;
+						}
+					}else if(this.TagLeftActive == 'nocat'){
+						this.TagLeftTotal = this.TagLeftTotal - this.TagLeftNocatTotal;
+						this.TagLeftNocatTotal = 0;
+					}else{
+						let curr = this.TagLeftData.find(v=>v.cid == this.TagLeftActive);
+						if(!curr)return false;
+						this.TagLeftTotal = this.TagLeftTotal - parseInt(curr.num);
+						curr.num = 0;
+					}
+				}else{
+					self.$message.error(res.msg || '{lang delete_unsuccess}');
+				}
+
+			},
+			async TagImport(event){
+				const self = this;
+				var formData = new FormData();
+				formData.append('appid',this.DocumentAppid);
+				formData.append('formhash','{FORMHASH}');
+				if(!this.TagLeftActive){
+					// window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid);
+					
+				}else if(this.TagLeftActive == 'nocat'){
+					// window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid+'&nocat=1');
+					formData.append('nocat',1);
+				}else{
+					// window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid+'&cid='+this.TagLeftActive);
+					formData.append('cid',this.TagLeftActive);
+				}
+
+				
+				
+				formData.append('importfilesubmit',true);
+				formData.append('file',event.target.files[0]);
+				const { data: res } = await axios.post(MOD_URL+'&op=library&do=importtag&notqs=1',formData);
+				if(res.success){
+					window.open(res.url)
+				}else{
+					self.$message.error(res.msg || '{lang upload_failed}');
+				}
+
+
+			},
+			TagExport(){
+				if(!this.TagLeftActive){
+					window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid);
+				}else if(this.TagLeftActive == 'nocat'){
+					window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid+'&nocat=1');
+				}else{
+					window.open(MOD_URL+'&op=library&do=exporttag&appid='+this.DocumentAppid+'&cid='+this.TagLeftActive);
+				}
+				
+			},
+		},
+
+		components: {
+			language
+		},
+
+		mounted(){
+			var self = this;
+			
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	dzzoffice.component('language',language);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

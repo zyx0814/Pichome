@@ -1,0 +1,121 @@
+<template v-if="!RightData.allowedit">
+	<div class="el-textarea is-disabled">
+		<div class="el-textarea__inner tag-box" style="min-height: 31px;line-height: 31px;">
+			<span v-if="!item.value.length" style="color:var(--el-text-color-placeholder);font-size: var(--el-font-size-base);vertical-align: text-bottom;">{{ item.name }}</span>	
+			<el-tag
+				v-for="tag in item.data"
+				:key="tag.tid"
+				disable-transitions
+				type="info">
+				{{tag.tagname}}
+			</el-tag>
+		</div>
+	</div>
+</template>
+<template v-else>
+	<el-popover
+		placement="left"
+		:ref="'RightTagPopverRef'+item.flag"
+		@before-enter="RightTagPopverShow(item)"
+		@hide="handleDocumentOverlay(false);"
+		width="auto"
+		trigger="click">
+		<div style="height: 400px" v-loading="RightTagPopver.loading">
+			<el-tabs 
+				v-model="RightTagPopver.leftactive"
+				@tab-change="RightTagRightData(item)"
+				class="right-tag-tabs" 
+				tab-position="left" 
+				style="height: 400px">
+				<el-tab-pane label="{lang All_labels}" name="all">
+					<div style="height: 44px;">
+						<el-input
+							v-model.trim="RightTagPopver.keyword" 
+							prefix-icon="Search" 
+							placeholder="{lang search}"
+							@keydown.enter="RightTagPopverSearchEnter(item)"
+							@input="RightTagPopverSearch"
+							clearable></el-input>
+					</div>
+					<el-scrollbar height="356px">
+						<template v-if="RightTagPopver.keyword">
+							<el-check-tag
+								v-if="!RightTagPopver.right.searchCongruent"
+								@change="RightTagPopverSearchEnter(item)">
+								{lang creation}“{{RightTagPopver.keyword}}”{lang label}
+								</el-check-tag>
+							<el-check-tag
+								v-for="val in RightTagPopver.right.searchdata"
+								:checked="RightTagPopver.right.active.indexOf(val.tid)>-1"
+								@change="RightTagPopverChange(item,val,key)"
+								:key="val.tid">
+								{{ val.tagname }}
+								</el-check-tag>
+						</template>				
+						<template v-else>
+							<div v-if="RightTagPopver.right.recent.length" style="margin-bottom: var(--el-popover-padding);">
+								<p style="padding-bottom: var(--el-popover-padding);">{lang Common_tags}</p>
+								<el-check-tag 
+									v-for="val in RightTagPopver.right.recent"
+									:checked="RightTagPopver.right.active.indexOf(val.tid)>-1"
+									@change="RightTagPopverChange(item,val,key)"
+									:key="val.tid">
+									{{ val.tagname }}
+									</el-check-tag>
+							</div>
+							<template v-for="fitem in RightTagPopver.right.data">
+								<div style="margin-bottom: var(--el-popover-padding);">
+									<p style="padding-bottom: var(--el-popover-padding);">{{fitem.text}}({{fitem.num}})</p>
+									<el-check-tag 
+										v-for="val in fitem.data"
+										:checked="RightTagPopver.right.active.indexOf(val.tid)>-1"
+										@change="RightTagPopverChange(item,val,key)"
+										:key="val.tid">
+										{{ val.tagname }}
+									</el-check-tag>
+								</div>
+							</template>
+						</template>
+						
+					</el-scrollbar>
+				</el-tab-pane>
+				<el-tab-pane 
+					v-for="fitem in RightTagPopver.left" 
+					:label="fitem.text"
+					:name="fitem.cid">
+					<div v-loading="RightTagPopver.right.loading" style="height: 400px;">
+						<p style="padding-bottom: var(--el-popover-padding);display: flex;align-items: center;">{{fitem.text}}({{fitem.num}})<el-icon style="margin-left: 8px;cursor: pointer;" @click="RightTagPopverAddTag(item)"><Circle-Plus /></el-icon></p>
+						<el-scrollbar height="368px" v-if="!RightTagPopver.right.loading">
+							<el-check-tag
+								v-for="val in RightTagPopver.right.data"
+								:checked="RightTagPopver.right.active.indexOf(val.tid)>-1"
+								@change="RightTagPopverChange(item,val)"
+								:key="val.tid">
+								{{ val.tagname }}
+							</el-check-tag>
+						</el-scrollbar>
+					</div>
+				</el-tab-pane>
+			</el-tabs>
+		</div>
+		<template #reference>
+			<div class="el-textarea">
+				<div class="el-textarea__inner tag-box" style="min-height: 31px;line-height: 31px;">
+					<span v-if="!item.data.length" style="color:var(--el-text-color-placeholder);font-size: var(--el-font-size-base);vertical-align: text-bottom;">{lang label}</span>	
+					<el-tag
+						v-for="tag in item.data"
+						@close="RightFileTagDelete(item.flag,tag)"
+						:key="tag.tid"
+						disable-transitions
+						type="info"
+						closable>
+						{{tag.tagname}}
+					</el-tag>
+				</div>
+			</div>
+			
+		</template>
+	</el-popover>
+</template>
+
+	

@@ -1,0 +1,316 @@
+<div class="picture-box el-container is-vertical">
+	<template v-if="imagesData.iniframe">
+		<template v-if="DocumentThemeColor == 'dark'">
+			<iframe 
+				style="border: 0px;"
+				:src="imagesData.iniframe+'&theme=dark'" 
+				width="100%" 
+				height="100%"></iframe>
+		</template>
+		<template v-else>
+			<iframe 
+				style="border: 0px;"
+				:src="imagesData.iniframe" 
+				width="100%" 
+				height="100%"></iframe>
+		</template>
+	</template>
+	<template v-else>
+		<div class="el-carousel" style="position: relative;flex: 1;overflow: hidden;">
+			<el-scrollbar class="page-component__scroll" id="ImgScroll" ref="scrollImg" @mousedown.native="imageDrag">
+				<!-- <img
+					:src="imagesData.icondata"
+					class="image-viewer__img thumbnail" /> -->
+				<img
+					@load="imageload"
+					v-show="imagesSize.show"
+					:src="imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
+					class="image-viewer__img max" />
+				
+			</el-scrollbar>
+			<template v-if="previews.data.length">
+				<el-button 
+					v-if="previews.active > 0"
+					style="left: 0;"
+					class="el-carousel__arrow" 
+					@click="previewClick(previews.active - 1 )" 
+					icon="ArrowLeftBold"></el-button>
+				<el-button 
+					v-if="previews.active + 1 < previews.data.length"
+					class="el-carousel__arrow" 
+					style="right: 0;"
+					@click="previewClick(previews.active + 1)" 
+					icon="ArrowRightBold"></el-button>
+			</template>
+		</div>
+	</template>
+
+	<div class="album-box" v-if="previews.data.length">
+		<el-button 
+			v-if="previews.size"
+			class="slider-btn slider-btn-prev" 
+			@click="previewSwitch('left')" 
+			text 
+			icon="ArrowLeftBold"></el-button>
+		<div class="album-imgs" ref="previewBox">
+			<ul 
+				class="album-imglist" 
+				ref="previewChild"
+				:style="{transform: 'translate('+previews.transform+'px, 0px)'}">
+				<li 
+					v-for="(item,index) in previews.data" 
+					:key="index" 
+					:ref="'previewImage'+index"
+					@click="previewClick(index)">
+					<div class="album-img" :class="{'active':index==previews.active}" >
+						<el-image  :src="item.spath?item.spath:'dzz/images/extimg/'+imagesData.filetype+'.png'" fit="contain" ><template #error><div class="el-image__placeholder"></div></template></el-image>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<el-button 
+			v-if="previews.size" 
+			class="slider-btn slider-btn-next" 
+			@click="previewSwitch('right')" 
+			text 
+			icon="ArrowRightBold"></el-button>
+	</div>
+</div>
+<script type="text/javascript">
+	var ImageMixin = {
+		watch:{
+			'previews.active':function(val){
+				this.imageSet();
+			},
+		},
+		methods:{
+			imageTransform(){
+				var self = this;
+				var str = '';
+				if(self.ImgParam.rotate != 0){
+					str += ' rotate('+self.ImgParam.rotate+'deg)';
+				}
+				if(self.ImgParam.scaleX != 0){
+					str += ' scaleX('+self.ImgParam.scaleX+')';
+				}
+				if(self.ImgParam.scaleY != 0){
+					str += ' scaleY('+self.ImgParam.scaleY+')';
+				}
+				var img = document.querySelector('.image-viewer__img');
+				img.style.transform=str;
+					
+			},
+			imageSize(proportion){
+				var self = this;
+				// if(self.ImgParam.LoadFirst){
+				// 	self.ImgParam.LoadFirst = false;
+				// 	return false;
+				// }
+				var ImgScroll = document.getElementById('ImgScroll');
+				var img = document.querySelector('.image-viewer__img');
+				var wrap = document.querySelector('#ImgScroll .el-scrollbar__wrap');
+				var canva = document.querySelector('#ImgScroll .el-scrollbar__view');
+				
+				if(this.imagesData.opentype == 'other'){
+					var width = parseFloat(this.imagesData.iconwidth);
+					var height = parseFloat(this.imagesData.iconheight);
+				}else{
+					var width = parseFloat(this.imagesSize.width);
+					var height = parseFloat(this.imagesSize.height);
+				}
+
+
+				if(this.imagesData.opentype == 'other'){
+					var width = parseFloat(this.imagesData.iconwidth);
+					var height = parseFloat(this.imagesData.iconheight);
+				}else{
+					var width = parseFloat(this.imagesSize.width);
+					var height = parseFloat(this.imagesSize.height);
+				}
+				var fwidth = width*proportion;
+				var fheight = height*proportion;
+			
+				var owidth = fwidth-img.clientWidth;
+				var oheight = fheight-img.clientHeight;
+				var pwidth = ImgScroll.clientWidth-(ImgScroll.clientWidth/5);
+				var pheight = ImgScroll.clientHeight-(ImgScroll.clientHeight/5);
+
+				canva.style.lineHeight = ImgScroll.clientHeight+'px';
+				if(fwidth>ImgScroll.clientWidth){
+					img.style.cssText = 'max-width: "";width:'+fwidth+'px';
+					wrap.scrollLeft += owidth/2;
+					
+				}else{
+					img.style.cssText = 'max-width: "";width:'+fwidth+'px';
+				}
+				if(fheight>ImgScroll.clientHeight){
+					img.style.cssText = 'max-height: "";height:'+fheight+'px';
+					wrap.scrollTop += oheight/2;
+				}else{
+					img.style.cssText = 'max-height: "";height:'+fheight+'px';
+				}
+				if(fheight>ImgScroll.clientHeight || fwidth>ImgScroll.clientWidth){
+					
+					ImgScroll.classList.add = 'move';
+				}else{
+					ImgScroll.classList.remove('move');
+				}
+				img.classList.remove('max');
+				if(self.$refs.scrollImg){
+					self.$refs.scrollImg.update();
+				}
+			},
+			imageproportion(){
+				var self = this;
+				var val = self.ImgParam.proportion;
+				this.ImgParam.fproportion = Math.round(val*100);
+				self.$nextTick(function(){
+					self.imageSize(val);
+				});
+			},
+			imageload(){
+				let img = document.querySelector('.image-viewer__img.max');
+				if(img){
+					img.classList.remove('opacity');
+				}
+			},
+			imageSet(){
+				var self = this;
+				let imagewidth = 0;
+				let imageheight = 0;
+				this.getImageSizeByUrl( function(param){
+					let imageswidth = param.width;
+					let imagesheight = param.height;
+					if(imageswidth == 0 && imagesheight == 0){
+						imageswidth = self.imagesData.width;
+						imagesheight = self.imagesData.height;
+					}
+					self.imagesSize.width = imageswidth;
+					self.imagesSize.height = imagesheight;
+					var Bw = document.getElementById('ImgScroll').clientWidth;
+					var Bh = document.getElementById('ImgScroll').clientHeight;
+					var slider = document.querySelector('.el-slider').clientWidth;
+					var Lw = 0;
+					var Lh = 0;
+					var proportion = 0;
+					if(self.imagesData.opentype == 'other'){
+						var Lw = parseFloat(self.imagesData.iconwidth);
+						var Lh = parseFloat(self.imagesData.iconheight);
+					}else{
+						var Lw = parseFloat(self.imagesSize.width);
+						var Lh = parseFloat(self.imagesSize.height);
+					}
+					if(Bw < Lw || Bh < Lh){
+						var rateW =  Bw/Lw;
+						var rateH = Bh/Lh;
+						if(rateW>rateH){
+							num = rateH;
+						}else{
+							num = rateW;
+						}
+						proportion = num;
+					}else{
+						proportion = 1;
+					}
+					self.ImgParam.proportion = proportion;
+					var fproportion = Math.round(proportion*100);
+					self.ImgParam.slider = (slider/2)*(fproportion/100);
+					self.imagesSize.show = true;
+					self.imageproportion();
+				});
+			},
+			async getImageSizeByUrl(callback){
+				let image = new Image();
+				image.src = this.imagesData.originalimg;
+				image.onload = await function () {
+					callback({
+						width: image.width,
+						height: image.height
+					});
+				};
+				image.onerror = await function () {
+					callback({
+						width: 0,
+						height: 0
+					});
+				};
+				
+			},
+			imageDrag(e){//图片移动
+				var self = this;
+				var oDiv = document.getElementById('ImgScroll');
+				var oImg = document.querySelector('.image-viewer__img');
+				var wrap = oDiv.querySelector('.el-scrollbar__wrap');
+				e = e ? e : window.event;
+				e.preventDefault();
+				oDiv.classList.add = 'activemove';
+				var lastClientX = e.clientX;
+				var lastClientY = e.clientY;
+				document.onmousemove = function(e){
+					e = e ? e : window.event;
+					var ClientX = e.clientX;
+					var ClientY = e.clientY;
+							
+					if(oImg.clientWidth>oDiv.clientWidth){
+						wrap.scrollLeft -=(- lastClientX + (lastClientX=ClientX));
+					}
+					if(oImg.clientHeight>oDiv.clientHeight){
+						var num  = (- lastClientY + (lastClientY=ClientY));
+						wrap.scrollTop -=num;
+					}
+					return false; //阻止默认事件或冒泡  
+				}
+				document.onmouseup = function(){
+					oDiv.classList.remove('activemove');
+					document.onmousemove = null;
+					document.onmouseup = null;
+				};
+
+
+				
+			},
+			previewClick(index){
+				let self = this;
+				if(this.previews.active == index || this.previews.data.length <= index || index <= -1)return false;
+				this.previews.active = index;
+				this.imagesData.originalimg = this.previews.data[index].lpath;
+			},
+			previewSwitch(type){
+				let self = this;
+				let WBox = self.$refs.previewBox.offsetWidth;
+				let WChild = self.$refs.previewChild.offsetWidth;
+				if(type == 'left'){
+					if(self.previews.transform == 0){
+						return;
+					}else{
+						let fw = this.previews.transform + WBox;
+						if(fw > 0){
+							self.previews.transform = 0;
+						}else{
+							this.previews.transform = fw;
+						}
+					}	
+				}else{
+					let fw = self.previews.transform - WBox;
+					if(fw < -(WChild - WBox)){
+						self.previews.transform = -(WChild - WBox);
+					}else{
+						self.previews.transform = fw;
+					}
+				}
+
+			},
+			previewSize(){
+				let self = this;
+				if(!self.$refs.previewBox || !self.$refs.previewChild)return false;
+				let WBox = self.$refs.previewBox.offsetWidth;
+				let WChild = self.$refs.previewChild.offsetWidth;
+				if(WChild > WBox){
+					self.previews.size = true;
+				}else{
+					self.previews.size = false;
+				}
+			},
+		}
+	};
+</script>

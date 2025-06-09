@@ -1,0 +1,26 @@
+<!--{eval output();}-->
+<!--{eval updatesession();}-->
+<!--{if debuginfo()}-->
+<script type="text/javascript">
+try{
+	if(console && console.log){
+		console.log('Processed in $_G[debuginfo][time] second(s), $_G[debuginfo][queries] queries <!--{if $_G[gzipcompress]}-->, Gzip On<!--{/if}--><!--{if C::memory()->type}-->, <!--{echo ucwords(C::memory()->type)}--> On<!--{/if}-->.');
+	}
+}catch(e){}
+</script>
+<!--{/if}-->	
+<!--{if !$_G['setting']['bbclosed']}-->
+	<!--{if !isset($_G['cookie']['sendmail'])}-->
+	<script type="text/javascript" src="misc.php?mod=sendmail&rand=$_G[timestamp]"></script>
+	<!--{/if}-->
+<!--{/if}-->
+<!--{if $_G[uid]}-->
+	<!--{if !isset($_G['cookie']['checkupgrade']) || !isset($_G['cookie']['checkupgrade'])}-->
+		<script type="text/javascript" src="misc.php?mod=upgrade&action=checkupgrade&rand=$_G[timestamp]"></script>
+	<!--{/if}-->
+<!--{/if}-->
+<!--{if $_G['setting']['statcode']}-->
+	$_G['setting']['statcode']
+<!--{/if}--> 
+</body>
+</html>

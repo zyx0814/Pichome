@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+        <!-- 主题名称 -->
+        <item id="themename"><![CDATA[默认主题]]></item>
+        <!-- 主题颜色 -->
+        <item id="colors"><![CDATA[white,dark]]></item>
+        <item id="defaultcolor"><![CDATA[dark]]></item>
+         <!-- 主题样式 -->
+        <item id="modulestyle">
+            <!-- 幻灯片 -->
+            <item id="slide">
+                <!-- 样式1 -->
+                <item id="horizontal">
+                    <item id="title"><![CDATA[横幅]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[horizontal]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[1800×450]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[25%]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[1800×500]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[28%]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[1800×800]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[44%]]></item>
+                        </item>
+                    </item>
+                </item>
+                <!-- 样式2 -->
+                <item id="full">
+                    <item id="title"><![CDATA[满屏]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[full]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[1800×450]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[25%]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[1800×500]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[28%]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[1800×800]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[44%]]></item>
+                        </item>
+                    </item>
+                </item>
+  
+            </item>
+            <!-- 搜索 -->
+            <item id="search_rec">
+                <!-- 样式1 -->
+                <item id="style1">
+                    <item id="title"><![CDATA[简洁边框中对齐]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[style1]]></item>
+                </item>
+                <!-- 样式2 -->
+                <item id="style2">
+                    <item id="title"><![CDATA[简洁边框左对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style2]]></item>
+                </item>
+                <!-- 样式3 -->
+                <item id="style3">
+                    <item id="title"><![CDATA[无边框中对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style3]]></item>
+                </item>
+                <!-- 样式4 -->
+                <item id="style4">
+                    <item id="title"><![CDATA[无边框左对齐]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[style4]]></item>
+                </item>
+                
+            </item>
+            <!-- 富文本 -->
+            <item id="rich_text">
+                <!-- 样式1 -->
+                <item id="top">
+                    <item id="title"><![CDATA[顶部分类]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[top]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[宽]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[full]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[窄]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[limit]]></item>
+                        </item>
+                    </item>
+                </item>
+                <!-- 样式2 -->
+                <item id="left">
+                    <item id="title"><![CDATA[左侧分类]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[left]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[宽]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[full]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[窄]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[limit]]></item>
+                        </item>
+                    </item>
+                </item>
+                
+            </item>
+            <!-- 链接 -->
+            <item id="link">
+                <!-- 样式1 -->
+                <item id="horizontal">
+                    <item id="title"><![CDATA[横排]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[horizontal]]></item>
+                </item>
+                <!-- 样式2 -->
+                <item id="card">
+                    <item id="title"><![CDATA[卡片]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[card]]></item>
+                </item>
+                <!-- 样式3 -->
+                <item id="icon">
+                    <item id="title"><![CDATA[图标]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[icon]]></item>
+                </item>
+                
+            </item>
+            <!-- 常见问题 -->
+            <item id="question">
+                <!-- 样式1 -->
+                <item id="top">
+                    <item id="title"><![CDATA[顶部分类]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[top]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[宽]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[full]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[窄]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[limit]]></item>
+                        </item>
+                    </item>
+                </item>
+                <!-- 样式2 -->
+                <item id="left">
+                    <item id="title"><![CDATA[左侧分类]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[left]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[宽]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[full]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[窄]]></item>
+                            <item id="default"><![CDATA[false]]></item>
+                            <item id="value"><![CDATA[limit]]></item>
+                        </item>
+                    </item>
+                </item>
+            </item>
+            <!-- 文件推荐 -->
+            <item id="file_rec">
+                <!-- 样式1 -->
+                <item id="imageList">
+                    <item id="title"><![CDATA[网格]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[imageList]]></item>
+                </item>
+                <!-- 样式2 -->
+                <item id="rowGrid">
+                    <item id="title"><![CDATA[自适应]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[rowGrid]]></item>
+                </item>
+                <!-- 样式3 -->
+                <item id="tabodd">
+                    <item id="title"><![CDATA[列表单列]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[tabodd]]></item>
+                </item>
+                <item id="tabeven">
+                    <item id="title"><![CDATA[列表双列]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[tabeven]]></item>
+                </item>
+                <item id="details">
+                    <item id="title"><![CDATA[详情]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[details]]></item>
+                </item>
+            </item>
+            <!-- 库 -->
+            <item id="db_ids">
+                <!-- 样式1 -->
+                <item id="waterFall">
+                    <item id="title"><![CDATA[瀑布流]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[waterFall]]></item>
+                </item>
+                <!-- 样式1 -->
+                <item id="imageList">
+                    <item id="title"><![CDATA[网格]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[imageList]]></item>
+                </item>
+                <!-- 样式2 -->
+                <item id="rowGrid">
+                    <item id="title"><![CDATA[自适应]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[rowGrid]]></item>
+                </item>
+                <!-- 样式3 -->
+                <item id="tabodd">
+                    <item id="title"><![CDATA[列表单列]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[tabodd]]></item>
+                </item>
+                <item id="tabeven">
+                    <item id="title"><![CDATA[列表双列]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[tabeven]]></item>
+                </item>
+                <item id="details">
+                    <item id="title"><![CDATA[详情]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[details]]></item>
+                </item>
+                
+            </item>
+            <!-- 手动推荐 -->
+            <item id="manual_rec">
+                 <!-- 样式1 -->
+                <item id="one">
+                    <item id="title"><![CDATA[单排文字居中]]></item>
+                    <item id="default"><![CDATA[true]]></item>
+                    <item id="value"><![CDATA[one]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="two">
+                    <item id="title"><![CDATA[单排文字居下]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[two]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="three">
+                    <item id="title"><![CDATA[单排图外文字]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[three]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="four">
+                    <item id="title"><![CDATA[双排文字居中]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[four]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="five">
+                    <item id="title"><![CDATA[双排文字居下]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[five]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="six">
+                    <item id="title"><![CDATA[双排图外文字]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[six]]></item>
+                    <item id="size">
+                        <item id="0">
+                            <item id="title"><![CDATA[266×182]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[rectangle]]></item>
+                        </item>
+                        <item id="1">
+                            <item id="title"><![CDATA[266×400]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[vertical]]></item>
+                        </item>
+                        <item id="2">
+                            <item id="title"><![CDATA[266×266]]></item>
+                            <item id="default"><![CDATA[true]]></item>
+                            <item id="value"><![CDATA[square]]></item>
+                        </item>
+                    </item>
+                </item>
+                <item id="seven">
+                    <item id="title"><![CDATA[大图小图混排]]></item>
+                    <item id="default"><![CDATA[false]]></item>
+                    <item id="value"><![CDATA[seven]]></item>
+                </item>
+            </item>
+        </item>
+</root>

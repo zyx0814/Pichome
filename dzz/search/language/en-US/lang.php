@@ -1,0 +1,71 @@
+<?php
+$lang = array
+(
+    'app_name'=>'Search settings',
+    'appname'=>'Search settings',
+    'setting'=>'Settings',
+    'layout'=>'Layout',
+    'layout_rowGrid'=>'RowGrid',
+    'layout_waterFall'=>'Waterfall',
+    'layout_imageList'=>'Grid',
+    'layout_tabodd'=>'Single column',
+    'layout_tabeven'=>'Double column',
+    'layout_details'=>'Details',
+
+    'searchName'=>'Template name',
+    'searchName_empty'=>'Template name cannot be empty',
+    'searchRange'=>'Search range',
+    'searchRange_tips'=>'You can choose multiple databases, leave blank to limit',
+    'searchExts'=>'Search suffix',
+    'searchExts_tips'=>'Multiple use "," to separate',
+    'searchDisp'=>'Sort',
+    'searchDisp_placeholder'=>'Please enter a number, the larger the later',
+
+    'display_default'=>'Show item',
+    'display_name'=>'File name',
+    'display_extension'=>'Suffix name',
+    'display_other'=>'Show more',
+    'display_size'=>'Size',
+    'display_filesize'=>'File size',
+    'display_tag'=>'Tag',
+    'display_grade'=>'Grade',
+    'display_btime'=>'Add date',
+    'display_dateline'=>'Creation time',
+    'display_mtime'=>'Modification time',
+
+    'sort_default'=>'Default sorting',
+    'sort_btime'=>'Add date',
+    'sort_dateline'=>'Creation time',
+    'sort_mtime'=>'Modification time',
+    'sort_name'=>'File name',
+    'sort_filesize'=>'File size',
+    'sort_whsize'=>'Size',
+    'sort_grade'=>'Grade',
+    'sort_duration'=>'Duration',
+
+    'orderby_default'=>'Order by',
+    'orderby_asc'=>'Ascending',
+    'orderby_desc'=>'Descending',
+
+    'opentype'=>'Detail window',
+    'opentype_current'=>'Current window',
+    'opentype_new'=>'New window',
+
+    'filterstyle'=>'Filter style',
+    'filterstyle_0'=>'Drop-down menu',
+    'filterstyle_1'=>'List',
+
+    'screen_selecting'=>'Selectable filter items',
+    'screen_selected'=>'Selected filter items',
+
+    'screen_tag_auto'=>'Auto tag',
+    'screen_tag_custom'=>'Custom tag',
+    'screen_tag_sort_hot'=>'Hot sorting',
+    'screen_tag_sort_name'=>'Name sorting',
+
+    'confirm_delete'=>'This operation cannot be restored, are you sure you want to delete?',
+    'template_name_empty'=>'Template name cannot be empty',
+    'template_create_fail'=>'Template creation failed',
+    'add_templat'=>'Create template',
+    'Navigation'=>'Navigation',
+);

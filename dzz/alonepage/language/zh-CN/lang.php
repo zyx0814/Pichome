@@ -1,0 +1,22 @@
+<?php
+$lang = array(
+    'Image_address'=>'图片地址',
+    'Link_address'=>'链接地址',
+    'page'=>'单页',
+    'column'=>'栏目',
+    'tip1'=>'数量0或者不填为不限数量',
+    'tip2'=>'数据缓存时间间隔，单位秒；0：不使用缓存',
+    'tip3'=>'更多链接',
+    'tip4'=>'会出现更多内容按钮，点击可跳转到链接地址',
+    'Latest_recommendations'=>'最新推荐',
+    'Popular_recommendations'=>'热门推荐',
+    'Tag_recommendation'=>'标签推荐',
+    'Automatic_acquisition'=>'自动获取',
+    'Manual_settings'=>'手动设置',
+    'Hotword_settings'=>'热词设置',
+    'Content_management'=>'内容管理',
+    'data_source'=>'数据来源',
+    'search_cat'=>'搜索分类',
+    'default_groupname'=>'默认分类',
+    'index'=>'序号',
+);

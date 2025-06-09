@@ -1,0 +1,156 @@
+<!--{template common/container/pc/header_start}-->
+<style type="text/css">
+	:root{
+		--el-color-primary: #1c3676; 
+	}
+	body {
+		background: transparent;
+	}
+	.page-left .el-menu-item.is-active{
+		background-color: #e8ebf1;
+	}
+	.el-page-header__left {
+		margin-right: 8px;
+	}
+	.el-page-header__content {
+		color: #fff;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px" style="--el-header-padding: 0 8px;background: var(--el-color-primary);">
+			<!--{template header/index}-->
+		</el-header>
+		<el-container>
+			<el-aside width="300px" class="page-left">
+				<!--{template left}-->
+			</el-aside>
+			<el-main style="padding: 0;">
+				<el-scrollbar style="height: 100%;">
+					<div style="padding: 20px;">
+						<el-form ref="form" label-position="top" label-width="100px" label-suffix="：">
+							<el-form-item label="{lang logswitch}">
+								<el-radio-group v-model="systemlog_open">
+								    <el-radio border :label="1">{lang enable}</el-radio>
+								    <el-radio border :label="0">{lang forbidden}</el-radio>
+								</el-radio-group>
+							</el-form-item>
+							<el-form-item label="{lang logtype}" v-show="systemlog_open">
+								<el-table
+								    :data="tableData"
+								    style="width:480px">
+								    <el-table-column
+								        label="{lang logtypename}"
+								        width="180">
+										<template #default="scope">
+											<el-input :readonly="parseInt(scope.row.issystem)" v-model="scope.row.title" placeholder=""></el-input>
+										</template>
+								    </el-table-column>
+									<el-table-column
+									    label="{lang logflag}"
+									    width="180">
+										<template #default="scope">
+											<el-input :readonly="parseInt(scope.row.issystem)" v-model="scope.row.mark" placeholder=""></el-input>
+										</template>
+									</el-table-column>
+									<el-table-column
+									    label="{lang logswitch}"
+									    width="120"
+										align="center">
+										<template #default="scope">
+											<el-checkbox v-model="scope.row.issystem" :true-label="1" :false-label="0"></el-checkbox>
+										</template>
+									</el-table-column>
+							</el-form-item>
+							<el-form-item>
+								<el-button type="primary" @click="handleSubmit">{lang save_changes}</el-button>
+							</el-form-item>
+						</el-form>
+					</div>
+				</el-scrollbar>
+			</el-main>
+		</el-container>
+	</el-container>
+	<script type="text/javascript">
+		const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+		const dzzoffice = createApp({
+			data() {
+				return {
+					systemlog_open:<!--{if $_G[setting][systemlog_open]==1}-->1<!--{else}-->0<!--{/if}-->,
+					tableData:[],
+				};
+			},
+			mixins:[LeftMixin],
+			watch:{
+		
+			},
+			computed:{
+				
+			},
+			created() {
+				<!--{loop $systemlog_setting $mark $info}-->
+				this.tableData.push({
+					issystem:$info[issystem],
+					title:'$info[title]',
+					mark:'$mark',
+				})
+				<!--{/loop}--> 
+			},
+			methods: {
+				async handleSubmit(){
+					var param = {
+						settingsubmit:true,
+						formhash:'{FORMHASH}',
+						operation: 'basic',
+						systemlog_open:this.systemlog_open,
+						settingnew:{
+							issystem:[],
+							title:[],
+							mark:[],
+							is_open:[]
+						}
+					};
+					this.tableData.forEach(function(item){
+						param.settingnew.issystem.push(item.issystem);
+						param.settingnew.title.push(item.title);
+						param.settingnew.mark.push(item.mark);
+						param.settingnew.is_open.push(item.issystem);
+					});
+					var res = await axios.post(MOD_URL+'&op=admin',param);
+					var json = res.data;
+					if(json.success){
+						this.$message({
+							type:'success',
+							message:'保存成功'
+						});
+					}else{
+						this.$message({
+							type:'error',
+							message:'保存失败'
+						});
+					}
+				}
+			},
+			mounted() {
+				var self = this;
+	
+			},
+			components:{
+				comavatar,
+			}
+		})
+		dzzoffice.use(ElementPlus, {
+			locale: ElementPlusLocaleZhCn,
+		});
+		for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+			dzzoffice.component(key, component)
+		}
+		// 屏蔽警告信息
+		dzzoffice.config.warnHandler = function(){return null};
+		dzzoffice.mount('#dzzoffice');
+	</script>
+</div>
+
+
+<!--{template common/container/pc/footer}-->

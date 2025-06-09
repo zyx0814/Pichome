@@ -1,0 +1,122 @@
+<div 
+	class="box-selection" 
+	v-show="BoxSelectionParam.show" 
+	style="background: var(--el-text-color-disabled);position: absolute;z-index:500;opacity: 0.5;"
+	:style="'width:' + boxselectionwidth + ';left:' + boxselectionleft + ';height:' + boxselectionheight + ';top:' + boxselectiontop"></div>
+<div v-if="BoxSelectionParam.show"  style="position: absolute;width:100%;height:100%;left:0;top:0;z-index:4000;"></div>	
+<script type="text/javascript">
+	let BoxSelectionMixin = {
+		data(){
+			return {
+				BoxSelectionParam:{
+					show:false,
+					rids:[],
+					box_screen_left: 0,
+					box_screen_top: 0,
+					start_x: 0,
+					start_y: 0,
+					end_x: 0,
+					end_y: 0,
+				}
+			}
+		},
+		
+		computed: {
+			boxselectionwidth() {
+				return `${Math.abs(this.BoxSelectionParam.end_x - this.BoxSelectionParam.start_x)}px;`;
+			},
+			boxselectionheight() {
+				return `${Math.abs(this.BoxSelectionParam.end_y - this.BoxSelectionParam.start_y)}px;`;
+			},
+			boxselectionleft() {
+				return `${Math.min(this.BoxSelectionParam.start_x, this.BoxSelectionParam.end_x) - this.BoxSelectionParam.box_screen_left}px;`;
+			},
+			boxselectiontop() {
+				return `${Math.min(this.BoxSelectionParam.start_y, this.BoxSelectionParam.end_y) - this.BoxSelectionParam.box_screen_top}px;`;
+			},
+		},
+		methods:{
+			DocumentMouseDownPageContent(event) {
+				let dom = document.querySelectorAll('.cannot-select');
+				for(var i =0;i<dom.length;i++){
+					if (dom[i].contains(event.target)) {
+						return false;
+					}
+				}
+				this.DocumentPageContentNotChecked();
+				const dom_box = document.querySelector(".dzz-container");
+				this.BoxSelectionParam.box_screen_left = dom_box.getBoundingClientRect().left;
+				this.BoxSelectionParam.box_screen_top = dom_box.getBoundingClientRect().top;
+				this.BoxSelectionParam.show = true;
+				this.BoxSelectionParam.start_x = event.clientX;
+				this.BoxSelectionParam.start_y = event.clientY;
+				this.BoxSelectionParam.end_x = event.clientX;
+				this.BoxSelectionParam.end_y = event.clientY;
+				document.body.addEventListener("mousemove", this.BoxSelectionMouseMove);
+				document.body.addEventListener("mouseup", this.BoxSelectionMouseUp);
+			},
+			BoxSelectionMouseMove(event) {
+				event.preventDefault();
+				this.BoxSelectionParam.end_x = event.clientX;
+				this.BoxSelectionParam.end_y = event.clientY;
+				this.BoxSelectionDomSelect();
+			},
+			BoxSelectionMouseUp() {
+				document.body.removeEventListener("mousemove", this.BoxSelectionMouseMove);
+				document.body.removeEventListener("mouseup", this.BoxSelectionMouseUp);
+				
+				this.BoxSelectionParam.show = false;
+				if(this.BoxSelectionParam.rids.length){
+					this.RightParamClean();
+					this.RightType = 'file';
+					this.RightActiveRid = JSON.parse(JSON.stringify(this.BoxSelectionParam.rids));
+					this.RightGetData();
+				}
+				this.BoxSelectionresSetXY();
+			},
+			BoxSelectionDomSelect() {
+				var self = this;
+				const dom_mask = window.document.querySelector(".box-selection");
+				const rect_select = dom_mask.getClientRects()[0];
+				document.querySelectorAll(".image-item").forEach((node, index) => {
+					const rects = node.getClientRects()[0];
+					var rid = node.dataset.rid;
+					var index = self.BoxSelectionParam.rids.indexOf(rid);
+					if (self.BoxSelectioncollide(rects, rect_select)) {
+						if(index<0){
+							self.BoxSelectionParam.rids.push(rid);
+						}
+					}else{
+						if(index>-1){
+							self.BoxSelectionParam.rids.splice(index,1);
+						}
+					}
+					
+				});
+				
+			},
+			BoxSelectioncollide(rect1, rect2) {
+				const maxX = Math.max(rect1.x + rect1.width, rect2.x + rect2.width);
+				const maxY = Math.max(rect1.y + rect1.height, rect2.y + rect2.height);
+				const minX = Math.min(rect1.x, rect2.x);
+				const minY = Math.min(rect1.y, rect2.y);
+				if (maxX - minX <= rect1.width + rect2.width && maxY - minY <= rect1.height + rect2.height) {
+					return true;
+				} else {
+					return false;
+				}
+			},
+			BoxSelectionresSetXY() {
+				this.BoxSelectionParam.start_x = 0;
+				this.BoxSelectionParam.start_y = 0;
+				this.BoxSelectionParam.end_x = 0;
+				this.BoxSelectionParam.end_y = 0;
+				this.BoxSelectionParam.rids = [];
+			},
+		},
+		mounted(){
+			var self = this;
+			
+		}
+	}
+</script>

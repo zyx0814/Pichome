@@ -1,0 +1,303 @@
+<div class="tabbar" :class="{'tabbar-music':FooterMusic.boxshow}">
+	<template v-if="FooterMusic.boxshow">
+		<div class="tab-item avatar">
+			<div style="position: absolute;width: 100%;height: 100%;z-index: 1;" @click="FooterMusiclayoutPlay(FooterMusic.rid)">
+				<template v-if="FooterMusic.loading">
+					<van-loading type="spinner" color="#ffffff" size="18px"></van-loading>
+				</template>
+				<template v-else>
+					<template v-if="FooterMusic.playing"><i class="icon ri-pause-fill"></i></template>
+					<template v-else><i class="icon ri-play-fill"></i></template>
+				</template>
+			</div>
+			<audio 
+				style="position: absolute;left: 0;width: 100%;height: 100%;opacity: 0;" 
+				class="audio" 
+				ref="music-player" 
+				autoplay 
+				:src="FooterMusic.src"
+				@timeupdate="FooterMusiclayoutonTimeupdate"
+				@pause="FooterMusiclayoutonPause"
+				@play="FooterMusiclayoutonPlay"
+				@loadedmetadata="FooterMusiclayoutonLoadedmetadata"></audio>
+		</div>
+		<div class="tab-item music-info">
+			<div style="width: 100%;">
+				<div class="info">
+					<div class="info-name" ref="music-player-info">
+						<div class="name" :class="{'name-scroll':FooterMusic.namescroll}" ref="music-player-name">{{FooterMusic.name}}</div>
+					</div>
+					<div class="info-time">{{FooterMusic.currentTime | FooterMusiclayoutSecond }} / {{FooterMusic.maxTime | FooterMusiclayoutSecond}}</div>
+				</div>
+				<div class="slider">
+					<van-slider 
+					v-model="FooterMusic.currentTime" 
+					button-size="18px"
+					:max="FooterMusic.maxTime"
+					@change="FooterMusiclayoutprogressChange"></van-slider>
+				</div>
+			</div>
+		</div>
+		<div class="tab-item length" @click="FooterMusiclayoutEnd">
+			<i class="icon ri-shut-down-line"></i>
+		</div>
+	</template>
+	<template v-else>
+		<template v-for="item in ParamFooter.data">
+			<template v-if="item.show">
+				<template v-if="item.type == 'user'">
+					<div class="tab-item" @click="MyPopupVisible=true">
+						<div id="dzz_avatar_img">
+							{eval echo avatar_block($_G[uid]);}
+							<!--{if intval($_G[pichomelevel]) == 1}-->
+								<van-image
+									class="garde-image"
+									fit="contain"
+									src="dzz/pichome/image/grade/1.png"
+								/>
+							<!--{elseif intval($_G[pichomelevel]) == 2}-->
+								<van-image
+									class="garde-image"
+									fit="contain"
+									src="dzz/pichome/image/grade/2.png"
+								/>
+							<!--{elseif intval($_G[pichomelevel]) == 3}-->
+								<van-image
+									class="garde-image"
+									fit="contain"
+									src="dzz/pichome/image/grade/3.png"
+								/>
+							<!--{elseif intval($_G[pichomelevel]) == 4}-->
+								<van-image
+									class="garde-image"
+									fit="contain"
+									src="dzz/pichome/image/grade/4.png"
+								/>
+							<!--{elseif intval($_G[pichomelevel]) == 5}-->
+								<van-image
+									class="garde-image"
+									fit="contain"
+									src="dzz/pichome/image/grade/5.png"
+								/>
+							<!--{/if}-->
+						</div>
+					</div>
+				</template>
+				<template v-else>
+					<div class="tab-item" @click="handleFooterClick(item.type)">
+						<i :class="item.icon" style="position: relative;">
+							<template v-if="item.type == 'search'">
+								<div v-if="ParamSearch.keyword" class="van-info van-info--dot van-sidebar-item__info"></div>
+							</template>
+							<template v-else-if="item.type == 'screen'">
+								<div v-if="ParamScreen.ActiveNum" class="van-info van-info--dot van-sidebar-item__info"></div>
+							</template>
+						</i>
+					</div>
+				</template>
+			</template>
+		</template>
+	</template>
+</div>
+
+
+<script>
+	function FooterMusicPlaySecond(second) {
+	    var secondType = typeof second;
+	    if (secondType === 'number' || secondType === 'string') {
+			second = parseInt(second);
+			var hours = Math.floor(second / 3600);
+			second = second - hours * 3600;
+			var mimute = Math.floor(second / 60);
+			second = second - mimute * 60;
+			return ('0' + mimute).slice(-2) + ':' + ('0' + second).slice(-2)
+	    } else {
+			return '00:00'
+	    }
+	}
+	var FooterMixin = {
+		data(){
+			return {
+				ParamFooter:{
+					IsShow:'up',
+					data:{
+						clear:{type:'clear',icon:'icon ri-brush-3-line',show:false},
+						search:{type:'search',icon:'icon ri-search-line',show:true},
+						screen:{type:'screen',icon:'icon ri-filter-2-fill',show:false},
+						sort:{type:'sort',icon:'icon ri-arrow-up-down-fill',show:true},
+						user:{type:'user',icon:'',show:true},
+						collectcheck:{type:'collectcheck',icon:'icon ri-star-fill',show:false},
+						outcheck:{type:'outcheck',icon:'icon ri-close-fill',show:false}
+					}
+				},
+				FooterMusic:{
+					boxshow:false,
+					loading:true,
+					rid:'',
+					src:'',
+					name:'',
+					namescroll:false,
+					playing:false,
+					currentTime:0,
+					maxTime:0,
+					cacheCurrent:0
+				}
+			}
+		},
+		methods:{
+			FooterMusiclayoutonTimeupdate(res){
+				this.FooterMusic.currentTime = res.target.currentTime
+			},
+			FooterMusiclayoutonPlay(){
+				var self = this;
+				self.ParamFooter.IsShow = 'up';
+				self.FooterMusic.loading = false;
+				self.FooterMusic.playing = true;
+				var curr1 = self.ParamImages.imgageTable.StoreImgdatas.find(function(curr){
+					return curr.rid == self.FooterMusic.rid;
+				});
+				var curr2 = self.ParamImages.Newdatas.find(function(curr){
+					return curr.rid == self.FooterMusic.rid;
+				});
+				if(curr1){
+					curr1.playmusic = true;
+				}
+				if(curr2){
+					curr2.playmusic = true;
+				}
+				
+			},
+			FooterMusiclayoutonPause(){
+				var self = this;
+				self.FooterMusic.playing = false;
+				self.FooterMusic.loading = false;
+				var curr1 = self.ParamImages.imgageTable.StoreImgdatas.find(function(curr){
+					return curr.rid == self.FooterMusic.rid;
+				});
+				var curr2 = self.ParamImages.Newdatas.find(function(curr){
+					return curr.rid == self.FooterMusic.rid;
+				});
+				if(curr1){
+					curr1.playmusic = false;
+				}
+				if(curr2){
+					curr2.playmusic = false;
+				}
+			},
+			FooterMusiclayoutonLoadedmetadata(res){
+				var self = this;
+				var boxw = self.$refs['music-player-info'].offsetWidth;
+				var domw = self.$refs['music-player-name'].offsetWidth;
+				
+				if(boxw<domw){
+					this.FooterMusic.namescroll = true;
+				}else{
+					this.FooterMusic.namescroll = false;
+				}
+				this.FooterMusic.maxTime = parseInt(res.target.duration)
+			},
+			FooterMusiclayoutprogressChange(value){
+				var self = this;
+				self.$refs['music-player'].currentTime = value >= 0 ? value : this.FooterMusic.cacheCurrent;
+				this.FooterMusic.currentTime = value >= 0 ? value : this.FooterMusic.cacheCurrent
+			},
+			FooterMusiclayoutmouseupChangeTime(){
+				this.FooterMusiclayoutprogressChange(this.FooterMusic.cacheCurrent)
+			},
+			FooterMusiclayoutPlay(rid){
+				var self = this;
+				self.FooterMusic.boxshow = true;
+				var curr1 = self.ParamImages.imgageTable.StoreImgdatas.find(function(curr){
+					return curr.rid == rid;
+				});
+				if(this.FooterMusic.rid == rid){
+					if(self.FooterMusic.playing){
+						if(self.FooterMusic.loading){
+							self.$refs['music-player'].pause();
+							this.FooterMusiclayoutonPause();
+						}else{
+							self.$refs['music-player'].pause();
+						}
+					}else{
+						self.$refs['music-player'].play();
+					}
+				}else{
+					if(curr1){
+						if(this.FooterMusic.rid){
+							var oldcurr1 = self.ParamImages.imgageTable.StoreImgdatas.find(function(curr){
+								return curr.rid == self.FooterMusic.rid;
+							});
+							var oldcurr2 = self.ParamImages.Newdatas.find(function(curr){
+								return curr.rid == self.FooterMusic.rid;
+							});
+							if(oldcurr1){
+								oldcurr1.playmusic = false;
+							}
+							if(oldcurr2){
+								oldcurr2.playmusic = false;
+							}
+						}
+						self.FooterMusic.loading = true;
+						self.FooterMusic.playing = true;
+						this.FooterMusic.src = curr1.mediaplayerpath;
+						this.FooterMusic.rid = curr1.rid;
+						this.FooterMusic.name = curr1.name;
+						this.FooterMusic.fade = false;
+					}
+				}
+			},
+			FooterMusicPlaySecond(second) {
+				this.FooterMusic.cacheCurrent = second;
+				return FooterMusicPlaySecond(second);
+			},
+			FooterMusiclayoutEnd(){
+				var self = this;
+				self.FooterMusic.boxshow = false;
+				if(self.FooterMusic.playing){
+					self.FooterMusiclayoutonPause();
+					self.$refs['music-player'].pause();
+				}
+				self.FooterMusic.loading = false;
+				self.FooterMusic.rid = '';
+				self.FooterMusic.src = '';
+				self.FooterMusic.name = '';
+				self.FooterMusic.namescroll = false;
+				self.FooterMusic.playing = false;
+				self.FooterMusic.currentTime = 0;
+				self.FooterMusic.maxTime = 0;
+				self.FooterMusic.cacheCurrent = 0;
+			},
+			handleFooterClick(type){
+				var self = this;
+				if(type == 'search'){
+					this.ParamSearch.PopupVisible = true;
+				}else if(type == 'screen'){
+					this.ParamScreen.PopupVisible = true;
+				}else if(type == 'sort'){
+					this.ParamSort.PopupVisible = true;
+				}else if(type == 'clear'){
+					this.ParamSearch.keyword = '';
+					this.ScreenReset();
+					this.CommonSetFooterBadge();
+					this.CommonhandleHash();
+				}else if(type == 'outcheck'){
+					this.ParamImages.operation.rids = [];
+					this.ParamImages.checked = false;
+				}else if(type == 'collectcheck'){
+					if(!self.ParamImages.operation.rids.length){
+						self.$notify({ type: 'warning', message: '请先选择文件' });
+						return false;
+					}
+					this.ParamImages.operation.type = 'collect';
+					this.ImagesClassify.PopupVisible = true;
+				}
+			}
+		},
+		filters: {
+			// 将整数转化成时分秒
+			FooterMusiclayoutSecond(second = 0) {
+			    return FooterMusicPlaySecond(second)
+			}
+		},
+	};
+</script>

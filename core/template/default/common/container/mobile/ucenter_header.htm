@@ -1,0 +1,79 @@
+
+<div class="ucenter-header">
+	<div class="el-space el-space--horizontal uinfo" style="align-items: center;border-bottom: 0px">
+		<div class="el-space__item" style="padding-bottom: 0px;margin-right: 8px;">
+			<el-avatar :size="50"  alt="$_G['username']">
+				{eval echo avatar_block($_G[uid]);}
+			</el-avatar>
+		</div>
+		<div class="el-space__item" style="padding-bottom: 0px;width: 100%;">
+			<div class="utitle">
+				<div style="display: flex;align-items: center;justify-content: space-between;font-size: var(--el-font-size-medium);">
+					<el-text size="large" tag="b">$_G['username']</el-text>
+					<div>
+						<el-button 
+							text 
+							style="font-size: 26px;margin-right: 6px;"
+							:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+							style="font-size: var(--el-font-size-extra-large);" 
+							circle  
+							@click="DocumentThemeChange"></el-button>
+						<el-link href="user.php?mod=my&op=profile"><el-icon :size="26"><Edit /></el-icon></el-link>
+					</div>
+				
+				</div>
+				<div><el-text type="info" size="small">$_G['group']['grouptitle']</el-text></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	// -1更新失败,0未导入,1准备中,2导入中,3校验中,4完成
+    const UcenterHeader = {
+		data(){
+			return {
+				UcenterNavigations:null
+			};
+		},
+		created(){
+			let self=this;
+			axios.get('user.php?mod=my&do=getNavigation').then(function(res){
+					self.UcenterNavigations=res.data;
+					// self.UcenterNavigations.push({
+					// 	id:'library',
+					// 	name:'我管理的库',
+					// 	url:'index.php?mod=pichome&op=view'
+						
+					// },
+					// {
+					// 	id:'downloads',
+					// 	name:'我的下载',
+					// 	url:'index.php?mod=stats&op=downloads'
+						
+					// },
+					// {
+					// 	id:'views',
+					// 	name:'浏览记录',
+					// 	url:'index.php?mod=stats&op=views'
+						
+					// })
+				}).catch(function (error) {
+				    console.log(error);
+				});
+		},
+		 methods:{
+			 handleSelectUserCenterMenu:function(index,indexPath,item){
+				let url='';
+				this.UcenterNavigations.map((item)=>{
+					if(item.id==index) url=item.url;
+					return;
+				});
+				location.href=url;
+			 }
+		 },
+		 mounted(){
+            
+        }
+	}
+</script>

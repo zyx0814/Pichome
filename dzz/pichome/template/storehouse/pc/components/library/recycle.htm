@@ -1,0 +1,154 @@
+<ul class="wrap-content" v-loading="recycleData.loading">
+	<li 
+		v-for="item in recycleData.data"
+		class="piece"
+        style="cursor: default;" 
+		:key="item.appid" 
+		:class="{'is-progress':parseInt(item.state)==1||parseInt(item.state)==2||parseInt(item.state)==3}" >
+		<el-card shadow="hover"> 
+                <div class="box-images" v-if="item.icon" :style="{'--background-image-url': 'url('+(item.icon?item.icon:'{$_G[siteurl]}dzz/images/b.gif')+')'}">
+                    <!-- <div class="image"></div> -->
+                    <el-image style="width: 100%; height: 100%;" :src="item.icon" fit="contain">
+                        <template #error><div class="el-image__placeholder"></div></template>
+                    </el-image>>
+                </div>
+                <div class="layer">
+                    <div style="height: 96px;padding-top: 24px;">
+                        <p class="name">
+                            <template v-if="parseInt(item.type)==1">
+                                <el-image
+                                    style="width: 22px; height: 22px;margin-right: 8px;"
+                                    src="dzz/pichome/image/library/file.png"
+                                    fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                            </template>
+                            <template v-else-if="parseInt(item.type)==2">
+                                <el-image
+                                style="width: 22px; height: 22px;margin-right: 8px;"
+                                    src="dzz/pichome/image/library/billfish.png"
+                                    fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                            </template>
+                            <template v-else-if="parseInt(item.type)==3">
+                                <el-image
+                                style="width: 22px; height: 22px;margin-right: 8px;"
+                                    src="dzz/pichome/image/library/pichome.png"
+                                    fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                            </template>
+                            <template v-else>
+                                <el-image
+                                style="width: 22px; height: 22px;margin-right: 8px;"
+                                    src="dzz/pichome/image/library/eagle.png"
+                                    fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                            </template>
+                            <el-text class="el-text--default" truncated style="font-size: 20px;font-weight: 700;
+                            color: var(--el-text-color-primary);">{{item.appname}}</el-text>
+                        </p>
+                    </div>
+                    <div class="operation">
+                        <div 
+                            class="el-button edit el-button--info" 
+                            @click="RecycleOperation('recovery',item.appid)">
+                            <span>{lang recovery}</span>
+                        </div>
+                        <div 
+                            class="el-button edit el-button--danger"
+                            @click="RecycleOperation('delete',item.appid)">
+                            <span>{lang completely_delete}</span>
+                        </div>
+                    </div>
+                </div>
+
+			
+		</el-card>
+	</li>
+    
+</ul>
+<script>
+	// -1更新失败,0未导入,1准备中,2导入中,3校验中,4完成
+    const RecycleMixin = {
+        data(){
+            return{
+                recycleData:{
+					data:[],
+                    loading:false
+				}
+            }
+        },
+        methods:{
+            async RecycleOperation(type,id){
+                let self = this;
+                if(type == 'recovery'){
+                    const {data: res} = await axios.post(MOD_URL+'&op=library&operation=recover',{
+                        appid:id
+                    });
+                    if(res.success){
+                        let index = this.recycleData.data.findIndex(item => item.appid == id);
+                        if(index != -1){
+                            this.recycleData.data.splice(index,1);
+                        }
+                        self.$message({
+                            type:'success',
+                            message:'{lang recovery_success}'
+                        });
+                    }else{
+                        self.$message.error(res.msg || 'recovery_unsuccess');
+                    }
+                }else{
+                    self.$messageBox.confirm(
+						'{lang delete_tip}',
+						'{lang board_message}',
+						{
+							confirmButtonText: '{lang confirms}',
+							cancelButtonText: '{lang cancel}',
+							type: 'warning',
+                            icon:'QuestionFilled'
+						}
+					).then(async () => {
+                        const {data: res} = await axios.post(MOD_URL+'&op=library&operation=finallydel',{appid:id});
+						if(res.success){
+                            let index = this.recycleData.data.findIndex(item => item.appid == id);
+                            if(index != -1){
+                                this.recycleData.data.splice(index,1);
+                            }
+                            self.$message({
+                                type:'success',
+                                message:'{lang delete_success}'
+                            });
+                        }else{
+                            self.$message.error(res.msg || '{lang delete_unsuccess}');
+                        }
+					}).catch(() => {
+						
+					})
+                }
+            },
+            async RecycleGetData(){
+                var self = this;
+                this.recycleData.data = [];
+                self.recycleData.loading = true;//获取完成
+				var {data: res} = await axios.post(MOD_URL+'&op=library&operation=getdata',{
+                    isdelete:1
+                });
+                arr = [];
+                for(let i in res.data){
+					res.data[i]['icon'] = '';
+                    arr.push(res.data[i]);
+                }
+				self.recycleData.data = arr;//添加数据
+				self.recycleData.loading = false;//获取完成
+				self.TableGeVappico();//获取图片
+				// self.TableDataForEach();//执行缩略图队列
+                
+            },
+        },
+        mounted(){
+        }
+    }
+</script>

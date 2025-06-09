@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+	<item id="Title"><![CDATA[Dzz! app]]></item>
+	<item id="Version"><![CDATA[30.1.2]]></item>
+	<item id="Time"><![CDATA[2020-11-13 22:14]]></item>
+	<item id="From"><![CDATA[oaooa111 (http://127.0.0.6/)]]></item>
+	<item id="Data">
+		<item id="app">
+			<item id="mid"><![CDATA[56]]></item>
+			<item id="appname"><![CDATA[西瓜播放器]]></item>
+			<item id="appico"><![CDATA[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABqCAMAAAB9NgQWAAAAM1BMVEUAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACjBUbJAAAAEHRSTlMAECAwQFBgcICQ
+oLDA0ODwVOCoyAAAAn5JREFUeNrtWkGShCAMBERAReD/r93LsqAoBLG6dqqmjzNqm3SIIYH9K0hl
+rA1/sNYo+SrBZGy4hDXTSyasPlTg12GDuHahCaf5AIXIjaibI55asYYOrI+sMT50wZt+ufdwxr4Z
+LX+hzXZxgew043z/InnhTrmciUyP4PuRQYvbK/XpUkF2lT8oKlvr6KAM0WXqQCEIhh9oFIVjCQmW
+aL2w+XuxJrK3cjMjY3YdLOvT5cXzO6m+8op1QqV4WWiauwc5fHIU9WWKd/4o26VFI29jxOccYyz+
+Li73nGOUZa/kq8gxzmKqgjjOBsBdKUvpLD8NVh3+3mEmRd8g1K3DuKfmBHpm8rz4oxBkUJbyhUU0
+cWYvYI5PE5eGWPYKtitTuM+pxyGuVNEt1bmNBVyf9poluGhI1X5veK8pLlvszfCN96heU2Txy3RP
+EmElcd0X7+1jHrgFsegts5Q/s+o2Cb3o1SfvmCh7m4RexohTArNNb7Fwgp2o/rLHJxgCScLCiTX7
+MYBlF0nwFQnLx6pISSNJcJIR7lG5XTuZJMGKtigm130jkJQwvJWKbU5iukgI5axJJMl3RBLKVrHU
+mhBcLFSxXUojB0lKnwFIQpjrJDxmsiESywoICAnAXR8p/FoNYchihKQVSIIcTfUbJdVDPlqQzy+i
+kBgoiQS5JIIUd5AyFVlwp81Em8ROnVsHyCYIsZ2DbEyxW+z3mwU2egbS9kA0cCCtKERTDdEehDQ6
+ES1bRPMZ0kZHDAQQow3AkGYlj5u2vnHTFhIHYnAGHQHih5n4sWw5YHa1AbMrBsyAUTl06I8/voA/
+iIE/UkI/HGM4/pgP/sDS+NGrL7744rPwA7bGr6eM6ji2AAAAAElFTkSuQmCC
+]]></item>
+			<item id="appdesc"><![CDATA[]]></item>
+			<item id="appurl"><![CDATA[{dzzscript}?mod=xgplayer&ext={ext}]]></item>
+			<item id="appadminurl"><![CDATA[]]></item>
+			<item id="noticeurl"><![CDATA[]]></item>
+			<item id="disp"><![CDATA[0]]></item>
+			<item id="vendor"><![CDATA[xgplayer]]></item>
+			<item id="haveflash"><![CDATA[0]]></item>
+			<item id="isshow"><![CDATA[0]]></item>
+			<item id="havetask"><![CDATA[0]]></item>
+			<item id="hideInMarket"><![CDATA[0]]></item>
+			<item id="feature"><![CDATA[]]></item>
+			<item id="fileext"><![CDATA[mp3,mp4,flv,webm,ogv,ogg,wav,m3u8,hls,mpg,avi,rm,rmvb,mkv,mov,wmv,asf,mpg,mpeg,f4v,vob,ogv,mts,m2ts,mpe,ogg,3gp,flv,midi,wma,vqf,ra,aac,flac,ape,amr,aiff,au,m4a,m4v]]></item>
+			<item id="group"><![CDATA[0]]></item>
+			<item id="position"><![CDATA[1]]></item>
+			<item id="system"><![CDATA[0]]></item>
+			<item id="notdelete"><![CDATA[1]]></item>
+			<item id="open"><![CDATA[0]]></item>
+			<item id="nodup"><![CDATA[0]]></item>
+			<item id="identifier"><![CDATA[xgplayer]]></item>
+			<item id="app_path"><![CDATA[dzz]]></item>
+			<item id="version"><![CDATA[1.0]]></item>
+			<item id="extra">
+			</item>
+		</item>
+		<item id="version"><![CDATA[30.1.4]]></item>
+	</item>
+</root>

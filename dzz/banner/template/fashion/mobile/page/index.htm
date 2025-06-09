@@ -1,0 +1,376 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/theme/default/index.js?{VERHASH}"></script> 
+
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="{MOD_PATH}/template/fashion/pc/assets/js/menu.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayoutlimit/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+
+<!--{if PICHOME_LIENCE == 2}-->
+<script type="text/javascript" src="static/vue_components/TabMessage/index.js?{VERHASH}"></script>
+<link rel="stylesheet" media="noexist" onload="this.media='all'" href="static/vue_components/TabMessage/index.css?{VERHASH}">
+<link rel="stylesheet" media="noexist" onload="this.media='all'" href="static/vue_components/TabExport/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/TabExport/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="dzz/tab/template/assets/js/fulltext.js?{VERHASH}"></script>
+<!--{/if}-->
+
+
+<link href="static/prismjs/index.css?{VERHASH}" rel="stylesheet">
+<script src="static/prismjs/index.js?{VERHASH}"></script>
+<script src="static/prismjs/prism-autoloader.js?{VERHASH}"></script>
+<link rel="stylesheet" href="{MOD_PATH}/template/fashion/mobile/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/sharedialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/screendir/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+	function obtainData(arr,realurl){
+		if(!arr.length)return false;
+		if(arr[0].realurl == realurl) return arr[0];
+		return obtainData(arr.slice(1), realurl) || obtainData(arr[0].children, realurl);
+	}
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy')
+		item.$message({
+		message: '{lang copy_clipboard}',
+		type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="50px" style="border:0;">
+			<!--{template fashion/mobile/components/header}-->
+        </el-header>
+		<el-container class="page-main is-vertical">
+			<theme-default 
+				ref="MainDomRef"
+				:tilebanner="tilebanner"
+				:pagetype="PageType"
+				:contentdata="ContentData"
+				:screenshow="Screenshow"
+				:preference="HeaderRightBtnShow"
+				:itemdata="bannerData.item"
+				@handlepreference="handlepreference"
+				@clearkeyword="clearkeyword"
+				:keyword="headerkeyword"
+				:headeralldata="headeralldata"></theme-default>
+		</el-container>
+		<el-header class="page-header page-footer_m"  height="50px" style="border:0;border-top: var(--el-border);">
+			<!--{template fashion/mobile/components/footer}-->
+        </el-header>
+	</el-container>
+
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch,defineAsyncComponent, onBeforeUpdate, defineProps  } = Vue;
+	var dzzoffice = createApp({
+		data(){
+			return {
+				bannerData:{
+					data:{},
+					active:null,
+					item:'',
+					show:false
+				}, 
+				bannerActive:0,
+				PageType:'',
+				DocumentThemeColor:'',
+				ContentData:[],
+				headeralldata:{
+					data:[],
+					message:{
+						sitebeiantxt:'{$_G[setting][sitebeiantxt]}',
+						sitebeian:'{$_G[setting][sitebeian]}',
+					}
+				},
+				tilebanner:[],
+				topLevelId:0,
+				// scrollref:'',
+				// rollingdire:'up',
+				// beforeScrollTop:0
+			}
+		},
+		created(){
+			const self = this;
+			let data = '$bannerdata';
+			let childdata = $tilebanner;
+			for (const key in childdata) {
+				const element = childdata[key];
+				this.tilebanner.push(element);
+			}
+			if(!data){
+				return false;
+			}
+			this.bannerData.data = JSON.parse(data);
+			this.headeralldata.data = this.bannerData.data.bottom?this.bannerData.data.bottom:[];
+			let keys = Object.keys(this.bannerData.data);
+			if(keys && keys.length){
+				this.GetBannerData();
+			}
+		},
+		mixins:[HeaderMixins],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval;
+				},
+				deep:true,
+				// immediate:true
+			},
+			bannerActive:{
+				handler(newval){
+					this.HeaderActiveScroll();
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods:{
+			banncomplete(data,type){
+				this.bannerData.item = data;
+				this.bannerData.active = data.id;
+				this.bannerActive = data.id;
+				let keyword = this.GetUrlParam('keyword');
+				if(keyword){
+					this.headerkeyword = keyword;
+					this.fheaderkeyword = keyword;
+				}
+				let btype = parseInt(this.bannerData.item.btype);
+				if(this.headerkeyword && btype != 0 && btype != 4){
+					this.bannerData.active = 0;
+					this.bannerActive = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+					return false;
+				}
+				if(btype == 0){//库
+					this.ContentData = [];
+					this.PageType = 'ku';
+				}else if(btype == 1){//智能数据
+					this.ContentData = [];
+					this.PageType = 'sources';
+				}else if(btype == 4){//专辑
+					this.ContentData = [];
+					this.PageType = 'tab';
+				}else if(btype == 2){//单页
+					this.ContentData = [];
+					this.PageType = 'page';
+					this.GetContentData();
+				}else{
+					return false;
+				}
+			},
+			//获取栏目数据
+			GetBannerData(){
+				
+				const self = this;
+				let href = window.location.href;
+				//ipv6中含有 []的处理
+				let reg1 = new RegExp(SITEURL.replace('[','\\[').replace(']','\\]'),"g");
+				let active = href.replace(reg1,"");
+				let curr;
+				if(active){
+					<!--{if intval($_G[setting][pathinfo])}-->
+					let param = '{$_GET[hashparams]}';
+					if(param){
+						param = JSON.parse(param);
+						let url = 'index.php?mod=banner&op=index&id='+param.id+'#id='+param.id;
+						curr = obtainData(this.bannerData.data.top,url);
+						if(curr){
+
+							this.banncomplete(curr);
+						}
+					}else{
+						curr = obtainData(this.bannerData.data.top,active);
+						if(curr){
+							this.banncomplete(curr);
+						}else{
+							let pageid = this.GetUrlParam('id');
+							if(pageid){
+								let url = 'index.php?mod=banner&op=index&id='+pageid+'#id='+pageid
+								let curr = obtainData(this.bannerData.data.top,url);
+								if(curr){
+									this.banncomplete(curr);
+								}
+							}
+						}
+					}
+					<!--{else}-->
+
+					curr = obtainData(this.bannerData.data.top,active);
+
+					if(curr){
+						this.banncomplete(curr);
+					}else{
+						let pageid = this.GetUrlParam('id');
+						if(pageid){
+							let url = 'index.php?mod=banner&op=index&id='+pageid+'#id='+pageid
+							let curr = obtainData(this.bannerData.data.top,url);
+							if(curr){
+								this.banncomplete(curr);
+							}
+						}
+					}
+					<!--{/if}-->
+
+					if(curr){
+
+						let newStr = curr.pathkey.replace(/_/g, "");
+						let arrActive = newStr.split("-");
+						if(arrActive.length > 1){
+							this.bannerActive = arrActive[0];
+						}
+					}
+					
+				}else{
+					if(this.bannerData.data && this.bannerData.data.top && this.bannerData.data.top.length){
+						if(parseInt(this.bannerData.data.top[0].btype) == 3){
+							for (let index = 0; index < this.bannerData.data.top.length; index++) {
+								const element = this.bannerData.data.top[index];
+								if(parseInt(element.btype) != 3){
+									this.banncomplete(element);
+									break;
+								}
+							}
+						}else{
+							this.banncomplete(this.bannerData.data.top[0]);
+						}
+						
+					}
+				}
+			},
+			clearkeyword(){
+				let self = this;
+                this.headerkeyword = '';
+                this.fheaderkeyword = '';
+				self.$nextTick(() => {
+					self.$refs.MainDomRef.Init();
+				})
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			//获取栏目内容
+			async GetContentData(){
+				const {data: res} = await axios.get('index.php?mod=alonepage&op=view&do=getdata&id='+this.bannerData.item.bdata);
+				this.ContentData = res.data;
+			},
+			//获取哈希参数
+			GetUrlParam(name){
+				let hash = location.hash;
+				hash = hash.replace(/^#/i, '');
+				if (!name) {
+					return false;
+				}
+				var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+				if (!hash) {
+					return false;
+				}
+				var r = hash.match(reg);
+
+				if (r !== null) {
+					return decodeURIComponent(r[2]);
+				}
+			},
+			ImagePageTurning(path){
+				const self = this;
+				self.$refs.MainDomRef.ImagePageTurning(path);
+			},
+			hideIframe(){
+				const self = this;
+				self.$refs.MainDomRef.hideIframe();
+			},
+			HeaderActiveScroll(){
+				const self = this;
+				nextTick(function(){
+					let child = self.$refs.headerscrollbar.querySelector('.is-active');
+					if(self.$refs.headerscrollbar && child){
+						let Boxw = self.$refs.headerscrollbar.offsetWidth / 2;
+						let childW = child.offsetWidth / 2;
+						self.$refs.headerscrollbar.scrollLeft = child.offsetLeft - Boxw + childW;
+					}
+					
+				});
+				
+			},
+		},
+		
+		mounted(){
+			const self = this;
+			dzzoffice.WindowThis = this;
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			//筛选显示隐藏
+			let showscreen = sessionStorage.getItem('showscreen');
+			if(parseInt(showscreen) > -1){
+				this.Screenshow = parseInt(showscreen)?true:false;
+			}
+		},
+		components:{
+			comavatar,
+			menuitem
+		}
+	});
+	
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('international',international);
+	dzzoffice.use(ThemeDefault);
+	dzzoffice.use(DzzScreen);
+	dzzoffice.use(DzzScreendir);
+	dzzoffice.component('comsort', comsort);
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(ImageLayoutlimit);
+	dzzoffice.use(DzzCollectdialog);
+	dzzoffice.use(DzzShareDialog);
+
+
+	<!--{if PICHOME_LIENCE == 2}-->
+	dzzoffice.component('fulltext', fulltext);
+	dzzoffice.component('tab_message', tab_message);
+	dzzoffice.component('tabExport', tabExport);
+	<!--{/if}-->
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+
+<!--{template common/container/pc/footer}-->

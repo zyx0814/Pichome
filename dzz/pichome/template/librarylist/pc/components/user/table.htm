@@ -1,0 +1,114 @@
+<div class="content" v-loading="Userloading">
+	<!-- <div class="member-list-item-detail" v-for="(item,index) in UserDataList">
+		<div class="img small" v-html="item.icon"></div>
+		<span class="name">{{item.username}}</span>
+		<div class="operation">
+			<el-row :gutter="5">
+				<el-col :span="12">
+					<el-popconfirm title="此操作无法恢复，确定离开该收藏夹？" cancel-button-type="danger" @confirm="UserOut(index,item.uid)">
+						<template #reference>
+						    <el-button slot="reference" type="info" size="small" plain :disabled="item.loading">
+						    	移出
+						    </el-button>
+						</template>
+					</el-popconfirm>
+				</el-col>
+			</el-row>
+			
+			
+		</div>
+	</div> -->
+	<el-table :data="UserDataList" style="width: 100%">
+	    <el-table-column label="{lang name}">
+			<template #default="scope">
+				<div style="display: inline-block;" class="img small" v-html="scope.row.icon"></div>
+				<span class="name" style="margin-left: 8px;">{{scope.row.username}}</span>
+			</template>
+		</el-table-column>
+	    <el-table-column label="{lang jurisdictions}" align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.uid)==1">
+					<el-tag effect="light"disable-transitions>
+                        {lang administrator}
+					</el-tag>
+				</template>
+				<template v-else>
+					<el-tag effect="light" type="info" disable-transitions>
+                        {lang collaborative_members}
+					</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+	    <el-table-column align="center" width="80">
+			<template #default="scope">
+				<template v-if="parseInt(UserPerm)==1&&parseInt(scope.row.uid)!=1">
+					<el-popconfirm title="{lang del_user_confirm}" @confirm="UserOut(scope.row)">
+					    <template #reference>
+							<el-button type="danger" size="small">{lang remove}</el-button>
+					    </template>
+					</el-popconfirm>
+					
+				</template>
+			</template>
+	    </el-table-column>
+	</el-table>
+	
+	
+	
+	
+</div>
+<script>
+	var MainTableMixin = {
+			data(){
+				return {
+					Userloading:false,
+					UserKeyword:'',
+					UserDataList:[],
+					UserPerm:'$_G[adminid]',
+				}
+			},
+			methods:{
+				async UserOut(item){
+					var self = this;
+					var param = {
+						appid:self.DocumentAppid,
+						uids:item.uid
+					};
+					item.loading = true;
+					var res = await axios.post(MOD_URL+'&op=library&do=member&operation=delmember',param);
+					var json = res.data;
+					item.loading = false;
+					if(json.success){
+						var index = self.UserDataList.findIndex(function(curretn){
+							return curretn.uid == item.uid;
+						});
+						self.UserDataList.splice(index,1);
+					}else{
+						self.$message.error(json.msg || '{lang delete_unsuccess}');
+					}
+						
+				},
+				async UserGetdata(){
+					var self = this;
+					self.Userloading = true;
+					var param = {
+						appid:self.DocumentAppid,
+						keyword:self.UserKeyword
+					};
+					self.UserDataList = [];
+					var res = await axios.post(MOD_URL+'&op=library&do=member&operation=getmember',param);
+
+					var json = res.data;
+					for(var i in json.data){
+						var item = json.data[i];
+						item['loading'] = false;
+						self.UserDataList.push(item);
+					}
+					self.Userloading = false;
+				},
+				
+				
+				
+			}
+		};
+</script>

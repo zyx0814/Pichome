@@ -1,0 +1,30 @@
+<!--{template common/header_simple_start}-->
+<script type="text/javascript" src="$onlyDocumentUrl"></script>
+<!--{template common/header_simple_end}-->
+<style>
+html,body{
+	height:100%;
+	overflow:hidden;
+}
+</style>
+<div id="placeholder" style="width:100%;height:100%;overflow:auto"></div>
+
+<script type="text/javascript">
+
+
+var config = {eval echo json_encode($config)};
+	config["events"] = {
+			'onAppReady': function(){},
+			'onDocumentReady': function(){},
+			'onBack': function(){},
+			'onError': function(){},
+			'onSave': function(){},
+			"onRequestHistoryData": function(){},
+			"onRequestHistory": function(){},
+			"onRequestHistoryClose": function(){},
+		}
+
+var docEditor = new DocsAPI.DocEditor("placeholder", config);
+
+</script>
+<!--{template common/footer_simple}-->

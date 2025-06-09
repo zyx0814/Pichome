@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+	<item id="Title"><![CDATA[Dzz! app]]></item>
+	<item id="Version"><![CDATA[30.1.4.3]]></item>
+	<item id="Time"><![CDATA[2023-10-16 16:45]]></item>
+	<item id="From"><![CDATA[zyx (http://127.0.0.15/)]]></item>
+	<item id="Data">
+		<item id="app">
+			<item id="mid"><![CDATA[0]]></item>
+			<item id="appname"><![CDATA[Lang]]></item>
+			<item id="appico"><![CDATA[data:image/png;base64,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
+]]></item>
+			<item id="appdesc"><![CDATA[]]></item>
+			<item id="appurl"><![CDATA[{dzzscript}?mod=lang]]></item>
+			<item id="appadminurl"><![CDATA[{dzzscript}?mod=lang&op=admin]]></item>
+			<item id="noticeurl"><![CDATA[]]></item>
+			<item id="disp"><![CDATA[0]]></item>
+			<item id="vendor"><![CDATA[]]></item>
+			<item id="haveflash"><![CDATA[0]]></item>
+			<item id="isshow"><![CDATA[0]]></item>
+			<item id="havetask"><![CDATA[0]]></item>
+			<item id="hideInMarket"><![CDATA[1]]></item>
+			<item id="feature"><![CDATA[]]></item>
+			<item id="fileext"><![CDATA[]]></item>
+			<item id="group"><![CDATA[1]]></item>
+			<item id="position"><![CDATA[0]]></item>
+			<item id="system"><![CDATA[0]]></item>
+			<item id="notdelete"><![CDATA[0]]></item>
+			<item id="open"><![CDATA[0]]></item>
+			<item id="nodup"><![CDATA[0]]></item>
+			<item id="identifier"><![CDATA[lang]]></item>
+			<item id="app_path"><![CDATA[dzz]]></item>
+			<item id="version"><![CDATA[1.0]]></item>
+			<item id="extra">
+				<item id="installfile"><![CDATA[install.php]]></item>
+				<item id="uninstallfile"><![CDATA[uninstall.php]]></item>
+			</item>
+			<item id="uids"><![CDATA[]]></item>
+			<item id="showadmin"><![CDATA[0]]></item>
+		</item>
+		<item id="version"><![CDATA[30.1.4.3]]></item>
+        <item id="hooks">
+            <item id="lang_parse" priority="0" description="lang_parse"><![CDATA[dzz\lang\classes\lang]]></item>
+        </item>
+	</item>
+</root>

@@ -1,0 +1,33 @@
+<el-header class="page-header"  height="60px">
+    <div class="h-left">
+        <el-link :underline="false" href="index.php?mod=manage" style="margin-right: 8px;"><el-icon style="color: var(--el-text-color-primary);"><Arrow-Left-Bold /></el-icon></el-link>
+        <el-text tag="b" size="large" style="color:var(--el-text-color-primary)">{eval echo $appname?$appname:$_G['setting'][sitename]}</el-text>
+    </div>
+    <div class="h-right"> 
+        <el-tooltip content="{lang theme_color}" placement="bottom">
+            <el-button 
+                text 
+                :icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+                style="font-size: var(--el-font-size-extra-large);" 
+                circle  
+                size="large"
+                @click="DocumentThemeChange">
+            </el-button>
+        </el-tooltip>
+        <international current="$_G['language']"></international>
+        <comavatar
+            :level="parseInt($_G[pichomelevel])"
+            iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+            :adminid="parseInt($_G[adminid])"
+            PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+            :uid="parseInt($_G[uid])"
+            upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+            version="$_G[setting][version]"
+            formhash="{FORMHASH}"
+            :isrefresh="true">
+            <el-avatar size="40">
+                {eval echo avatar_block($_G[uid]);}
+            </el-avatar>
+        </comavatar>
+    </div>
+</el-header>

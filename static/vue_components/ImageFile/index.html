@@ -1,0 +1,44 @@
+<!doctype html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Document</title><link rel="stylesheet" href="https://unpkg.com/element-plus@2.3.3/dist/index.css"/><script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script><script src="https://unpkg.com/element-plus@2.3.3/dist/index.full.js"></script><script src="https://unpkg.com/element-plus@2.3.3/dist/locale/zh-cn.js"></script><script src="https://unpkg.com/@element-plus/icons-vue@2.1.0/dist/index.iife.min.js"></script><style>*{
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+	html,body,#dzzoffice,.el-container {
+		height: 100%;
+		width: 100%;
+		overflow: hidden
+	}</style></head><body><div id="dzzoffice"><el-container><el-main style="padding: 0;"><image-layout></image-layout></el-main></el-container></div><script src="index.js"></script></body><script>const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	
+	const dzzoffice = createApp({
+		data(){
+			return {
+
+			}
+		},
+		// 0开始，1开始缓存，2完成
+		created(){
+			
+		},
+		watch:{
+
+		},
+		methods:{
+
+		},
+		
+		mounted(){
+
+		},
+		components:{
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.use(ImageLayout);
+    dzzoffice.config.warnHandler = function(){return null};
+    dzzoffice.mount('#dzzoffice');
+	// 屏蔽警告信息</script>

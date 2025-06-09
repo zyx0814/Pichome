@@ -1,0 +1,125 @@
+<div style="padding: 16px 20px;background: var(--el-bg-color);padding-top: 0;border: var(--el-border);border-radius: 12px;">
+    <div style="padding: 20px 0;text-align: center;">
+        <el-text tag="b" size="large">{lang top_menu}</el-text>
+    </div>
+    <ul class="table_header">
+        <li class="cell flex" style="min-width: 120px;">{lang name}</li>
+        <li class="cell" style="min-width: 200px;">{lang data_source}</li>
+        <li class="cell" style="min-width: 80px;text-align: center;">{lang status}</li>
+        <li class="cell" style="min-width: 230px;text-align: center;">{lang operation}</li>
+    </ul>
+    <el-tree 
+        class="table-tree" 
+        ref="treeTop"
+        :data="treeData.top" 
+        draggable
+        default-expand-all
+        node-key="id"
+        :props="treeProp"
+        @node-drop="TreeDrop">
+        <template #default="{ node, data }">
+            <div class="cell flex" style="padding-left: 0;min-width: 120px;">
+                <div class="name">
+                    <el-image 
+                    style="min-width: 23px;width:23px; height: 23px;margin-right: 6px;border-radius: var(--el-border-radius-base);" 
+                    :src="data.icon" 
+                    fit="cover" >
+                        <template #error><div class="el-image__placeholder"></div></template>
+                    </el-image>
+                    <el-text class="el-tree-node__label" truncated>{{ node.label }}</el-text>
+                </div>
+                <div class="btn">
+                    <el-button 
+                    plain
+                    @click.stop="OperationTree('sibling',node,'top')"
+                    icon="plus">{lang Create_peer}</el-button>
+                <el-button
+                    plain
+                    icon="plus"
+                    @click.stop="OperationTree('child',node,'top')">{lang Create_Child}</el-button>
+                </div>
+            </div>
+            <div class="cell" style="min-width: 200px;">
+                <el-text truncated style="display: flex;align-items: center;height: 100%;">
+                    <template v-if="data.btype == 0">
+                        <el-icon style="font-size: 13px;margin-right: 5px;">
+                            <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M959.9972 831.9948c0 125.055218-233.59854 191.9988-451.709177 191.9988h8.127949a30.719808 30.719808 0 0 1-0.703995 0h-7.423954a30.719808 30.719808 0 0 1-0.639996 0h8.06395C297.53734 1023.9936 64.0028 957.050018 64.0028 831.9948V210.878682c0-59.775626 49.919688-113.66329 141.439116-151.551053C287.361404 25.791839 396.928719 6.847957 512 6.847957c216.318648 0 447.9972 71.423554 447.9972 204.030725l-0.064 0.639996z m-63.9996-198.526759c-84.415472 54.39966-239.614502 83.327479-387.709577 83.327479h8.191949-8.959944 8.191949c-148.095074 0-303.358104-28.927819-387.709577-83.327479V831.9948c0 62.911607 162.174986 130.751183 383.9976 131.519178 221.886613-0.767995 383.9976-68.671571 383.9976-131.519178z m-77.439516-270.974307c-83.19948 35.007781-191.422804 53.951663-306.558084 53.951663-146.559084 0-300.158124-32.831795-383.9976-95.679402l-0.064 231.038556c21.055868 53.951663 177.790889 109.055318 384.0616 109.695315 206.270711-0.639996 363.005731-55.679652 384.0616-109.631315l-0.128-232.318548a351.677802 351.677802 0 0 1-77.439516 42.943731zM512 69.503566c-221.886613 0-383.9976 74.367535-383.9976 141.439116 0 67.007581 162.110987 141.375116 383.9976 141.375116 220.990619 0 382.717608-73.023544 383.9976-139.839126v-0.831995-0.319998c0-66.751583-162.110987-141.823114-383.9976-141.823113z" ></path></svg>
+                        </el-icon>
+                        {{ data.soucresname }}
+                    </template>
+                    <template v-else-if="data.btype == 1">
+                        <el-icon style="font-size: var(--el-font-size-medium);margin-right: 5px;">
+                            <svg viewBox="0 0 1041 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M511.500488 63.937561c33.104671 0 59.941463 26.836792 59.941463 59.941463 0 21.351149-11.163099 40.094845-27.971684 50.713476L543.469268 255.750244h287.719025c17.655758 0 31.96878 14.313022 31.96878 31.96878v575.438049c0 17.655758-14.313022 31.96878-31.96878 31.968781H191.812683c-17.655758 0-31.96878-14.313022-31.968781-31.968781V287.719024c0-17.655758 14.313022-31.96878 31.968781-31.96878h287.719024v-81.157744c-16.548839-10.452792-27.625022-28.781893-27.96469-49.721444L451.559024 123.879024c0-33.104671 26.836792-59.941463 59.941464-59.941463z m279.726829 263.742439H231.773659v495.516098h559.453658V327.68zM631.383415 672.343415a7.992195 7.992195 0 0 1 7.992195 7.992195v47.95317a7.992195 7.992195 0 0 1-7.992195 7.992196H391.617561a7.992195 7.992195 0 0 1-7.992195-7.992196v-47.95317a7.992195 7.992195 0 0 1 7.992195-7.992195h239.765854zM119.882927 399.609756a7.992195 7.992195 0 0 1 7.992195 7.992195v303.703415a7.992195 7.992195 0 0 1-7.992195 7.992195H71.929756a7.992195 7.992195 0 0 1-7.992195-7.992195V407.601951a7.992195 7.992195 0 0 1 7.992195-7.992195h47.953171z m831.188293 0a7.992195 7.992195 0 0 1 7.992195 7.992195v303.703415a7.992195 7.992195 0 0 1-7.992195 7.992195h-47.953171a7.992195 7.992195 0 0 1-7.992195-7.992195V407.601951a7.992195 7.992195 0 0 1 7.992195-7.992195h47.953171z m-607.40683 63.937561c30.897826 0 55.945366 25.04754 55.945366 55.945366s-25.04754 55.945366-55.945366 55.945366-55.945366-25.04754-55.945366-55.945366 25.04754-55.945366 55.945366-55.945366z m335.672195 0c30.897826 0 55.945366 25.04754 55.945366 55.945366s-25.04754 55.945366-55.945366 55.945366-55.945366-25.04754-55.945365-55.945366 25.04754-55.945366 55.945365-55.945366z" fill="currentColor"></path></svg>
+                        </el-icon>
+                        {{ data.soucresname }}
+                    </template>
+                    <template v-else-if="data.btype == 2">
+                        <el-icon style="font-size: var(--el-font-size-medium);margin-right: 5px;"><Tickets /></el-icon>
+                        {{ data.soucresname }}
+                    </template>
+                    <template v-else-if="data.btype == 3">
+                        <el-tooltip
+                            effect="dark"
+                            :content="data.soucresname"
+                            placement="top">
+                            <div style="display: flex;align-items: center;height: 100%;">
+                                <el-icon style="font-size: var(--el-font-size-medium);margin-right: 5px;">
+                                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" data-v-ea893728=""><path fill="currentColor" d="M715.648 625.152 670.4 579.904l90.496-90.56c75.008-74.944 85.12-186.368 22.656-248.896-62.528-62.464-173.952-52.352-248.96 22.656L444.16 353.6l-45.248-45.248 90.496-90.496c100.032-99.968 251.968-110.08 339.456-22.656 87.488 87.488 77.312 239.424-22.656 339.456l-90.496 90.496zm-90.496 90.496-90.496 90.496C434.624 906.112 282.688 916.224 195.2 828.8c-87.488-87.488-77.312-239.424 22.656-339.456l90.496-90.496 45.248 45.248-90.496 90.56c-75.008 74.944-85.12 186.368-22.656 248.896 62.528 62.464 173.952 52.352 248.96-22.656l90.496-90.496 45.248 45.248zm0-362.048 45.248 45.248L398.848 670.4 353.6 625.152 625.152 353.6z"></path></svg>
+                                </el-icon>
+                                {lang link}
+                            </div>
+                        </el-tooltip>
+                    </template>
+                    <template v-else-if="data.btype == 4">
+                        <el-icon style="font-size: var(--el-font-size-medium);margin-right: 5px;">
+                            <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 40V19C6 17.8954 6.89543 17 8 17H15C16.1046 17 17 17.8954 17 19V29C17 30.1046 17.8954 31 19 31H29C30.1046 31 31 31.8954 31 33V40C31 41.1046 30.1046 42 29 42H8C6.89543 42 6 41.1046 6 40Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+                                <path d="M42 8V29C42 30.1046 41.1046 31 40 31H33C31.8954 31 31 30.1046 31 29V19C31 17.8954 30.1046 17 29 17H19C17.8954 17 17 16.1046 17 15V8C17 6.89543 17.8954 6 19 6H40C41.1046 6 42 6.89543 42 8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+                            </svg>
+                        </el-icon>
+                        {{ data.soucresname }}
+                    </template>
+                    <template v-else-if="data.btype == 5">
+                        <el-icon style="font-size: var(--el-font-size-medium);margin-right: 5px;"><Coin /></el-icon>
+                        {lang No_data_available}
+                    </template>
+                    
+                    
+                </el-text>
+                
+
+            </div>
+            <div @click.stop class="cell" style="min-width: 80px;text-align: center;">
+                <el-switch
+                    v-model="data.isshow"
+                    active-value="1"
+                    inactive-value="0"
+                    @change="TreeStatus(data)"
+                ></el-switch>
+            </div>
+            <div class="cell" style="min-width:230px;">
+                <el-button 
+                    icon="edit"
+                    @click.stop="OperationTree('edit',node,'top')">{lang edit}</el-button>
+               <template v-if="!parseInt(data.issystem)">
+                <el-popconfirm title="{lang cloumn_delete_confirm}" @confirm="OperationTree('delete',node,'top')">
+                    <template #reference>
+                        <el-button
+                            type="danger"
+                            plain
+                            icon="delete">{lang delete}</el-button>
+                    </template>
+                </el-popconfirm>
+               </template>
+            </div>
+            </template>
+    </el-tree>
+    <div class="el-table__append-wrapper">
+        <el-button 
+            style="width: 100%;border-radius: 0;height: 65px;font-size: 16px;" 
+            plain 
+            text 
+            @click="OperationAddNew('top')" 
+            icon="CirclePlus">{lang add}</el-button>
+    </div>
+</div>

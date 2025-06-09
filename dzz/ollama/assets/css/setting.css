@@ -1,0 +1,88 @@
+.maxWidth {
+    width: 500px
+}
+
+.tipTxt {
+    display: block;
+    width: 100%;
+    margin-bottom: 15px
+}
+
+.avatarstatus {
+    width: 100%;
+    height: 100%
+}
+
+.avatarstatus .img-circle {
+    border-radius: 0;
+    width: 100%;
+    height: 100%
+}
+
+.page-content .Topcarousel {
+    line-height: 148px
+}
+
+.el-form-item__content {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start
+}
+
+.prompt-ul .prompt-li {
+    max-width: 800px;
+    border: 1px solid var(--el-border-color);
+    background-color: var(--el-bg-color);
+    padding:30px 30px 20px 10px;
+    border-radius: var(--el-border-radius-base);
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.prompt-ul .prompt-li .move {
+    height: 32px;
+    width: 32px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center
+}
+.prompt-ul .prompt-li .dzz-move {
+   position: absolute;
+    left:15px;
+    top:15px;
+}
+
+.prompt-ul .prompt-li .input-box {
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1
+}
+
+.prompt-ul .prompt-li .operation {
+    text-align: right
+}
+
+.Prompt-add {
+    width: 100%;
+    max-width: 800px
+}
+
+.Prompt-add .el-button {
+    width: 100%;
+    margin: 15px 0
+}
+.prompt-li.dragging{
+    height:70px;
+    overflow:hidden;
+    padding-top:20px;
+}

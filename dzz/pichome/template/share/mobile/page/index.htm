@@ -1,0 +1,326 @@
+<!--{template common/container/pc/header_start}-->
+<script src="static/vant/index.min.js?{VERHASH}" type="text/javascript" charset="utf-8"></script>
+<script src="dzz/details/template/mobile/assets/js/pinchzoom.js?{VERHASH}" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="static/vant/index.css?{VERHASH}" />
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/template/share/mobile/assets/css/index.css?{VERHASH}" />
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<div
+		id="DetailPopup"
+		class="detail-popup" 
+		:class="[
+			{'is-padding':previews.data.length},
+			{'NotFooter':imagesData.footer?'':'NotFooter'},
+			{'full':full}
+		]">
+		<van-nav-bar class="header-top">
+			<template #left>
+				<div class="pic-logo" slot="left">
+					<a class="h-left" href="{$_G['siteurl']}">
+						<img src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" alt="">
+						<span class="text">$_G['setting'][sitename]</span>
+					</a>
+				</div>
+			</template>
+			<template #right>
+				<div style="width: 25px;text-align: center;height: 25px;line-height: 25px;" @click.stop="PopupInformation=true">
+					<van-icon name="warning-o" size="18" />
+				</div>
+			</template>
+		</van-nav-bar>
+		<div class="detail-popup-translate">
+			<div class="detail-popup-content">
+				<div class="detail-popup-img">
+						<template v-if="imagesData.iniframe">
+							<iframe 
+								style="border: 0px;"
+								:src="imagesData.iniframe" 
+								width="100%" 
+								height="100%"></iframe>
+						</template>
+						<template v-else>
+							<div class="img-box">
+								<img :src="imagesData.icondata" class="image-viewer__img thumbnail" />
+								<img
+									@load="DetailImgload"
+									:src="(parseInt(imagesData.download) || parseInt(DocumentAdminId)) && imagesData.originalimg?imagesData.originalimg:imagesData.icondata"
+									class="image-viewer__img opacity" />
+							</div>
+						</template>
+				</div>
+			</div>
+		</div>
+		<ul class="album-imglist"  v-if="previews.data.length">
+			<template v-for="(item,index) in previews.data" >
+				<li class="album-item" 
+					:class="{'is-active':index==previews.active}" 
+					:key="index" 
+					@click="previewClick(index)">
+					<img :src="item.spath?item.spath:'dzz/images/extimg/'+imagesData.filetype+'.png'" alt="">
+				</li>
+			</template>
+			
+		</ul>
+		<div class="footer-tabbar" v-if="imagesData.footer">
+			<div class="footer-tabbar-item" v-if="imagesData.link" @click="DetailFooterClick('link')">
+				<van-icon name="link-o" />
+			</div>
+			<div class="footer-tabbar-item" v-if="parseInt(imagesData.download)" @click="DetailFooterClick('download')">
+				<van-icon name="down" />
+			</div>
+			<div class="footer-tabbar-item" v-if="parseInt(imagesData.share)" @click="DetailFooterClick('share')">
+				<van-icon name="share-o" />
+			</div>
+		</div>
+		
+		
+		<van-popup
+			v-model:show="PopupInformation" 
+			class="detail-popup-message"
+			:class="imagesData.footer?'':'NotFooter'"
+			position="right" 
+			:overlay="false" 
+			get-container="#DetailPopup">
+			<van-nav-bar title="{lang deafil_info}" left-arrow @click-left="PopupInformation=false"></van-nav-bar>
+			<div  style="position: relative;height: 100%;background: var(--bg-content);padding-top: 46px;" v-cloak>
+				
+				<div class="DetailPopup-content" style="padding: 0 16px;">
+					<div class="name">{{imagesData.name}}.{{imagesData.ext}}</div>
+					<div class="block" v-if="imagesData.colors && imagesData.colors.length">
+						<div class="title">{lang color}</div>
+						<div class="block-item colors">
+							<div class="colors" v-for="item in imagesData.colors">
+								<div :style="{background: '#'+item}"></div>
+							</div>
+						</div>
+					</div>
+					<div class="block" v-if="imagesData.tag && imagesData.tag.length">
+						<div class="title">{lang tag}</div>
+						<div class="block-item tag">
+							<div class="tag" v-for="item in imagesData.tag">{{item}}</div>
+						</div>
+					</div>
+					<div class="block" v-if="imagesData.link">
+						<div class="title">{lang link}</div>
+						<div class="block-item link">
+							<span>{{imagesData.link}}</span>
+							<i class="ri-file-copy-line" @click="CommonCopyTxt(imagesData.link)"></i>
+						</div>
+					</div>
+					<div class="block" v-if="imagesData.foldernames && imagesData.foldernames.length">
+						<div class="title">{lang classify}</div>
+						<div class="block-item tag">
+							<div class="tag" v-for="item in imagesData.foldernames">{{item.fname}}</div>
+						</div>
+					</div>
+					<div class="block">
+						<div class="title">{lang basic_message}</div>
+						<div class="block-item">
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang grade}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">
+										<van-icon v-for="item in imagesData.grade" name="star" class="star active"></van-icon><van-icon v-for="item in imagesData.fgrade" name="star" class="star"></van-icon>
+									</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang size}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.width}}×{{imagesData.height}}</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang filesize}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.fsize}}</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang type}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.ext}}</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang creation_time}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.mtime}}</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang add_time}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.btime}}</div>
+								</van-col>
+							</van-row>
+							<van-row class="basic">
+								<van-col span="12">
+									<div class="label">{lang modify_time}</div>
+								</van-col>
+								<van-col span="12">
+									<div class="record">{{imagesData.dateline}}</div>
+								</van-col>
+							</van-row>
+						</div>
+					</div>
+				</div>
+				
+			</div>
+		</van-popup>
+	</div>
+</div>
+<script type="text/javascript">
+	const { showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, showConfirmDialog, showNotify   } = vant;
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		el: '#dzzoffice',
+		data: function() {
+			return {
+				imagesData: {
+					rid : '$resourcesdata[rid]',
+					appid : '$resourcesdata[appid]',
+					name : '$resourcesdata[name]',
+					type : '$resourcesdata[type]',
+					ext : '$resourcesdata[ext]',
+					iniframe : '$resourcesdata[iniframe]',
+					height : $resourcesdata[height],
+					width : $resourcesdata[width],
+					dateline : '$resourcesdata[dateline]',
+					grade : $resourcesdata[grade],
+					mtime : '$resourcesdata[mtime]',
+					btime : '$resourcesdata[btime]',
+					colors : $resourcesdata[colors],
+					desc : '$resourcesdata[desc]',
+					link : '$resourcesdata[link]',
+					tag :$resourcesdata[tag],
+					opentype : '$resourcesdata[opentype]',
+					icondata:'$resourcesdata[icondata]',
+					iconwidth : $resourcesdata[iconwidth],
+					iconheight : $resourcesdata[iconheight],
+					share : $resourcesdata[share],
+					download : $resourcesdata[download],
+					originalimg : '$resourcesdata[originalimg]',
+					realpath : '$resourcesdata[realpath]',
+					fsize : '$resourcesdata[fsize]',
+					foldernames :$resourcesdata[foldernames],
+					dpath:'$resourcesdata[dpath]',
+					footer:false
+				},
+				PopupInformation:false,
+				DocumentAdminId:'$_G[adminid]',
+				previews:{
+					data:$resourcesdata['preview'],
+					active:0,
+				}
+			};
+		},
+
+		computed: {
+	
+		},
+		created() {
+			if(this.imagesData.link || parseInt(this.imagesData.share ) || parseInt(this.imagesData.download)){
+				this.imagesData['footer'] =  true;
+			}else{
+				this.imagesData['footer'] = false;
+			}
+			if(this.imagesData.opentype=='video'){
+				var ratio = parseFloat(this.imagesData.width)/document.body.clientWidth;
+				var h = parseFloat(this.imagesData.height)/ratio;
+				this.imagesData['videoH'] = h;
+			}
+		},
+		methods:{
+			DetailImgload(event){
+				var self = this;
+				event.target.classList.remove('opacity');
+				event.target.previousSibling.remove();
+			},
+			previewClick(index){
+				let self = this;
+				this.imagesData.originalimg = this.previews.data[index].lpath;
+				this.previews.active = index;
+			},
+			async DetailFooterClick(type){
+				var self = this;
+				var rid = self.imagesData.rid;
+				if(type == 'link'){
+					window.open(self.imagesData.link);
+					return false;
+				}
+				if(type == 'download'){
+					if (self.imagesData.dpath) {
+						window.open('index.php?mod=banner&op=download&dpath=' + self.imagesData.dpath)
+					} else {
+						self.$toast({
+						  message: '{lang data_error}',
+						  icon: 'cross',
+						});
+					}
+					return false;
+				}
+				if(type == 'share'){
+					if (self.imagesData.rid) {
+						var res = await axios.post('index.php?mod=banner&op=appajax&do=createshare',{rid: self.imagesData.rid});
+						if(res == 'intercept'){
+							return false;
+						}
+						var data = res.data;
+						if (data.success) {
+							self.$dialog.confirm({
+								title: '{lang share_success}',
+								message: data.success,
+								confirmButtonText:'{lang copy}',
+								cancelButtonText:'{lang close}'
+							}).then(function() {
+								self.CommonCopyTxt(data.success);
+							}).catch(function() {
+								// on cancel
+							 });
+						} else {
+							self.$toast({
+							  message: '{lang share_fail}',
+							  icon: 'cross',
+							});
+						}
+					} else {
+						self.$toast({
+						  message: '{lang data_error}',
+						  icon: 'cross',
+						});
+					}
+				}
+			},
+			CommonCopyTxt(text){
+				var self = this;
+				var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+				input.setAttribute('value', text);
+				document.getElementsByTagName('body')[0].appendChild(input);
+				document.getElementById('copyInput').select();
+				document.execCommand('copy');
+				document.getElementById('copyInput').remove();
+				self.$toast.success('{lang copy_clipboard}');
+			}
+		},
+		mounted() {
+		}
+	});
+	dzzoffice.use(vant);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

@@ -1,0 +1,161 @@
+<van-popup 
+	v-model:show="InformationPopup" 
+	class="detail-popup-message"
+	:class="showdata[path] && !showdata[path].data.footer?'noPadding':''"
+	position="right" 
+	:overlay="false" 
+	get-container="#DetailPopup">
+	<van-nav-bar class="header-top" title="详情信息" left-arrow @click-left="InformationPopup=false"></van-nav-bar>
+	<div style="position: relative;height: 100%;background: var(--bg-content);padding-top: 46px;" v-cloak>
+		
+		<div class="DetailPopup-content" style="padding: 0 16px;">
+<!-- 			<template v-if="ParamDetail.messageloading">
+				<van-loading class="custom-load" size="24px" type="spinner" color="var(--header-text)" vertical>加载中...</van-loading>
+			</template>
+			<template v-else> -->
+				<div class="name">
+					<template v-if="parseInt(showdata[path].data.level)==1">
+						<van-image
+							 style="width: 25px; height: 25px;vertical-align: bottom;"
+							fit="contain"
+							src="dzz/pichome/image/grade/1.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(showdata[path].data.level)==2">
+						<van-image
+							 style="width: 25px; height: 25px;vertical-align: bottom;"
+							fit="contain"
+							src="dzz/pichome/image/grade/2.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(showdata[path].data.level)==3">
+						<van-image
+							 style="width: 25px; height: 25px;vertical-align: bottom;"
+							fit="contain"
+							src="dzz/pichome/image/grade/3.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(showdata[path].data.level)==4">
+						<van-image
+							 style="width: 25px; height: 25px;vertical-align: bottom;"
+							fit="contain"
+							src="dzz/pichome/image/grade/4.png"
+						/>
+					</template>
+					<template v-else-if="parseInt(showdata[path].data.level)==5">
+						<van-image
+							 style="width: 25px; height: 25px;vertical-align: bottom;"
+							fit="contain"
+							src="dzz/pichome/image/grade/5.png"
+						/>
+					</template>
+					{{showdata[path].data.name}}.{{showdata[path].data.ext}}
+				</div>
+				<div class="block" v-if="showdata[path].data.colors && showdata[path].data.colors.length">
+					<div class="title">颜色</div>
+					<div class="block-item colors">
+						<div class="colors" v-for="item in showdata[path].data.colors" @click="DetailMessageSearch('color',item)">
+							<div :style="{background: '#'+item}"></div>
+						</div>
+					</div>
+				</div>
+				<div class="block" v-if="showdata[path].data.tag && showdata[path].data.tag.length">
+					<div class="title">标签</div>
+					<div class="block-item tag">
+						<div class="tag" v-for="item in showdata[path].data.tag" @click="DetailMessageSearch('tag',item.key)">{{item.val}}</div>
+					</div>
+				</div>
+				<div class="block" v-if="showdata[path].data.link">
+					<div class="title">链接</div>
+					<div class="block-item link">
+						<span @click="DetailMessageSearch('link',showdata[path].data.link)">{{showdata[path].data.link}}</span>
+						<i class="ri-file-copy-line" @click="DetailMessageSearch('copy',showdata[path].data.link)"></i>
+					</div>
+				</div>
+				<div class="block" v-if="showdata[path].data.realfianllypath">
+					<div class="title">固定地址</div>
+					<div class="block-item link">
+						<span @click="DetailMessageSearch('link',showdata[path].data.realfianllypath)">{{showdata[path].data.realfianllypath}}</span>
+						<i class="ri-file-copy-line" @click="DetailMessageSearch('copy',showdata[path].data.realfianllypath)"></i>
+					</div>
+				</div>
+				<div class="block" v-if="showdata[path].data.foldernames && showdata[path].data.foldernames.length">
+					<div class="title">分类</div>
+					<div class="block-item tag">
+						<div class="tag" v-for="item in showdata[path].data.foldernames" @click="DetailMessageSearch('classify',item.key)">{{item.val}}</div>
+					</div>
+				</div>
+				<div class="block">
+					<div class="title">基本信息</div>
+					<div class="block-item">
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">评分</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">
+									<van-icon v-for="item in showdata[path].data.grade" name="star" class="star active"></van-icon><van-icon v-for="item in showdata[path].data.fgrade" name="star" class="star"></van-icon>
+								</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">尺寸</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.width}}×{{showdata[path].data.height}}</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">文件大小</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.fsize}}</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">类型</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.ext}}</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">创建时间</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.mtime}}</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">添加时间</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.btime}}</div>
+							</van-col>
+						</van-row>
+						<van-row class="basic">
+							<van-col span="12">
+								<div class="label">修改时间</div>
+							</van-col>
+							<van-col span="12">
+								<div class="record">{{showdata[path].data.dateline}}</div>
+							</van-col>
+						</van-row>
+					</div>
+				</div>
+			<!-- </template> -->
+		</div>
+		
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var DetailMessageJs = {
+		
+
+	}
+</script>

@@ -1,0 +1,376 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="static/js/sortable.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
+<!--{template common/container/pc/header_end}-->
+<style>
+	.el-table{
+		overflow: unset;
+		
+	}
+	.el-table .el-scrollbar,
+	.el-table .el-table__body-wrapper, 
+	.el-table .el-scrollbar__wrap{
+		overflow: unset;
+	}
+	.el-table .el-table__cell{
+		z-index: inherit;
+	}
+</style>
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/ad_pic_header}-->
+		<el-main style="overflow: hidden;position: relative;padding: 0;">
+			<el-scrollbar>
+				<div class="page-container">
+					<div class="warp-box">
+						<el-table 
+							:data="tableData" 
+							row-key="id" 
+							:row-class-name="tableRowClassName">
+							<el-table-column label="{lang sort}" width="60px" align="center">
+								<template #default="scope">
+									<el-icon v-if="!parseInt(scope.row.issystem)" class="dzz-move"><Rank /></el-icon>
+								</template>
+							</el-table-column>
+							<el-table-column 
+							label="{lang name}"
+							prop="name"
+							class-name="table-td">
+								<template #default="scope">
+									{{ scope.row.pagename }}
+								</template>
+							</el-table-column>
+							<el-table-column 
+								label="{lang site}"
+								class-name="table-td" >
+								<template #default="scope">
+									<div style="display: flex;justify-content: space-between;">
+										<el-text type="primary" truncated>
+											<a style="text-decoration: none;color: var(--el-text-color);" :href="scope.row.url" target="_blank">{{scope.row.url}}</a>
+										</el-text>
+										<div class="copy-paste">
+											<el-button type="info" plain @click="RightCopyUrl(scope.row.url,true)">{lang copy}</el-button>
+											<el-popover
+												placement="top"
+												popper-class="qrcode-box"
+												:width="224"
+												:teleported="false"
+												@before-enter="handleTableGeturlqrcode(scope.row.id)"
+												trigger="hover"
+												:popper-style="{'z-index':1000}">
+												<div style="width: 200px;font-size: 0;">
+													<el-image draggable="false" v-if="SettingQrcode.qrcodeurl" style="width: 200px; height: 200px" :src="SettingQrcode.qrcodeurl" fit="contain">
+														<template #error><div class="el-image__placeholder"></div></template>
+													</el-image>
+													<el-text tag="p" style="text-align: center;padding-top: 12px;">{lang QR}</el-text>
+													<div v-if="SettingQrcode.qrcodeurl" class="download" @click="TableDownQrcodeurl(SettingQrcode.qrcodeurl)">
+														<div style="text-align: center;">
+															<el-icon style="font-size: 22px;"><Download /></el-icon>
+															<el-text tag="p" style="width: 100%;">{lang Download_QR}</el-text>
+														</div>
+													</div>
+												</div>
+												<template #reference>
+													<el-button plain>
+														<template #icon>
+															<el-icon>
+																<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" ><path d="M384 64l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2c0 51.2 41.6 89.6 89.6 89.6l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2C473.6 105.6 435.2 64 384 64zM428.8 380.8c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8l0-227.2c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8L428.8 380.8z"></path><path d="M192 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M377.6 544l-243.2 0c-48 0-86.4 38.4-86.4 89.6l0 220.8c0 48 38.4 89.6 86.4 89.6l243.2 0c48 0 86.4-38.4 86.4-89.6l0-220.8C467.2 582.4 425.6 544 377.6 544zM422.4 851.2c0 25.6-19.2 44.8-44.8 44.8l-243.2 0c-25.6 0-44.8-19.2-44.8-44.8l0-220.8c0-25.6 19.2-44.8 44.8-44.8l243.2 0c25.6 0 44.8 19.2 44.8 44.8L422.4 851.2z" ></path><path d="M192 668.8l131.2 0 0 131.2-131.2 0 0-131.2Z"></path><path d="M633.6 470.4l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2c0-51.2-41.6-89.6-89.6-89.6l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2C544 432 585.6 470.4 633.6 470.4zM588.8 153.6c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8l0 227.2c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8L588.8 153.6z"></path><path d="M700.8 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M572.8 716.8l137.6 0c12.8 0 22.4-9.6 22.4-22.4l0-137.6c0-12.8-9.6-22.4-22.4-22.4l-137.6 0c-12.8 0-22.4 9.6-22.4 22.4l0 137.6C550.4 707.2 560 716.8 572.8 716.8z"></path><path d="M886.4 563.2l0 38.4c0 12.8 12.8 25.6 25.6 25.6l38.4 0c12.8 0 25.6-12.8 25.6-25.6l0-38.4c0-12.8-12.8-25.6-25.6-25.6l-38.4 0C899.2 537.6 886.4 547.2 886.4 563.2z"></path><path d="M582.4 944l48 0c12.8 0 22.4-9.6 22.4-22.4l0-48c0-12.8-9.6-22.4-22.4-22.4l-48 0c-12.8 0-22.4 9.6-22.4 22.4l0 48C560 934.4 569.6 944 582.4 944z"></path><path d="M944 704l-99.2 0c-16 0-28.8 12.8-28.8 28.8l0 44.8-48 0c-19.2 0-32 12.8-32 32l0 99.2c0 16 12.8 28.8 28.8 28.8l179.2 3.2c16 0 28.8-12.8 28.8-28.8l0-179.2C972.8 716.8 960 704 944 704z" ></path></svg>
+															</el-icon>
+														</template>
+                                                        {lang Get_QR}
+													</el-button>
+												</template>
+											</el-popover>
+										</div>
+									</div>
+									
+								</template>
+							</el-table-column>
+							<el-table-column label="{lang update_dateline}" prop="dateline" width="180px" align="center"></el-table-column>
+							<el-table-column label="{lang operation}" width="200px">
+								<template #default="scope">
+									<el-tooltip
+										effect="dark"
+										content="{lang edit}"
+										placement="bottom">
+										<el-button @click.stop="detail(scope.row)" type="info"  icon="EditPen" plain></el-button>
+									</el-tooltip>
+									<el-tooltip
+										effect="dark"
+										content="{lang setting}"
+										placement="bottom">
+										<el-button @click="handleedit('edit',scope.row)" type="info"  icon="Setting" plain></el-button>
+									</el-tooltip>
+									<template v-if="!parseInt(scope.row.issystem)">
+										<el-popconfirm title="{lang delete_tip}" @confirm="handleDelete(scope.row.id)">
+											<template #reference>
+												<div style="display: inline-block;margin-left: 12px;">
+													<el-tooltip
+														effect="dark"
+														content="{lang delete}"
+														placement="bottom"
+														size="small">
+														<el-button type="danger" icon="Delete" plain></el-button>
+													</el-tooltip>
+												</div>
+											</template>
+										</el-popconfirm>
+									</template>
+								</template>
+							</el-table-column>
+						</el-table>
+						<div class="el-table__append-wrapper">
+                            <el-button 
+                                style="width: 100%;border-radius: 0;height: 65px;font-size: 16px;" 
+                                plain 
+                                text 
+								@click="handleedit('add')"
+                                icon="CirclePlus">{lang add}</el-button>
+                        </div>
+					</div>
+					
+				</div>
+			</el-scrollbar>
+			
+		</el-main>
+	</el-container>
+	<!--{template components/index/right}-->
+</div>
+<script>
+	const BasicUrl = MOD_URL+'&op=alonepageinterface&do=';
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		mixins:[HeaderMixin,RightMixin],
+		created() {
+            this.HeaderMenu.active = 'alonepage'
+		},
+		setup(){
+			let DocumentThemeColor = ref();
+			let HeaderMenuIndex = 'alonepage';
+			let tableData = ref([]);
+			function TableSortable(){//排序
+				let tbody = document.querySelector('.el-table__body-wrapper tbody')
+				Sortable.create(tbody, {
+					handle: ".dzz-move",
+					animation: 150, // ms, number 单位：ms，定义排序动画的时间
+					// 拖拽移动的时候
+					onMove: function (/**Event*/evt,) {
+						let classList = evt.related.classList;
+						if(classList.value.indexOf('tr-disabled') > -1){
+							return false;
+						}
+						
+					},
+					onUpdate: function(/**Event*/evt) {
+						const currentRow = tableData.value.splice(evt.oldIndex, 1)[0];
+                        tableData.value.splice(evt.newIndex, 0, currentRow);
+						nextTick(async () => {
+							let ids = [];
+							for (let index = 0; index < tableData.value.length; index++) {
+								const element = tableData.value[index];
+								ids.push(element.id)
+							}
+							const {data: res} = await axios.post(BasicUrl+'sortpage',{
+								ids:ids.join(',')
+							});
+							if(res.success){
+								ElementPlus.ElMessage({
+									type:'success',
+									message:'{lang do_success}'
+								});
+							}else{
+								ElementPlus.ElMessage.error(res.msg || '{lang do_failed}');
+							}
+						})
+					}
+				})
+			};
+			//获取二维码
+			async function handleTableGeturlqrcode(id){
+                const self = this;
+				var {data: res} = await axios.post(BasicUrl+'geturlqrcode',{
+					id:id
+				});
+				if(res.success){
+                    this.SettingQrcode.qrcodeurl = res.qrcode;
+				}else{
+					ElementPlus.ElMessage.error(res.msg || '{lang Get_QR_error}');
+				}
+			};
+			function handleedit(type,item){//编辑、添加
+				if(type == 'edit'){
+					this.SettingForm.id = item.id
+					this.SettingDialog.Visible = true;
+					this.SettingForm.pagename = item.pagename;
+					return false;
+				}
+				let text = '';
+				let title = '{lang create}';
+				let start = true;
+				ElementPlus.ElMessageBox.prompt('{lang name}', title, {
+					confirmButtonText: '{lang confirms}',
+					cancelButtonText: '{lang cancel}',
+					inputValue:text,
+					inputValidator:function(val){
+						if(start){
+							start = false;
+							return true;
+						}
+						if(val){
+							let status = false;
+							for (let index = 0; index < tableData.value.length; index++) {
+								const element = tableData.value[index];
+								if(type == 'edit' && element.id == item.id){
+									continue;
+								}
+								if(element.pagename == val){
+									status = true;
+									break;
+								}
+							}
+							if(status){
+								return '{lang name_not_same}'
+							}else{
+								return true;
+							}
+						}else{
+							return '{lang name_cannot_empty}';
+						}
+						
+					},
+					inputPlaceholder:'{lang Please_input_name}'
+					}).then(async ({ value }) => {
+						var param = {};
+						if(type == 'edit'){
+							param = {
+								addpage:true,
+								formhash:'{FORMHASH}',
+								id:item.id,
+								pagename:value
+							}
+						}else{
+							param = {
+								addpage:true,
+								formhash:'{FORMHASH}',
+								pagename:value
+							}
+						}
+						const {data: res} = await axios.post(BasicUrl+'addpage',param);
+						if(res.success){
+							if(type == 'edit'){
+								item.pagename = value;
+								ElementPlus.ElMessage({
+									type:'success',
+									message:'{lang edit_success}'
+								});
+							}else{
+								tableData.value.push({
+									id:res.data.id,
+									url:SITEURL+res.data.url,
+									pagename:res.data.pagename,
+								});
+								ElementPlus.ElMessage({
+									type:'success',
+									message:'{lang add_success}'
+								});
+							}
+							
+							
+						}else{
+							ElementPlus.ElMessage.error(res.msg || '{lang add_error}');
+						}
+						
+					}).catch(() => {
+
+					})
+			};
+			function detail(data){//设置单页
+				window.location.href = MOD_URL+'&op=setting&id='+data.id
+			};
+			async function handleDelete(id,index){//删除
+				index = tableData.value.findIndex(current => current.id == id);
+				const {data: res} = await axios.post(BasicUrl+'delpage',{
+					id:id
+				});
+				if(res.success){
+					tableData.value.splice(index,1);
+					ElementPlus.ElMessage({
+						type:'success',
+						message:'{lang delete_success}'
+					});
+				}else{
+					ElementPlus.ElMessage.error(res.msg || '{lang delete_error}');
+				}
+			};
+			getData()
+			async function getData(){//获取数据
+				const {data: res} = await axios.post(BasicUrl+'pagelist');
+				tableData.value = res.data;
+			};
+			onMounted(function(){
+				TableSortable();//初始化拖动排序
+				//主题颜色
+				let theme = localStorage.getItem('theme');
+				if(theme){
+					DocumentThemeColor.value = theme;
+				}else{
+					DocumentThemeColor.value = 'light'
+				}
+			});
+			
+			
+			watch(()=>DocumentThemeColor.value, (newval)=>{
+				document.querySelector('html').className = newval
+			},{
+				deep: true,
+			})
+			function DocumentThemeChange(){//主题色切换
+				if(DocumentThemeColor.value=='light'){
+					DocumentThemeColor.value='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					DocumentThemeColor.value='light';
+					localStorage.setItem('theme','light');
+				}
+			};
+			function tableRowClassName(data){
+				let row = data.row;
+				if(parseFloat(row.issystem)){
+					return 'tr-disabled';
+				}else{
+					return '';
+				}
+			}
+			return {
+				handleedit,
+				handleDelete,
+				detail,
+				tableData,
+				TableSortable,
+				HeaderMenuIndex,
+				DocumentThemeColor,
+				DocumentThemeChange,
+				handleTableGeturlqrcode,
+				tableRowClassName
+			}
+		},
+
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('language', language);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+
+<!--{template common/container/pc/footer}-->

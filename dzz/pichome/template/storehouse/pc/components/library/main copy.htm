@@ -1,0 +1,385 @@
+<ul class="wrap-content">
+    <template v-for="item in Table.data">
+        <li class="piece" :key="item.appid" :class="{showmore:item.showmore}" >
+			<el-card shadow="hover"> 
+				<el-dropdown @command="TableMoreOpertion" trigger="click" @visible-change="mainvisiblechange(item.appid)">
+					<div class="more">
+						<el-icon><More-Filled /></el-icon>
+					</div>
+					<template #dropdown>
+						  <el-dropdown-menu>
+							<el-dropdown-item icon="EditPen" :command="{item:item,type:'edit'}">编辑</el-dropdown-item>
+							<template v-if="parseInt(item.connect) == 1">
+								<el-dropdown-item icon="Refresh" :command="{item:item,type:'renew'}">更新</el-dropdown-item>
+								<el-dropdown-item icon="Refresh" :command="{item:item,type:'reload'}">校验更新</el-dropdown-item>
+								
+							</template>
+							<el-dropdown-item icon="Setting" :command="{item:item,type:'set'}">设置</el-dropdown-item>
+							<el-dropdown-item icon="Delete" :command="{item:item,type:'delete'}">删除</el-dropdown-item>
+						  </el-dropdown-menu>
+					</template>
+				</el-dropdown>
+				<template v-if="parseInt(item.state)==1||parseInt(item.state)==2||parseInt(item.state)==3">
+					<div class="progress"> 
+						<div class="find">
+							<el-icon class="el-icon-loading">
+								<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M733.04 379.104a264.112 264.112 0 0 0-468.112 41.76 14.336 14.336 0 0 1-17.968 8.16l-20.256-7.008a12.352 12.352 0 0 1-7.456-16.192 312.112 312.112 0 0 1 556.736-48.56l12.704-44.352a16 16 0 0 1 7.632-9.584l24.752-13.712a14.464 14.464 0 0 1 20.912 16.64l-38.128 132.96a11.136 11.136 0 0 1-13.76 7.632l-132.96-38.128a14.464 14.464 0 0 1-3.04-26.56l24.752-13.712a16 16 0 0 1 12.16-1.392l42.032 12.048z m-447.52 280.352a264.112 264.112 0 0 0 468.112-41.76 14.336 14.336 0 0 1 17.968-8.16l20.256 7.008a12.352 12.352 0 0 1 7.44 16.176c-46.368 118.032-160.8 199.072-290.432 199.072-110.96 0-210.768-59.296-266.304-150.432l-12.704 44.288a16 16 0 0 1-7.616 9.584l-24.752 13.712a14.464 14.464 0 0 1-20.928-16.64l38.128-132.96a11.136 11.136 0 0 1 13.76-7.632l132.976 38.128a14.464 14.464 0 0 1 3.04 26.56l-24.768 13.712a16 16 0 0 1-12.16 1.392l-42.016-12.048z"></path></svg>
+							</el-icon>
+							<div class="text">{{item.percent}}%</div>
+						</div>
+					</div>
+				</template>
+				
+				<el- type="circle" :percentage="30"></el-progress>
+				<div class="box-images" @click="mainclick(item.appid)">
+					<div v-for="item in 4" class="img-d">
+						<img class="img" src="https://xsct.tuku.net.cn/data/attachment/dzz/202303/07/165157zz4816b4y4bdq44j.jpg.360_360_1_w.jpg?t=uHb" alt="">
+					</div>
+				</div>
+				<p class="name">
+					<template v-if="parseInt(item.type)==1">
+						<el-image
+							style="width: 18px; height: 18px;margin-right: 8px;"
+							src="dzz/pichome/image/library/file.png"
+							fit="contain"></el-image>
+					</template>
+					<template v-else-if="parseInt(item.type)==2">
+						<el-image
+						style="width: 18px; height: 18px;margin-right: 8px;"
+							src="dzz/pichome/image/library/billfish.png"
+							fit="contain"></el-image>
+					</template>
+					<template v-else>
+						<el-image
+						style="width: 18px; height: 18px;margin-right: 8px;"
+							src="dzz/pichome/image/library/eagle.png"
+							fit="contain"></el-image>
+					</template>
+					<el-text class="w-100% el-text--default" truncated>{{item.appname}}</el-text>
+				</p>
+				<p class="num">
+					<el-text class="el-text--small el-text--info flex">文件:{{item.filenum}}</el-text>
+					<el-text class="el-text--small el-text--info" style="margin-left: 8px;">人员:1111</el-text>
+					
+				</p>
+			</el-card>
+        </li>
+    </template>
+    
+</ul>
+
+<script>
+	// -1更新失败,0未导入,1准备中,2导入中,3校验中,4完成
+    const MainMixin = {
+        data(){
+            return{
+				drawer2:false,
+                Table:{
+					data:[],
+					loading:true,
+					getinfonumNum:0,
+					GetFetachNum:0,
+					GetFetachAppids:[],
+				},
+            }
+        },
+        methods:{
+			mainvisiblechange(appid){
+				var curr = this.Table.data.find(function(current){
+					return current.appid == appid;
+				});
+				if(curr){
+					curr.showmore = !curr.showmore;
+				}
+				
+			},
+			mainclick(appid){
+				window.location.href = MOD_URL+'&op=library&do=fileview#appid='+appid;
+				return false;
+			},
+            TableMoreOpertion(data){//库操作
+                const self = this;
+                switch(data.type){
+                    case 'renew'://更新
+                    case 'reload'://校验更新
+                        self.TableRefresh(data.item,data.type);
+                    break;
+                    case 'set'://设置
+						this.SettingDialog.Visible = true;
+						this.SettingForm.appname = data.item.appname;
+						this.SettingForm.appid = data.item.appid;
+                    break;
+					case 'edit'://编辑
+						window.location.href = MOD_URL+'&op=library&do=filelist#appid='+data.item.appid;
+                    break;
+                    case 'grade'://密钥
+						this.GradeDialogShow(data.item);
+                    break;
+                    case 'delete'://删除
+                        this.TableDelete(data.item.appid)
+                    break;
+                }
+            },
+            TableSortable(){//排序
+				var _this = this;
+				var tbody = document.querySelector('.wrap-content');
+				Sortable.create(tbody, {
+					draggable: ".piece",
+                    animation: 150,
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var currRow = _this.Table.data.splice(oldIndex, 1)[0];
+						_this.Table.data.splice(newIndex, 0, currRow);
+						var appids = [];
+						for(var i in _this.Table.data){
+							var item = _this.Table.data[i];
+							appids.push(item.appid);
+						}
+						appids = appids.join(',');
+						_this.TableSortableSubmit(appids);
+					}
+				});
+			},
+			async TableSortableSubmit(appids){//排序保存
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&operation=sort',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appids:appids,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.success){
+					// self.$message({
+					// 	type:'success',
+					// 	message:'排序成功'
+					// });
+				}else{
+					self.$message.error(data.msg || '排序失败');
+				}
+			},
+			async TableDelete(appid,index){//删除库
+                var self = this;
+                self.$messageBox.confirm('此操作无法恢复，确定删除库？', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                    icon:'QuestionFilled'
+                }).then(async function(){
+                    var res = await axios.post(MOD_URL+'&op=library&operation=dellibrary',{
+                        appid:appid
+                    });
+                    if(res == 'intercept'){
+                        return false;
+                    }
+                    var data = res.data;
+                    if(data.success){
+                        self.$message({
+                            type:'success',
+                            message:'删除成功'
+                        });
+                        index = self.Table.data.findIndex((current) => {
+                            return current.appid == appid;
+                        });
+                        if(self.Table.GetFetachAppids.indexOf(appid)>-1){
+                            self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(appid),1);
+                        }
+                        self.Table.data.splice(index,1);
+                    }else{
+                        self.$message.error('删除失败');
+                    }
+                }).catch(function(){});
+ 
+				
+				
+			},
+			async TableGetData(arr){//获取数据
+				var self = this;
+                self.Table.loading = true;//获取中
+				var {data: res} = await axios.post(MOD_URL+'&op=library&operation=getdata');
+				if(res == 'intercept'){
+					return false;
+				}
+                arr = [];
+                for(let i in res.data){
+                    res.data[i]['showmore'] = false;//添加字段，三个点使用
+                    arr.push(res.data[i]); 
+                }
+				self.Table.data = arr;//添加数据
+				self.Table.loading = false;//获取完成
+				for(var i in self.Table.data){//在更新的需要继续更新
+					if(parseInt(self.Table.data[i].state) == 1 || parseInt(self.Table.data[i].state) == -1 || parseInt(self.Table.data[i].state) == 2 || parseInt(self.Table.data[i].state) == 3){
+						if(self.Table.GetFetachAppids.indexOf(self.Table.data[i].appid)<0){
+							self.Table.GetFetachAppids.push(self.Table.data[i].appid);
+						}
+					}
+				}
+				if(self.Table.GetFetachNum == 0){
+					self.TableRefreshLoading();//执行更新队列
+				}
+				// self.TableDataForEach();//执行缩略图队列
+			},
+			TableDataForEach(){//缩略图队列
+				var self = this;
+				var isInterval = false;
+				
+				// for(var i in self.Table.data){
+				// 	var item = self.Table.data[i];
+				// 	if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
+				// 		isInterval = true;
+				// 		break;
+				// 	}
+				// }
+				if(self.Table.getinfonumNum == 0){
+					self.Tablegetinfonumtime();
+				}
+			},
+			Tablegetinfonumtime(){//获取缩略图
+				var self = this;
+				self.Table.getinfonumNum = 1;
+				setTimeout(async function(){
+					var res = await axios.post(MOD_URL+'&op=library&operation=getinfonum');
+					if(res == 'intercept'){
+						return false;
+					}
+					var data = res.data;
+					
+					var status = true;
+					for(var i in self.Table.data){
+						for(var a in data.data){
+							if(self.Table.data[i].appid == a){
+								if(parseInt(data.data[a])>0){
+									self.Table.data[i].getinfonum = data.data[a];
+								}else{
+									self.Table.data[i].getinfonum = 0;
+								}
+							}
+						}
+					}
+					for(var x in self.Table.data){
+						var breal = false;
+						for(var t in data.data){
+							if(self.Table.data[x].appid == t){
+								if(parseInt(self.Table.data[x].filenum) != parseInt(data.data[t])){
+									status = false;
+									breal = true;
+									break;
+								}
+							}
+						}
+						if(breal){
+							break;
+						}
+					}
+					if(!status){
+						self.Tablegetinfonumtime();
+					}else{
+						self.Table.getinfonumNum = 0;
+					}
+				},5000);
+				
+			},
+			async TableRefresh(data,type){//更新提交
+				const self = this;
+				let status = parseInt(data.state);//当前状态
+				if(status == 0 || status == 4 || status == -1){
+					var param = {
+						appid:data.appid,
+					};
+					if(type == 'reload'){//校验更新
+						param['force'] = 1;
+					}
+					data.state = 1;//准备中...
+					const {data: res} = await axios.post(MOD_URL+'&op=initexport',param);
+                    if(res.success){
+                        data.percent = 0;//加载数量
+						if(self.Table.GetFetachAppids.indexOf(data.appid)<0){
+							self.Table.GetFetachAppids.push(data.appid);
+						}
+						if(self.Table.GetFetachNum == 0){
+							self.TableRefreshLoading();//执行更新队列
+						}
+                    }else{
+                        data = status;//返回原先状态
+						self.$notify.error({//错误提示
+							title: '错误',
+							message: json.error
+						});
+
+                    }
+				}
+			},
+			TableRefreshLoading(){//更新队列
+				const self = this;
+				self.Table.GetFetachNum++;
+				if(!self.Table.GetFetachAppids.length){
+					self.Table.GetFetachNum = 0;
+					return false;
+				}
+				setTimeout(async function(){
+					if(!self.Table.GetFetachAppids.length){
+						self.Table.GetFetachNum = 0;
+						return false;
+					}
+					let res = await axios.post(MOD_URL+'&op=library&operation=getexportstatus',{
+						appids:self.Table.GetFetachAppids.join(',')
+					});
+					if(res == 'intercept'){
+						return false;
+					}
+					let json = res.data;
+					for(let i in json.data){
+						let item = json.data[i];
+						let xtem = self.Table.data.find((current) => {
+							return current.appid == item.appid;
+						});
+						if(xtem){
+							if(parseInt(item.state)==4){//完成
+								xtem.filenum = item.filenum;
+								xtem.percent = 100;
+								
+								if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+									self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+								}
+								self.$message({
+									type:'success',
+									message:xtem.appname+'更新完成'
+								});
+								setTimeout(function(){
+									xtem.state = parseInt(item.state);
+								},800)
+							}else if(parseInt(item.state)==-1){//更新失败
+								xtem.state = parseInt(item.state);
+								if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+									self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+								}
+								self.$message.error(xtem.appname+'更新失败');
+							}else{//2导入中，3校验中
+								if(parseInt(item.state) != xtem.state){
+									xtem.percent = 100;
+								}
+								xtem.filenum = item.filenum;
+								xtem.percent = parseInt(item.percent);
+								xtem.state = parseInt(item.state);
+								if(parseInt(item.state)==0){
+									if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+										self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+									}
+									self.$message.error(xtem.appname+'更新中断，请刷新重试');
+								}
+							}
+							break;
+						}
+					}
+					self.$nextTick(function(){
+						self.TableRefreshLoading();
+					});
+				},2000);
+			},
+        },
+        mounted(){
+            this.TableSortable();//初始化排序
+        }
+    }
+</script>

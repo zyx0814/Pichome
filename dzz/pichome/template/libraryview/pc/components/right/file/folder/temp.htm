@@ -1,0 +1,17 @@
+<p 
+	v-if="RightData.folder.length"
+	class="marginTop" 
+	style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">文件夹</p>
+<div v-if="RightData.folder.length" class="marginTop">
+	<div class="tag-box" style="min-height: 31px;">
+		<el-tag
+			v-for="folder in RightData.folder"
+			:key="folder.fid"
+			disable-transitions
+			effect="plain"
+			type="info">
+			<el-icon><Folder /></el-icon>
+			{{folder.fname}}
+		</el-tag>
+	</div>
+</div>

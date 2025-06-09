@@ -1,0 +1,338 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style>
+	.maxWidth{
+		width:370px;
+		max-width:100%;
+	}
+	.el-form-item__content{
+		display: block;
+	}
+	.content {
+    position: relative;
+    padding: 40px 20px 40px 20px;
+    background: var(--el-bg-color);
+    border: var(--el-border);
+    border-radius: 5px;
+}
+	.tipTxt {
+    color: var(--el-text-color-placeholder);
+    font-size: 12px;
+    line-height: 20px;
+    margin-top: 6px;
+}
+	.tipTxt:hover {
+		color: var(--el-text-color);
+	}
+	.el-input.is-disabled .el-input__wrapper {
+		background-color: var(--el-input-bg-color);
+		box-shadow: none;
+		border: 1px solid var(--el-border-color);
+	}
+	.el-input.is-disabled .el-input__inner{
+		background-color: var(--el-input-bg-color);
+		color: var(--el-input-text-color);
+		border: 0
+	}
+	.register-dialog .el-dialog__header{
+		display: none;
+	}
+	.register-dialog .main-title{
+		font-size: 22px;
+		margin: 11px 0;
+		margin-bottom: 25px;
+		color: var(--header-active);
+		vertical-align: middle;
+		text-align: center;
+	}
+	.register-dialog .main-title a{
+		color: var(--el-color-primary);
+	}
+	.register-dialog .sub-title{
+		text-align: center;
+		font-size: 22px;
+		margin: 11px 0;
+		color: var(--el-text-color-primary);
+		vertical-align: middle;
+	}
+	.register-dialog .tip{
+		color: var(--el-text-color-secondary);
+		line-height: 50px;
+		text-align: center;
+		font-size: 16px;
+		margin-top: 15px;
+		display: block;
+		text-decoration: none;
+	}
+	.el-upload{
+		display:inline-block;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/ad_pic_header}-->
+        <el-main>
+        <div class="container" >
+				<div class="content" >
+					<el-form ref="form" :model="formdata" label-width="200px">
+						<el-form-item label="{lang version_information}：">
+							<el-input class="maxWidth" disabled v-model="formdata.versions"></el-input>
+						</el-form-item>
+						<el-form-item label="{lang license_user_sum}：">
+							<el-input class="maxWidth" disabled v-model="formdata.num"></el-input>
+							<!--{if !defined('NOLIMITUSER')}-->
+							<el-button icon="Plus" style="margin-left: 6px;;" type="primary" @click="handleAddUser()">{lang system1}</el-button>
+							<!--{/if}-->
+							<p class="tipTxt">{lang system2}</p>
+						</el-form-item>
+						<el-form-item label="{lang system3}：">
+							<el-input class="maxWidth" disabled v-model="formdata.code"></el-input>
+							<el-button icon="Copy-Document" style="margin-left: 6px;" type="primary"  @click="handleCopyCode">{lang system4}</el-button>
+							<p class="tipTxt">{lang system5}</p>
+						</el-form-item>
+						<el-form-item label="{lang system6}：">
+							<el-input class="maxWidth" disabled v-model="formdata.time"></el-input>
+							<el-button type="primary" icon="Download"  style="margin-left: 6px;" @click="handleupdate">{lang system7}</el-button>
+							<el-upload
+								style="display:inline-block;margin-left: 6px;"
+								:show-file-list="false"
+								accept=".lic"
+								action="{MOD_URL}&do=authorize&operation=upload"
+								:on-success="handleUploadSuccess">
+								<el-button type="success" ><el-icon><Upload /></el-icon>{lang system8}</el-button>
+							</el-upload>
+							<p class="tipTxt">{lang system9}</p>
+						</el-form-item>
+					</el-form>
+
+					<div v-if="Version!='enterprise'" style="padding-top: 20px;">
+						<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-bottom: 10px;">
+							<div style="width: 200px;text-align:right;padding-right: 12px;">{lang system10}：</div>
+						</div>
+						<div class="tipTxt" style="padding-left: 117px;line-height: 25px;font-size: 14px;">
+							{lang system11}
+						</div>
+						<div style="color: var(--content-text);font-size: 14px;overflow: hidden;margin-top: 20px;margin-bottom: 10px;">
+							<div style="width: 200px;text-align:right;padding-right: 12px;">{lang system12}：</div>
+						</div>
+						<div class="tipTxt" style="padding-left: 117px;font-size: 14px;">
+								<p class="">1、{lang system13}：</p>
+							<div style="padding:20px 10px">
+								<el-steps
+										direction="vertical"
+										style="max-width: 100%;"
+										:space="80"
+										:active="step[0]"
+										process-status="info"
+
+								>
+									<el-step title="{lang license_step1_1_title}" @click="step[0]=1" description="{lang license_step1_1}"></el-step>
+									<el-step title="{lang license_step1_2_title}" @click="step[0]=2" description="{lang license_step1_2}"></el-step>
+									<el-step title="{lang license_step1_3_title}" @click="step[0]=3" description="{lang license_step1_3}"></el-step>
+
+
+								</el-steps>
+							</div>
+
+								<p class="">2、{lang system14}：</p>
+							<div style="padding:20px 10px">
+								<el-steps
+										direction="vertical"
+										style="max-width: 100%;"
+										:space="80"
+										:active="step[1]"
+										process-status="info"
+
+								>
+									<el-step title="{lang license_step2_1_title}" @click="step[1]=1" description="{lang license_step2_1}"></el-step>
+									<el-step title="{lang license_step2_2_title}" @click="step[1]=2" description="{lang license_step2_2}"></el-step>
+									<el-step title="{lang license_step2_3_title}" @click="step[1]=3" description="{lang license_step2_3}"></el-step>
+									<el-step title="{lang license_step2_4_title}" @click="step[1]=4" description="{lang license_step2_4}"></el-step>
+
+
+								</el-steps>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+        </el-main>
+	</el-container>
+	<el-dialog
+		v-model="dialogVisible"
+		custom-class="register-dialog"
+		:show-close="false"
+		@closed="registerdialogClose"
+		width="410px">
+		<div class="main-title">{lang input}<a href="https://oaooa.com/member" target="_blank">{lang system15}</a>{lang system16}</div>
+		<div class="sub-title">{lang system17}</div>
+		<el-form :model="registerform" @submit.native.prevent style="width: 350px;margin: 0 auto;padding-top: 30px;" :rules="rules" ref="ruleForm">
+			<el-form-item label="" prop="username">
+				<el-input v-model="registerform.username" type="text" placeholder="{lang system18}"></el-input>
+			</el-form-item>
+			<el-form-item label="" prop="password">
+				<el-input v-model="registerform.password" type="password" placeholder="{lang system19}" autocomplete="new-password"></el-input>
+			</el-form-item>
+			<el-form-item style="margin: 0;">
+				<el-button type="primary" native-type="submit" style="width: 100%;" @click="registerSubmit()">{lang system20}</el-button>
+			</el-form-item>
+		</el-form>
+		<a class="tip" href="https://oaooa.com/user.php?mod=login&op=logging&action=lostpasswd" target="_blank">{lang system21}</a>
+	</el-dialog>
+</div>
+<script type="text/javascript">
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy')
+		item.$message({
+		  message: __lang.copy_clipboard,
+		  type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+				Version:'{LICENSE_VERSION}',
+                DocumentThemeColor:'',
+				loading:false,
+				step:[0,0],
+				formdata:{
+					versions:'{$version}',//版本信息
+					num:'{$limitusernum}',//授权用户数
+					code:'{$_G[setting][machinecode]}',//机器识别码
+					time:'{$authdate}',//授权时间
+				},
+				dialogVisible:false,
+				registerform:{
+					username:'',
+					password:''
+				},
+				rules: {
+					username: [
+						{ required: true, message: __lang.enter_account, trigger: 'blur' },
+					],
+					password: [
+						{ required: true, message: __lang.enter_password, trigger: 'blur' },
+					],
+				},
+            }
+        },
+		created() {
+            //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			let self = this;
+			<!--{if defined('LICENSE_VERSION') && LICENSE_VERSION != CORE_VERSION_LEVEL}-->
+			self.$alert(__lang.system22, __lang.system23, {
+				confirmButtonText: __lang.system24,
+				cancelButtonText:__lang.system25,
+				showCancelButton:true,
+				callback: function(action ){
+					if(action == 'confirm'){
+						window.location.href = '/admin.php?mod=system#/systemupgrade';
+					}
+				}
+			});
+			<!--{/if}-->
+		},
+		mixins:[HeaderMixin],
+        watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handleupdate(){
+				this.dialogVisible = true;
+			},
+			
+			handleUploadSuccess(response){
+				var self = this;
+				if(response.success){
+					window.location.reload();
+				}else{
+					self.$message.error(__lang.uploading_files_error);
+				}
+			},
+			registerSubmit(){
+				var self = this;
+				self.$refs['ruleForm'].validate(async function(valid){
+					if (valid) {
+						var res = await axios.post(MOD_URL+'&do=updateauth',{
+							submit:true,
+							formhash:'{FORMHASH}',
+							username:self.registerform.username,
+							password:self.registerform.password
+						});
+						if(res == 'intercept'){
+							return false;
+						}
+						var json = res.data;
+						if(json.success){
+							window.location.reload();
+						}else{
+							self.$message.error(json.error);
+						}
+						self.dialogVisible = false;
+					} else {
+						console.log('error submit!!');
+						return false;
+					}
+				});
+			},
+			registerdialogClose(){
+				var self = this;
+				self.$refs['ruleForm'].resetFields();
+			},
+			handleCopyCode(){
+				CopyTxt(this,this.formdata.code);
+			},
+			handleAddUser(){
+				window.open('https://oaooa.com/index.php?mod=member&op=buy&id=1&mcode='+this.formdata.code)
+			}
+			
+		},
+		mounted() {
+            const self = this;
+
+        }
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

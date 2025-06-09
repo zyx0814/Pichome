@@ -1,0 +1,614 @@
+<div class="warp-box">
+    <div v-for="(item,key) in MianData" class="warp-block" :key="item.key" v-loading="item.loading" element-loading-text="{lang In_the_save}">
+        <div class="title-header">
+            <div class="left">
+                <el-icon class="icon-header"><Rank /></el-icon>
+                <el-text truncated tag="b">{{item.title}}</el-text>
+                <el-icon class="edit" @click="MainOperation('edit',key)"><Edit-Pen /></el-icon>
+            </div>
+            
+            <div class="right" v-show="mainvisible">
+                <!--{template components/setting/style}-->
+                <el-button style="margin-left: 12px;" type="primary" plain size="small" @click="MainOperation('save',key)">
+                    {lang save}</el-button>
+                <el-popconfirm title="{lang delete_tip}" @confirm="MainOperation('delete',key)">
+                    <template #reference>
+                        <el-button type="danger" plain size="small">{lang delete}</el-button>
+                    </template>
+                </el-popconfirm>
+            </div>
+        </div>
+        <div v-show="mainvisible" class="warp-content">
+            <component 
+                v-if="item.data && item.data.length"
+                :is="'Tmp'+item.type" 
+                :field="MianFieldType[item.type].data"
+                :model="item" 
+                :typecollection="TypeCollection"
+                :ParenIndex="key"></component>
+        </div>
+    </div>
+        
+    
+</div>
+<el-dialog
+    v-model="MainEditHeaderTitle.visible"
+    title="{lang edit_name}">
+    <el-form label-position="top">
+        <el-form-item label="{lang name}">
+            <div class="language-box">
+                <el-input v-model="MainEditHeaderTitle.name" ></el-input>
+                <language 
+                v-if="MainEditHeaderTitle.node.langkey&&MainEditHeaderTitle.node.langkey.tagname" 
+                :langkey="MainEditHeaderTitle.node.langkey.tagname"
+                @change="MainEditHeaderTitleChange"></language>
+            </div>
+        </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="MainEditHeaderTitle.visible = false">{lang cancel}</el-button>
+        <el-button type="primary" @click="MainEditHeaderTitleSubmit">{lang confirms}</el-button>
+      </div>
+    </template>
+  </el-dialog>
+<script>
+    const MainMixin = {
+        data(){
+            return {
+                MianData:[],
+                editorVal:'',
+                mainvisible:true,
+                MainStyle:{},
+                Mainthemeid:'',
+                MainEditHeaderTitle:{
+                    visible:false,
+                    name:'',
+                    node:'',
+                },
+                MianFieldType:{
+                    slide:{
+                        loading:false,
+                        key:'',
+                        tid:0,//块id
+                        type:'slide',//块类型
+                        title:'{lang slide_show}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {key:0,url:'',img:'',aid:0,link:'0',linkval:''},
+                                ]
+                            }
+                        ]
+                    },
+                    rich_text:{
+                        loading:false,
+                        key:'',
+                        tid:0,//块id
+                        type:'rich_text',//块类型
+                        title:'{lang full_text}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                name:'{lang title}',
+                                key:0,
+                                tdid:0,
+                                data:'',
+                                langkey:''
+                            }
+                        ]
+                    },
+                    link:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'link',//块类型
+                        title:'{lang link}',//块名称
+                        style:{style:'',size:''},//样式
+                        size:'',//尺寸
+                        langkey:'',
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {
+                                        key:0,
+                                        aid:0,
+                                        img:'',
+                                        title:'',
+                                        message:'',
+                                        link:'0',
+                                        linkval:'',
+                                    },
+                                ]
+                            }
+                        ]
+                    },
+                    contact:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'contact',//块类型
+                        title:'{lang contact}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {
+                                        key:0,
+                                        aid:0,
+                                        img:'',
+                                        title:'',
+                                    },
+                                ]
+                            }
+                        ]
+                    },
+                    question:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'question',//块类型
+                        title:'{lang faqs}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                name:'{lang title}',
+                                key:0,
+                                tdid:0,
+                                langkey:'',
+                                data:[
+                                    {key:0,title:'',answer:''},
+                                ]
+                            }
+                        ]
+                    },
+                    manual_rec:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'manual_rec',//块类型
+                        title:"{lang manual_recommend}",//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                name:'{lang title}',
+                                tdid:0,
+                                key:0,
+                                langkey: '',
+                                data:[
+                                    {
+                                        key:0,
+                                        url:'',
+                                        title:'',
+                                        img:'',
+                                        aid:0,
+                                        link:'0',
+                                        linkval:''
+                                    },
+                                ]
+                            },
+                        ]
+                    },
+                    file_rec:{
+                        loading:false,
+                        tid: 0,//块id
+                        key:'',
+                        type: 'file_rec',//块类型
+                        style:{style:'',size:''},//样式
+                        title: '{lang file_recommend}',
+                        langkey:'',
+                        data: [
+                            {
+                                name:'{lang title}',
+                                tdid:0,
+                                key:0,
+                                langkey:'',
+                                data:[
+                                    {
+                                        ftype: 0,//是0库还是1智能数据
+                                        id: '',//数据源id
+                                        type: 1,//1全部、2标签、3评分、4分类
+                                        sort: 1,//1最新、2最热、3文件名
+                                        number: 1,//排数
+                                        time:600,//缓存时间
+                                        langkey:'',
+                                        isfilename: 0,//文件名
+                                        isdown: 0,//下载按钮
+                                        link:'0',//链接类型，0地址、1库、2单页、2栏目
+                                        linkval:'',//更多链接地址
+                                        moretxt: '{lang more}',//更多文字
+                                        gradetype:0,//评分类型，0是,1不是,2包含及以下3,包含及以上
+                                        value: '',//推荐标签、评分的值、分类的值
+                                        classify:{//分类回显值
+                                            text:[],
+                                            expandedkeys:[],
+                                            checked:[]
+                                        },
+                                        
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    tab_rec:{
+                        loading:false,
+                        tid: 0,//块id
+                        key:'',
+                        type: 'tab_rec',//块类型
+                        style:{style:'',size:''},//样式
+                        title: '{lang tab_recommend}',
+                        langkey:'',
+                        data: [
+                            {
+                                tdid:0,
+                                langkey:'',
+                                name: '{lang title}',//tab{lang title}
+                                key:0,
+                                data:[
+                                    {
+                                        id: '',//数据源id
+                                        sort: 1,//1最新、2最热
+                                        number: 1,//排数
+                                        time:600,//缓存时间
+                                        link:'0',//链接类型，0地址、1库、2单页、2栏目
+                                        linkval:'',//更多链接地址
+                                        moretxt: '{lang more}',//更多文字
+                                        value: '',//推荐标签、评分的值、分类的值
+                                        classify:{//分类回显值
+                                            text:[],
+                                            expandedkeys:[],
+                                            checked:[]
+                                        },
+                                        
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    db_ids:{
+                        loading:false,
+                        tid: 0,//块id
+                        key:'',
+                        type: 'db_ids',//块类型
+                        title:'{lang library}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data: [
+                           {
+                                name:'{lang title}',
+                                tdid:0,
+                                key:0,
+                                langkey:'',
+                                data:[
+                                    {
+                                        id: '',//数据源id
+                                        ftype: 0,//是0库还是1智能数据
+                                        sort: 1,//1最新、2最热、3文件名
+                                        isfilename: 0,//文件名
+                                        number: 0,//获取数量
+                                        time:600,//缓存时间
+                                        moretxt:'{lang more}',
+                                        link: '0',//更多链接
+                                        linkval:'',//更多链接
+                                    }
+                                ]
+                           }
+                        ]
+                    },
+                    banner:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'banner',//块类型
+                        title:'{lang banner_ads}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {key:0,url:'',img:'',aid:0,link:'0',linkval:''},
+                                ]
+                            }
+                        ]
+                    },
+                    search_rec:{
+                        loading:false,
+                        tid:0,//块id
+                        key:'',
+                        type:'search_rec',//块类型
+                        title:'{lang search}',//块名称
+                        style:{style:'',size:''},//样式
+                        langkey:'',
+                        data:[
+                            {
+                                tdid:0,
+                                data:[
+                                    {
+                                        key:0,
+                                        img:'',
+                                        aid:0,
+                                        title:'',
+                                        desc:'',
+                                        searchclassify:[],
+                                        defaultclassify: '',
+                                        hots: 0,
+                                        hotsValue:[]
+                                    },
+                                ]
+                            }
+                        ]
+                    },
+                }
+            }
+        },
+        created(){
+            this.MainGetStyle();
+        },
+        methods:{
+
+            async MainOperation(type,index,flag){
+                const self = this;
+                switch(type){
+                    case 'add'://块添加
+                        let val = JSON.parse(JSON.stringify(this.MianFieldType[flag]));
+                        if(val){
+                            val['key'] - this.MainGetId();
+                            this.MianData.splice(index,0,val);
+                            // this.MainSave(this.MianData[index],index);
+                        }
+                    break;
+                    case 'save'://块保存
+                       var data = this.MianData[index];
+                       if(data){
+                            this.MainSave(data,index);
+                       }
+                       
+                    break;
+                    case 'delete'://块删除
+                        var data = this.MianData[index];
+                        if(data.tid){
+                            const {data: res} = await axios.post(BasicUrl+'deltag',{
+                                tid:data.tid,
+                            });
+                            if(res.success){
+                                data.loading = true;
+                                this.MianData.splice(index,1);
+                            }else{
+                                self.$message.error(res.msg || '{lang delete_error}');
+                            }
+                        }else{
+                            this.MianData.splice(index,1);
+                        }
+                        
+                        
+                    break;
+                    case 'edit'://块修改名称
+                        this.MainEditHeaderTitle.node = this.MianData[index];
+                        this.MainEditHeaderTitle.name = this.MianData[index].title
+                        this.MainEditHeaderTitle.visible = true;
+                    break;
+                }
+            },
+            MainEditHeaderTitleSubmit(){
+                this.MainEditHeaderTitle.node.title = this.MainEditHeaderTitle.name;
+                this.MainEditHeaderTitle.visible = false;
+            },
+            MainEditHeaderTitleChange(val){
+                this.MainEditHeaderTitle.name = val;
+                this.MainEditHeaderTitle.node.title = val;
+            },
+            MainGetId(){
+                let date = Date.now();
+                let rund = Math.ceil(Math.random()*1000)
+                let id = date + '' + rund;
+                return id;
+            },
+            async MainSave(data,disp){
+                const self = this;
+                data.loading = true;
+                let NewData = JSON.parse(JSON.stringify(data));
+                delete NewData['loading'];
+                delete NewData['key'];
+                NewData['disp'] = disp;
+                switch(NewData.type){
+                    case 'slide':
+                    case 'link':
+                    case 'search_rec':
+                    case 'contact':
+                    case 'banner':
+                        if(NewData.data[0].data && NewData.data[0].data.length){
+                            NewData.data[0].data.forEach(current => {
+                                delete current['key'];
+                                delete current['url'];
+                                delete current['langkey'];
+                            });
+                        }
+                    break;
+                    case 'rich_text':
+                        if(NewData.data && NewData.data.length){
+                            NewData.data.forEach(current => {
+                                delete current['key'];
+                                delete current['url'];
+                                delete current['langkey'];
+                            });
+                        }
+                    break;
+                    case 'file_rec':
+                    case 'manual_rec':
+                    case 'tab_rec':
+                    case 'question':
+                        if(NewData.data && NewData.data.length){
+                            NewData.data.forEach(current => {
+                                delete current['key'];
+                                delete current['url'];
+                                delete current['langkey'];
+                                if(current.data && current.data.length){
+                                    current.data.forEach(current => {
+                                        delete current['key'];
+                                        delete current['url'];
+                                    });
+                                }
+                            });
+                        }
+                    break;
+                }
+                const {data: res} = await axios.post(BasicUrl+'setpage',{
+                    id:$id,
+                    data:NewData
+                });
+                if(res.success){
+                    data.loading = false;
+                    data.tid = res.data.tid;
+                    data['langkey'] = res.data.langkey || '';
+                    switch(data.type){
+                        case 'slide':
+                        case 'link':
+                        case 'contact':
+                        case 'search_rec':
+                        case 'banner':
+                            if(data.data[0]){
+                                data.data[0].tdid = res.data.data[0].tdid;
+                            }
+                        break;
+                        case 'db_ids':
+                        case 'rich_text':
+                        case 'question':
+                        case 'file_rec':
+                        case 'tab_rec':
+                        case 'manual_rec':
+                            if(data.data && data.data.length){
+                                data.data.forEach((current,inx) => {
+                                    current.tdid = res.data.data[inx].tdid;
+                                    current.langkey = res.data.data[inx].langkey || '';
+                                    if(current.data && current.data.length){
+                                        current.data.forEach((fcurrent,finx) => {
+                                            fcurrent.langkey = res.data.data[inx].data[finx].langkey || '';
+                                        })
+                                    }
+                                });
+                            }
+                        break;
+                        
+                    }
+                    self.$message({
+                        type:'success',
+                        message:'{lang save_success}'
+                    })
+                }else{
+                    self.$message.error(res.msg || '{lang submit_error}');
+                }
+            },
+            async MainGetStyle(){
+                const self = this;
+                const {data: res} = await axios.get(BasicUrl+'getmouldstyle');
+                if(res.success){
+                    this.MainStyle = res.data;
+                    this.Mainthemeid = res.themeid;
+                    for (const key in this.MainStyle) {
+                        if (Object.hasOwnProperty.call(this.MainStyle, key)) {
+                            this.mianDefaultValue(key);
+                        }
+                    }
+                }else{
+                    self.$message.error(res.msg || '{lang model_style_get_fail}');
+                }
+            },
+            mianDefaultValue(type){
+                const self = this;
+                if(!this.MainStyle[type])return false;
+                let data = this.MainStyle[type];
+                if(self.MianFieldType[type]){
+                    for (const fkey in data) {
+                        if (Object.hasOwnProperty.call(data, fkey)) {
+                            let item = data[fkey];
+                            if(item.default == "true"){
+                                self.MianFieldType[type]['style']['style'] = item.value;
+                                if(item.size && item.size.length){
+                                    for (let index = 0; index < item.size.length; index++) {
+                                        let element = item.size[index];
+                                        if(element.default == "true"){
+                                            self.MianFieldType[type]['style']['size'] = element.value;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                
+            },
+            mianSortable(){
+                const self = this;
+                var tbody = document.querySelector('.warp-box');
+                new Sortable(tbody, {
+                    draggable: ".warp-block",
+                    handle: ".icon-header",
+                    group: {
+                        name: 'shared',
+                    },
+                    animation: 150,
+                    // 元素被选中
+                    onStart: function (/**Event*/evt) {
+                        self.mainvisible = false;
+                        evt.preventDefault();
+                    },
+                    // 结束拖拽
+                    onEnd: function (/**Event*/evt) {
+                        self.mainvisible = true;
+                        const currentRow = self.MianData.splice(evt.oldIndex, 1)[0];
+                        self.MianData.splice(evt.newIndex, 0, currentRow);
+                        self.mianSortableSave();
+                    },
+                    // 元素从一个列表拖拽到另一个列表
+                    onAdd: function ({item, newIndex, oldIndex}) {
+                        item.remove();
+                        let curr = self.rightData[oldIndex];
+                        self.MainOperation('add',newIndex,curr.flag);
+                    },
+                    // 元素从一个列表拖拽到另一个列表
+                    onChange: function (evt) {
+                        evt.preventDefault();
+                    },
+                });
+            },
+            async mianSortableSave(){
+                const self = this;
+                let ids = [];
+                if(!self.MianData.length || self.MianData.length == 1)return false;
+                for (let index = 0; index < self.MianData.length; index++) {
+                    const element = self.MianData[index];
+                    if(element.tid){
+                        ids.push(element.tid)
+                    }
+                    
+                }
+                if(!ids.length)return false;
+                const {data: res} = await axios.post(BasicUrl+'sorttag',{
+                    id:$id,
+                    tids:ids.join(',')
+                });
+            }
+        },
+        mounted(){
+            this.mianSortable();
+            let tbody = document.querySelector('.el-main').clientHeight;
+            document.querySelector('.warp-box').style.minHeight = tbody+"px";
+            var self = this;
+
+		    
+        }
+    }
+</script>

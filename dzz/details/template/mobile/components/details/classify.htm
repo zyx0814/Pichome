@@ -1,0 +1,232 @@
+<van-popup 
+	class="seasrch-popup footer-popup"
+	v-model:show="ImagesClassify.PopupVisible" 
+	round 
+	position="bottom" 
+	:style="{ height: '90%' }" 
+	@open="ImagesClassifyPopupOpen" 
+	@closed="ImagesClassifyPopupClosed"
+	style="padding-top: 10px;">
+	<div class="vam-popup-title" @click="ImagesClassify.PopupVisible=false">{lang collect_files}</div>
+	<!-- <div class="van-search-box" v-if="ImagesClassify.data.length">
+		<van-search class="popup-search-input" v-model.trim="ImagesClassify.search.name" shape="round" placeholder="输入关键词" maxlength="50" :clearable="false">
+			<template #right-icon>
+				<van-icon v-show="ImagesClassify.search.name" @click="ImagesClassify.search.name=''" name="cross" />
+			</template>
+		</van-search>
+	</div> -->
+	<div class="search-val-box">
+		<div class="screen-classify-collapse">
+			<collect-all 
+				v-if="ImagesClassify.isshowloading" 
+				:parammodel="ImagesClassify" 
+				:paramdata="ImagesClassify.data" 
+				@select="ImagesClassifyselect" 
+				:expandedkeys="ImagesClassify.expandedkeys" 
+				:keyword="ImagesClassify.search.name" 
+				@append="ImagesClassifyAppenddata" 
+				:issearch="ImagesClassify.search.issearch"
+				:level="0"></collect-all>
+		</div>
+	</div>
+	<div class="btn-bottom">
+		<van-row gutter="20">
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round plain type="default" size="large" @click="ImagesClassify.PopupVisible=false">{lang close}</van-button>
+		  </van-col>
+		  <van-col span="12" style="text-align: center;">
+			  <van-button round type="primary" size="large" @click="ImagesClassifyFooterClick">{lang confirms}</van-button>
+		  </van-col>
+		</van-row>
+	
+	</div>
+</van-popup>
+<script type="text/javascript">
+	var ImagesClassifyMixin = {
+		data(){
+			return {
+				ImagesClassify:{
+					PopupVisible:false,
+					data:[],
+					expandedkeys:[],
+					active:[],
+					value:'',
+					node:'',
+					checkedvalue:[],
+					loading:false,
+					isshowloading:false,
+					search:{
+						name:'',
+						issearch:false
+					}
+				}
+			}
+		},
+		watch:{
+			'ImagesClassify.loading':{
+				handler(val){
+					var self = this;
+					if(val){
+						showLoadingToast({
+							message: '{lang loading}',
+							overlay:true,
+							className:'conter-toast',
+							duration: 0,
+							forbidClick: true,
+							loadingType: 'spinner',
+						});
+					}else{
+						closeToast();
+					}
+				},
+				deep:true,
+				// immediate:true
+			},
+			'ImagesClassify.search.name':debounce(async function(val){
+				var self = this;
+				if(val){
+					self.ImagesClassify.isshowloading = false;
+					self.ImagesClassify.expandedkeys = [];
+					self.ImagesClassify.data = [];
+					self.ImagesClassify.search.issearch = true;
+					
+					var res = await axios.post('index.php?mod=collection&op=collect&do=searchcollect',{
+						keyword:self.ImagesClassify.search.name
+					});
+					if(res == 'intercept'){
+						return false;
+					}
+					var json = res.data;
+					for(var i in json.clid){
+						self.ImagesClassify.expandedkeys.push('p'+json.clid[i]);
+						self.ImagesClassify.active.push('p'+json.clid[i]);
+					}
+					for(var x in json.cids){
+						self.ImagesClassify.expandedkeys.push(parseInt(json.cids[x]));
+						self.ImagesClassify.active.push(parseInt(json.cids[x]));
+					}
+					self.$nextTick(function(){
+						self.ImagesClassify.isshowloading = true;
+					});
+						
+				}else{
+					self.ImagesClassify.issearch = false;
+					self.$nextTick(function(){
+						self.ImagesClassify.isshowloading = true;
+					});
+				}
+			},800)
+		},
+		methods:{
+			ImagesClassifyAppenddata(data){
+				if(data.type == 'parent'){
+					this.ImagesClassify.data = data.val;
+				}else{
+					data.data.children = data.val;
+					
+				}
+			},
+			async ImagesClassifyFooterClick(){
+				var self = this;
+				if(!self.ParamImages.operation.rids.length){
+					showNotify({ type: 'warning', message: '{lang please_select_file}' });
+					return false;
+				}
+				if(!this.ImagesClassify.value){
+					showNotify({ type: 'warning', message: '{lang please_select_classify}' });
+					return false;
+				}
+				var param = {};
+				if(self.ImagesClassify.node.parent){
+					param = {
+						ids:self.ParamImages.operation.rids.join(','),
+						clid:self.ImagesClassify.node.clid
+					}
+				}else{
+					param = {
+						ids:self.ParamImages.operation.rids.join(','),
+						clid:self.ImagesClassify.node.clid,
+						cid:self.ImagesClassify.node.cid
+					}
+				}
+				var url = 'index.php?mod=collection&op=collect&do=addfilecollect';
+				
+				var res = await axios.post(url,param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					if(self.ImagesClassify.node.parent){
+						var collect = {
+							name:self.ImagesClassify.node.catname,
+							key:self.ImagesClassify.node.cid
+						};
+					}else{
+						var collect = {
+							name:self.ImagesClassify.node.catname,
+							key:'p'+self.ImagesClassify.node.clid+'-'+self.ImagesClassify.node.pathkey.replaceAll('_','')
+						};
+					}
+					sessionStorage.setItem('{$_G[uid]}_collectkey', JSON.stringify(collect));
+					showNotify({ type: 'success', message: '{lang file_collection_successful}' });
+				}else{
+					showNotify({ type: 'warning', message: json.error });
+				}
+				self.ImagesClassify.PopupVisible = false;
+			},
+			ImagesClassifyselect(data){
+				if(this.ImagesClassify.value == data.cid){
+					this.ImagesClassify.value = '';
+					this.ImagesClassify.node = '';
+					this.ImagesClassify.checkedvalue = [];
+				}else{
+					this.ImagesClassify.node = JSON.parse(JSON.stringify(data));
+					this.ImagesClassify.value = data.cid;
+					this.ImagesClassify.checkedvalue = [data.cid];
+				}
+			},
+			
+			ImagesClassifySearchPopupOpen(){
+				var self = this;
+				this.ImagesClassify.search.realname = JSON.parse(JSON.stringify(this.ImagesClassify.search.name));
+			},
+			ImagesClassifyPopupOpen(){
+				// var collectkey = JSON.parse(sessionStorage.getItem('{$_G[uid]}_collectkey'));
+				// if(collectkey){
+				// 	var keys = collectkey.key.split('-');
+				// 	if(keys.length>1){
+				// 		keys.pop();
+				// 	}
+				// 	console.log(keys);
+				// 	var newkeys = [];
+				// 	for(var i in keys){
+				// 		if(keys[i].indexOf('p')>-1){
+				// 			newkeys.push(keys[i]);
+				// 		}else{
+				// 			newkeys.push(parseInt(keys[i]));
+				// 		}
+				// 	}
+				// 	console.log(newkeys);
+				// 	this.ImagesClassify.expandedkeys = newkeys;
+				// 	this.ImagesClassify.active = newkeys;
+				// }
+				this.ImagesClassify.isshowloading = true;
+			},
+			ImagesClassifyPopupClosed(){
+				var self = this;
+				this.ImagesClassify.loading = false;
+				this.ImagesClassify.isshowloading = false;
+				this.ImagesClassify.data = [];
+				this.ImagesClassify.active = [];
+				this.ImagesClassify.value = '';
+				this.ImagesClassify.node = '';
+				this.ImagesClassify.checkedvalue = [];
+				this.ImagesClassify.search.name = '';
+				this.ImagesClassify.search.issearch = '';
+				// this.ParamImages.operation.rids = [];
+			},
+		}
+	}
+
+</script>

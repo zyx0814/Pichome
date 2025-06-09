@@ -1,0 +1,528 @@
+<ul class="wrap-content">
+	<li 
+		v-for="item in Table.data"
+		class="piece" 
+		:class="{'piece-add':item.type == 'add'}"
+		:key="item.appid" 
+		:class="{'is-progress':parseInt(item.state)==1||parseInt(item.state)==2||parseInt(item.state)==3}" >
+		<el-card shadow="hover"> 
+			<template v-if="item.type == 'add'">
+				<div class="new">
+					<el-icon><Circle-Plus /></el-icon>
+					<el-text tag="p" style="width: 100%;">{lang create}</el-text>
+				</div>
+				<div class="entrys">
+					<div style="width: 260px;height: auto;">
+						<el-button @click="TableAdd('3')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/pichome.png" /> PicHome {lang library}</el-button>
+						<el-button @click="TableAdd('1')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/file.png" /> {lang normal_directory}</el-button>
+						<el-button @click="TableAdd('0')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/eagle.png" /> Eagle&nbsp;{lang library}</el-button>
+						<el-button @click="TableAdd('2')"><img style="height:40px;vertical-align: middle;margin-right:10px;" src="dzz/pichome/image/library/billfish.png" />Billfish&nbsp;{lang library}</el-button>
+						
+					</div>
+				</div>
+			</template>
+			<template v-else>
+				<template v-if="parseInt(item.state)==1||parseInt(item.state)==2||parseInt(item.state)==3">
+				<div class="progress">
+					<el-progress type="circle" :percentage="item.percent"></el-progress>
+				</div>
+			</template>
+			<a 
+				:href="item.url"
+				class="box-images" 
+				:style="{'--background-image-url': 'url('+(item.icon?item.icon:'{$_G[siteurl]}dzz/images/b.gif')+')'}">
+				<el-image v-if="item.icon" style="width: 100%; height: 100%;" :src="item.icon" fit="contain">
+					<template #error><div class="el-image__placeholder"></div></template>
+				</el-image>
+			</a>
+			<div class="layer">
+				<div style="height: 96px;padding-top: 24px;">
+					<p class="name">
+						<template v-if="parseInt(item.type)==1">
+							<el-image
+								style="width: 22px; height: 22px;margin-right: 8px;"
+								src="dzz/pichome/image/library/file.png"
+								fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+						</template>
+						<template v-else-if="parseInt(item.type)==2">
+							<el-image
+							style="width: 22px; height: 22px;margin-right: 8px;"
+								src="dzz/pichome/image/library/billfish.png"
+								fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+						</template>
+						<template v-else-if="parseInt(item.type)==3">
+							<el-image
+							style="width: 22px; height: 22px;margin-right: 8px;"
+								src="dzz/pichome/image/library/pichome.png"
+								fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+						</template>
+						<template v-else>
+							<el-image
+							style="width: 22px; height: 22px;margin-right: 8px;"
+								src="dzz/pichome/image/library/eagle.png"
+								fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+						</template>
+						<el-text class="el-text--default" truncated style="font-size: 20px;font-weight: 700;
+						color: var(--el-text-color-primary);">{{item.appname}}</el-text>
+					</p>
+					<div>
+						<el-link 
+							class="link" 
+							type="primary" 
+							:href="item.url" 
+							target="_blank"
+							:underline="false"
+						>{$_G['siteurl']}{{item.url}}</el-link>
+					</div>
+				</div>
+				<div class="operation">
+					<a class="el-button el-button--success edit" :href="'{MOD_URL}&op=library&do=filelist#appid='+item.appid" target="_blank">
+						<span>{lang edit}</span>
+					</a>
+					<el-popover
+						placement="top"
+						popper-class="qrcode-box"
+						:width="144"
+						:teleported="false"
+						data-container='body'
+						@before-enter="TableGeturlqrcode(item.appid)"
+						trigger="hover">
+						<div class="box" v-loading="!item.isqrcode">
+							<el-image draggable="false" v-if="item.qrcodeurl" :src="item.qrcodeurl" fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							<el-text tag="p" style="text-align: center;padding-top: 12px;">{lang QR}</el-text>
+							<div v-if="item.qrcodeurl" class="download" @click="TableDownQrcodeurl(item.qrcodeurl)">
+								<div style="text-align: center;">
+									<el-icon style="font-size: 22px;"><Download /></el-icon>
+									<el-text tag="p" style="width: 100%;">{lang Download_QR}</el-text>
+								</div>
+							</div>
+						</div>
+						<template #reference>
+							<el-button type="info" plain>
+								<el-icon style="font-size: 24px;" >
+									<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M112 195.84A83.84 83.84 0 0 1 195.84 112h202.992a83.84 83.84 0 0 1 83.84 83.84v202.992a83.84 83.84 0 0 1-83.84 83.84H195.84A83.84 83.84 0 0 1 112 398.832V195.84zM195.84 176A19.84 19.84 0 0 0 176 195.84v202.992c0 10.96 8.88 19.84 19.84 19.84h202.992a19.84 19.84 0 0 0 19.84-19.84V195.84A19.84 19.84 0 0 0 398.832 176H195.84z m345.488 19.84A83.84 83.84 0 0 1 625.168 112H828.16A83.84 83.84 0 0 1 912 195.84v202.992a83.84 83.84 0 0 1-83.84 83.84H625.184a83.84 83.84 0 0 1-83.84-83.84V195.84z m83.84-19.84a19.84 19.84 0 0 0-19.84 19.84v202.992c0 10.96 8.88 19.84 19.84 19.84H828.16A19.84 19.84 0 0 0 848 398.832V195.84A19.84 19.84 0 0 0 828.16 176H625.184zM112 625.168a83.84 83.84 0 0 1 83.84-83.84h202.992a83.84 83.84 0 0 1 83.84 83.84V828.16A83.84 83.84 0 0 1 398.832 912H195.84A83.84 83.84 0 0 1 112 828.16V625.184z m83.84-19.84a19.84 19.84 0 0 0-19.84 19.84V828.16c0 10.944 8.88 19.824 19.84 19.824h202.992a19.84 19.84 0 0 0 19.84-19.84V625.184a19.84 19.84 0 0 0-19.84-19.84H195.84z m345.488-32a32 32 0 0 1 32-32h88.16a32 32 0 0 1 32 32v86.832h49.088v-86.832a32 32 0 0 1 32-32h95.84a32 32 0 0 1 0 64h-63.84v86.832a32 32 0 0 1-32 32h-113.072a32 32 0 0 1-32-32v-86.832h-24.16v92.592a32 32 0 1 1-64 0v-124.592z m329.088 54.256a32 32 0 0 1 32 32v53.184a32 32 0 0 1-64 0v-53.184a32 32 0 0 1 32-32z m-240.912 150.832a32 32 0 0 1 32-32h134.16a32 32 0 0 1 0 64h-102.16v29.92H838.4v-21.184a32 32 0 0 1 64 0v53.184a32 32 0 0 1-32 32H661.504a32 32 0 0 1-32-32v-93.92z m-56.16-12.832a32 32 0 0 1 32 32v74.752a32 32 0 1 1-64 0v-74.752a32 32 0 0 1 32-32z"></path></svg>
+								</el-icon>
+							</el-button>
+						</template>
+					</el-popover>
+					<el-button type="info" plain icon="share" @click="RightCopyUrl(item.url)" style="font-size: 24px;margin-left: 12px;"></el-button>
+					<el-dropdown 
+						:teleported="false"
+						style="margin-left: 12px;" 
+						@command="TableMoreOpertion">
+						<el-button type="info" plain icon="MoreFilled" style="font-size: 24px;"></el-button>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<template v-if="parseInt(item.connect) == 1">
+									<el-dropdown-item icon="Refresh" :command="{item:item,type:'renew'}">{lang update}</el-dropdown-item>
+									<el-dropdown-item icon="Refresh" :command="{item:item,type:'reload'}">{lang validation_updates}</el-dropdown-item>
+								</template>
+								<el-dropdown-item icon="Setting" :command="{item:item,type:'set'}">{lang setting}</el-dropdown-item>
+								<el-dropdown-item icon="Delete" :command="{item:item,type:'delete'}">{lang delete}</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
+					
+				</div>
+			</div>
+			</template>
+			
+		</el-card>
+	</li>
+    
+</ul>
+
+<script>
+	// -1更新失败,0未导入,1准备中,2导入中,3校验中,4完成
+    const MainMixin = {
+        data(){
+            return{
+				drawer2:false,
+                Table:{
+					data:[],
+					loading:true,
+					getinfonumNum:0,
+					GetFetachNum:0,
+					GetFetachAppids:[],
+				},
+            }
+        },
+        methods:{
+            TableMoreOpertion(data){//库操作
+                const self = this;
+                switch(data.type){
+                    case 'renew'://更新
+                    case 'reload'://校验更新
+                        self.TableRefresh(data.item,data.type);
+                    break;
+                    case 'set'://设置
+						this.SettingDialog.Visible = true;
+						this.SettingForm.appname = data.item.appname;
+						this.SettingForm.appid = data.item.appid;
+                    break;
+					case 'edit'://编辑
+						window.location.href = MOD_URL+'&op=library&do=filelist#appid='+data.item.appid;
+                    break;
+                    case 'grade'://密钥
+						this.GradeDialogShow(data.item);
+                    break;
+                    case 'delete'://删除
+                        this.TableDelete(data.item.appid)
+                    break;
+                }
+            },
+			TableDownQrcodeurl(url){
+				let a = document.createElement('a')
+				a.href = url;
+				a.download = '{lang QR_code}'
+				a.click()
+			},
+			//获取二维码
+			async TableGeturlqrcode(appid,type){
+				const self = this;
+				let curr = '';
+				if(type){
+					this.SettingQrcode.isqrcode = false;
+					this.SettingQrcode.qrcodeurl = '';
+				}else{
+					curr = this.Table.data.find((current) => {
+						return current.appid == appid;
+					});
+					if(curr && curr.isqrcode){
+						return false;
+					}
+				}
+				var {data: res} = await axios.post(MOD_URL+'&op=library&operation=geturlqrcode',{
+					appid:appid
+				});
+				if(res.success){
+					if(type){
+						this.SettingQrcode.isqrcode = true;
+						this.SettingQrcode.qrcodeurl = res.qrcode;
+					}else{
+						curr.isqrcode = true;
+						curr.qrcodeurl = res.qrcode;
+					}
+
+				}else{
+					self.$message.error(res.msg || '{lang Get_QR_error}');
+				}
+
+			},
+            TableSortable(){//排序
+				var _this = this;
+				var tbody = document.querySelector('.wrap-content');
+				Sortable.create(tbody, {
+					draggable: ".piece",
+					preventOnFilter: true,
+                    animation: 150,
+					filter:'.piece-add',
+					onMove: function (evt,originalEvent) {
+						if(evt.related.classList.contains('piece-add')) {
+							return false;
+						}
+					},
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var currRow = _this.Table.data.splice(oldIndex, 1)[0];
+						_this.Table.data.splice(newIndex, 0, currRow);
+						var appids = [];
+						for(let i in _this.Table.data){
+							let item = _this.Table.data[i];
+							if(item.type == 'add')continue;
+							appids.push(item.appid);
+						}
+						appids = appids.join(',');
+						_this.TableSortableSubmit(appids);
+					}
+				});
+			},
+			async TableSortableSubmit(appids){//排序保存
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&operation=sort',{
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					appids:appids,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.success){
+					// self.$message({
+					// 	type:'success',
+					// 	message:'排序成功'
+					// });
+				}else{
+					self.$message.error(data.msg || '{lang sort_error}');
+				}
+			},
+			async TableDelete(appid,index){//删除库
+                var self = this;
+                self.$messageBox.confirm('{lang delete_recycle_bin}', '{lang prompt}', {
+                    confirmButtonText: '{lang confirms}',
+                    cancelButtonText: '{lang cancel}',
+                    type: 'warning',
+                    icon:'QuestionFilled'
+                }).then(async function(){
+                    var res = await axios.post(MOD_URL+'&op=library&operation=dellibrary',{
+                        appid:appid
+                    });
+                    if(res == 'intercept'){
+                        return false;
+                    }
+                    var data = res.data;
+                    if(data.success){
+                        self.$message({
+                            type:'success',
+                            message:'{lang delete_success}'
+                        });
+                        index = self.Table.data.findIndex((current) => {
+                            return current.appid == appid;
+                        });
+                        if(self.Table.GetFetachAppids.indexOf(appid)>-1){
+                            self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(appid),1);
+                        }
+                        self.Table.data.splice(index,1);
+                    }else{
+                        self.$message.error('{lang delete_unsuccess}');
+                    }
+                }).catch(function(){});
+
+
+
+			},
+			async TableGetData(arr){//获取数据
+				var self = this;
+                self.Table.loading = true;//获取中
+				var {data: res} = await axios.post(MOD_URL+'&op=library&operation=getdata');
+				if(res == 'intercept'){
+					return false;
+				}
+                arr = [];
+                for(let i in res.data){
+					res.data[i]['icon'] = '';
+					res.data[i]['isqrcode'] = false;
+					res.data[i]['qrcodeurl'] = '';
+                    arr.push(res.data[i]);
+                }
+				self.Table.data = arr;//添加数据
+				self.Table.loading = false;//获取完成
+				self.Table.data.unshift({
+					type:'add',
+					gid:'add'
+				})
+				for(var i in self.Table.data){//在更新的需要继续更新
+					if(parseInt(self.Table.data[i].state) == 1 || parseInt(self.Table.data[i].state) == -1 || parseInt(self.Table.data[i].state) == 2 || parseInt(self.Table.data[i].state) == 3){
+						if(self.Table.GetFetachAppids.indexOf(self.Table.data[i].appid)<0){
+							self.Table.GetFetachAppids.push(self.Table.data[i].appid);
+						}
+					}
+				}
+				if(self.Table.GetFetachNum == 0){
+					self.TableRefreshLoading();//执行更新队列
+				}
+				self.TableGeVappico();//获取图片
+				// self.TableDataForEach();//执行缩略图队列
+			},
+			async TableGeVappico(){//获取库图片
+				var self = this;
+				let isdelete = 1;
+				if(self.activeName == 'list'){
+					isdelete = 0;
+				}
+				var {data: res} = await axios.post(MOD_URL+'&op=library&operation=getvappico',{
+					isdelete:isdelete
+				});
+				for (let index = 0; index < res.data.length; index++) {
+					const element = res.data[index];
+					if(self.activeName == 'list'){
+						let curr = self.Table.data.find(function(current){
+							return current.appid == element.appid;
+						});
+						if(curr){
+							curr['icon'] = element.icon;
+						}
+					}else{
+						let curr = self.recycleData.data.find(function(current){
+							return current.appid == element.appid;
+						});
+						if(curr){
+							curr['icon'] = element.icon;
+						}
+					}
+					
+				}
+			},
+			TableDataForEach(){//缩略图队列
+				var self = this;
+				var isInterval = false;
+
+				// for(var i in self.Table.data){
+				// 	var item = self.Table.data[i];
+				// 	if(parseInt(item.state) == 4 && parseInt(item.type) == 1 && parseInt(item.getinfo) == 1 && parseInt(item.getinfonum)<parseInt(item.filenum)){
+				// 		isInterval = true;
+				// 		break;
+				// 	}
+				// }
+				if(self.Table.getinfonumNum == 0){
+					self.Tablegetinfonumtime();
+				}
+			},
+			Tablegetinfonumtime(){//获取缩略图
+				var self = this;
+				self.Table.getinfonumNum = 1;
+				setTimeout(async function(){
+					var res = await axios.post(MOD_URL+'&op=library&operation=getinfonum');
+					if(res == 'intercept'){
+						return false;
+					}
+					var data = res.data;
+
+					var status = true;
+					for(var i in self.Table.data){
+						for(var a in data.data){
+							if(self.Table.data[i].appid == a){
+								if(parseInt(data.data[a])>0){
+									self.Table.data[i].getinfonum = data.data[a];
+								}else{
+									self.Table.data[i].getinfonum = 0;
+								}
+							}
+						}
+					}
+					for(var x in self.Table.data){
+						var breal = false;
+						for(var t in data.data){
+							if(self.Table.data[x].appid == t){
+								if(parseInt(self.Table.data[x].filenum) != parseInt(data.data[t])){
+									status = false;
+									breal = true;
+									break;
+								}
+							}
+						}
+						if(breal){
+							break;
+						}
+					}
+					if(!status){
+						self.Tablegetinfonumtime();
+					}else{
+						self.Table.getinfonumNum = 0;
+					}
+				},5000);
+
+			},
+			async TableRefresh(data,type){//更新提交
+				const self = this;
+				let status = parseInt(data.state);//当前状态
+				if(status == 0 || status == 4 || status == -1){
+					var param = {
+						appid:data.appid,
+					};
+					if(type == 'reload'){//校验更新
+						param['force'] = 1;
+					}
+					data.state = 1;//准备中...
+					const {data: res} = await axios.post('misc.php?mod=initexport',param);
+                    if(res.success){
+                        data.percent = 0;//加载数量
+						if(self.Table.GetFetachAppids.indexOf(data.appid)<0){
+							self.Table.GetFetachAppids.push(data.appid);
+						}
+						if(self.Table.GetFetachNum == 0){
+							self.TableRefreshLoading();//执行更新队列
+						}
+                    }else{
+                        data = status;//返回原先状态
+						self.$notify.error({//错误提示
+							title: '{lang error}',
+							message: json.error
+						});
+
+                    }
+				}
+			},
+			TableRefreshLoading(){//更新队列
+				const self = this;
+				self.Table.GetFetachNum++;
+				if(!self.Table.GetFetachAppids.length){
+					self.Table.GetFetachNum = 0;
+					return false;
+				}
+				setTimeout(async function(){
+					if(!self.Table.GetFetachAppids.length){
+						self.Table.GetFetachNum = 0;
+						return false;
+					}
+					let res = await axios.post(MOD_URL+'&op=library&operation=getexportstatus',{
+						appids:self.Table.GetFetachAppids.join(',')
+					});
+					if(res == 'intercept'){
+						return false;
+					}
+					let json = res.data;
+					for(let i in json.data){
+						let item = json.data[i];
+						let xtem = self.Table.data.find((current) => {
+							return current.appid == item.appid;
+						});
+						if(xtem){
+							if(parseInt(item.state)==4){//完成
+								xtem.filenum = item.filenum;
+								xtem.percent = 100;
+
+								if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+									self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+								}
+								self.$message({
+									type:'success',
+									message:xtem.appname+'{lang update_success}'
+								});
+								setTimeout(function(){
+									xtem.state = parseInt(item.state);
+								},800)
+							}else if(parseInt(item.state)==-1){//更新失败
+								xtem.state = parseInt(item.state);
+								if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+									self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+								}
+								self.$message.error(xtem.appname+'{lang update_fail}');
+							}else{//2导入中，3校验中
+								if(parseInt(item.state) != xtem.state){
+									xtem.percent = 100;
+								}
+								xtem.filenum = item.filenum;
+								xtem.percent = parseInt(item.percent);
+								xtem.state = parseInt(item.state);
+								if(parseInt(item.state)==0){
+									if(self.Table.GetFetachAppids.indexOf(xtem.appid)>-1){
+										self.Table.GetFetachAppids.splice(self.Table.GetFetachAppids.indexOf(xtem.appid),1);
+									}
+									self.$message.error(xtem.appname+'{lang update_abort}');
+								}
+							}
+							break;
+						}
+					}
+					self.$nextTick(function(){
+						self.TableRefreshLoading();
+					});
+				},2000);
+			},
+        },
+        mounted(){
+            this.TableSortable();//初始化排序
+        }
+    }
+</script>

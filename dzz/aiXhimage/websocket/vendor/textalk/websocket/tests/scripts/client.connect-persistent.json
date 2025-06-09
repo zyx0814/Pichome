@@ -1,0 +1,80 @@
+[
+    {
+        "function": "stream_context_create",
+        "params": [],
+        "return": "@mock-stream-context"
+    },
+    {
+        "function": "stream_socket_client",
+        "params": [
+            "tcp:\/\/localhost:8000",
+            null,
+            null,
+            5,
+            5,
+            "@mock-stream-context"
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "persistent stream"
+    },
+    {
+        "function": "ftell",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 0
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            5
+        ],
+        "return": true
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return-op": "key-save",
+        "return": 248
+    },
+    {
+        "function": "fgets",
+        "params": [
+            "@mock-stream",
+            1024
+        ],
+        "return-op": "key-respond",
+        "return": "HTTP\/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {key}\r\n\r\n"
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 13
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "persistent stream"
+    },
+    {
+        "function": "fclose",
+        "params": [
+            "@mock-stream"
+        ],
+        "return":true
+    }
+]
+

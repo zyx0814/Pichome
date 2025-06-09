@@ -1,0 +1,18 @@
+<ul class="nav-stacked">
+		<li <!--{if $operation=='basic' || $operation=='datetime' || $operation=='upload' || $operation=='desktop' || $operation=='at' }-->class="active"<!--{/if}-->>
+				<a href="{BASESCRIPT}?mod={MOD_NAME}&operation=basic">{lang basicSet}</a>
+		</li>
+	
+		<li <!--{if $operation=='access' || $operation=='sec' || $operation=='qqlogin' || $operation=='loginset' }-->class="active"<!--{/if}-->>
+				<a href="{BASESCRIPT}?mod={MOD_NAME}&operation=access">{lang loginSet}</a>
+		</li>
+		
+		<li <!--{if $operation=='mail' || $op=='mailcheck' }-->class="active"<!--{/if}-->>
+				<a href="{BASESCRIPT}?mod={MOD_NAME}&operation=mail">{lang mail}</a>
+		</li>
+		<li <!--{if $operation=='image' || $operation=='watermark'  }-->class="active"<!--{/if}-->>
+				<a href="{BASESCRIPT}?mod={MOD_NAME}&operation=image">{lang thumb_and_watermark}</a>
+		</li>
+		
+		
+</ul>

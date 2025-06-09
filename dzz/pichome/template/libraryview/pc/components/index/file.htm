@@ -1,0 +1,122 @@
+
+<div id="files_box" v-if="fileparam.show" style="padding: 0 8px;">
+    <div class="file-headers">
+        <span class="cannot-select" style="cursor: pointer;font-size: 14px;" @click.stop="fileparam.visible = !fileparam.visible">
+            子文件夹（{{filedata.total}}）
+            <el-icon>
+                <Caret-Bottom v-show="fileparam.visible"></Caret-Bottom>
+                <Caret-Right v-show="!fileparam.visible"></Caret-Right>
+            </el-icon>
+        </span>
+        <div @click.stop class="cannot-select">
+            <el-checkbox 
+                v-model="hassub" 
+                :true-label="1" 
+                :false-label="0" 
+                label="显示子文件夹内容"
+                @change="ImageDataIsExpandedChange"></el-checkbox>
+        </div>
+    </div>
+    <div v-show="fileparam.visible">
+        <Image-File
+            ref="ImageFileRef"
+            :layout="ImageProps.layout"
+            :hassub="hassub"
+            :filedata="fileparam"
+            :perpage="10"
+            @click="Fileclick"
+            @dblclick="Filedblclick"
+            @complete="FileComplete"
+            >
+        </Image-File>
+    </div>
+</div>
+
+<script>
+    const FileMixins = {
+        data(){
+            return {
+                hassub:0,
+                fileparam:{
+                    visible:true,
+                    //是否显示文件夹目录
+					show:false,
+                    //文件夹目录参数
+                    param:{},
+                    //文件夹目录请求地址
+                    url:'{MOD_URL}&op=library&do=filelist&operation=folderlist',
+                    //重命名链接
+                    renameurl:'{MOD_URL}&op=library&do=folder&operation=rename'
+                },
+                filedata:{
+                    data:[],
+                    total:0,
+				},
+                fileMunu:{
+					show:false,
+					data:null,
+				},
+            }
+        },
+        methods:{
+            FileComplete(data){//完成事件
+                this.filedata.data = data.data;
+                this.filedata.total = data.total;
+            },
+            Fileclick(checkeds){//点击事件
+            	const self = this;
+            	
+                self.$nextTick(function(){
+					self.$refs.RefImageLayout.EmpytCheckedKeys();
+	                if(self.RightActivefid.length && checkeds && checkeds.length && self.RightActivefid.length==1 && self.RightActivefid[0] == checkeds[0]){
+	                    return false;
+	                }
+	                self.RightParamClean();
+	                self.RightType = 'folder';
+					self.RightActivefid = checkeds;
+					self.RightGetData();
+                })
+            },
+            Filedblclick(item){//双击事件
+                var self = this;
+				var pathkey = item.pathkey.split(this.DocumentAppid);
+				var pathkeys = [];
+				for(var i in pathkey){
+					if(pathkey[i]){
+						pathkeys.push(pathkey[i]+this.DocumentAppid);
+					}
+				}
+				if(pathkeys.length){
+					pathkeys.splice(pathkeys.length-1,1)
+					this.LeftTree.defaultOpenkeysInit = pathkeys;
+					this.LeftTree.defaultOpenkeys = pathkeys;
+				}
+				this.LeftTree.Currentkey = item.fid;
+				self.$refs.LeftTreeRef.setCurrentKey(item.fid);
+				this.LeftCurrenType = 'filelist'
+				self.$refs.ScreenBoxRef.DeleteAll();
+            },
+
+            //设置获取文件夹参数
+			FileSetParam(){
+				var self = this;
+                if(this.LeftCurrenType != 'filelist'){
+                    this.fileparam.show = false;
+                    return false;
+                }
+				var param = {
+					appid:this.DocumentAppid,
+					fid:this.LeftTree.Currentkey,
+				};
+				if(this.HeaderKeyword){
+					param['keyword'] = this.HeaderKeyword;
+				}
+				this.fileparam.param = param;
+                this.fileparam.show = true;
+                self.$nextTick(function(){
+                	self.$refs.ImageFileRef.Init();
+                });
+			},
+        }
+    }
+</script>

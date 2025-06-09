@@ -1,0 +1,45 @@
+<template v-if="RightData.Aikey.type == 'files'">
+	<div style="padding: 8px 18px;">
+		<el-button plain style="width: 100%;" @click="Aikeys.visible=true">AI批量标注</el-button>
+	</div>
+</template>
+<template v-if="RightData.Aikey.type == 'folder' || RightData.Aikey.type == 'vapp'">
+	<div style="padding: 8px 18px;">
+		<el-button  plain style="width: 100%;" @click="Aikeys.visible=true">AI批量标注整个文件夹图片</el-button>
+	</div>
+</template>
+
+<el-dialog
+    v-model="Aikeys.visible"
+    title="{lang ai_notes}"
+    width="500"
+    @open="AikeysOpen">
+    <p class="tipTxt" v-if="RightData.Aikey.type == 'files'" style="margin: 0;margin-bottom: 12px;">
+        {lang selected}
+        <el-text type="warning" size="large" tag="b">{{RightActiveRid.length}}</el-text>
+        {lang seleced_img_num}</p>
+    <el-form 
+        :model="AikeysForm" 
+        style="max-width: 600px" 
+        label-position="top">
+        <template v-for="item in this.AikeysForm">
+            <el-form-item :label="item.title">
+                <el-select v-model="item.value" placeholder="{lang empty_not_edit}" style="width: 100%">
+                    <el-option
+                        v-for="fitem in item.data"
+                        :key="fitem.tplid"
+                        :label="fitem.name"
+                        :value="fitem.tplid"
+                    />
+                </el-select>
+            </el-form-item>
+        </template>
+        
+    </el-form>
+    <template #footer>
+        <div class="dialog-footer">
+            <el-button @click="Aikeys.visible = false">{lang cancel}</el-button>
+            <el-button type="primary" @click="AikeysSubmit">{lang submit}</el-button>
+        </div>
+    </template>
+</el-dialog>

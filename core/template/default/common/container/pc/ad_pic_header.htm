@@ -1,0 +1,71 @@
+<el-header class="page-header"  height="60px" width="100%">
+    <div class="h-left">
+        <el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain"></el-image>
+         <el-link :underline="false" href="$_G['siteurl']"><el-text tag="b" size="large" style="color:var(--el-text-color-primary)">$_G['setting'][sitename] </el-text></el-link>
+    </div>
+    <div class="h-center">
+        <el-menu
+            class="admin-el-menu dzz-menu"
+            :default-active="HeaderMenu.active"
+            mode="horizontal"
+            @select="headerMenuSelect">
+            <el-menu-item v-for="item in HeaderMenu.data" :index="item.id">{{ item.name }}</el-menu-item>
+        </el-menu>
+    </div>
+    <div class="h-right"> 
+        <el-tooltip content="{lang theme_color}" placement="bottom">
+            <el-button 
+                text 
+                :icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+                style="font-size: var(--el-font-size-extra-large);" 
+                circle  
+                size="large"
+                @click="DocumentThemeChange">
+            </el-button>
+        </el-tooltip>
+        <international current="$_G['language']"></international>
+        <comavatar
+            :level="parseInt($_G['pichomelevel'])"
+            iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G['config']['pichomeclosecollect'] || $_G[adminid])}--><!--{/if}-->"
+            :adminid="parseInt($_G['adminid'])"
+            PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+            :uid="parseInt($_G['uid'])"
+            upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+            version="$_G['setting']['version']"
+            formhash="{FORMHASH}"
+            :isrefresh="true">
+            <el-avatar size="40">
+                {eval echo avatar_block($_G['uid']);}
+            </el-avatar>
+        </comavatar>
+    </div>
+</el-header>
+
+<script>
+    const HeaderMixin = {
+		data(){
+			return {
+                HeaderMenu:{
+                    active:'systeminfo',
+                    data:[]
+                }
+			}
+		},
+        created() {
+            this.GetHeaderMenuData();
+		},
+		methods:{
+            async GetHeaderMenuData(){
+                const {data: res} = await axios.post('index.php?mod=manage&do=header');
+                this.HeaderMenu.data = res.data;
+            },
+			headerMenuSelect(id){
+				if(this.HeaderMenu.active == id)return false;
+				let curr = this.HeaderMenu.data.find(function(current){
+					return current.id == id;
+				});
+				window.location.href = curr.url;
+			},
+		}
+	}
+</script>

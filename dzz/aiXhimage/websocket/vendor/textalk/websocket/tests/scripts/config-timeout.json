@@ -1,0 +1,24 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            300
+        ],
+        "return": true
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    }
+]

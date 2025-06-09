@@ -1,0 +1,211 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/assets/css/chat.css?{VERHASH}"/>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+        <el-container>
+            <el-aside width="25%" v-if="formdata && formdata.length">
+                <div class="left-box">
+                    <el-text class="title" tag="p" size="large">{{ ContentData.name }}</el-text>
+                    <el-scrollbar style="padding: 20px;">
+                        <el-form
+                            label-position="top">
+                            <template v-for="item in formdata">
+                                <el-form-item :label="item.lable" required>
+                                    <template v-if="item.type == 'input'">
+                                        <el-input
+                                            v-model="item.value"
+                                            maxlength="500"
+                                            show-word-limit
+                                            type="text"
+                                            :disabled="IsSubmit"
+                                        ></el-input>
+                                    </template>
+                                    <template v-else>
+                                        <el-input
+                                            v-model="item.value"
+                                            :rows="4"
+                                            maxlength="500"
+                                            show-word-limit
+                                            type="textarea"
+                                            :disabled="IsSubmit"
+                                        ></el-input>
+                                    </template>
+                                    
+                                </el-form-item>
+                            </template>
+                        </el-form>
+                    </el-scrollbar>
+                    <el-button 
+                        class="submitBtn" 
+                        type="primary" 
+                        size="large" 
+                        round 
+                        @click="HandleSybmit" 
+                        :disabled="IsSubmit">立即生成</el-button>
+                </div>
+                
+            </el-aside>
+            <el-main style="padding: 0;">
+                <el-scrollbar style="padding-right: 20px;">
+                    <div>
+                        <el-text tag="p" size="large" style="color: var(--el-color-black);">本次创作结果</el-text>
+                        <ul class="chat-box">
+                            <li v-for="item in DataList">
+                                <template v-for="fitem in item.chat">
+                                    <el-text class="text" tag="p" size="large">{{ fitem.name }}：{{ fitem.content }}</el-text>
+                                </template>
+                                <template v-if="item.loading">
+                                    <div style="width: 100%;height: 60px;" v-loading="item.loading"></div>
+                                </template>
+                                <template v-else>
+                                    <el-text class="text" tag="p" size="large" style="color: var(--el-text-color);" v-html="item.msg"></el-text>
+                                </template>
+                                <div class="operation" v-if="!item.loading">
+                                    <el-text tag="p">{{item.date}}</el-text>
+                                    <div>
+                                        <template v-if="!IsSubmit">
+                                            <el-button text bg round @click="HandleSybmit">再来一次</el-button>
+                                            <el-button text bg round @click="handlerewrite">重写</el-button>
+                                        </template>
+                                        <el-button text bg round @click="Copy(item.msg)">复制</el-button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </el-scrollbar>
+            </el-main>
+        </el-container>
+		
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+        setup(){
+            let ID = $id;
+            let DataList = ref([]);
+            let IsSubmit = ref(false);
+            let DocumentThemeColor = ref('');
+            let formdata = ref([]);
+            let ContentData = $modeldata;
+            if(ContentData && ContentData.formdata){
+                for (const key in ContentData.formdata) {
+                    const element = ContentData.formdata[key];
+                    element['value'] = '';
+                   formdata.value.push(element)   
+                }
+            }
+            watch(()=>DocumentThemeColor.value, (newval)=>{
+				document.querySelector('html').className = newval
+			},{
+				deep: true,
+			})
+            function DocumentThemeChange(){//主题色切换
+				if(DocumentThemeColor.value=='light'){
+					DocumentThemeColor.value='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					DocumentThemeColor.value='light';
+					localStorage.setItem('theme','light');
+				}
+			};
+            async function HandleSybmit(){//提交
+                let curr = formdata.value.find(function(current){
+                    return !current.value;
+                });
+                if(curr){
+                    ElementPlus.ElMessage.error('必填项内容不能为空');
+                    return false;
+                }
+                let param = {id:$id};
+                let arr = [];
+                for (let index = 0; index < formdata.value.length; index++) {
+                    const element = formdata.value[index];
+                    if(element.value){
+                        param[element.name] = element.value;
+                        arr.push({
+                            name:element.lable,
+                            content:element.value
+                        })
+                    }
+                }
+                IsSubmit.value = true;
+                DataList.value.unshift({
+                    chat:arr,
+                    date:'',
+                    msg:'',
+                    loading:true,
+                    error:''
+                });
+                let {data: res} = await axios.post('{MOD_URL}&do=createchat',param);
+                if(res.success){
+                    DataList.value[0].date = res.result.date;
+                    DataList.value[0].msg = res.result.msg;
+                }else{
+                    DataList.value[0].error = res.msg;
+                }
+                DataList.value[0].loading = false;
+                IsSubmit.value = false;
+            }
+            function handlerewrite(){//重写
+                for (let index = 0; index < formdata.value.length; index++) {
+                    const element = formdata.value[index];
+                    element.value = '';
+                }
+            };
+            function Copy(content){
+                if(!content)return false;
+				var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+				input.setAttribute('value', content);
+				document.getElementsByTagName('body')[0].appendChild(input);
+				document.getElementById('copyInput').select();
+				document.execCommand('copy')
+                ElementPlus.ElMessage({
+                    message: '成功复制到剪切板',
+					type: 'success'
+                });
+                
+				document.getElementById('copyInput').remove();
+			};
+            onMounted(function(){
+				//主题颜色
+				let theme = localStorage.getItem('theme');
+				if(theme){
+					DocumentThemeColor.value = theme;
+				}else{
+					DocumentThemeColor.value = 'light'
+				}
+			});
+            return {
+                DocumentThemeColor,
+                formdata,
+                ContentData,
+                DataList,
+                IsSubmit,
+
+                DocumentThemeChange,
+                HandleSybmit,
+                handlerewrite,
+                Copy
+            }
+        }
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+    dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template pc/frame/footer_simple}-->

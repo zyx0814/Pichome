@@ -1,0 +1,711 @@
+<el-drawer 
+	ref="rightdrawer"
+    v-model="SettingDialog.Visible" 
+    direction="rtl"
+    :show-close="false"
+    size="66%"
+    :append-to-body="true"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
+    destroy-on-close
+    @open="SettingGetData"
+	@closed="SettingRightClosed">
+    <template #header>
+		<el-text class="title" tag="b" truncated size="large">{lang setting}{{SettingForm.title}}</el-text>
+		<div style="flex: 1 1 auto;width: 100%;overflow: hidden;">
+			<el-tabs v-model="SettingDialog.active">
+				<el-tab-pane label="{lang base_setting}" name="basic"></el-tab-pane>
+				<el-tab-pane label="{lang preferences}" name="preference"></el-tab-pane>
+				<el-tab-pane label="{lang filters_setting}" name="screen"></el-tab-pane>
+			</el-tabs>
+		</div>
+		<div style="min-width: 160px;max-width: 160px;text-align: right;">
+			<el-button @click="SettingRightClosed" :disabled="SettingForm.loading">{lang close}</el-button>
+			<el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">
+                {lang save}</el-button>
+		</div>
+    </template>
+    <template #default>
+		<template v-if="SettingDialog.active == 'basic'">
+			<el-form 
+				:model="SettingForm" 
+				label-width="140px" 
+				:label-position="'{$_G["language"]}' == 'zh-CN'?'left':'top'"
+				label-suffix="：">
+				<el-form-item label="{lang searchName}" >
+					<div class="language-box">
+						<el-input v-model="SettingForm.title" @input="SettingEditStatus"></el-input>
+						<language 
+							v-if="SettingForm.langkey" 
+							:langkey="SettingForm.langkey.title" 
+							@change="SettingFormTitleChange"></language>
+					</div>
+				</el-form-item>
+				<el-form-item label="{lang searchDisp}" >
+					<el-input v-model="SettingForm.disp" type="number" @input="SettingEditStatus" placeholder="{lang searchDisp_placeholder}"></el-input>
+					<el-text tag="p" type="info" size="small" truncated>{lang searchDisp_placeholder}</el-text>
+				</el-form-item>
+				<el-form-item label="{lang searchRange}" >
+					 <el-select style="width:100%"  v-model="SettingForm.searchRange" multiple @change="SettingEditStatus">
+						<el-option
+					     v-for="item in SettingForm.kus"
+						:key="item.id"
+						:label="item.name"
+						:value="item.id"></el-option>
+					 </el-select>
+					<el-text tag="p" type="info" size="small" truncated>{lang searchRange_tips}</el-text>
+				</el-form-item>
+				
+				<el-form-item label="{lang searchExts}">
+					<el-input type="textarea" v-model="SettingForm.searchExts" @input="SettingEditStatus"></el-input>
+					<el-text tag="p" type="info" size="small" truncated>{lang searchExts_tips}</el-text>
+				</el-form-item>
+				
+			</el-form>
+		</template>
+		<template v-else-if="SettingDialog.active=='preference'">
+			<el-form 
+				:model="SettingForm" 
+				label-width="140px" 
+				label-suffix="：">
+				<el-form-item label="{lang default_layout}">
+					<el-radio-group v-model="SettingForm.layout" @change="SettingEditStatus">
+						<el-radio label="waterFall" style="margin-bottom: 6px;" border>{lang layout_waterFall}</el-radio>
+						<el-radio label="rowGrid" style="margin-bottom: 6px;" border>{lang layout_rowGrid}</el-radio>
+						<el-radio label="imageList" style="margin-bottom: 6px;" border>{lang layout_imageList}</el-radio>
+						<el-radio label="tabodd" style="margin-bottom: 6px;" border>{lang layout_tabodd}</el-radio>
+						<el-radio label="tabeven" style="margin-bottom: 6px;" border>{lang layout_tabeven}</el-radio>
+						<el-radio label="details" style="margin-bottom: 6px;" border>{lang layout_details}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="{lang display_default}">
+					<el-checkbox-group v-model="SettingForm.display" @change="SettingEditStatus">
+						<el-checkbox border style="margin-bottom: 6px;" label="name" name="type">{lang display_name}</el-checkbox>
+						<!-- <el-checkbox border style="margin-bottom: 6px;" label="tagging" name="type">标注数</el-checkbox> -->
+						<el-checkbox border style="margin-bottom: 6px;" label="extension" name="type">{lang display_extension}</el-checkbox>
+						<el-checkbox border style="margin-bottom: 6px;" label="other" name="type">{lang display_other}</el-checkbox>
+					</el-checkbox-group>
+				</el-form-item>
+				<el-form-item v-if="SettingForm.display.indexOf('other')>-1" label="{lang display_other}">
+					<el-radio-group v-model="SettingForm.other" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="size">{lang display_size}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="filesize">{lang display_filesize}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="tag">{lang display_tag}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="grade">{lang display_grade}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="btime">{lang display_btime}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="dateline">{lang display_dateline}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="mtime">{lang display_mtime}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="{lang sort_default}">
+					<el-radio-group v-model="SettingForm.sort" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="btime">{lang sort_btime}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="dateline">{lang sort_dateline}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="mtime">{lang sort_mtime}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="name">{lang sort_name}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="filesize">{lang sort_filesize}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="whsize">{lang sort_whsize}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="grade">{lang sort_grade}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="duration">{lang sort_duration}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="{lang orderby_default}">
+					<el-radio-group v-model="SettingForm.desc" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="desc">{lang orderby_desc}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="asc">{lang orderby_asc}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="{lang opentype}">
+					<el-radio-group v-model="SettingForm.opentype" @change="SettingEditStatus">
+						<el-radio border style="margin-bottom: 6px;" label="current">{lang opentype_current}</el-radio>
+						<el-radio border style="margin-bottom: 6px;" label="new">{lang opentype_new}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="{lang filterstyle}">
+					<el-radio-group v-model="SettingForm.filterstyle" @change="SettingEditStatus">
+						<el-radio border :label="0">{lang filterstyle_0}</el-radio>
+						<el-radio border :label="1">{lang filterstyle_1}</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				
+			</el-form>
+		</template>
+		<template v-else-if="SettingDialog.active=='screen'">
+			<el-row v-if="SettingScreens.show" class="drawer-screen-box" :gutter="20">
+				<el-col :span="8">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								{lang screen_selecting}
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<el-tree
+										ref="SettingTreeRef"
+										style="padding: 10px;"
+										:data="SettingScreens.data"
+										show-checkbox
+										default-expand-all
+										check-strictly
+										node-key="key"
+										:expand-on-click-node="false"
+										check-on-click-node
+										@check="SettingTreeChange"
+										:default-checked-keys="SettingScreens.defaultKeys"
+										:props="{
+											children: 'children',
+											label: 'label',
+											isLeaf:'isLeaf'
+										}"
+									></el-tree>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="8" v-if="SettingScreens.checkedVals.length">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								{lang screen_selected}
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<div class="el-checkbox-group checkedkeys-checkbox-group">
+										<label 
+											class="el-checkbox" 
+											v-for="item in SettingScreens.checkedVals"
+											:class="{checked:item.key == 'tag' || item.group,'is-active':SettingScreens.tagvaldata.active == item.key}"
+											:key="item.key"
+											@click.stop="SettingTagVal(item)">
+											<span class="el-checkbox__label">{{item.label}}</span>
+											<el-icon class="move move-handle"><Rank></Rank></el-icon>
+										</label>
+									</div>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="8" v-if="SettingScreens.tagvaldata.active">
+					<div class="el-transfer">
+						<div class="el-transfer-panel">
+							<p class="el-transfer-panel__header">
+								{{SettingScreens.tagvaldata.title}}{lang set}
+							</p>
+							<div class="el-transfer-panel__body">
+								<el-scrollbar :height="SettingScreensHeight">
+									<el-radio-group 
+										@change="SettingDialog.edit = true"
+										v-model="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].auto" 
+										style="padding:10px;">
+										<el-radio label="0">{lang screen_tag_auto}</el-radio>
+										<el-radio label="1">{lang screen_tag_custom}</el-radio>
+									</el-radio-group>
+									<el-divider style="margin:0;"></el-divider>
+									<div :class="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].auto == '0'?'show':'hidden'">
+										<el-radio-group 
+											@change="SettingDialog.edit = true"
+											v-model="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].sort"
+											style="padding:10px;">
+											<el-radio label="hot">{lang screen_tag_sort_hot}</el-radio>
+											<el-radio label="name">{lang screen_tag_sort_name}</el-radio>
+										</el-radio-group>
+									</div>
+									<div :class="SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].auto == '1'?'show':'hidden'">
+										<div class="el-checkbox-group">
+											<el-autocomplete
+												v-model="SettingScreens.tagvaldata.keyword"
+												style="width: 100%;"
+												:fetch-suggestions="SettingTagGet"
+												@select="SettingTagAdd">
+												<template #default="{ item }">
+													<div 
+													class="value"
+													:class="{active:item.checked}">
+														{{ item.tagname }}
+														<el-icon v-if="item.checked" class="Check"><Check ></Check></el-icon>
+													</div>
+													
+												</template>
+											</el-autocomplete>
+											<div class="tag-checkbox-group">
+												<label 
+												class="el-checkbox" 
+												v-for="item in SettingScreens.tagvaldata.data[SettingScreens.tagvaldata.active].data"
+												:key="item.tid">
+												<span class="el-checkbox__label">{{item.tagname}}</span>
+												<el-icon class="delete" @click="SettingDeleteTag(item)"><Close></Close></el-icon>
+												<el-icon class="move move-handle"><Rank></Rank></el-icon>
+											</label>
+											</div>
+										</div>
+									</div>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</el-col>
+			</el-row>
+		</template>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button @click="SettingRightClosed" :disabled="SettingForm.loading">{lang close}</el-button>
+        <el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">{lang save}</el-button>
+      </div>
+    </template>
+</el-drawer>
+<script>
+    const RightMixin = {
+        data(){
+            return {
+				SettingForm:{
+					tid:'',
+					title:'',
+					disp:0,
+					searchRange:[],
+					searchExts:'',
+					loading:false,
+					charset:'',
+                    layout: 'waterFall',
+                    display: [],
+                    other:'btime',
+					langkey:'',
+                    sort: 'btime',
+                    desc: 'desc',
+                    opentype:'current',
+					filterstyle:0,
+					kus:[]
+				},
+				SettingDialog:{
+					Visible:false,
+                    loading:false,
+					edit:false,
+					active:'basic',
+					type:'',
+				},
+				
+				SettingScreens:{
+					defaultKeys:[],
+					data:[],
+					tagchilds:[],
+					checkedVals:[],
+					tagvaldata:{
+						data:{},
+						title:'',
+						active:'',
+						keyword:''
+					},
+					show:false
+				},
+				SettingScreensHeight:'0px'
+				
+            }
+        },
+		watch:{
+			'SettingDialog.active':{
+				handler(val){
+					let self = this;
+					if(val == 'screen'){
+						this.TreeloadNode();
+					}
+				},
+				deep:true
+			}
+		},
+        methods:{
+			SettingFormTitleChange(value){
+				let self = this;
+				this.SettingForm.title = value;
+				let curr = this.tableData.find(function(current){
+					return parseFloat(current.tid) == parseFloat(self.SettingForm.tid);
+				});
+				if(curr){
+					curr.title = value;
+				}
+			},
+			//删除标签
+			SettingDeleteTag(data){
+				let index = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+					return parseFloat(data.tid) == parseFloat(current.tid);
+				});
+				if(index>-1){
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.splice(index,1);
+				}
+				this.SettingDialog.edit = true;
+			},
+			
+			async SettingTagGet(keyword,cd){
+				if(!keyword){
+					cd([]);
+					return false;
+				}
+				let param = {
+					keyword:keyword,
+				}
+				
+				var {data: res} = await axios.post(MOD_URL+'&op=setting&do=gettag',param);
+				if(res){
+					let data = [];
+					for (let index = 0; index < res.tag.length; index++) {
+						const item = res.tag[index];
+						let ind = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+							return parseFloat(item.tid) == parseFloat(current.tid);
+						});
+						if(ind < 0){
+							item['checked'] = false;
+						}else{
+							item['checked'] = true;
+						}
+						data.push(item)
+					}
+					cd(data);
+				}else{
+					cd([]);
+				}
+			},
+			SettingTagAdd(data){
+				let index = this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.findIndex(function(current){
+					return parseFloat(data.tid) == parseFloat(current.tid);
+				})
+				if(index<0){
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.push(data);
+				}else{
+					this.SettingScreens.tagvaldata.data[this.SettingScreens.tagvaldata.active].data.splice(index,1);
+				}
+				this.SettingDialog.edit = true;
+			},
+			SettingTagVal(data){
+				const self = this;
+				this.SettingScreens.tagvaldata.title = '';
+				this.SettingScreens.tagvaldata.active = '';
+				this.SettingScreens.tagvaldata.keyword = '';
+				if(data.key != 'tag' && !data.group){
+					return false;
+				}
+				this.SettingScreens.tagvaldata.title = data.label;
+				this.SettingScreens.tagvaldata.active = data.key;
+				self.$nextTick(function(){
+					self.SettingScrrenThreeSortable();
+				})
+			},
+			
+			//筛选项change
+			SettingTreeChange(data,checkedNodes){
+				const self = this;
+				if(data.group && checkedNodes.checkedKeys.indexOf(data.key) > -1){
+					self.$refs.SettingTreeRef.setChecked('tag',false);
+					this.SettingTreeVal({key:'tag'},false);
+				}else if(data.key == 'tag' && checkedNodes.checkedKeys.indexOf(data.key) > -1){
+					for (let index = 0; index < this.SettingScreens.tagchilds.length; index++) {
+						const item = this.SettingScreens.tagchilds[index];
+						if(checkedNodes.checkedKeys.indexOf(item.key) > -1){
+							self.$refs.SettingTreeRef.setChecked(item.key,false);
+							this.SettingTreeVal({key:item.key},false);
+						}
+					}
+				}
+				this.SettingTreeVal(data,checkedNodes.checkedKeys.indexOf(data.key)>-1);
+			},
+			//处理筛选的值
+			SettingTreeVal(data,status){
+				if(status){
+					let obj = {
+						key:data.key,
+						label:data.label?data.label:data.text,
+					}
+					if(data.group || data.key == 'tag'){
+						obj['group'] = data.group || false;
+						obj['data'] = data.data || [];
+						obj['auto'] = data.auto || '0';
+						obj['sort'] = data.sort || 'hot';
+						this.SettingScreens.tagvaldata.data[data.key] = obj;
+					}
+					this.SettingScreens.checkedVals.push(obj);
+				}else{
+					let index = this.SettingScreens.checkedVals.findIndex(function(current){
+						return current.key == data.key;
+					});
+					if(index > -1){
+						this.SettingScreens.checkedVals.splice(index,1);
+						if(data.group || data.key == 'tag'){
+							delete this.SettingScreens.tagvaldata.data[data.key];
+							if(this.SettingScreens.tagvaldata.active == data.key){
+								this.SettingScreens.tagvaldata.active = '';
+								this.SettingScreens.tagvaldata.title = '';
+								this.SettingScreens.tagvaldata.keyword = '';
+							}
+						}
+					}
+				}
+				this.SettingDialog.edit = true;
+			},
+			//筛选项加载
+			async TreeloadNode(node,resolve){
+				var self = this;
+				/*this.SettingScreens.data = [
+					{key:'classify',label:'分类'},
+					{key:'tag',label:'标签',children:[]},
+					{key:'color',label:'颜色'},
+					{key:'link',label:'链接'},
+					{key:'desc',label:'注释'},
+					{key:'duration',label:'时长'},
+					{key:'size',label:'尺寸'},
+					{key:'ext',label:'类型'},
+					{key:'shape',label:'形状'},
+					{key:'grade',label:'评分'},
+					{key:'level',label:'密级'},
+					{key:'btime',label:'添加时间'},
+					{key:'dateline',label:'修改日期'},
+					{key:'mtime',label:'创建日期'},
+				]*/
+				let param = {
+					appid:this.SettingForm.appid
+				}
+				var {data: res} = await axios.post(MOD_URL+'&op=setting&do=gettagcat',param);
+				let data = [];
+				if(res.success){
+					for(let i in res.data){
+						data.push({
+							key:i,
+							label:res.data[i],
+							group:true,
+						});
+					}
+					
+				}
+				if(data.length){
+				
+					let tagIndex=this.SettingScreens.data.findIndex((item)=>{
+						return item.key=='tag';
+					});
+					if(tagIndex>-1) this.SettingScreens.data[tagIndex].children = data;
+				}
+				this.SettingScreens.tagchilds = data;
+				self.SettingScreens.show = true;
+				self.$nextTick(function(){
+					self.SettingScrrenTwoSortable();
+				});
+			},
+			async SettingGetData(){
+				var self = this;
+				self.SettingScreensHeight = self.$refs.rightdrawer.drawerRef.querySelector('.el-drawer__body').offsetHeight - 80 +'px';
+                self.SettingDialog.loading = false;
+				var res = await axios.post(MOD_URL+'&op=setting&do=fetch',{
+                    tid:this.SettingForm.tid
+                });
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.success){
+					var ditem = data.data;
+					
+					let layout = 'waterFall';
+					let display = [];
+					let other = 'btime';
+					let sort = 'btime';
+					let desc = 'desc';
+					let opentype = 'current';
+					let filterstyle = 0;
+					if(ditem.pagesetting){
+						layout = ditem.pagesetting.layout || 'waterFall';
+						display = ditem.pagesetting.display || [];
+						other = ditem.pagesetting.other || 'btime';
+						sort = ditem.pagesetting.sort || 'btime';
+						desc = ditem.pagesetting.desc || 'desc';
+						opentype = ditem.pagesetting.opentype || 'current';
+						filterstyle = parseInt(ditem.pagesetting.filterstyle) || 0;
+					}
+					if(ditem.filter && ditem.filter.length){
+						self.SettingScreens.data=ditem.filter;
+					}
+					self.SettingScreens.defaultKeys = [];
+					if(ditem.screen && ditem.screen.length){
+						for (let index = 0; index < ditem.screen.length; index++) {
+							const fitem = ditem.screen[index];
+							self.SettingScreens.defaultKeys.push(fitem.key);
+							self.SettingTreeVal(fitem,true);
+						}
+					}
+					
+				
+					
+					self.SettingForm = {
+						tid:data.data.tid,
+						title:data.data.title,
+						disp:data.data.disp,
+						searchRange:data.data.searchRange,
+						searchExts:data.data.exts,
+						loading:false,
+                        layout: layout,
+                        display: display,
+                        other:other,
+						langkey:data.data.langkey || '',
+                        sort: sort,
+                        desc: desc,
+                        opentype:opentype,
+						kus:data.data.kus,
+						filterstyle:filterstyle,
+					};
+					
+				
+				
+                    self.SettingDialog.loading = true;
+					self.SettingDialog.edit = false;
+					self.SettingDialog.active = 'basic';
+					
+				}else{
+					self.$message.error('数据获取失败');
+				}
+			},
+			
+			SettingScreenChange(value){
+				for (let index = 0; index < this.SettingScreens.length; index++) {
+					const item = this.SettingScreens[index];
+					if(value.indexOf(item.key)<0){
+						item.checked = 0;
+					}else{
+						item.checked = 1;
+					}
+				}
+			},
+			SettingScrrenThreeSortable(){//标签设置排序
+				var _this = this;
+				var tbody = document.querySelector('.tag-checkbox-group');
+				Sortable.create(tbody, {
+                    animation: 150,
+					draggable: ".el-checkbox",
+					handle: ".move",
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var val = _this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data[oldIndex];
+						_this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data.splice(oldIndex, 1);
+						_this.SettingScreens.tagvaldata.data[_this.SettingScreens.tagvaldata.active].data.splice(newIndex, 0, val);
+						_this.SettingDialog.edit = true;
+					}
+				});
+			},
+            SettingScrrenTwoSortable(){//已选筛选排序
+				var _this = this;
+				var tbody = document.querySelector('.checkedkeys-checkbox-group');
+				Sortable.create(tbody, {
+                    animation: 150,
+					draggable: ".el-checkbox",
+					handle: ".move",
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var val = _this.SettingScreens.checkedVals[oldIndex];
+						_this.SettingScreens.checkedVals.splice(oldIndex, 1);
+						_this.SettingScreens.checkedVals.splice(newIndex, 0, val);
+						_this.SettingDialog.edit = true;
+					}
+				});
+			},
+			
+			async SettingSubmit(){
+				var self = this;
+				self.SettingForm.loading = true;
+				
+				let screen = [];
+				for (let s = 0; s < this.SettingScreens.checkedVals.length; s++) {
+					const item = JSON.parse(JSON.stringify(this.SettingScreens.checkedVals[s]));
+					if(item.group || item.key == 'tag'){
+						if(this.SettingScreens.tagvaldata.data[item.key]){
+							let fitem = this.SettingScreens.tagvaldata.data[item.key];
+							item['group'] = fitem.group ? true : '';
+							item['sort'] = fitem.sort;
+							item['auto'] = fitem.auto;
+							item['data'] = fitem.data || [];
+						}
+					}
+					screen.push(item)
+				}
+				
+				var param = {
+					settingsubmit:true,
+					formhash:'{FORMHASH}',
+					tid:self.SettingForm.tid,
+					title:self.SettingForm.title,
+					disp:self.SettingForm.disp,
+					searchRange:self.SettingForm.searchRange,
+					exts:self.SettingForm.searchExts,
+					pagesetting:{
+						layout:self.SettingForm.layout,
+						display:self.SettingForm.display,
+						other:self.SettingForm.other,
+						sort:self.SettingForm.sort,
+						desc:self.SettingForm.desc,
+						opentype:self.SettingForm.opentype,
+						filterstyle:self.SettingForm.filterstyle,
+					},
+					screen:screen
+				};
+				
+				var res = await axios.post(MOD_URL+'&op=setting&do=fetch',param);
+				if(res == 'intercept'){
+					return false;
+				}
+				var data = res.data;
+				if(data.success){
+					//self.TableDataForEach();
+					self.$message({
+						type:'success',
+						message:'{lang save_success}'
+					});
+					self.SettingDialog.edit = false;
+					window.location.reload();
+				}else{
+					self.$message.error('{lang save_unsuccess}');
+				}
+				self.SettingForm.loading = false;
+			},
+			
+			
+			SettingEditStatus(){
+				this.SettingDialog.edit = true;
+			},
+			SettingRightClosed(){
+				const self = this;
+				if(this.SettingDialog.edit){
+					self.$messageBox.confirm(
+						__lang.has_not_save_data,
+						__lang.prompt,
+						{
+							confirmButtonText: __lang.confirm_save,
+							cancelButtonText: __lang.cancel_save,
+							type: 'warning',
+                            icon:'QuestionFilled'
+						}
+					).then(() => {
+						self.SettingSubmit();
+						this.SettingDialog.Visible = false;
+					}).catch(() => {
+						this.SettingEmptyData();
+						this.SettingDialog.Visible = false;
+					})
+				}else{
+					this.SettingEmptyData();
+					this.SettingDialog.Visible = false;
+				}
+				
+			},
+			SettingEmptyData(){
+				
+				this.SettingDialog.edit = false;
+				this.SettingScreens = {
+					defaultKeys:[],
+					data:[],
+					tagchilds:[],
+					checkedVals:[],
+					tagvaldata:{
+						data:{},
+						title:'',
+						active:'',
+						keyword:''
+					},
+					show:false
+				};
+			}
+		}
+    }
+</script>

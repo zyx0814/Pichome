@@ -1,0 +1,39 @@
+<!--{template libraryview/pc/components/right/file/tag/js}-->
+<!--{template libraryview/pc/components/right/file/color/js}-->
+<!--{template libraryview/pc/components/right/file/folder/js}-->
+<script type="text/javascript">
+	let RightFileMixin = {
+		mixins:[RightTagMixin,RightColorMixin,RightFolderMixin],
+		methods:{
+			async RightFileTagDelete(data){//标签删除
+				var self = this;
+				let currIndex = this.RightData.tags.findIndex(function(current){
+					return current.tid == data.tid;
+				});
+				this.RightData.tags.splice(currIndex,1);
+				var vals = [];
+				var texts = [];
+				for(var n in this.RightData.tags){
+					texts.push(this.RightData.tags[n].tagname);
+					vals.push(this.RightData.tags[n].tid);
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=lable&operation=save',{
+					flag:'tag',
+					val:vals.join(','),
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid
+				});
+				if(res.data.success){
+					var curr = this.ImageDataList.find(function(current){
+						return current.rid == self.RightActiveRid[0];
+					});
+					if(curr){
+						curr.tags = texts;
+					}
+				}else{
+					self.$message.error(res.data.msg || '删除标签失败');
+				}
+			},
+		}
+	}
+</script>

@@ -1,0 +1,77 @@
+<el-scrollbar>
+	<div style="padding: 8px 18px;">
+		<template v-if="RightActivefid.length == 1">
+			<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+                {lang filename}
+			</p>
+			<div class="marginTop">
+				<div class="language-box">
+					<el-input
+						class=""
+						v-model="RightData.title"
+						type="textarea"
+						@change="RightFolderNameChange"
+						:autosize="{  maxRows: 8 }"
+						placeholder="{lang filename}"></el-input>
+					<language 
+						v-if="RightData.langkey&&RightData.langkey.fname" 
+						:langkey="RightData.langkey.fname"
+						@change="RightFolderNameLanguageChange"></language>
+				</div>
+			</div>
+		</template>
+		
+		<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+            {lang desc}
+		</p>
+		<div class="marginTop">
+			
+			<div class="language-box">
+				<el-input
+					v-model="RightData.message"
+					@change="RightFileDescChange"
+					type="textarea"
+					:autosize="{  maxRows: 8 }"
+					placeholder="{lang desc}"></el-input>
+				<language 
+					v-if="RightData.langkey&&RightData.langkey.desc" 
+					:langkey="RightData.langkey.desc"
+					@change="RightDataDescChange"></language>
+			</div>
+		</div>
+
+
+
+		<template v-for="(item,key) in RightData.filedsData">
+			<template v-if="item.flag == 'tag'">
+				<p class="marginTop" style="font-size: var(--el-font-size-base); font-weight: 700; color: var(--el-text-color-regular);display: flex;justify-content: space-between;align-items: center;cursor: pointer;">
+					{{item.name}}
+				</p>
+				<div class="marginTop">
+					<!--{template librarylist/pc/components/right/file/tag/temp}-->
+				</div>
+			</template>
+		</template>
+
+
+
+		<div class="basic-file marginTop" v-if="RightData.foldenum || RightData.foldersize || RightData.dateline">
+			<p class="marginTop" style="font-size: var(--el-font-size-base);font-weight: 700;color: var(--el-text-color-regular);">{lang basic_message}</p>
+			<div class="marginTop">
+				<el-row v-if="RightData.foldenum" class="single" :gutter="12">
+					<el-col :span="8">{lang filenum}</el-col>
+					<el-col :span="16" class="message">{{RightData.foldenum}}</el-col>
+				</el-row>
+				<el-row v-if="RightData.foldersize" class="single" :gutter="12">
+					<el-col :span="8">{lang filesize}</el-col>
+					<el-col :span="16" class="message">{{RightData.foldersize}}</el-col>
+				</el-row>
+				<el-row class="single" :gutter="12" v-if="RightData.dateline">
+					<el-col :span="8">{lang modify_time}</el-col>
+					<el-col :span="16" class="message">{{RightData.dateline}}</el-col>
+				</el-row>
+			</div>
+		</div>
+	</div>
+</el-scrollbar>
+<!--{template librarylist/pc/components/right/Aikeys}-->

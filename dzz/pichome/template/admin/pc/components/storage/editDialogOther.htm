@@ -1,0 +1,219 @@
+<el-dialog
+	v-loading="EditDialogOther.loading"
+	:title="EditDialogOther.cloudname"
+	width="80%"
+	style="max-width:600px"
+	v-model="EditDialogOther.dialogVisible">
+	<el-form ref="EditDialogOtherref" :model="EditDialogOther" label-width="110px" label-position="top">
+		<!-- <el-form-item class="title" label="{lang storage_iamge_setting}"></el-form-item> -->
+		<el-form-item class="title">
+			<template #label>
+				{lang storage_iamge_setting}
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<template #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">{lang enable_support_ext}，{$_G['config']['qcosimage']}，{lang create_thumb}</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+				
+			</template>
+			<el-radio-group v-model="EditDialogOther.imagestatus" @change="EditDialogOtherImageChange">
+				<el-radio border :label="0">{lang close}</el-radio>
+				<el-radio border :label="1">{lang enable}</el-radio>
+
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item class="title" label="{lang storage_media_setting}">
+			<template #label>
+				{lang storage_media_setting}
+				<el-tooltip
+					effect="light"
+					placement="right-start">
+					<template #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">{lang enable_media_after_pre}：{$_G['config']['qcosmedia']}，{lang enable_media_after_end}</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+
+			</template>
+			<el-radio-group v-model="EditDialogOther.mediastatus" :disabled="EditDialogOther.mediastate?false:true" @change="EditDialogOtherMediaChange">
+				<el-radio border :label="0">{lang close}</el-radio>
+				<el-radio border :label="1">{lang enable}</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item v-if="parseInt(EditDialogOther.mediastatus)">
+			<template #label>
+				{lang media_preview_size}：
+				<!--{loop $_G['config']['videoquality'] $key $val}-->
+				<!--{if $key==$_G['config']['defaultvideoquality']}-->
+				$val[name] $val[width]*$val[height] {lang bitrate}：$val[bitrate]
+				<!--{/if}-->
+				<!--{/loop}-->
+			</template>
+		</el-form-item>
+		<el-form-item class="title">
+			<template #label>
+				{lang office_doc_setting}
+				<el-tooltip
+					effect="light"
+					placement="right-start">
+					<template #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">{lang enable_doc_after_pre}：{$_G['config']['qcosoffice']}，{lang enable_doc_after_end}</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+
+			</template>
+			<el-radio-group v-model="EditDialogOther.docstatus" :disabled="EditDialogOther.docstate?false:true" @change="EditDialogOtherDocChange">
+				<el-radio border :label="0">{lang close}</el-radio>
+				<el-radio border :label="1">{lang enable}</el-radio>
+			</el-radio-group>
+		</el-form-item>
+	</el-form>
+</el-dialog>
+<script type="text/javascript">
+	var EditDialogOtherMixin = {
+		data(){
+			return {
+				EditDialogOther:{
+					loading:false,
+					dialogVisible:false,
+					id:0,
+					cloudname:'',
+					imagestatus:0,
+					
+					mediastatus:0,
+					mediastate:0,
+					
+					docstatus:0,
+					docstate:0,
+					videoquality:parseInt($_G['config']['videoquality']) || 1
+				},
+			}
+		},
+		created() {
+			
+		},
+		methods:{
+			async EditDialogOtherDocChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+					id:self.EditDialogOther.id,
+					docstatus:val,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.$message({
+						type:'success',
+						message:'{lang set_success}'
+					});
+					var tab = self.tableData.find(function(item){
+						return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+					});
+					tab.docstatus = val;
+				}else{
+					self.EditDialogOther.docstatus = self.EditDialogOther.docstatus?0:1;
+					self.$message.error(json.msg);
+				}	
+			},
+			async EditDialogOtherMediaChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=videosetting',{
+					id:self.EditDialogOther.id,
+					mediastatus:val,
+					videoquality:self.EditDialogOther.videoqualite,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.$message({
+						type:'success',
+						message:'{lang set_success}'
+					});
+					var tab = self.tableData.find(function(item){
+						return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+					});
+					tab.mediastatus = val;
+				}else{
+					self.EditDialogOther.mediastatus = self.EditDialogOther.mediastatus?0:1;
+					self.$message.error(json.msg);
+				}	
+			},
+			async EditDialogOtherImageChange(val){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=imagesetting',{
+					id:self.EditDialogOther.id,
+					imagestatus:val,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.$message({
+						type:'success',
+						message:'{lang set_success}'
+					});
+					var tab = self.tableData.find(function(item){
+						return parseInt(item.id) == parseInt(self.EditDialogOther.id);
+					});
+					tab.imagestatus = val;
+				}else{
+					self.$message.error(json.msg);
+				}	
+			},
+			async EditDialogOtherGetData(){
+				var self = this;
+				if(!self.EditDialogOther.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				self.EditDialogOther.loading = true;
+				self.EditDialogOther.dialogVisible = true;
+				
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=getsettingdata',{
+					id:self.EditDialogOther.id,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				self.EditDialogOther.cloudname = json.cloudname;
+				
+				self.EditDialogOther.imagestatus = parseInt(json.imagestatus);
+				
+				self.EditDialogOther.mediastatus = parseInt(json.mediastatus);
+				self.EditDialogOther.mediastate = json.mediastate?1:0;
+				
+				self.EditDialogOther.docstatus = parseInt(json.docstatus);
+				self.EditDialogOther.docstate = json.docstate?1:0;
+				self.EditDialogOther.loading = false;
+			}
+		}
+	};
+</script>

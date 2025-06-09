@@ -1,0 +1,151 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="overflow: hidden;">
+</div>
+<div class="h-right"> 
+	<el-tooltip content="{lang theme_color}" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<international current="$_G['language']"></international>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+			}
+		},
+		methods:{
+			querySearch(queryString, cb) {
+				// const results = queryString
+				// 	? restaurants.value.filter(createFilter(queryString))
+				// 	: restaurants.value
+				// call callback function to return suggestions
+				cb([])
+			},
+			handleSelect(key){
+				const self = this;
+				let curr = obtainData(this.bannerData.data,key);
+				if(!curr)return false;
+				this.fheaderkeyword = '';
+				this.headerkeyword = '';
+				let btype = parseInt(curr.btype);
+				if(btype == 3){
+					window.open(curr.bdata);
+					return false;
+				}
+				this.bannerData.active = parseInt(key);
+				this.bannerData.factive = parseInt(key);
+				this.banncomplete(curr,'refresh');
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handlepreference(data){
+				if(!data instanceof Object) return false;
+				for (const key in data) {
+					this.HeaderShowChange({
+						type:key,
+						value:data[key]
+					},true);
+				}
+			},
+			HeaderShowChange(data,load){
+				const self = this;
+				if(data.type == 'show'){
+					this.HeaderRightBtnShow.display = data.value;
+				}else{
+					this.HeaderRightBtnShow[data.type] = data.value;
+				}
+				switch(data.type){
+					case 'display':
+					case 'show':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.imagereload = true;
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+				if(!load){
+					self.$refs.MainDomRef.settingpreference(data.type,data.value)
+				}
+				
+			},
+			headerkeywordInput(){
+				this.headerkeyword = JSON.parse(JSON.stringify(this.fheaderkeyword));
+				if(this.PageType != 'ku'){
+					this.bannerData.active = 0;
+					this.ContentData = [];
+					this.PageType = 'search';
+				}
+				
+			}
+		},
+	}
+</script>

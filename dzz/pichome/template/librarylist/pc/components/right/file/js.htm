@@ -1,0 +1,319 @@
+<!--{template librarylist/pc/components/right/file/tag/js}-->
+<!--{template librarylist/pc/components/right/file/color/js}-->
+<!--{template librarylist/pc/components/right/file/folder/js}-->
+<!--{template librarylist/pc/components/right/file/tab/js}-->
+<!--{template librarylist/pc/components/right/file/view/js}-->
+<script type="text/javascript">
+	let RightFileMixin = {
+		mixins:[RightTagMixin,RightColorMixin,RightFolderMixin,RightTabMixin,RightPreviewMixin],
+		methods:{
+			async RightCoverUploadChange(uploadFile){
+				let self = this;
+				let fileName = uploadFile.name;
+				const fileSize = uploadFile.size || 0;
+				const chunkSize=this.maxChunkSize;
+				let chunkTotals = Math.ceil(fileSize / chunkSize);
+				if (chunkTotals>0){
+					for(let chunkNumber = 0, start = 0; chunkNumber < chunkTotals;chunkNumber++,start+=chunkSize){
+					  let end = Math.min(fileSize,start + chunkSize);
+					  const filedata = uploadFile.raw.slice(start, end);
+					  const result = await this.uploadFileToServer(uploadFile,filedata,start,end);
+					  	if(chunkNumber == chunkTotals-1){
+							let fres=result.data['files'][0];
+							if(fres.error){
+								self.$message.error(fres.error || '{lang upload_failed}');
+								return false;
+							}
+							let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=editCover',{
+								rid:this.RightActiveRid[0],
+								aid:fres.data.aid
+							});
+							if(res.success){
+								this.RightData.img[0] = res.data;
+								let img = new Image();
+								img.src = res.data;
+								img.onload = function() {
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'hasthumb',1);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'icondata',res.data);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbwidth',this.width);
+									self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbheight',this.height);
+									self.$nextTick(function(){
+										self.$refs.RefImageLayout.updateImageData()
+									})
+								}
+								self.$message({
+									type:'success',
+									message:'{lang change_success}'
+								})
+							}else{
+								self.$message.error(res.msg || '{lang change_failer}');
+							}
+						  
+					  	}
+					}
+				}
+			},
+			async RightCoverRecovery(){//恢复封面
+				let self = this;
+				let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=delCover',{
+						rid:this.RightActiveRid[0],
+					});
+					if(res.success){
+						this.RightData.img[0] = res.data;
+						let img = new Image();
+						img.src = res.data;
+						img.onload = function() {
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'hasthumb',1);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'icondata',res.data);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbwidth',this.width);
+							self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[0],'thumbheight',this.height);
+							self.$nextTick(function(){
+								self.$refs.RefImageLayout.updateImageData()
+							})
+						}
+
+						self.$message({
+							type:'success',
+							message:'{lang restore_success}'
+						})
+					}else{
+						self.$message({
+							type:'error',
+							message:res.msg || '{lang is_default_cover}'
+						});
+					}
+			},
+			async RightFileLangChange(val){//文件名称修改
+				var self = this;
+				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=lang',{
+					val:val,
+					rid:this.RightActiveRid[0],
+					appid:this.DocumentAppid
+				});
+				// let curr = this.ImageDataParam.data.find(function(current){
+				// 	return current.rid == self.RightActiveRid[0];
+				// });
+				// if(res.data.success){
+				// 	// curr.name = val;
+				// 	self.$refs.RefImageLayout.UpdateData(curr.rid,'name',val);
+				// }else{
+				// 	self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				// }
+				
+			},
+			async RightFileNameChange(val){//文件名称修改
+				var self = this;
+				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=name',{
+					val:val,
+					rid:this.RightActiveRid[0],
+					appid:this.DocumentAppid
+				});
+				let curr = this.ImageDataParam.data.find(function(current){
+					return current.rid == self.RightActiveRid[0];
+				});
+				if(res.data.success){
+					// curr.name = val;
+					self.$refs.RefImageLayout.UpdateData(curr.rid,'name',val);
+				}else{
+					self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				}
+				
+			},
+			RightDataTitleChange(val){
+				var self = this;
+				let curr = this.ImageDataParam.data.find(function(current){
+					return current.rid == self.RightActiveRid[0];
+				});
+				self.RightData.title = val;
+				self.$refs.RefImageLayout.UpdateData(curr.rid,'name',val);
+
+			},
+			async RightFileDescChange(val){//描述修改
+				var self = this;
+				if(this.RightType == 'folder'){
+					var param = {
+						val:val,
+						fid:this.LeftTree.Currentkey,
+						appid:this.DocumentAppid,
+					}
+					if(self.RightActivefid && self.RightActivefid.length){
+						param['fid'] = self.RightActivefid.join(',');
+					}else{
+						param['fid'] = self.LeftTree.Currentkey;
+					}
+				}else{
+					var param = {
+						val:val,
+						rid:this.RightActiveRid.join(','),
+						appid:this.DocumentAppid,
+					}
+				}
+				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=desc',param);
+				if(res.data.success){
+				}else{
+					self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				}
+			},
+			RightDataDescChange(val){
+				let self = this;
+				if(this.RightType == 'folder'){
+					this.RightData.message = val;
+				}else{
+					let curr = this.ImageDataParam.data.find(function(current){
+						return current.rid == self.RightActiveRid[0];
+					});
+					if(curr){
+						curr.desc = val;
+					}
+					
+					let fcurr = this.RightData.filedsData.find(function(current){
+						return current.flag == 'desc';
+					});
+					if(fcurr){
+						fcurr.value = val;
+					}
+					
+				}
+				
+			},
+			async RightFileLinkChange(val){//链接修改
+				var self = this;
+				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=link',{
+					val:val,
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid
+				});
+				if(res.data.success){
+					
+				}else{
+					self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				}
+			},
+			async RightFileTagDelete(flag,data){//标签删除
+				var self = this;
+				if(flag == 'lefttreetag'){
+					let curr = this.LeftTreeTaggingDialog.fileds.find(function(current){
+						return current.type == 'tag';
+					});
+					let findex = curr.data.findIndex(function(current){
+						return current.tid == data.tid;
+					});
+					let ffindex = curr.value.findIndex(function(current){
+						return current.tid == data.tid;
+					});
+					curr.data.splice(findex,1);
+					curr.value.splice(ffindex,1);
+					return false;
+				}
+
+
+
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == flag;
+				});
+				if(!curr)return false;
+
+				let currIndex = curr.value.indexOf(data.tid);
+				curr.value.splice(currIndex,1);
+
+
+				let tcurr = curr.data.findIndex(function(current){
+					return current.tid == data.tid;
+				});
+				curr.data.splice(tcurr,1);
+
+				var vals = [];
+				var texts = [];
+				for(var n in curr.data){
+					texts.push(curr.data[n].tagname);
+					vals.push(curr.data[n].tid);
+				}
+
+
+				if(this.RightType == 'folder'){
+					var param = {
+						flag:'tag',
+						val:vals.join(','),
+						fid:this.RightActivefid.join(','),
+						appid:this.DocumentAppid,
+					}
+				}else{
+					var param = {
+						flag:'tag',
+						val:vals.join(','),
+						rid:this.RightActiveRid.join(','),
+						appid:this.DocumentAppid,
+					}
+				}
+
+				var {data: res} = await axios.post(MOD_URL+'&op=library&do=lable&operation=save',param);
+				if(res.success){
+					let text = [];
+					let val = [];
+					for (let findex = 0; findex < res.data.tag.length; findex++) {
+						const element = res.data.tag[findex];
+						text.push(element.tagname);
+						val.push(element.tid);
+					}
+					for (let index = 0; index < res.data.rid.length; index++) {
+						const element = res.data.rid[index];
+						let curr = this.ImageDataParam.data.find(function(current){
+							return current.rid == element;
+						});
+						if(curr){
+							self.$refs.RefImageLayout.UpdateData(element,'tags',text);
+							curr.tags = text;
+						}
+					}
+				}else{
+					self.$message.error(res.data.msg || '{lang delete_unsuccess}');
+				}
+			},
+			async RightFileGradeChange(val){//评分修改
+				var self = this;
+				var res = await axios.post('{MOD_URL}&op=library&do=lable&operation=save&flag=grade',{
+					val:val,
+					rid:this.RightActiveRid.join(','),
+					appid:this.DocumentAppid
+				});
+				
+				if(res.data.success){
+					for(var r in self.RightActiveRid){
+						self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[r],'grade',val);
+					}
+				}else{
+					self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				}
+			},
+			async RightFileLevelChange(val){//密级修改
+				var self = this;
+				let dpaths = [];
+				if(this.ImageDataParam.data){
+					dpaths = this.ImageDataParam.data.filter(function(current){
+						return self.RightActiveRid.indexOf(current.rid)>-1;
+					})
+				}
+				let paths = [];
+				for (let index = 0; index < dpaths.length; index++) {
+					const element = dpaths[index];
+					paths.push(element.dpath);
+				}
+				paths = paths.join(',');
+				var res = await axios.post('{MOD_URL}&op=library&do=ajax&operation=setfilelevel',{
+					level:val,
+					paths:paths,
+					appid:this.DocumentAppid
+				});
+				if(res.data.success){
+					this.RightData.level = val;
+					for(var r in self.RightActiveRid){
+						self.$refs.RefImageLayout.UpdateData(self.RightActiveRid[r],'level',val);
+					}
+				}else{
+					self.$message.error(res.data.msg || '{lang save_unsuccess}');
+				}
+			},
+			
+		}
+	}
+</script>

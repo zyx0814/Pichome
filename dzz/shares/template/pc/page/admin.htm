@@ -1,0 +1,537 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="user/my/template/pc/assets/index.css?{VERHASH}">
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="{MOD_PATH}/template/pc/assets/index.css?{VERHASH}"/>
+<style>
+
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+    <el-container class="page-main">
+        <el-header style="padding: 0;">
+            <!--{template pc/componets/header}-->
+        </el-header>
+        <el-main style="padding: 0">
+            <el-scrollbar ref="scrollbar" >
+                <div class="container">
+                    <div class="filter-box">
+                            <div>
+                                <span class="filter-item stype" >
+                                    <el-select
+                                            class="filterStype"
+                                            v-model="paramData.stype"
+                                            placeholder="{lang share_stype}"
+                                            title="{lang share_stype}"
+
+                                    >
+                                        <el-option
+                                                v-for="item in stypeData"
+                                                :key="item.key"
+                                                :label="item.label"
+                                                :value="item.key"
+                                                @click.native.prevent="filterChange(item.key,'stype')"
+                                        />
+                                    </el-select>
+                                      <span class="delBtn" v-show="Number.isInteger(paramData.stype) && paramData.stype>=0" @click.stop="clearFilter('stype')"><el-icon><Close /></el-icon></span>
+                                </span>
+                                <span class="filter-item status">
+                                    <el-select
+                                            class="filterStatus"
+                                            v-model="paramData.status"
+                                            placeholder="{lang share_status}"
+                                            title="{lang share_status}"
+                                    >
+                                        <el-option
+                                                v-for="item in statusData"
+                                                :key="item.key"
+                                                :label="item.label"
+                                                :value="item.key"
+                                                @click.native.prevent="filterChange(item.key,'status')"
+                                        />
+                                    </el-select>
+                                      <span class="delBtn" v-show="Number.isInteger(paramData.status)" @click.stop="clearFilter('status')"><el-icon><Close /></el-icon></span>
+                                </span>
+                                <span class="filter-item user">
+                                    <el-select
+                                            class="filteruser"
+                                            v-model="paramData.uid"
+                                            placeholder="{lang share_username}"
+                                            title="{lang share_user}"
+                                            multiple
+                                            filterable
+                                            remote
+                                            remote-show-suffix
+                                            :remote-method="getShareUser"
+                                            :loading="userloading"
+                                            @change="filteruserChange"
+                                    >
+                                        <el-option
+                                                v-for="item in userData"
+                                                :key="item.uid"
+                                                :label="item.username"
+                                                :value="item.uid"
+
+                                        />
+                                    </el-select>
+
+                                </span>
+                                <span class="filter-item date">
+                                    <el-popover
+                                        ref="datefilterpopover"
+                                        popper-class="filter-popper"
+                                        width="252"
+                                        @show="dateFilterShow"
+                                        @hide="dateFilterHide"
+                                        trigger="click">
+                                    <ul class="el-dropdown-menu">
+                                        <li class="el-dropdown-menu__item"  v-for="item in actionData">
+                                            <el-radio
+                                                    v-model="paramData.date"
+                                                    :label="item.key"
+                                                    @click.native.prevent="filterChange(item.key,'date')">
+                                                {{item.name}}
+                                            </el-radio>
+                                        </li>
+
+                                        <li class="el-dropdown-menu__item" v-show="dateFilter.customShow">
+                                            <el-date-picker
+                                                    :teleported="false"
+                                                    v-model="dateFilter.datelinepicker"
+                                                    clearable
+                                                    @change="PickerChange"
+                                                    format="YYYY-MM-DD"
+                                                    value-format="YYYY-MM-DD"
+                                                    type="daterange"
+                                                    range-separator="-"
+                                                    :start-placeholder="{lang starttime}"
+                                                    :end-placeholder="{lang endtime}">
+                                            </el-date-picker>
+                                        </li>
+                                    </ul>
+                                    <template #reference>
+                                        <el-button class="datefilter">
+                                            <template #default>
+
+                                                <el-text type="plain"  v-if="paramData.date=='custom' && dateFilter.datelinepicker.length>0" type="info" size="small" closeable >
+                                                    {lang share_dateline} : {{dateFilter.datelinepicker[0]}} _ {{dateFilter.datelinepicker[1]}}
+                                                </el-text>
+                                                <el-text type="plain" v-else-if="paramData.date!='all'">
+                                                    {lang share_dateline} : {{actionData[paramData.date].name}}
+                                                </el-text>
+                                                <el-text v-else>{lang share_dateline} </el-text>
+                                                <el-icon class="arrow" style="margin-left:5px;"><Arrow-Down /></el-icon>
+                                                <span class="delBtn" v-show="paramData.date!='all'" @click.stop="clearFilter('date')"><el-icon><Close /></el-icon></span>
+                                            </template>
+                                           </el-button>
+                                    </template>
+                                </el-popover>
+                                </span>
+                            </div>
+                            <div>
+                                <el-input
+                                        style="width: 200px;"
+                                        v-model="keyword"
+                                        placeholder="{lang search}"
+                                        class="input-search"
+                                        clearable
+                                        @change="searchSubmit">
+                                    <template #suffix>
+                                        <el-icon @click="searchSubmit" style="cursor: pointer;"><Search /></el-icon>
+                                    </template>
+                                </el-input>
+                            </div>
+                        </div>
+                    <div class="notification">
+                        <el-table :data="tableData" style="width: 100%" :table-layout="auto"  :default-sort="{ prop: 'fdateline', order: 'descending' }" @sort-change="handleSortChange" >
+                                <el-table-column  prop="title" label="{lang share_title}"  min-width="200" >
+                                    <template #default="scope">
+                                        <el-link :underline="false" target="_blank" :href="scope.row.shareurl">{{scope.row.title}}</el-link>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column   label="{lang share_limit}" width="250">
+                                    <template #default="props">
+                                        <div class="shareinfo-wrapper" :id="'shareinfo_'+props.row.id" @click="handleExpand(props.row.id)">
+                                            <template v-if="props.row.fendtime">
+                                                <span class="shareinfo endtime" ><em>{lang share_endtime}:</em> <b>{{ props.row.fendtime }}</b></span>
+                                            </template>
+                                            <template v-if="props.row.times>0">
+                                                <span class="shareinfo times" ><em>{lang share_times}:</em> <b> {{ props.row.times }}</b></span>
+                                            </template>
+                                            <template v-if="props.row.password!=''">
+                                                <span class="shareinfo password" ><em>{lang share_password}:</em> <b> {{ props.row.password }}</b></span>
+                                            </template>
+                                            <template v-if="props.row.fperm">
+                                                <span class="shareinfo perm" ><em>{lang share_perm}: </em> <b>{{ props.row.fperm }}</b></span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="username"  label="{lang share_username}" width="80"  align="center"></el-table-column>
+                                <el-table-column prop="fstatus"  label="{lang share_status}" width="80"  align="center"></el-table-column>
+                                <el-table-column  prop="fdateline" sortable="custom" label="{lang share_dateline}" width="150" align="center"></el-table-column>
+                                <el-table-column   label="{lang share_address}" width="128" align="center">
+                                    <template #default="props">
+                                        <div style="display: flex;flex: 1;" >
+                                            <div style="white-space: nowrap;margin-left: 12px;">
+                                                <el-button icon="CopyDocument" title="{lang copy_link}" @click="RightCopyUrl(props.row.fshareurl)" plain></el-button>
+                                                <el-popover
+                                                        placement="top"
+                                                        popper-class="qrcode-box"
+                                                        :width="224"
+                                                        :teleported="true"
+                                                        @before-enter="TableGeturlqrcode(props.row.id,true)"
+                                                        trigger="click">
+                                                    <div v-loading="!props.row.isqrcode" style="width: 200px;font-size: 0;">
+                                                        <el-image draggable="false" v-if="props.row.qrcodeurl" style="width: 200px; height: 200px" :src="props.row.qrcodeurl" fit="contain">
+                                                            <template #error><div class="el-image__placeholder"></div></template>
+                                                        </el-image>
+                                                        <el-text tag="p" style="text-align: center;padding-top: 12px;">
+                                                            {lang qrcode_image_tip}</el-text>
+                                                        <div v-if="props.row.qrcodeurl" class="download" @click="TableDownQrcodeurl(props.row.qrcodeurl)">
+                                                            <div style="text-align: center;">
+                                                                <el-icon style="font-size: 22px;"><Download /></el-icon>
+                                                                <el-text tag="p" style="width: 100%;">{lang qrcode_download}</el-text>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <template #reference>
+                                                        <el-button plain title="{lang qrcode_get}">
+                                                            <template #icon>
+                                                                <el-icon>
+                                                                    <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" ><path d="M384 64l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2c0 51.2 41.6 89.6 89.6 89.6l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2C473.6 105.6 435.2 64 384 64zM428.8 380.8c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8l0-227.2c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8L428.8 380.8z"></path><path d="M192 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M377.6 544l-243.2 0c-48 0-86.4 38.4-86.4 89.6l0 220.8c0 48 38.4 89.6 86.4 89.6l243.2 0c48 0 86.4-38.4 86.4-89.6l0-220.8C467.2 582.4 425.6 544 377.6 544zM422.4 851.2c0 25.6-19.2 44.8-44.8 44.8l-243.2 0c-25.6 0-44.8-19.2-44.8-44.8l0-220.8c0-25.6 19.2-44.8 44.8-44.8l243.2 0c25.6 0 44.8 19.2 44.8 44.8L422.4 851.2z" ></path><path d="M192 668.8l131.2 0 0 131.2-131.2 0 0-131.2Z"></path><path d="M633.6 470.4l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2c0-51.2-41.6-89.6-89.6-89.6l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2C544 432 585.6 470.4 633.6 470.4zM588.8 153.6c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8l0 227.2c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8L588.8 153.6z"></path><path d="M700.8 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M572.8 716.8l137.6 0c12.8 0 22.4-9.6 22.4-22.4l0-137.6c0-12.8-9.6-22.4-22.4-22.4l-137.6 0c-12.8 0-22.4 9.6-22.4 22.4l0 137.6C550.4 707.2 560 716.8 572.8 716.8z"></path><path d="M886.4 563.2l0 38.4c0 12.8 12.8 25.6 25.6 25.6l38.4 0c12.8 0 25.6-12.8 25.6-25.6l0-38.4c0-12.8-12.8-25.6-25.6-25.6l-38.4 0C899.2 537.6 886.4 547.2 886.4 563.2z"></path><path d="M582.4 944l48 0c12.8 0 22.4-9.6 22.4-22.4l0-48c0-12.8-9.6-22.4-22.4-22.4l-48 0c-12.8 0-22.4 9.6-22.4 22.4l0 48C560 934.4 569.6 944 582.4 944z"></path><path d="M944 704l-99.2 0c-16 0-28.8 12.8-28.8 28.8l0 44.8-48 0c-19.2 0-32 12.8-32 32l0 99.2c0 16 12.8 28.8 28.8 28.8l179.2 3.2c16 0 28.8-12.8 28.8-28.8l0-179.2C972.8 716.8 960 704 944 704z" ></path></svg>
+                                                                </el-icon>
+                                                            </template>
+                                                        </el-button>
+                                                    </template>
+                                                </el-popover>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="{lang operation}" width="150" align="center">
+                                    <template #default="scope">
+                                        <el-button type="primary" @click="handleEdit(scope.row.id)"><el-icon ><Edit /></el-icon></el-button>
+                                        <el-popconfirm width="250px" title="{lang share_delete_confirm}" @confirm="handleDelete(scope.row.id)">
+                                            <template #reference>
+                                                <el-button type="danger" ><el-icon ><Delete /></el-icon></el-button>
+                                            </template>
+                                        </el-popconfirm>
+
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+
+                    </div>
+                    <div style="padding: 15px 0;">
+                        <el-pagination
+                                v-model:current-page="paramData.page"
+                                background
+                                v-model:page-size="paramData.perpage"
+                                :page-sizes="[50, 100, 150, 200]"
+                                layout="total, sizes, prev, pager, next, jumper"
+                                style="justify-content: center;"
+                                :total="paramData.total"
+                                @size-change="pageSizeChange"
+                                @current-change="getData">
+                        </el-pagination>
+                    </div>
+                </div>
+            </el-scrollbar>
+        </el-main>
+    </el-container>
+    <!--{template pc/componets/shareEditDialog}-->
+</div>
+<script type="text/javascript">
+    const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+    const dzzoffice = createApp({
+        data() {
+            return {
+                DocumentThemeColor:'',
+                UcenterHeaderMenuIndex:'myshares',
+                tableData:[],
+                keyword:'',
+                dataActive:'all',
+                status:0,
+                stype:'',
+                paramData:{
+                    page:1,
+                    perpage:20,
+                    keyword:'',
+                    stauts:0,
+                    stype:'',
+                    date:'all',
+                    order:'desc',
+                    orderby:'fdateline',
+                    uid:[]
+                },
+                dateFilter:{
+                    customShow:false,
+                    datelinepicker:[]
+                },
+                PostParam:'',
+                userData:[],
+                actionData:{eval echo json_encode(($actionData))},
+                statusData:{eval echo json_encode(($statusData))},
+                stypeData:{eval echo json_encode(($stypeData))},
+            }
+        },
+        mixins:[ShareEditDialogMixin],
+        watch:{
+            DocumentThemeColor:{
+                handler(newval){
+                    document.querySelector('html').className = newval
+                },
+                deep:true,
+                // immediate:true
+            }
+        },
+        created() {
+            //主题颜色
+            let theme = localStorage.getItem('theme');
+            if(theme){
+                this.DocumentThemeColor=theme;
+            }else{
+                this.DocumentThemeColor = 'light'
+            }
+            this.getData();
+        },
+        methods: {
+            searchSubmit(){
+                this.paramData.page = 1;
+                this.paramData.keyword = this.keyword;
+                this.getData();
+            },
+            pageSizeChange(){
+                this.paramData.page = 1;
+                this.getData();
+            },
+            clearFilter(key){
+                let self=this;
+                if(key=='date'){
+                    this.paramData.date='all';
+                    this.dateFilter.customShow=false;
+                    this.dateFilter.datelinepicker=[];
+                    this.dataActive = 'all';
+                    self.$refs.datefilterpopover.doClose();
+                }else if(key=='status'){
+                    this.paramData.status='';
+                    this.status='';
+                }else if(key=='stype'){
+                    this.paramData.stype='';
+                    this.stype='';
+                }
+                this.getData();
+            },
+            filterChange(val,key){
+                if(key=='date' && val=='custom'){
+                    this.paramData.date=val;
+                    this.dateFilter.customShow=true;
+                }else if(key=='date') {
+                    if (this.dataActive == val) return false;
+                    this.dataActive = val;
+                    this.dateFilter.customShow=false;
+                    this.dateFilter.datelinepicker=[];
+                    this.paramData.page = 1;
+                    this.paramData.date = val;
+                    this.getData();
+                }else if(key=='status'){
+                    if(this.status==val) return false;
+                    this.paramData.page = 1;
+                    this.paramData.status = val;
+                    this.status=val;
+                    this.getData();
+                }else if(key=='stype'){
+                    if(this.stype==val) return false;
+                    this.paramData.page = 1;
+                    this.paramData.stype = val;
+                    this.stype=val;
+                    this.getData();
+                }
+            },
+            filteruserChange(value){
+                this.paramData.page = 1;
+                this.paramData.uid = value;
+                this.getData();
+            },
+            PickerChange(value){
+                // if(value && value.length){
+                //     this.dateFilter.datelinepicker = value;
+                // }else{
+                //     this.dateFilter.datelinepicker = [];
+                // }
+                this.paramData.page = 1;
+                this.paramData.date = 'custom';
+                this.paramData.starttime=value[0];
+                this.paramData.endtime=value[1];
+                this.getData();
+            },
+            handleSortChange(column){
+
+                this.paramData.orderby=column.prop;
+                if(column.order=='ascending'){
+                    this.paramData.order = 'asc';
+                }else if(column.order=='descending'){
+                    this.paramData.order = 'desc';
+                }else{
+                    this.paramData.order = '';
+                }
+                this.getData();
+            },
+            TableDownQrcodeurl(url){
+                let a = document.createElement('a')
+                a.href = url;
+                a.download = '{lang qrcode}'
+                a.click()
+            },
+            async getShareUser(q) {
+                const self = this;
+                self.userloading = true;
+                const {data: res} = await axios.post(MOD_URL + '&op=ajax&do=getShareUser', {
+                    q: q
+                });
+                if (res.success) {
+                    self.userloading = false;
+                    self.userData = res.data;
+                } else {
+                    self.userloading = false;
+                    self.$message.error(res.msg || '{lang failure}');
+                }
+            },
+            //获取二维码
+            async TableGeturlqrcode(sid){
+                const self = this;
+                let curr = '';
+                curr = this.tableData.find((current) => {
+                    return current.id == sid;
+                });
+                if(curr && curr.isqrcode){
+                    return false;
+                }
+                const {data: res} = await axios.post(MOD_URL+'&op=ajax&do=geturlqrcode',{
+                    sid:sid
+                });
+                if(res.success){
+                    curr.isqrcode = true;
+                    curr.qrcodeurl = res.qrcode;
+                }else{
+                    self.$message.error(res.msg || '{lang failure}');
+                }
+            },
+            RightCopyUrl(url){
+                const self = this;
+                var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+                input.setAttribute('value', url);
+                document.getElementsByTagName('body')[0].appendChild(input);
+                document.getElementById('copyInput').select();
+                document.execCommand('copy')
+                self.$message({
+                    message: '{lang copy_clipboard}',
+                    type: 'success'
+                });
+                document.getElementById('copyInput').remove();
+            },
+            getData(){
+                let self = this;
+                let param = {
+                    page:this.paramData.page,
+                    perpage:this.paramData.perpage,
+                    date:this.paramData.date,
+                    keyword:this.paramData.keyword,
+                    status:this.paramData.status,
+                    orderby:this.paramData.orderby,
+                    order:this.paramData.order,
+                    starttime:this.paramData.starttime,
+                    endtime:this.paramData.endtime,
+                    uids:this.paramData.uid,
+                    stype:this.paramData.stype,
+                };
+
+                if(this.PostParam){
+                    this.PostParam();
+                }
+                let CancelToken = axios.CancelToken;
+                axios.post('{MOD_URL}&op=admin&do=filelist',param,{
+                    cancelToken: new CancelToken(function executor(c) {
+                        self.PostParam = c;
+                    })
+                }).then(function ({data:res}) {
+                    if(res.success){
+                        self.tableData = res.data.data || [];
+                        self.paramData.total = parseInt(res.data.total);
+                    }else{
+                        self.$message.error(res.msg || '{lang failure}');
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+            DocumentThemeChange(){
+                if(this.DocumentThemeColor=='light'){
+                    this.DocumentThemeColor='dark';
+                    localStorage.setItem('theme','dark');
+                }else{
+                    this.DocumentThemeColor='light';
+                    localStorage.setItem('theme','light');
+                }
+                let self=this;
+            },
+
+            handleDelete(id){
+                let self=this;
+
+                axios.post('{MOD_URL}&op=ajax&do=delete', {
+                    id:id
+                }).then(function(res){
+                    //window.location.reload();
+                    if(res.data.success){
+                        let index=self.tableData.findIndex((item)=>{
+                            if(item.id==id) return true;
+                        });
+                        if(index>-1) self.tableData.splice(index,1);
+                        if(self.tableData.length<1) window.location.reload();
+                    }else{
+                        self.$message({
+                            message: res.data.msg,
+                            type: 'error',
+                        });
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+
+
+            },
+            handleEdit(sid){
+                let self=this;
+
+                self.editDialog.sid=sid;
+                self.editDialog.visible=true;
+            },
+            handleExpand(id){
+                let obj=document.getElementById('shareinfo_'+id);
+                if(obj.className == 'shareinfo-wrapper'){
+                    obj.className = 'shareinfo-wrapper expand';
+                }else{
+                    obj.className = 'shareinfo-wrapper';
+                }
+            }
+        },
+        mounted() {
+            dzzoffice.WindowThis = this;
+        }
+    });
+    dzzoffice.use(ElementPlus, {
+        locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+    });
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        dzzoffice.component(key, component)
+    }
+    dzzoffice.component('comavatar', comavatar);
+    dzzoffice.component('international',international);
+    // 屏蔽警告信息
+    dzzoffice.config.warnHandler = function(){return null};
+    dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

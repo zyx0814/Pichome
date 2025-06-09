@@ -1,0 +1,110 @@
+<div class="content" style="padding: 16px 25px;">
+	<el-table
+		v-loading="HtmlLoading"
+		:data="tableData"
+		style="width: 100%">
+		<el-table-column
+			label="{lang searchName}"
+			show-overflow-tooltip>
+			<template #default="scope">
+				<span style="margin-left: 8px;">{{scope.row.title}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang searchRange}"
+			show-overflow-tooltip>
+			<template #default="scope">
+				<span style="margin-left: 8px;">{{scope.row.searchRange_names}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang searchExts}"
+			show-overflow-tooltip>
+			<template #default="scope">
+				<span style="margin-left: 8px;">{{scope.row.exts}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang layout}"
+			width="120">
+			<template #default="scope">
+				<span >{{scope.row.flayout}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang operation}"
+			width="160">
+			<template #default="scope">
+				<el-button type="info" size="small" @click="TableEdit(scope.row)">{lang set}</el-button>
+				<template v-if="scope.row.tid">
+					<el-popconfirm
+						@confirm="TableDelete(scope.row)"
+						title="{lang confirm_delete}">
+						<template #reference>
+						<el-button type="danger"  size="small">{lang delete}</el-button></template>
+					</el-popconfirm>
+				</template>
+				
+			</template>
+		</el-table-column>
+	</el-table>
+	<div style="margin-top: 16px;" v-show="!HtmlLoading">
+		<el-button icon="plus" type="primary" size="large" @click="handleTemplateAdd">{lang add}</el-button>
+	</div>
+	<!--<div style="margin-top: 24px;font-size: 18px;color: var(--content-textHover);">注释：<el-link style="vertical-align: text-top;font-weight: 700;" type="primary" :underline="false" href="https://www.yuque.com/pichome/np87ue/ge3lgm" target="_blank">操作说明详见说明文档</el-link></div>
+	<div class="tipTxt" style="line-height: 25px;font-size: 14px;">
+		<p class="">1、默认存储位置的图片处理、媒体处理和文档处理为关闭状态</p>
+		<p class="">2、图片处理关闭时，不执行普通目录的图片信息获取和缩略图生成</p>
+		<p class="">3、媒体处理关闭时，不执行媒体文件的信息获取、缩略图生成和音视频转码</p>
+		<p class="">4、文档处理关闭时，不执行文档缩略图获取，不支持在线预览</p>
+		<p class="">5、如需开启，可开启对应位置的设置项，当设置开启时每次更新库后将尝试执行未完成的相关操作</p>
+		<p class="">6、目前能够支持的存储位置管理有本地存储、腾讯云COS。后续还会继续增加更多的存储位置支持</p>
+	</div>-->
+</div>
+<script type="text/javascript">
+	var MainMixin = {
+		data(){
+			return {
+				
+			}
+		},
+		created() {
+			
+		},
+		methods:{
+			
+			async TableDelete(item){
+				var self = this;
+				self.loading = true;
+				var res = await axios.post(MOD_URL+'&op=setting&do=delete',{tid:item.tid});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					let index=self.tableData.findIndex(function(val){
+						return  item.tid == val.tid;
+					});
+					if(index>-1) self.tableData.splice(index,1);
+					self.$message({
+						message:'{lang delete_success}',
+						type:'success'
+					});
+				}else{
+					self.$message.error(json.msg);
+				}
+				self.loading = false;
+			},
+			
+			TableEdit(item){
+				this.SettingDialog.Visible=true;
+				this.SettingForm.tid=item.tid;
+				this.SettingForm.title=item.title;
+				
+			},
+			handleTemplateAdd() {
+				this.Catalogue.dialogVisible = true;
+			},
+		}
+	};
+</script>

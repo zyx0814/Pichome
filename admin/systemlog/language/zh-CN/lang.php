@@ -1,0 +1,23 @@
+<?php
+$lang = array (
+    'appname'=>'登录日志',
+	'logs' => '运行记录',
+    'systemlog_setting'=>'设置',
+    'systemlog_list'=>'日志列表',
+    'os'=>'设备',
+	'info'=>'信息',
+	'loginfo'=>'日志信息',
+	'visit'=>'访问页面',
+	'from'=>'来源页面',
+	'logswitch'=>'日志开关',
+	'logtype'=>'日志类型',
+	'logtypename'=>'日志类型名称',
+	'logflag'=>'日志标识',
+	'Logtag'=>'日志标记',
+	'repeat'=>'重复',
+	'Update_setting'=>'更新日志设置',
+    '后台访问'=>'后台访问',
+    '用户登录'=>'用户登录',
+);
+
+?>

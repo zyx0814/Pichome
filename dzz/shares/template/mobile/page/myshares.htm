@@ -1,0 +1,340 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/mobile/css/index.css?{VERHASH}">
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+        <el-header class="page-header" height="40px" style="border: 0;background: transparent;padding: 0 10px">
+			<a class="h-left" href="user.php?mod=my" style="color: var(--el-text-color-regular);">
+				<el-icon><Arrow-Left /></el-icon>
+			</a>
+			<div class="h-center" style="justify-content: center;"> 
+				<el-text size="large">$navtitle</el-text>
+			</div>
+		 </el-header>
+        <el-main class="dzz-container" style="padding:0;overflow: hidden;position: relative;">
+            <el-scrollbar id="main_scrollbar" class="main_scrollbar" ref="MainscrollbarRef" @scroll="HandleElScrollbar">
+                <el-affix 
+                    class="dzz-affix" 
+                    target=".main_scrollbar>.el-scrollbar__wrap" 
+                    :offset="40">
+                    <div style="padding: 8px 4px;padding-bottom: 0; display: flex;">
+                        <el-input v-model="keyword" prefix-icon="Search" @clear="searchSubmit" @change="searchSubmit" type="search" placeholder="{lang search}" clearable ></el-input>
+
+                    </div>
+                    <el-header height="50px" style="padding: 0px;padding-bottom: 4px;">
+                        <div id="ScreenBox">
+                            <div class="screen-wrap">
+                                <div class="screen-view">
+                                    <div class="screen-item" v-for="item in actionData">
+                                        <el-button 
+                                            plain
+                                            :type="dataActive==item.key?'primary':''"
+                                            @click="filterChange(item.key)"
+                                        >{{ item.name }}</el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </el-header>
+                </el-affix>
+                <template v-if="tableData.length">
+                    <el-card v-for="item in tableData" shadow="hover">
+                    <template #header>
+                        <div class="card-header">
+                            <el-link :underline="false" target="_blank" :href="item.shareurl">{{item.title}}</el-link>
+                        </div>
+                    </template>
+                    <div class="shareinfo-wrapper">
+                    <template v-if="item.fendtime">
+                        <div class="shareinfo endtime" ><el-text type="info" >{lang share_endtime}:{{ item.fendtime }}</el-text></div>
+                    </template>
+                    <template v-if="item.times>0">
+                        <div class="shareinfo times" ><el-text type="info">{lang share_times}: {{ item.times }}</el-text></div>
+                    </template>
+                    <template v-if="item.password!=''">
+                        <div  class="shareinfo password" ><el-text type="info">{lang share_password}: {{ item.password }}</el-text></div>
+                    </template>
+                    <template v-if="item.fperm">
+                        <div class="shareinfo perm" ><el-text type="info">{lang share_perm}: {{ item.fperm }}</el-text></div>
+                    </template>
+                    </div>
+                    <div class="operation">
+
+                        <el-button icon="CopyDocument" title="{lang copy_link}" @click="RightCopyUrl(item.fshareurl)" plain></el-button>
+                        <el-popover
+                                placement="top"
+                                popper-class="qrcode-box"
+                                :width="224"
+                                :teleported="true"
+                                @before-enter="TableGeturlqrcode(item.id,true)"
+                                trigger="click">
+                            <div v-loading="!item.isqrcode" style="width: 200px;font-size: 0;">
+                                <el-image draggable="false" v-if="item.qrcodeurl" style="width: 200px; height: 200px" :src="item.qrcodeurl" fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                                <el-text tag="p" style="text-align: center;padding-top: 12px;">{lang qrcode_image_tip}</el-text>
+                                <div v-if="item.qrcodeurl" class="download" @click="TableDownQrcodeurl(item.qrcodeurl)">
+                                    <div style="text-align: center;">
+                                        <el-icon style="font-size: 22px;"><Download /></el-icon>
+                                        <el-text tag="p" style="width: 100%;">{lang qrcode_download}</el-text>
+                                    </div>
+                                </div>
+                            </div>
+                            <template #reference>
+                                <el-button plain title="{lang qrcode_get}">
+                                    <template #icon>
+                                        <el-icon>
+                                            <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" ><path d="M384 64l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2c0 51.2 41.6 89.6 89.6 89.6l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2C473.6 105.6 435.2 64 384 64zM428.8 380.8c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8l0-227.2c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8L428.8 380.8z"></path><path d="M192 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M377.6 544l-243.2 0c-48 0-86.4 38.4-86.4 89.6l0 220.8c0 48 38.4 89.6 86.4 89.6l243.2 0c48 0 86.4-38.4 86.4-89.6l0-220.8C467.2 582.4 425.6 544 377.6 544zM422.4 851.2c0 25.6-19.2 44.8-44.8 44.8l-243.2 0c-25.6 0-44.8-19.2-44.8-44.8l0-220.8c0-25.6 19.2-44.8 44.8-44.8l243.2 0c25.6 0 44.8 19.2 44.8 44.8L422.4 851.2z" ></path><path d="M192 668.8l131.2 0 0 131.2-131.2 0 0-131.2Z"></path><path d="M633.6 470.4l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2c0-51.2-41.6-89.6-89.6-89.6l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2C544 432 585.6 470.4 633.6 470.4zM588.8 153.6c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8l0 227.2c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8L588.8 153.6z"></path><path d="M700.8 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M572.8 716.8l137.6 0c12.8 0 22.4-9.6 22.4-22.4l0-137.6c0-12.8-9.6-22.4-22.4-22.4l-137.6 0c-12.8 0-22.4 9.6-22.4 22.4l0 137.6C550.4 707.2 560 716.8 572.8 716.8z"></path><path d="M886.4 563.2l0 38.4c0 12.8 12.8 25.6 25.6 25.6l38.4 0c12.8 0 25.6-12.8 25.6-25.6l0-38.4c0-12.8-12.8-25.6-25.6-25.6l-38.4 0C899.2 537.6 886.4 547.2 886.4 563.2z"></path><path d="M582.4 944l48 0c12.8 0 22.4-9.6 22.4-22.4l0-48c0-12.8-9.6-22.4-22.4-22.4l-48 0c-12.8 0-22.4 9.6-22.4 22.4l0 48C560 934.4 569.6 944 582.4 944z"></path><path d="M944 704l-99.2 0c-16 0-28.8 12.8-28.8 28.8l0 44.8-48 0c-19.2 0-32 12.8-32 32l0 99.2c0 16 12.8 28.8 28.8 28.8l179.2 3.2c16 0 28.8-12.8 28.8-28.8l0-179.2C972.8 716.8 960 704 944 704z" ></path></svg>
+                                        </el-icon>
+                                    </template>
+                                </el-button>
+                            </template>
+                        </el-popover>
+                        <el-button type="plain" @click="handleEdit(item.id)"><el-icon ><Edit /></el-icon></el-button>
+                        <el-popconfirm title="{lang share_delete_confirm}" @confirm="handleDelete(item.id)">
+                            <template #reference>
+                                <el-button type="plain" style="margin-left:auto"><el-icon ><Delete /></el-icon></el-button>
+                            </template>
+                        </el-popconfirm>
+                    </div>
+                </el-card>
+                </template>
+                <template v-else>
+                    <el-empty description="{lang no_data}" style="margin-top: 100px;"></el-empty>
+                </template>
+                </template>
+                <div id="pageLoading" v-show="paramData.valLoading"  style="height: 50px;text-align: center;line-height: 50px;">
+                    <el-icon style="vertical-align: text-bottom;" class="is-loading"><Loading /></el-icon>
+                    <el-text style="margin-left: 6px;">{lang loading}</el-text>
+                </div>
+            </el-scrollbar>
+        </el-main>
+
+	</el-container>
+    <!--{template mobile/componets/shareEditDialog}-->
+</div>
+
+<script type="text/javascript">
+    const intersectionObserver = new IntersectionObserver((entries) => {
+        // 如果 intersectionRatio 为 0，则目标在视野外，
+        // 我们不需要做任何事情。
+        if (entries[0].intersectionRatio <= 0) return;
+        if(dzzoffice.WindowThis.paramData.next) {
+            dzzoffice.WindowThis.paramData.page += 1;
+            dzzoffice.WindowThis.getData();
+        }
+    });
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	var dzzoffice = createApp({
+		data() {
+			return {
+				DocumentThemeColor:'',
+                afterScrollTop:0,
+                beforeScrollTop:0,
+                keyword:'',
+                dataActive:'',
+                status:0,
+                tableData:[],
+                paramData:{
+                    page:1,
+                    perpage:10,
+                    next:true,
+                    valLoading:false
+                },
+                PostParam:'',
+                actionData:{eval echo json_encode(array_values($actionData))}
+			}
+		},
+        mixins:[ShareEditDialogMixin],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+            let self = this;
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+            this.getData();
+		},
+		methods: {
+            searchSubmit(){
+                this.paramData.page = 1;
+                this.paramData.keyword=this.keyword;
+                this.getData();
+            },
+            filterChange(key){
+                if(this.dataActive == key) return false;
+                this.dataActive = key;
+                this.paramData.page = 1;
+                this.paramData.date = key;
+                this.getData();
+            },
+            //获取二维码
+            async TableGeturlqrcode(sid){
+                const self = this;
+                let curr = '';
+                curr = this.tableData.find((current) => {
+                    return current.id == sid;
+                });
+                if(curr && curr.isqrcode){
+                    return false;
+                }
+
+                const {data: res} = await axios.post(MOD_URL+'&op=ajax&do=geturlqrcode',{
+                    sid:sid
+                });
+                if(res.success){
+                    curr.isqrcode = true;
+                    curr.qrcodeurl = res.qrcode;
+                }else{
+                    self.$message.error(res.msg || '{lang failure}');
+                }
+
+            },
+            RightCopyUrl(url){
+                const self = this;
+                var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+                input.setAttribute('value', url);
+                document.getElementsByTagName('body')[0].appendChild(input);
+                document.getElementById('copyInput').select();
+                document.execCommand('copy')
+                self.$message({
+                    message: '{lang copy_clipboard}',
+                    type: 'success'
+                });
+                document.getElementById('copyInput').remove();
+            },
+            TableDownQrcodeurl(url){
+                let a = document.createElement('a')
+                a.href = url;
+                a.download = '{lang qrcode}';
+                a.click();
+            },
+            HandleElScrollbar(data){
+				var self = this;
+                return;
+                let afterScrollTop = data.scrollTop;
+                let updown = afterScrollTop - self.beforeScrollTop;
+
+                if( updown === 0 ) {
+                    return false;
+                }            
+                self.beforeScrollTop = afterScrollTop;
+                self.rollingdire = updown > 0 ? "down" : "up";  //判断往上还是往下
+			},
+            handleEdit(sid){
+                let self=this;
+                self.editDialog.sid=sid;
+                self.editDialog.visible=true;
+            },
+            getData(){
+                let self = this;
+                let param = {
+                    page:this.paramData.page,
+                    perpage:this.paramData.perpage,
+                    date:this.paramData.date,
+                    keyword:this.paramData.keyword,
+                    status:this.paramData.status,
+                };
+
+                if(this.PostParam){
+					this.PostParam();
+				}
+                let CancelToken = axios.CancelToken;
+                axios.post('{MOD_URL}&op=ajax&do=filelist',param,{
+					cancelToken: new CancelToken(function executor(c) {
+					    self.PostParam = c;
+					})
+				}).then(function ({data:res}) {
+					if(res.success){
+                        if(self.paramData.page == 1){
+                            self.tableData = res.data.data || [];
+
+                        }else{
+                            self.tableData.push.apply(self.tableData,res.data.data);
+
+                        }
+                        
+                        self.paramData.page = res.data.page;
+                        self.paramData.next = res.data.next;
+                        if(res.data.next){
+                            self.paramData.valLoading = true;
+                        }else{
+                            self.paramData.valLoading = false;
+                        }
+
+                    }else{
+                        self.$message.error(res.msg || '{lang failure}');
+                        self.paramData.valLoading = true;
+                    }
+				}).catch(function (error) {
+				    console.log(error);
+				});
+            },
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			handleDelete(id){
+				let self=this;
+				axios.post('{MOD_URL}&op=ajax&do=delete', {
+					id:id
+				}).then(function(res){
+					//window.location.reload();
+					if(res.data.success){
+						let index=self.tableData.findIndex((item)=>{
+							if(item.id==id) return true;
+						});
+						if(index>-1) self.tableData.splice(index,1);
+						if(self.tableData.length<1) window.location.reload();
+					}else{
+						self.$message({
+							message: res.data.msg,
+							type: 'error',
+						  });
+					}
+				}).catch(function (error) {
+					console.log(error);
+				});
+					
+				  
+			},
+
+		},
+		mounted() {
+            var self = this;
+
+            dzzoffice.WindowThis = this;
+            intersectionObserver.observe(document.getElementById("pageLoading"));
+        }
+	});
+    dzzoffice.use(ElementPlus, {
+        locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+    });
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+
+
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

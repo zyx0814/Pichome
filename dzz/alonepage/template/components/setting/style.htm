@@ -1,0 +1,13 @@
+<div v-if="MainStyle[item.type]">
+    <el-text>{lang style}：</el-text>
+    <el-select v-model="item.style.style" style="width: 150px;margin-right: 12px;">
+        <el-option v-for="fitem in MainStyle[item.type]" :key="fitem.value" :label="fitem.title" :value="fitem.value"></el-option>
+    </el-select>
+    <template v-if="MainStyle[item.type][item.style.style] && MainStyle[item.type][item.style.style].size && MainStyle[item.type][item.style.style]['size'].length">
+        <el-text>{lang size}：</el-text>
+        <el-select v-if="MainStyle[item.type] && MainStyle[item.type][item.style.style]" v-model="item.style.size" style="width: 150px;">
+            <el-option v-for="fitem in MainStyle[item.type][item.style.style]['size']" :label="fitem.title" :value="fitem.value"></el-option>
+        </el-select>
+    </template>
+    
+</div>

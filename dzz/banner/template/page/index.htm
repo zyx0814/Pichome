@@ -1,0 +1,180 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/asstes/css/index.css?{VERHASH}">
+<!-- <link rel="stylesheet" href="static/scss/admin.css?{VERHASH}"> -->
+<script src="static/js/sortable.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/locale/index.js?{VERHASH}"></script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/ad_pic_header}-->
+        <el-main style="padding: 0px;overflow: hidden;position: relative;" v-loading="treeLoading">
+            <el-scrollbar>
+                <div class="page-container">
+                    <!--{template components/index/top}-->
+                    <!--{template components/index/bottom}-->
+                </div>
+               
+            </el-scrollbar>		
+        </el-main>
+	</el-container>
+    <!--{template components/index/operation}-->
+</div>
+<script type="text/javascript">
+    const BaseUrl = '{MOD_URL}&op=bannerinterfcae';
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+                treeLoading:true,
+                treeData:{
+                    top:[],
+                    bottom:[]
+                },
+                treeProp:{
+                    label:'bannername',
+                },
+                HeaderMenuIndex:'banner',
+                DocumentThemeColor:''
+            }
+        },
+		created() {
+            this.HeaderMenu.active = 'banner';
+            //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+            this.GetData();
+		},
+        watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		mixins:[HeaderMixin,OperationMixi],
+		methods: {
+            //树拖动
+            async TreeDrop(before,after,inner){
+                let param = {
+					id:before.data.id,
+					oid:after.data.id,
+					type:inner,
+				};
+                const {data: res} = await axios.post(BaseUrl+'&do=move',param);
+                if(res.success){
+
+                }else{
+                    self.$message.error(res.msg || '{lang sort_error}');
+                }
+
+
+            },
+            async TreeStatus(data){
+                const self = this;
+                const {data: res} = await axios.post(BaseUrl+'&do=setstatus',{
+                    id:data.id,
+                    isshow:data.isshow
+                });
+                if(res.success){
+
+                }else{
+                    self.$message.error(res.msg || '{lang set_unsuccess}');
+                }
+            },
+            //树得操作
+            OperationTree(type,node,direction){
+                this.DialogData.direction = direction;
+                if(type == 'sibling'){//添加同级
+                    this.DialogData.types = 'add';
+                    this.DialogData.node = node;
+                    this.DialogData.ftypes = 'sibling';
+                    this.DialogData.visible = true;
+
+                }else if(type == 'child'){//添加子级
+                    if(node.data && !node.data.children){
+                        node.data.children = [];
+                    }
+                    this.DialogData.ftypes = 'child';
+                    this.DialogData.types = 'add';
+                    this.DialogData.node = node;
+                    this.DialogData.visible = true;
+                }else if(type == 'delete'){//删除
+                    this.TreeDelete(node)
+                }else if(type == 'edit'){
+                    this.DialogData.types = 'edit';
+                    this.DialogData.node = node;
+                    this.DialogData.visible = true;
+                }
+            },
+            async TreeDelete(node){
+                const self = this;
+                const {data: res} = await axios.post(BaseUrl+'&do=delbanner',{
+                    id:node.data.id
+                });
+                if(res.success){
+                    if(node.level == 1){
+                        const index = self.treeData[this.DialogData.direction].findIndex((d) => parseInt(d.id) === parseInt(node.data.id));
+                        self.treeData[this.DialogData.direction].splice(index, 1);
+                    }else{
+                        const parent = node.parent;
+                        const children = parent.data.children;
+                        const index = children.findIndex((d) => d.id === node.data.id)
+                        children.splice(index, 1);
+                    }
+                    self.$message({
+                        type:'success',
+                        message:'{lang delete_success}'
+                    })
+                }else{
+                    self.$message.error(res.msg || '{lang delete_unsuccess}');
+                }
+            },
+            async GetData(){
+                const self = this;
+                const {data: res} = await axios.get(BaseUrl+'&do=bannerlist&ajax_submit=1');
+                self.treeLoading = false;
+                if(res.success){
+                    self.treeData.top = res.data.top || [];
+                    self.treeData.bottom = res.data.bottom || [];
+                }else{
+                    self.$message.error(res.msg || '{lang get_data_fail}');
+                }
+            },
+            DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			}
+		},
+		mounted() {
+            const self = this;
+
+        }
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+    dzzoffice.component('language', language);
+    dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

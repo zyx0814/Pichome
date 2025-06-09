@@ -1,0 +1,125 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/storehouse/pc/assets/css/library.css?{VERHASH}">
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<el-header class="page-header" height="40px" style="border: 0;background: transparent;padding: 0 10px">
+			<a class="h-left" href="user.php?mod=my" style="color: var(--el-text-color-regular);">
+				<el-icon><Arrow-Left /></el-icon>
+			</a>
+			<div class="h-center" style="justify-content: center;"> 
+				<el-text size="large">{lang my_library}</el-text>
+			</div>
+		 </el-header>
+		<el-main style="--el-main-padding: 10px;">
+			<ul class="wrap-content">
+				<!--{loop $data $val}-->
+				<li 
+					class="piece" style="cursor: default;width: 100%;">
+					<el-card shadow="hover"> 
+						<a 
+							href="{$val[url]}"
+							class="box-images" 
+							style="--background-image-url: url($val[icon])">
+							<el-image style="width: 100%; height: 100%;" src="$val[icon]" fit="contain">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>>
+						</a>
+						<div class="layer" style="padding: 0 16px;bottom: 0;top: unset;">
+							<div style="padding: 16px 0;">
+								<p class="name" style="margin-bottom: 0;">
+									<!--{if item.type == 1}-->
+									<el-image
+										style="width: 22px; height: 22px;margin-right: 8px;"
+										src="dzz/pichome/image/library/file.png"
+										fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+									<!--{elseif item.type == 2}-->
+										<el-image
+										style="width: 22px; height: 22px;margin-right: 8px;"
+											src="dzz/pichome/image/library/billfish.png"
+											fit="contain">
+											<template #error><div class="el-image__placeholder"></div></template>
+										</el-image>
+									<!--{else}-->
+									<el-image
+									style="width: 22px; height: 22px;margin-right: 8px;"
+										src="dzz/pichome/image/library/eagle.png"
+										fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+									<!--{/if}-->
+									<el-text class="el-text--default" truncated style="font-size: 1rem;font-weight: 700;color: var(--el-text-color-primary);">{$val[appname]}</el-text>
+								</p>
+							</div>
+						</div>
+						</template>
+					</el-card>
+				</li>
+				<!--{/loop}-->
+			</ul>
+		</el-main>
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+				DocumentThemeColor:'',
+				UcenterHeaderMenuIndex:'library',
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+			
+			
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			
+			
+			
+		},
+		mounted() {}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

@@ -1,0 +1,50 @@
+<script type="text/javascript">
+	let LeftTabMixin = {
+		data(){
+			return {
+
+			}
+		},
+		methods:{
+			LeftTabGroup(data,flag){
+				let curr = this.LeftTreeTaggingDialog.fileds.find(item=>item.flag==flag);
+				if(!curr)return false;
+				let val = [];
+
+				for (let index = 0; index < data.length; index++) {
+					const element = data[index];
+                    if(!element.tabname){
+						element.tabname = __lang.Unnamed;
+					}
+					val.push(element.tid);
+				}
+				curr.value = val;
+				curr.data = data;
+			},
+			async LeftTabDelete(id,flag,index){
+				let curr = this.LeftTreeTaggingDialog.fileds[index];
+				if(!curr || !curr.data.length)return false;
+
+				let tindex = curr.data.findIndex(function(current){
+					return parseInt(current.tid) == parseInt(id);
+				});
+				curr.data.splice(tindex,1);
+				let findex = curr.value.findIndex(function(current){
+					return parseInt(current) == parseInt(id);
+				});
+				curr.value.splice(findex,1);
+			},
+			LeftTabPopverShow(flag,index){
+				let curr = this.LeftTreeTaggingDialog.fileds[index];
+				curr.iframe = 'index.php?mod=tab&op=OutPopover&isall=1&gid='+curr.id+'&ids='+curr.value.join(',')+'&callback=lefttabgroup_callback&cacheflag='+curr.flag;
+				this.handleDocumentOverlay(true);
+			},
+			LeftTabPopverHide(flag,index){
+				let curr = this.LeftTreeTaggingDialog.fileds[index];
+				curr.iframe = '';
+				this.handleDocumentOverlay(false);
+			},
+			
+		}
+	}
+</script>

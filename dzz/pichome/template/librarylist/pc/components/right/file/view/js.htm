@@ -1,0 +1,134 @@
+<script>
+	let RightPreviewMixin = {
+		data(){
+			return {
+				maxChunkSize:parseFloat('$maxChunkSize')
+			}
+		},
+		methods:{
+			async RightPreviewUploadChange(uploadFile){
+				let self = this;
+				let curr = this.RightData.filedsData.find(function(current){
+					return current.flag == 'preview';
+				});
+				if(!curr)return false;
+				curr.num ++;
+				let fileName = uploadFile.name;
+				const fileSize = uploadFile.size || 0;
+				const chunkSize=this.maxChunkSize;
+				let chunkTotals = Math.ceil(fileSize / chunkSize);
+				if (chunkTotals>0){
+					for(let chunkNumber = 0, start = 0; chunkNumber < chunkTotals;chunkNumber++,start+=chunkSize){
+					  let end = Math.min(fileSize,start + chunkSize);
+					  const filedata = uploadFile.raw.slice(start, end);
+					  const result = await this.uploadFileToServer(uploadFile,filedata,start,end);
+					  	if(chunkNumber == chunkTotals-1){
+							let res=result.data['files'][0];
+							if(res.error){
+								curr.num --;
+								self.$message.error(res.error || '{lang upload_failed}');
+								return false;
+							}
+							let {data: fres} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=addPreview',{
+								rid:this.RightActiveRid[0],
+								aid:res.data.aid,
+							});
+							
+							curr.num --;
+							if(curr.num == 0){
+								curr.num = 0;
+							}
+							let index = curr.value.findIndex(function(current){
+								return parseInt(current.id) == parseInt(fres.id);
+							});
+							if(index > -1)return false;
+							curr.value.push({
+								id:fres.data,
+								spath:res.data.img,
+							});
+						  
+					  	}
+					}
+				}
+
+
+			},
+			async uploadFileToServer(uploadFile, filedata,start,end){
+			  const formdata = new FormData();
+			 
+			  formdata.append('files[]', filedata);
+			//   formdata.append('cid', this.cid);
+			  formdata.append('filename', uploadFile.name);
+			  
+				return await axios({
+					url: 'index.php?mod=pichome&op=library&do=upload&operation=upload&notqs=1',
+					method: 'post',
+					headers: {
+						'Content-Disposition':'attachment; filename="'+encodeURI(uploadFile.name)+'"',
+						'Content-Type': 'multipart/form-data',
+						'Content-Range':'bytes '+start+'-'+(end-1)+'/'+uploadFile.size
+					},
+					data:formdata
+				});
+			},
+			RightPreviewSortable(){//排序
+				let self = this;
+				let curr = self.RightData.filedsData.find(function(current){
+					return current.flag == 'preview';
+				});
+				if(!curr)return false;
+				let body = self.$refs.PreviewRef[0];
+
+				Sortable.create(body, {
+					draggable: '.el-space__item',
+					filter:'.add',
+                    animation: 150,
+					onUpdate ({ newIndex, oldIndex }) {//列表内元素顺序更新的时候触发
+						var currRow = curr.value.splice(oldIndex - 1 , 1)[0];
+						curr.value.splice(newIndex - 1, 0, currRow);
+						self.RightPreviewSortableSubmit(curr);
+					}
+				});
+			},
+			async RightPreviewSortableSubmit(data){
+				let self = this;
+				let ids = [];
+				for (let index = 0; index < data.value.length; index++) {
+					const element = data.value[index];
+					ids.push(element.id);
+				}
+				let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=sortPreview',{
+					ids:ids,
+				});
+				if(res.success){
+				}else{
+					self.$message.error(res.msg || '{lang sort_error}');
+				}
+			},
+			async RightPreviewDelete(id){
+				let self = this;
+				if(!id)return false;
+				let {data: res} = await axios.post('index.php?mod=pichome&op=library&do=preview&operation=delPreview',{
+					id:id,
+				});
+				if(res.success){
+					let curr = this.RightData.filedsData.find(function(current){
+						return current.flag == 'preview';
+					});
+					if(!curr)return false;
+					let index = curr.value.findIndex(function(current){
+						return parseInt(current.id) == parseInt(id);
+					});
+					if(index < 0)return false;
+					curr.value.splice(index,1)
+					self.$message({
+						type:'success',
+						message:'{lang delete_success}'
+					})
+				}else{
+					self.$message.error(res.msg || '{lang delete_unsuccess}');
+				}
+			}
+		}
+	}
+</script>

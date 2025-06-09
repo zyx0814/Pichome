@@ -1,0 +1,41 @@
+<div class="marginTop">
+	<div class="tag-box" style="min-height: 31px;">
+		<el-tag
+			v-for="folder in RightData.folder"
+			:key="folder.fid"
+			disable-transitions
+			type="info"
+			:closable="RightData.allowedit"
+			@close="RightFolderDelete(folder.fid)">
+			<!-- <el-icon><Folder /></el-icon> -->
+			{{folder.fname}}
+		</el-tag>
+		<template v-if="RightData.allowedit">
+			<el-popover
+				placement="left"
+				@before-enter="RightFolderPopverShow"
+				@after-leave="RightFolderPopverHide"
+				width="auto"
+				trigger="click">
+				<div v-loading="RightFolderPopverParam.loading" style="height:356px;">
+					<el-scrollbar height="356px" v-if="!RightFolderPopverParam.loading">
+						<el-tree
+							:props="{label:'fname',children: 'children',isLeaf:'leaf'}"
+							:load="RightFolderPopverTreeLoad" 
+							:default-checked-keys="RightFolderPopverParam.CheckedKeys"
+							:default-expanded-keys="RightFolderPopverParam.ExpandedKeys"
+							node-key="fid"
+							check-strictly
+							lazy 
+							show-checkbox
+							@check="RightFolderPopverTreeChange"></el-tree>
+					</el-scrollbar>
+				</div>	
+				<template #reference>
+					<el-icon style="color: var(--el-color-info);vertical-align: middle;cursor:pointer;"><Circle-Plus-Filled /></el-icon>
+				</template>
+			</el-popover>
+		</template>
+		
+	</div>
+</div>

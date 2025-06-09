@@ -1,0 +1,42 @@
+<el-header v-if="(screenType.show && !screenType.type) && ispc" v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;">
+    <dzz-screen
+        ref="ScreenBoxRef"
+        :resize="DocumentResize"
+        :props="ScreenProps"
+        :headerkeyword="headerkeyword"
+        :defaultparam="ScreenParam"
+        @submit="CommonGetImageData"
+        @visible="screenvisible">
+    </dzz-screen>
+</el-header>
+<script type="text/javascript">
+	var ScreenMixin = {
+		data(){
+			return {
+                screenType:{
+					type:0,
+					show:false
+				},
+				Screenshow:true,
+				ScreenParam:{
+					hassub:0,
+					sid:'',
+				},
+				ScreenProps:{
+					optionload:'index.php?mod=search&op=ajax&operation=getscreen',
+					contentload:'index.php?mod=search&op=ajax&operation=searchmenu_num',
+					classifyload:'index.php?mod=search&op=ajax&operation=getfolderdata',//分类url
+					tagload:'index.php?mod=search&op=ajax&operation=search_menu',
+					isclassify:false,//分类是否显示
+				}
+			}
+		},
+		methods:{
+			screenvisible(status,text){
+				this.DocumentOverlay = status;
+			}
+		}
+	};
+
+
+</script>

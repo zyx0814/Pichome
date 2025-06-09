@@ -1,0 +1,47 @@
+<script type="text/javascript">
+	var ImgageTableMixin = {
+		methods:{
+			ImagesTablelayoutCompute(){
+				var self = this;
+				if(self.ParamImages.type == 'refresh' || !self.ParamImages.data.length){
+					self.ParamImages.imgageTable.perpage = 0;
+					var documentW = document.body.clientWidth;
+					var boxWidth = documentW-8;
+					document.querySelector('#imgContainer').style.width = boxWidth+'px';
+					self.ParamImages.imgageTable.maxNewtop = 0;
+					self.ParamImages.imgageTable.StoreImgdatas = [];
+					self.ParamImages.Newdatas = [];
+				}
+				
+			
+				if(!self.ParamImages.data.length){
+					document.querySelector('#imgContainer').style.height = 0;
+					return false;
+				}
+				
+				
+				var arr = [];
+				var i = 0;
+				for(var index = self.ParamImages.imgageTable.perpage; index < self.ParamImages.data.length;++index){
+					var item = JSON.parse(JSON.stringify(self.ParamImages.data[index]));
+					arr[i] = item;
+					arr[i]['ptop'] = self.ParamImages.imgageTable.maxNewtop;
+					self.ParamImages.imgageTable.maxNewtop += self.ParamImages.imgageTable.fixedH;
+					arr[i]['pbottom'] = self.ParamImages.imgageTable.maxNewtop ;
+					arr[i]['isodd'] = index%2?true:false;
+					item['playmusic'] = self.FooterMusic.playing && self.FooterMusic.rid==item.rid?true:false;
+					i++;
+				}
+				self.ParamImages.imgageTable.perpage = self.ParamImages.data.length;
+				if(self.ParamImages.type == 'append'){
+					self.ParamImages.imgageTable.StoreImgdatas.push.apply(self.ParamImages.imgageTable.StoreImgdatas,arr);
+				}else{
+					self.ParamImages.imgageTable.StoreImgdatas = arr;
+				}
+				// $('#imgContainer').height(self.ParamImages.imgageTable.maxNewtop+60);
+				document.querySelector('#imgContainer').style.height = (self.ParamImages.imgageTable.maxNewtop + 60) + 'px';
+				self.ImagesLayoutScrollShow()
+			}
+		}
+	};
+</script>

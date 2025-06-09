@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui">
+    <meta name="referrer" content="no-referrer">
+    <title>$data[name]</title>
+	
+    <style type="text/css">
+      html, body {width:100%;height:100%;margin:auto;overflow: hidden;background: #000;box-sizing: border-box}
+		#mse{
+			width:100% !important;
+			height:100% !important;
+			padding-top:0 !important;
+		}
+		#canvas {
+			position:absolute;top:0;bottom:50px;right:0;left:0;z-index:10;;
+			text-align: center;
+      	}
+		canvas{
+			width:100%;height:100%;
+		}
+		.xgplayer-skin-default.xgplayer-music .xgplayer-cover,.xgplayer-next,.xgplayer-prev{
+			display: none;
+		}
+		.xgplayer-skin-default.xgplayer-music .xgplayer-forward{
+			margin-left:15px !important;
+		}
+		.xgplayer-skin-default.xgplayer-music .xgplayer-controls  .xgplay-icon{
+			padding-top:10px !important;
+		}
+		.xgplayer-skin-default.xgplayer-music .xgplayer-play .xgplayer-icon{
+			margin-top:0 !important;
+		}
+		.xgplayer-skin-default.xgplayer-music .xgplayer-controls .xgplayer-time{
+			top:35% !important;
+		}
+		<!--{if $ismobile}-->
+		.xgplayer-skin-default .xgplayer-controls{
+			display: -webkit-flex !important;
+			display: -moz-box !important;
+			display: flex !important;
+		}
+		<!--{/if}-->
+    </style>
+	  <script src="{MOD_PATH}/js/xgplayer.js"></script>
+	<!--{if $_GET['ext']=='flv' || $_GET['ext']=='m4v'}-->
+		<script src="{MOD_PATH}/js/xgplayer-flv.js" charset="utf-8"></script>
+	<!--{elseif $_GET['ext']=='m3u8' || $_GET['ext']=='HLS'}-->
+		<script src="{MOD_PATH}/js/xgplayer-hls.js" charset="utf-8"></script>
+	<!--{elseif $_GET['ext']=='mpg' || $_GET['ext']=='mpeg'}-->
+		<script src="{MOD_PATH}/js/xgplayer-shaka.js" charset="utf-8"></script>
+	<!--{elseif $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav'}-->
+	   <script src="{MOD_PATH}/js/xgplayer.music.js" charset="utf-8"></script>
+	<!--{/if}-->
+  </head>
+  <body>
+ <!--{if $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav' }-->
+		  <div id="canvas">
+				<canvas ></canvas>
+		  </div>
+		  <!--{/if}-->
+		  <div id="mse"></div>
+  
+	
+	<!--{if $_GET['ext']=='mp3' || $_GET['ext']=='ogg' || $_GET['ext']=='wav' }-->
+     	<script type="text/javascript">
+		document.querySelector('canvas').width=window.innerWidth;
+		document.querySelector('canvas').height=window.innerHeight-50;
+		 window.addEventListener('resize',function(){
+			document.querySelector('canvas').width=window.innerWidth;
+			document.querySelector('canvas').height=window.innerHeight-50;
+		 });
+      let player = new window.Music({
+          id: 'mse',
+          url: [{src: "$src", name: '$data[name]', poster: '$_G[siteurl]dzz/images/b.gif',vid:'1'}],
+          volume: 0.8,
+          width: '100%',
+          height: 50,
+		  preloadNext: false,
+      });
+	  player.crossOrigin = "anonymous";
+	  var an=player.analyze(document.querySelector('canvas'))
+    /*  an.style = {
+		  bgColor: '#c8c8c8',
+          color: '#909099'
+      }*/
+	  an.mode="bar";
+	  an.size=2048;
+	  an.status='on';
+      player.on('playing', function(){
+          player.mode = 2;
+      });
+	  
+	 
+	
+      //document.getElementById("canvas").height =  window.innerHeight * 0.36;
+	  </script>
+	  <!--{elseif $_GET['ext']=='flv' || $_GET['ext']=='m4v'}-->
+	   <script type="text/javascript">
+		  var player = new FlvPlayer({
+          id: 'mse',
+          url: "$src",
+          playsinline: true,
+          "videoInit": true,
+      });
+	  </script>
+	  <!--{elseif $_GET['ext']=='m3u8' || $_GET['ext']=='HLS'}-->
+	 <script type="text/javascript">
+      let player = new HlsPlayer({
+          id: 'mse',
+          url:"$src",
+          autoplay: false,
+          playsinline: true,
+          height: '100%',
+          width: '100%',
+		   "videoInit": true,
+      });
+    </script>
+	  <!--{elseif $_GET['ext']=='mpg' || $_GET['ext']=='mpeg'}-->
+	   <script type="text/javascript">
+      new window.ShakaJsPlayer({
+        id: 'mse',
+        url: "$src",
+        ignores: ['error'],
+        playsinline: true,
+        height: '100%',
+          width: '100%',
+		   "videoInit": true,
+      });
+    </script>
+	  <!--{else}-->
+	   <script type="text/javascript">
+	  
+      var player = new Player({
+		"id": "mse",
+		"url": "$src",
+		"playsinline": true,
+		"whitelist": [
+				""
+		],
+		"keyShortcut": "on",
+		"playbackRate": [
+				0.5,
+				1,
+				1.5,
+				2,
+				2.5
+		],
+		"screenShot": false,
+		"download": false,
+		"pip": false,
+		"fluid": true,
+		  "videoInit": true,
+		"autoplay": false,
+      });
+   </script>
+	  <!--{/if}-->
+  </body>
+</html>

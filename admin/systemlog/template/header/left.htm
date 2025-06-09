@@ -1,0 +1,15 @@
+<div class="el-page-header__left" @click="headergoBack">
+	<i class="el-icon-back"></i>
+</div>
+<span class="text" >
+	<span v-cloak>登录日志</span>
+</span>
+<script type="text/javascript">
+	var HeaderleftMixin = {
+		methods:{
+			headergoBack(){
+				window.location.href='index.php?mod=pichome';
+			}
+		}
+	};
+</script>

@@ -1,0 +1,68 @@
+<!--{template common/header_simple_start}-->
+<link href="static/css/common.css?{VERHASH}" rel="stylesheet" media="all">
+<link href="static/css/checkbox.css?{VERHASH}" rel="stylesheet" media="all">
+<script type="text/javascript" src="static/js/jquery.leftDrager.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/js/jquery.textareaexplander.js?{VERHASH}"></script>
+<style>
+    #cpform {
+        margin-top: 15px;
+    }
+    i.dzz {
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 30px;
+    }
+
+    .vitem{
+        margin-bottom:10px;
+        max-width:600px;
+    }
+    .vitem .col-sm-5{
+        padding:0 2px;
+    }
+    .vitem .form-control{
+        max-width:100%;
+        border-width:1px;
+    }
+    .vitem-label{
+        line-height: 34px;
+        text-align: right
+    }
+
+    .ui-sortable-helper{
+        background-color: #FFF;
+        border:1px solid #e1e1e1;
+    }
+    .ui-state-highlight{
+        width:100%;
+        max-width:600px;
+        height: 34px;
+        background-color: blanchedalmond
+    }
+</style>
+<!--{template common/header_simple_end}-->
+
+<div class="bs-container clearfix">
+
+    <div class="left-drager">
+        <div class="left-drager-op">
+            <div class="left-drager-sub"></div>
+        </div>
+    </div>
+    <div>
+        <input type="file" name="files[]" id="wangpan-upload-file" class="wangpan-upload-file" multiple  accept="*" data-uploadtype="file" >
+    </div>
+</div>
+<script type="text/javascript">
+ var clouddata = eval('('+'{$jsondata}'+')');
+ var uid = '$_G[uid]';
+
+</script>
+//校验MD5
+<script type="text/javascript" src="static/js-spark-md5-master/spark-md5.js"></script>
+<script type="text/javascript" src="dzz/qcos/api/cos-js-sdk-v5-master/dist/cos-js-sdk-v5.js"></script>
+<script type="text/javascript" src="dzz/qcos/js/qcosuploadfile.js"/>
+<script type="text/javascript">
+    console.log('aaaa');
+</script>
+<!--{template common/footer_simple}-->

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>导出tab</title>
+</head>
+<body>
+<div class="container"style="text-align: center;width:100%;">
+<p ><h1>导出标题</h1></p>
+</div>
+<div>
+
+        {loop $datas $data}
+        <div>
+                {loop $filedsarr  $key}
+                <div style="height: 32px;line-height: 32px;">
+                {if $data[showlist][$key][value]}
+                tabname:
+                {$data[showlist][$key][value]}
+                {/if}
+                </div>
+                {/loop}
+        </div>
+        {/loop}
+</div>
+</body>
+</html>

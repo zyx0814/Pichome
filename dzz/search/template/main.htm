@@ -1,0 +1,320 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style type="text/css">
+	
+	.page-content {
+		
+		height:600px;
+		max-height: 800px;
+		margin:0 auto;
+	}
+	.switch{
+		text-align: center;
+		padding:15px 0;
+	}
+	.content{
+		width:100%;
+		height:100%;
+		border-radius: 20px;
+		background-color:var(--el-bg-color);
+		
+	}
+	.content-layer{
+	
+		display: none;
+		text-align: center;
+		height: 100%;
+		width:100%;
+		display:none;
+		justify-content:center;
+		align-items:center;
+		padding:0;
+	}
+	.content-layer.target.current{
+		background-image: 
+                linear-gradient(45deg, rgba(0, 0, 0, 0.4) 25%, transparent 25%, transparent 75%,rgba(0, 0, 0, 0.4) 75%), 
+                linear-gradient(45deg,rgba(0, 0, 0, 0.4) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.4) 75%);
+            background-position: 0 0, 10px 10px;
+           
+            background-size: 20px 20px;
+		border:1px solid var(--el-border-color);
+	}
+	.content-layer.current{
+		display: flex;
+	}
+	.content-layer img{
+		max-height: 100%;
+		max-width:100%
+	}
+	.upload-guide{
+		width:100%;
+		height:100%;
+	}
+	.content div{
+		width:100%;
+		height:100%;
+		min-height: 500px
+	}
+	.el-upload-dragger{
+		padding:200px 0;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/header_default}-->
+		<el-main class="container" style="padding: 0px;position: relative;">
+	   
+		<div class="page-content">		
+		 <div class="switch">
+			<el-button :type="layer==0?'primary':'default'" @click="handleSwitch(0)" >上传图片</el-button>
+			<el-button :type="layer==1?'primary':'default'" @click="handleSwitch(1)" >查看原图</el-button>
+			<el-button :type="layer==2?'primary':'default'" @click="handleSwitch(2)" v-if="isprocessed">查看效果图</el-button>
+			 <el-button type="default"  @click="handleDownload" v-if="isprocessed">下载</el-button>
+			 <el-button type="default"  @click="handleSaveImage" v-if="isprocessed">保存到我的创作</el-button>
+			
+		</div>			
+		<div class="content" v-loading="loading">
+			
+			
+			<div class="content-layer" :class="layer==0?'current':''">
+				<el-upload
+					drag
+					:auto-upload="false"
+					name="files[]"
+					:before-upload="handleBeforeUpload"
+					:on-change="handleUploadChange"
+					:show-file-list="false"
+					accept="image/png,image/jpg,image/jpeg,image/bmp" 
+					style="height:100%"
+					title="拖放到此处或点击上传"
+				  >
+				<el-icon class="el-icon--upload"><upload-filled /></el-icon>
+					<div class="el-upload__text">
+					 拖拽文件到此释放 or <em>点击上传</em>
+					</div>
+				</el-upload>
+		    </div>
+			<div class="content-layer source" :class="layer==1?'current':''">
+				<img :src="source.data" alt="source.name"/>
+			</div>
+			<div class="content-layer target" :class="layer==2?'current':''">
+				<img :src="target.data" alt="source.name"/>
+			</div>
+			
+		</div>
+			<div class="switch">
+				<el-button size="large" type="primary" @click="handleProcess" v-if="isSource && !isprocessed" >开始抠图</el-button>
+				
+			</div>			
+		</div>
+		</el-main>
+	</el-container>
+</div>
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			var self = this;
+			
+			return {
+				DocumentThemeColor:'',
+				isprocessed:0,//是否已经抠图
+				isSource:0,//是否已经加载原图
+				layer:0,
+				loading:false,
+				oerror:"$oerror",
+				source:{
+					name:"{eval echo $data['name']?$data['name']:''}",
+					data:"{eval echo $data['base64']?$data['base64']:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}",
+					mine:"{eval echo $data['mine']?$data['mine']:''}",
+				},
+				target:{
+					name:"{eval echo $data['segname']?$data['segname']:'bodyseg.png'}",
+					data:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+					mine:'image/png',
+				},
+				config:$config_json,
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+			 //主题颜色
+			 let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			if(this.source.name){
+				this.isSource=1;
+				this.layer=1;
+			}
+			let self=this;
+			if(this.oerror){
+				this.$message({
+					type:'danger',
+					message:self.oerror
+				});
+			}
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handleSwitch(num){
+				this.layer=num;
+			},
+			handleProcess(){
+				let self=this;
+				self.loading=true;
+				axios.post('{MOD_URL}&op=ajax&operation=process', {
+							base64:self.source.data
+						}).then(function(res){
+							if(res.data.success){
+								self.target.data=res.data.data.base64;
+								self.target.mine=res.data.data.mine;
+								self.layer=2;
+								self.isprocessed=1;
+							}else{
+								self.$message({
+									type:'danger',
+									message:res.data.error
+								});
+							}
+							self.loading=false;
+						}).catch(function (error) {
+							console.log(error);
+						});
+			},
+			handleSaveImage(){
+				let self=this;
+				axios.post('{MOD_URL}&op=ajax&operation=saveimage', {
+					base64:self.target.data,
+					name:self.target.name
+				}).then(function(res){
+					if(res.data.success){
+						self.$message({
+							type:'success',
+							message:'保存成功，可以到我的创作内查看'
+						});
+					}else{
+						self.$message({
+							type:'danger',
+							message:res.data.error
+						});
+					}
+					self.loading=false;
+				}).catch(function (error) {
+					console.log(error);
+				});
+			},
+		    handleDownload(){
+				
+				this.downloadFile(this.target.name,this.target.data);
+			},
+			downloadFile(fileName, content) {
+				let aLink = document.createElement('a');
+				let blob = this.base64ToBlob(content); //new Blob([content]);
+
+				let evt = document.createEvent("HTMLEvents");
+				evt.initEvent("click", true, true);//initEvent 不加后两个参数在FF下会报错  事件类型，是否冒泡，是否阻止浏览器的默认行为
+				aLink.download = fileName;
+				aLink.href = URL.createObjectURL(blob);
+
+				// aLink.dispatchEvent(evt);
+				//aLink.click()
+				aLink.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window}));//兼容火狐
+			  },
+
+			base64ToBlob(code) {
+				let parts = code.split(';base64,');
+				let contentType = parts[0].split(':')[1];
+				let raw = window.atob(parts[1]);
+				let rawLength = raw.length;
+
+				let uInt8Array = new Uint8Array(rawLength);
+
+				for (let i = 0; i < rawLength; ++i) {
+				  uInt8Array[i] = raw.charCodeAt(i);
+				}
+				return new Blob([uInt8Array], {type: contentType});
+			  },
+
+			handleUploadChange(uploadFile,uploadFiles){
+				let self=this;
+				this.source.name=uploadFile.name;
+				const ext =uploadFile.name.substring(uploadFile.name.lastIndexOf(".")+1);
+				this.source.ext=ext;
+				
+				if(!this.handleBeforeUpload(uploadFile)){
+					return;
+				}
+				if (uploadFile) {
+					var reader = new FileReader();
+					reader.onload = function (event) {
+						var txt = event.target.result;
+						self.source.data=txt;
+						let arr=txt.match(/data:(.*?);base64,/i);
+						self.source.mine=arr[1];
+						self.layer=1;
+						self.isSource=1;
+						self.isprocessed=0;
+					};
+				}
+				reader.readAsDataURL(uploadFile.raw);
+			},
+			
+			handleBeforeUpload(uploadFile){
+				let self=this;
+				//验证文件后缀
+				if(this.config.exts.length){
+					const ext =uploadFile.name.substring(uploadFile.name.lastIndexOf(".")+1);
+					const index=this.config.exts.findIndex(item => item==ext.toLowerCase());
+
+					if (index == -1) {
+						self.$message.error('Filetype not allowed');
+						return false;
+					}
+				}
+				//验证文件大小
+				const size=uploadFile.size;
+				if(size>this.config.size){
+					self.$message.error('文件大小不能超过 '+self.config.fsize);
+					 return false;
+				}
+				return true
+			},
+			
+			
+		},
+		mounted() {}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: ElementPlusLocaleZhCn,
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar)
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

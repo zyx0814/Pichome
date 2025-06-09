@@ -1,0 +1,215 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" type="text/css" href="dzz/details/template/pc/assets/css/header.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/details/template/pc/assets/css/details.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/details/template/pc/assets/css/xuanzhuan/index.css?{VERHASH}"/>
+<script>
+	function CopyTxt(item,text){
+		var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+		input.setAttribute('value', text);
+		document.getElementsByTagName('body')[0].appendChild(input);
+		document.getElementById('copyInput').select();
+		document.execCommand('copy');
+		item.$message({
+		  message: '{lang copy_clipboard}',
+		  type: 'success'
+		});
+		document.getElementById('copyInput').remove();
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" height="70px" style="padding: 0;z-index: 10;">
+			<div id="top_header">
+				<!--{template share/pc/components/header}-->
+			</div>
+		</el-header>
+		<el-main>
+			<div class="page-content" v-loading="HtmlLoading" style="display: flex;flex-direction: column;height: 100%;overflow: hidden;">
+				<div class="details-top" style="padding-right: 0;">
+					<div class="details-maincontainer">
+						<div class="floating-layer clearfix" :class="HideInformation?'HideInformation':''">
+							<!--{template share/pc/components/image}-->
+							<!--{template share/pc/components/right}-->
+						</div>
+					</div>
+				
+				</div>
+				
+			</div>
+
+		</el-main>
+	</el-container>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	const dzzoffice = createApp({
+		el: '#dzzoffice',
+		data() {
+			return {
+				rid:'',
+				ColorPopver: {
+					base: '',
+					rgb: '',
+					rgba: '',
+					hsl: '',
+					hsv: '',
+					cmyk: ''
+				},
+				DocumentAdminId:'$_G[adminid]',
+				HideInformation:false,
+				IsFullScreen:false,
+				imagesData: {
+					rid : '$resourcesdata[rid]',
+					appid : '$resourcesdata[appid]',
+					name : '$resourcesdata[name]',
+					type : '$resourcesdata[type]',
+					ext : '$resourcesdata[ext]',
+					iniframe : '$resourcesdata[iniframe]',
+					height : $resourcesdata[height],
+					width : $resourcesdata[width],
+					dateline : '$resourcesdata[dateline]',
+					grade : $resourcesdata[grade],
+					mtime : '$resourcesdata[mtime]',
+					btime : '$resourcesdata[btime]',
+					colors : $resourcesdata[colors],
+					desc : '$resourcesdata[desc]',
+					dpath : '$resourcesdata[dpath]',
+					link : '$resourcesdata[link]',
+					tag :$resourcesdata[tag],
+					opentype : '$resourcesdata[opentype]',
+					icondata:'$resourcesdata[icondata]',
+					iconwidth : $resourcesdata[iconwidth],
+					realfianllypath : '$resourcesdata[realfianllypath]',
+					iconheight : $resourcesdata[iconheight],
+					share : $resourcesdata[share],
+					download : $resourcesdata[download],
+					originalimg : '$resourcesdata[originalimg]',
+					realpath : '$resourcesdata[realpath]',
+					fsize : '$resourcesdata[fsize]',
+					foldernames :$resourcesdata[foldernames]
+				},
+				ImgParam:{
+					slider:0,
+					proportion:0,
+					fproportion:0,
+					scaleX:0,
+					scaleY:0,
+					rotate:0,
+					total:0,
+					index:0,
+					LoadFirst:false
+				},
+				imagesSize:{
+					width:0,
+					height:0,
+					show:false
+				},
+				DocumentThemeColor:'',//dark,
+				previews:{
+					data:$resourcesdata['preview'],
+					transform:0,
+					active:0,
+					size:false
+				}
+			}
+		},
+		watch: {
+			'ImgParam.proportion':function(val){
+				// this.ImgParam.fproportion = Math.round(val*100);
+				// this.imageSize(val);
+			},
+			'ImgParam.rotate':function(val){
+				this.imageTransform();
+			},
+			'ImgParam.scaleX':function(val){
+				this.imageTransform();
+			},
+			'ImgParam.scaleY':function(val){
+				this.imageTransform();
+			},
+			imagesData:{
+				handler(dasta){
+					var self = this;
+					self.$nextTick(function(){
+						if(dasta.opentype=='image' || dasta.opentype=='other'){
+							self.imageSet();
+						}
+						
+					});
+				},
+				deep:true,
+				immediate:true
+			},
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			var name = '$resourcesdata[name]-'+'$_G[setting][sitename]';
+			document.title = name;
+		},
+		mixins:[HeaderMixin,RightMixin,ImageMixin],
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+		},
+		mounted() {
+			var self = this;
+			window.onresize = function(){
+				var h = document.getElementById('ImgScroll').clientHeight;
+				document.querySelector('#ImgScroll .el-scrollbar__view').style.lineHeight = h+'px';
+			}
+			self.$nextTick(function () {
+				self.previewSize()
+			});
+			//禁止鼠标右击
+			// document.oncontextmenu = function() {
+			// 	event.returnValue = false;
+			// 	// alert('请不要右击');
+			// 	return false;
+			// };
+			//禁用开发者工具F12
+			// document.onkeydown = document.onkeyup = document.onkeypress = function(event) {
+			// 	let e = event || window.event || arguments.callee.caller.arguments[0];
+			// 	if (e && e.keyCode == 123) {
+			// 		e.returnValue = false;
+			// 		// alert('F12是不礼貌的');
+			// 		return false;
+			// 	}
+			// };
+		},
+
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

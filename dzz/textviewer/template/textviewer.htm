@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="{MOD_PATH}/css/theme/$theme/root.css?{VERHASH}">
+		<link rel="stylesheet" type="text/css" href="static/js/perfect-scrollbar/css/perfect-scrollbar.css?{VERHASH}" />
+		<script type="text/javascript" src="static/js/perfect-scrollbar/js/perfect-scrollbar.min.js?{VERHASH}"></script>
+		<style type="text/css">
+			*{
+				padding: 0;
+				margin: 0;
+				box-sizing: border-box;
+			}
+			body {
+				-webkit-box-orient: vertical;
+				-webkit-box-direction: normal;
+				-ms-flex-direction: column;
+				flex-direction: column;
+				/* word-break: break-all; */
+				background: var(--bg-input);
+				color: var(--header-text);
+				border-radius: 18px;
+			}
+			html,body,.scrollbar,.scrollbar__wrap{
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+			}
+			.scrollbar__wrap{
+				position: relative;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="scrollbar" style="padding: 25px 0;">
+			<div class="scrollbar__wrap" style="padding: 0px 35px;">
+				<div class="scrollbar__view" data-ttt="$theme">
+					$str
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			window.onload = function(){
+				var container = document.querySelector('.scrollbar__wrap');
+				new PerfectScrollbar(container);
+			};
+		</script>
+	</body>
+
+</html>

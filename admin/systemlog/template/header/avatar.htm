@@ -1,0 +1,146 @@
+<!--{if $_G[uid]}-->
+<el-dropdown trigger="click" @command="HeaderRightAvatar"  v-cloak>
+	<div id="dzz_avatar_img">
+		{eval echo avatar_block($_G[uid]);}
+		<!--{if intval($_G[pichomelevel]) == 1}-->
+		<el-tooltip class="item" effect="dark" content="密级" placement="bottom-end">
+		    <el-image v-cloak class="garde-image" src="dzz/pichome/image/grade/1.png" fit="contain"></el-image>
+		</el-tooltip>
+		<!--{elseif intval($_G[pichomelevel]) == 2}-->
+		<el-tooltip class="item" effect="dark" content="密级" placement="bottom-end">
+		    <el-image v-cloak class="garde-image" src="dzz/pichome/image/grade/2.png" fit="contain"></el-image>
+		</el-tooltip>
+		<!--{elseif intval($_G[pichomelevel]) == 3}-->
+		<el-tooltip class="item" effect="dark" content="密级" placement="bottom-end">
+		    <el-image v-cloak class="garde-image" src="dzz/pichome/image/grade/3.png" fit="contain"></el-image>
+		</el-tooltip>
+		<!--{elseif intval($_G[pichomelevel]) == 4}-->
+		<el-tooltip class="item" effect="dark" content="密级" placement="bottom-end">
+		    <el-image v-cloak class="garde-image" src="dzz/pichome/image/grade/4.png" fit="contain"></el-image>
+		</el-tooltip>
+		<!--{elseif intval($_G[pichomelevel]) == 5}-->
+		<el-tooltip class="item" effect="dark" content="密级" placement="bottom-end">
+		    <el-image v-cloak class="garde-image" src="dzz/pichome/image/grade/5.png" fit="contain"></el-image>
+		</el-tooltip>
+		<!--{/if}-->
+	</div>
+	<el-dropdown-menu slot="dropdown" style="width: 165px;">
+		<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}-->
+		<el-dropdown-item command="collection">收藏夹</el-dropdown-item>
+		<!--{/if}-->
+		<el-dropdown-item command="personal">个人设置</el-dropdown-item>
+		<el-dropdown-item command="help">帮助文档</el-dropdown-item>
+		<el-dropdown-item command="problem">问题反馈</el-dropdown-item>
+		<!--{if $_G['adminid']==1}-->
+		<el-divider></el-divider>
+		<el-dropdown-item command="setting">站点设置</el-dropdown-item>
+		<el-dropdown-item command="library">库设置</el-dropdown-item>
+		<!--{if defined('PICHOME_LIENCE')}-->
+		<el-dropdown-item command="orguser">用户管理</el-dropdown-item>
+		<!--{/if}-->
+		<el-dropdown-item command="system">
+			<span style="position: relative;">
+				系统工具
+				<!--{if $_G['setting']['upgrade']}-->
+				<div class="tip" style="width: 7px;height: 7px;border-radius: 50%;background: red;position: absolute;left: -13px;top: 0;bottom: 0;margin: auto;"></div>
+				<!--{/if}-->
+			</span>
+		</el-dropdown-item>
+		<el-dropdown-item command="systemlog">登录日志</el-dropdown-item>
+		<!--{/if}-->
+		<el-divider></el-divider>
+		<el-dropdown-item command="about">关于PicHome</el-dropdown-item>
+		<el-dropdown-item command="OutLogin">退出站点</el-dropdown-item>
+	</el-dropdown-menu>
+</el-dropdown>
+<!--{else}-->
+<el-button type="primary" size="mini" @click="HeaderRightGoLogin">登录</el-button>
+<!--{/if}-->
+<script type="text/javascript">
+	var HeaderRightAvatarMixin = {
+		methods:{
+			HeaderRightAvatar(type){
+				var self = this;
+				switch(type){
+					case 'collection':
+						window.location.href = 'index.php?mod=collection';
+					break;
+					case 'orguser':
+						window.open(SITEURL+'admin.php?mod=orguser');
+					break;
+					case 'personal':
+						window.location.href = MOD_URL + '&op=user&do=personal';
+					break;
+					case 'help':
+						window.open('https://www.yuque.com/pichome');
+					break;
+					case 'problem':
+						window.open('https://support.qq.com/products/340252');
+					break;
+					case 'setting':
+						window.location.href = MOD_URL + '&op=admin&do=authorize';
+					break;
+					case 'library':
+						window.location.href = MOD_URL + '&op=library';
+					break;
+					case 'about':
+						this.$alert(
+						`<div class="aboutlogo">
+							<img src="`+MOD_PATH+`/image/phlogo.png" alt="">
+						</div>
+						<div class="aboutmessage">
+							<div class="aboutlist">
+								<span class="title">软件名称：</span><span class="mes">欧奥PicHome</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版本信息：</span><span class="mes">$_G[setting][version]</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">版权信息：</span><span class="mes">Powered By oaooa PicHome © 2020-2022 欧奥图文</span>
+							</div>
+							<div class="aboutlist">
+								<span class="title">网站地址：</span><span class="mes"><a class="address" href="https://oaooa.com/" target="_blank">oaooa.com</a></span>
+							</div>
+						</div>`,
+						'',
+						{
+							customClass:'aboutPichome',
+							showClose:false,
+							showConfirmButton:false,
+							dangerouslyUseHTMLString: true,
+							closeOnClickModal:true
+						});
+					break;
+					case 'OutLogin':
+						self.$confirm('您确定要注销登录?', '提示', {
+							  confirmButtonText: '确定',
+							  cancelButtonText: '取消',
+							  type: 'warning'
+							}).then(function() {
+							 jQuery.get('user.php?mod=login&op=logging&action=logout&formhash={FORMHASH}&t='+new Date().getTime(),function(data){
+									window.location.reload();
+								});
+							}).catch(function() {
+									   
+							});
+					break;
+					case 'system':
+						window.open(SITEURL+'admin.php?mod=system');
+					break;
+					case 'systemlog':
+						window.open(SITEURL+'admin.php?mod=systemlog');
+					break;
+				}
+				return false;
+			},
+			HeaderRightGoLogin(){
+				// window.location.href = SITEURL+'user.php?mod=login';
+				this.Loginclickmodal = true;
+				this.LoginFormhash = '{FORMHASH}';
+				this.LoginVisible = true;
+				this.LoginFunc = 'refresh';
+				this.LoginParam = null;
+			},
+		}
+	}
+</script>

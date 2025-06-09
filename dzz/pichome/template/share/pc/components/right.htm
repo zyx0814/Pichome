@@ -1,0 +1,332 @@
+<div class="information-box">
+	<el-scrollbar class="page-component__scroll">
+		<div style="padding-right: 20px;">
+			<div class="title"><span v-cloak>{{imagesData.name}}</span><span v-cloak>.{{imagesData.ext}}</span></div>
+			<div class="operation clearfix">
+				<el-button 
+					plain 
+					v-cloak 
+					size="large"
+					v-if="parseInt(imagesData.download)"
+					@click="rightDown"
+					style="width: 100%;">{lang promptly_download}</el-button>
+					<el-tooltip v-if="(imagesData.iniframe || imagesData.icondata || imagesData.originalimg) && parseInt(imagesData.download)" class="item" effect="dark" content="查看原图" placement="bottom">
+						<el-button 
+							plain 
+							circle 
+							icon="View" 
+							@click="rightView"
+							size="large"></el-button>
+					</el-tooltip>
+					<el-tooltip v-if="parseInt(imagesData.share)" class="item" effect="dark" content="{lang share}" placement="bottom">
+						<el-button 
+							plain 
+							@click="rightShare"  
+							size="large" 
+							v-if="parseInt(imagesData.share)" 
+							circle 
+							icon="Share"></el-button>
+					</el-tooltip>
+			</div>
+			
+			<div class="message">
+				<div class="thesis-wrap" v-if="imagesData.colors && imagesData.colors.length">
+					<el-text v-cloak truncated tag="b" size="large" class="tip-title" style="color: var(--el-text-color-primary);">
+                        {lang color}</el-text>
+					<ul class="color clearfix" v-cloak>
+						<li class="color-list" v-for="citem in imagesData.colors">
+							<el-dropdown v-cloak trigger="click" @visible-change="rightShowPopoverColor(citem)" @command="rightCommandColor" placement="bottom">
+								<div style="width: 100%;">
+									<el-tooltip :content="'#'+citem" effect="light" placement="top" popper-class="color-top">
+										<div class="bg" :style="{background: '#'+citem}"></div>
+									</el-tooltip>
+								</div>
+								<template #dropdown>
+									<el-dropdown-menu class="el-popover-color">
+										<!-- <el-dropdown-item command="common">搜索相似颜色的项目</el-dropdown-item>
+										<el-divider></el-divider> -->
+										<el-dropdown-item :command="ColorPopver.base">{lang copy}&nbsp;{{ColorPopver.base}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.rgb">{lang copy}&nbsp;{{ColorPopver.rgb}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.rgba">{lang copy}&nbsp;{{ColorPopver.rgba}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.hsl">{lang copy}&nbsp;{{ColorPopver.hsl}}</el-dropdown-item>
+										<el-divider></el-divider>
+										<el-dropdown-item :command="ColorPopver.hsv">{lang copy}&nbsp;{{ColorPopver.hsv}}</el-dropdown-item>
+										<el-dropdown-item :command="ColorPopver.cmyk">{lang copy}&nbsp;{{ColorPopver.cmyk}}</el-dropdown-item>
+									</el-dropdown-menu>
+								</template>
+								
+							</el-dropdown>
+						</li>
+					</ul>
+				</div>
+				
+				<div class="thesis-wrap" v-if="imagesData.tag && imagesData.tag.length">
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);" size="large">
+                        {lang tag}</el-text>
+					<div v-if="imagesData.tag" class="label clearfix" v-cloak>
+						<el-tag v-for="item in imagesData.tag" size="large" effect="light" type="info">{{item}}</el-tag>
+					</div>
+				</div>
+				<div class="thesis-wrap" v-if="imagesData.link" v-cloak>
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);" size="large">
+                        {lang link}</el-text>
+					<p class="link">
+						<el-link :underline="false" :href="imagesData.link" truncated style="font-size: 12px;" target="_blank">{{imagesData.link}}</el-link>
+
+						<el-icon size="small" @click="rightcopyText(imagesData.link)"><Copy-Document /></el-icon>
+					</p>
+				</div>
+
+
+				<div class="thesis-wrap" v-if="imagesData.foldernames && imagesData.foldernames.length">
+					<el-text v-cloak truncated tag="b" class="tip-title" style="color: var(--el-text-color-primary);" size="large">
+                        {lang classify}</el-text>
+					<div class="label clearfix" style="padding: 0;" v-cloak>
+						<el-tag v-for="item in imagesData.foldernames" effect="light" type="info" size="large">
+							{{item.fname}}</el-tag>
+					</div>
+				</div>
+			</div>
+			<div class="information">
+				<el-text v-cloak truncated tag="b" class="tip" style="color: var(--el-text-color-primary);" size="large">
+                    {lang basic_message}</el-text>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang grade}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<div class="record" v-cloak>
+							<div class="el-rate el-rate--small">
+								<span class="el-rate__item" v-for="s in parseInt(imagesData.grade)" style="cursor: default;">
+									<el-icon class="el-rate__icon is-active"><Star-Filled></Star-Filled></el-icon>
+								</span>
+								<span class="el-rate__item" v-for="s in 5-parseInt(imagesData.grade)" style="cursor: default;">
+									<el-icon class="el-rate__icon"><Star></Star></el-icon>
+								</span>
+							</div>
+						</div>
+					</el-col>
+				</el-row>
+
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang size}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.width}}×{{imagesData.height}}</el-text>
+					</el-col>
+				</el-row>
+
+
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang filesize}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.fsize}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang type}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.ext}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang creation_time}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.mtime}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang add_time}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.btime}}</el-text>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="field">
+					<el-col :span="12">
+						<el-text v-cloak truncated size="small">{lang modify_time}</el-text>
+					</el-col>
+					<el-col :span="12" style="text-align: right;">
+						<el-text size="small" style="color: var(--el-text-color-primary);">{{imagesData.dateline}}</el-text>
+					</el-col>
+				</el-row>
+			</div>
+		</div>
+	</el-scrollbar>
+
+</div>
+<script type="text/javascript">
+	var RightMixin = {
+		methods:{
+			rightcopyText(val) {
+				CopyTxt(this, val);
+			},
+			rightShowPopoverColor(val) {
+				var rgb = this.righthexToRgb('#' + val);
+				var hsl = this.rightrgbToHsl(rgb.r, rgb.g, rgb.b);
+				var cmyk = this.rightRgbToCmyk(rgb.r, rgb.g, rgb.b);
+				var hsv = this.rightrgbToHsv(rgb.r, rgb.g, rgb.b);
+				this.ColorPopver = {
+					base: '#' + val,
+					rgb: 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')',
+					rgba: 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 1)',
+					hsl: hsl,
+					hsv: hsv,
+					cmyk: cmyk
+				};
+			},
+			rightCommandColor(val){
+				if(val == 'common'){
+					window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&color=' + this.ColorPopver.base;
+				}else{
+					CopyTxt(this,val)
+				}
+			},
+			rightView(){
+				if(this.imagesData.realfianllypath){
+					window.open(this.imagesData.realfianllypath);
+				}else if(this.imagesData.iniframe){
+					window.open(this.imagesData.iniframe);
+				}else if(this.imagesData.originalimg){
+					window.open(this.imagesData.originalimg);
+				}else{
+					window.open(this.imagesData.icondata);
+				}
+			},
+			async rightShare() {
+				var self = this;
+				if (self.imagesData.dpath) {
+					var res = await axios.post(MOD_URL+'&op=ajax&operation=createshare', {path: self.imagesData.dpath});
+					var data = res.data;
+					if (data.success) {
+						self.$notify({
+							title: '{lang share_success}',
+							duration: 10000,
+							dangerouslyUseHTMLString: true,
+							message: '<p class="address">' + data.success +
+								'</p><div style="text-align: right;margin-top: 6px;"><button type="button" class="el-button el-button--primary el-button--mini copy-share-btn"><span>{lang copy}地址</span></button></div>',
+							position: 'bottom-right'
+						});
+					} else {
+						self.$message({
+							message: '{lang share_fail}',
+							type: 'error'
+						});
+					}
+				} else {
+					this.$message({
+						message: '{lang data_error}',
+						type: 'error'
+					});
+				}
+			
+			},
+			async rightDown() {
+				let self = this;
+				if(this.previews.data && this.previews.data.length && this.previews.active > 0){
+					if(self.isadmin){
+						window.open('index.php?mod=pichome&op=download&dpath=' + this.previews.data[this.previews.active].dpath);
+					}else{
+						window.open('index.php?mod=banner&op=download&dpath=' + this.previews.data[this.previews.active].dpath);
+					}
+				}else{
+					if (self.imagesData.dpath) {
+						if(self.isadmin){
+							window.open('index.php?mod=pichome&op=download&dpath=' + self.imagesData.dpath);
+						}else{
+							window.open('index.php?mod=banner&op=download&dpath=' + self.imagesData.dpath);
+						}
+					} else {
+						self.$message({
+							message: '{lang data_error}',
+							type: 'error'
+						});
+					}
+				}
+			},
+
+			rightClickLink(val){
+				window.open(val);
+				// window.location.href = MOD_URL + '#appid=' + this.imagesData.appid + '&link=1&linkval=' + val;
+			},
+			righthexToRgb(hex) {
+				var str = {
+					r: parseInt('0x' + hex.slice(1, 3)),
+					g: parseInt('0x' + hex.slice(3, 5)),
+					b: parseInt('0x' + hex.slice(5, 7))
+				};
+				return str;
+			},
+			rightrgbToHsl(r, g, b) {
+				r /= 255, g /= 255, b /= 255;
+				var max = Math.max(r, g, b),
+					min = Math.min(r, g, b);
+				var h, s, l = (max + min) / 2;
+				if (max == min) {
+					h = s = 0; // achromatic
+				} else {
+					var d = max - min;
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0);
+							break;
+						case g:
+							h = (b - r) / d + 2;
+							break;
+						case b:
+							h = (r - g) / d + 4;
+							break;
+					}
+					h *= 6;
+				}
+				return 'hsl(' + Math.round(parseInt(h * 100) / 10) + ', ' + Math.round(parseInt(s * 1000) / 10) +
+					'%, ' + Math.round(parseInt(l * 1000) / 10) + '%)';
+			},
+			rightrgbToHsv(R, G, B) {
+				R /= 255
+				G /= 255
+				B /= 255
+				var max = Math.max(R, G, B)
+				var min = Math.min(R, G, B)
+				var range = max - min
+				var V = max
+				var S = V === 0 ? 0 : range / V
+				var H = 0
+				if (R === V) H = (60 * (G - B)) / range
+				if (G === V) H = 120 + (60 * (B - R)) / range
+				if (B === V) H = 240 + (60 * (R - G)) / range
+				if (range === 0) H = 0
+				if (H < 0) H += 360
+				return 'hsv(' + Math.round(H) + ', ' + Math.round(parseInt(S * 1000) / 10) + '%, ' + Math.round(
+					parseInt(V * 1000) / 10) + '%)';
+			},
+			rightRgbToCmyk(R, G, B) {
+				if ((R == 0) && (G == 0) && (B == 0)) {
+					return [0, 0, 0, 1];
+				} else {
+					var calcR = 1 - (R / 255),
+						calcG = 1 - (G / 255),
+						calcB = 1 - (B / 255);
+			
+					var K = Math.min(calcR, Math.min(calcG, calcB)),
+						C = (calcR - K) / (1 - K),
+						M = (calcG - K) / (1 - K),
+						Y = (calcB - K) / (1 - K);
+			
+					return 'cmyk(' + Math.round(parseInt(C * 1000) / 10) + '%, ' + Math.round(parseInt(M * 1000) /
+						10) + '%, ' + Math.round(parseInt(Y * 1000) / 10) + '%, ' + Math.round(parseInt(K *
+						1000) / 10) + '%)';
+				}
+			},
+		},
+	};
+</script>

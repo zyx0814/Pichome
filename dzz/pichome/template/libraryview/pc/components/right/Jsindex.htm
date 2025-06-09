@@ -1,0 +1,235 @@
+<!--{template libraryview/pc/components/right/file/js}-->
+<script>
+	let RightMixin = {
+		data(){
+			return {
+				RightWidth:260,
+				RightType:'',
+				RightActiveRid:[],
+				RightActivefid:[],
+				RightData:{
+					img:[],
+					color:[],
+					title:'',
+					message:'',
+					tags:[],
+					link:'',
+					folder:[],
+					
+					format:'',
+					size:'',
+					foldersize:'',
+					foldenum:'',
+					grade:0,
+					btime:'',
+					mtime:'',
+					dateline:'',
+				},
+				
+			}
+		},
+		mixins:[RightFileMixin],
+		methods:{
+			async RightGetData(){
+				let url = '';
+				let param = {
+					appid:this.DocumentAppid,
+					hassub:this.ImageDataIsExpanded
+				};
+				if(this.RightType == 'file'){
+					url = MOD_URL+'&op=library&do=rightdata&operation=getfiledata';
+				}else{
+					url = MOD_URL+'&op=library&do=rightdata&operation=getfolderdata';
+				}
+				if(this.RightType == 'file'){
+					param['rids'] = this.RightActiveRid.join(',');
+				}else if(this.RightType == 'notclassify'){
+					param['nofolder'] = 1;
+				}else if(this.RightType == 'nottag'){
+					param['notag'] = 1;
+				}else if(this.RightType == 'folder'){
+					param['fid'] = this.RightActivefid.join(',');
+				}else if(this.RightType == 'recycle'){
+					param['isrecycle'] = 1;
+				}
+
+				var res = await axios.post(url,param);
+				let data = res.data;
+				if(this.RightType == 'file'){
+					
+					if(data){
+						
+						if(this.RightActiveRid.length>1){
+							this.RightData.folder = [];
+							this.RightData.tags = [];
+							this.RightData.img = [];
+							for(var f in data.folderdata){
+								this.RightData.folder.push({
+									fid:f,
+									fname:data.folderdata[f].fname,
+									pathkey:data.folderdata[f].pathkey,
+								});
+							}
+							for(var t in data.tagdata){
+								this.RightData.tags.push({
+									tid:t,
+									tagname:data.tagdata[t]
+								});
+							}
+							for(var t in data.icondata){
+								this.RightData.img.push(data.icondata[t]);
+							}
+							this.RightData.foldersize = data.size;
+							this.RightData.link = data.link;
+							this.RightData.message = data.desc;
+						}else{
+							this.RightData.img = [data.icondata];
+							for(var i in data.colors){
+								this.RightData.color.push('#'+data.colors[i]);
+							}
+							this.RightData.title = data.name;
+							for(var t in data.tag){
+								this.RightData.tags.push({
+									tid:t,
+									tagname:data.tag[t]
+								});
+							}
+							this.RightData.message = data.desc;
+							this.RightData.link = data.link;
+							for(var f in data.foldernames){
+								this.RightData.folder.push({
+									fid:f,
+									fname:data.foldernames[f].fname,
+									pathkey:data.foldernames[f].pathkey,
+								});
+							}
+							this.RightData.format = data.ext;
+							this.RightData.size = data.width+'×'+data.height;
+							this.RightData.foldersize = data.fsize;
+							this.RightData.grade = parseInt(data.grade);
+							this.RightData.btime = data.btime;
+							this.RightData.mtime = data.mtime;
+							this.RightData.dateline = data.dateline;
+						}
+						
+					}
+				}else if(this.RightType == 'folder'){
+					if(data){
+						if(data.num){
+							this.RightData.foldenum = data.num;
+						}
+						if(data.size){
+							this.RightData.foldersize = data.size;
+						}
+						if(data.dateline){
+							this.RightData.dateline = data.dateline;
+						}
+						this.RightData.title = data.fname;
+					}
+				}else{
+					if(data){
+						if(data.num){
+							this.RightData.foldenum = data.num;
+						}else{
+							this.RightData.foldenum = 0;
+						}
+						if(data.size){
+							this.RightData.foldersize = data.size;
+						}else{
+							this.RightData.foldersize = 0;
+						}
+					}
+				}
+			},
+			async RightFolderNameChange(val){
+				var self = this;
+				var res = await axios.post(MOD_URL+'&op=library&do=folder&operation=rename',{
+					fid: this.RightActivefid[0],
+					name:val
+				});
+				var curr = this.fileParam.data.find(function(current){
+					return current.fid == self.RightActivefid[0];
+				});
+				if(curr){
+					curr.pfname = val;
+					curr.fname = val;
+				}
+				var node = self.$refs.LeftTreeRef.getNode(this.RightActivefid[0]);
+				if(node){
+					node.data.fname = val;
+					node.data.pfname = val;
+				}
+			},
+			RightParamClean(type){
+				if(type){
+					this.RightData = {
+						img:[],
+						color:[],
+						title:'',
+						message:'',
+						tags:[],
+						link:'',
+						folder:[],
+						
+						format:'',
+						size:'',
+						foldersize:'',
+						foldenum:'',
+						grade:0,
+						btime:'',
+						mtime:'',
+						dateline:'',
+					}
+					return false;
+				}
+				this.RightType = '';
+				this.RightActiveRid = [];
+				this.RightActivefid = [];
+				this.RightData = {
+					img:[],
+					color:[],
+					title:'',
+					message:'',
+					tags:[],
+					link:'',
+					folder:[],
+					
+					format:'',
+					size:'',
+					foldersize:'',
+					foldenum:'',
+					grade:0,
+					btime:'',
+					mtime:'',
+					dateline:'',
+				}
+			},
+			RightdragControllerDiv(){
+				var self = this;
+				var boxw = document.body.clientWidth;
+				var fboxw = parseInt(boxw/3);
+				// 鼠标按下事件
+				document.onmousemove = function(e) {
+					var DocumentLeftWidth = e.clientX+1;
+					DocumentLeftWidth = boxw-DocumentLeftWidth;
+					if(DocumentLeftWidth>fboxw){
+						DocumentLeftWidth = fboxw;
+					}else if(DocumentLeftWidth<260){
+						DocumentLeftWidth = 260;
+					}
+					self.RightWidth = DocumentLeftWidth;
+					return false;
+				};
+				document.onmouseup = function() {
+					document.onmousemove = null;
+					document.onmouseup = null;
+					if(self.LeftCurrenType != 'tags' && self.LeftCurrenType != 'member'){
+						self.$refs.RefImageLayout.updateImageData();
+					}
+					return false;
+				};
+				return false;
+			}
+		}
+	};
+</script>

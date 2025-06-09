@@ -1,0 +1,217 @@
+<el-drawer 
+	ref="rightdrawer"
+    v-model="SettingDialog.Visible" 
+    direction="rtl"
+    :show-close="false"
+    size="66%"
+    :append-to-body="true"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
+    destroy-on-close
+    @open="SettingGetData"
+	@closed="SettingEightClosed">
+    <template #header>
+		<el-text class="title" tag="b" truncated size="large">{{SettingForm.pagename}}</el-text>
+		<div style="flex: 1 1 auto;width: 100%;overflow: hidden;">
+			<el-tabs v-model="SettingDialog.active">
+				<el-tab-pane label="{lang basic_message}" name="basic"></el-tab-pane>
+			</el-tabs>
+		</div>
+		<div style="min-width: 160px;max-width: 160px;text-align: right;">
+			<el-button @click="SettingEightClosed" :disabled="SettingForm.loading">{lang close}</el-button>
+			<el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">
+                {lang save}</el-button>
+		</div>
+    </template>
+    <template #default>
+        <el-form 
+            :model="SettingForm" 
+            label-width="140px" 
+            label-suffix="：">
+            <el-form-item label="{lang name}">
+                <div class="language-box">
+                    <el-input v-model="SettingForm.pagename" @input="SettingEditStatus"></el-input>
+                    <language 
+                    v-if="SettingForm.langkey&&SettingForm.langkey.pagename" 
+                    :langkey="SettingForm.langkey.pagename"
+                    @change="SettingFormPagenameChange"></language>
+                </div>
+            </el-form-item>
+            <el-form-item label="{lang access_address}" style="flex-wrap: unset;">
+                <div style="display: flex;flex: 1;">
+                    <el-input 
+                        v-model="SettingForm.address"
+                        :disabled="parseFloat(SettingDialog.pathinfo)?false:true"
+                        @input="SettingAddressInput"
+                        maxlength="30">
+                        <template #prepend>{$_G['siteurl']}</template>
+                    </el-input>
+                    <div style="white-space: nowrap;margin-left: 12px;">
+                        <el-button icon="CopyDocument" @click="RightCopyUrl(SettingForm.address)" plain>{lang copy_link}</el-button>
+                        <el-popover
+                            placement="bottom"
+                            popper-class="qrcode-box"
+                            :width="224"
+                            :teleported="false"
+                            @before-enter="TableGeturlqrcode"
+                            trigger="hover">
+                            <div v-loading="!SettingQrcode.isqrcode" style="width: 200px;font-size: 0;">
+                                <el-image draggable="false" v-if="SettingQrcode.qrcodeurl" style="width: 200px; height: 200px" :src="SettingQrcode.qrcodeurl" fit="contain">
+                                    <template #error><div class="el-image__placeholder"></div></template>
+                                </el-image>
+                                <el-text tag="p" style="text-align: center;padding-top: 12px;">{lang qrcode_image_tip}</el-text>
+                                <div v-if="SettingQrcode.qrcodeurl" class="download" @click="TableDownQrcodeurl(SettingQrcode.qrcodeurl)">
+                                    <div style="text-align: center;">
+                                        <el-icon style="font-size: 22px;"><Download /></el-icon>
+                                        <el-text tag="p" style="width: 100%;">{lang qrcode_download}</el-text>
+                                    </div>
+                                </div>
+                            </div>
+                            <template #reference>
+                                <el-button plain>
+                                    <template #icon>
+                                        <el-icon>
+                                            <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" ><path d="M384 64l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2c0 51.2 41.6 89.6 89.6 89.6l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2C473.6 105.6 435.2 64 384 64zM428.8 380.8c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8l0-227.2c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8L428.8 380.8z"></path><path d="M192 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M377.6 544l-243.2 0c-48 0-86.4 38.4-86.4 89.6l0 220.8c0 48 38.4 89.6 86.4 89.6l243.2 0c48 0 86.4-38.4 86.4-89.6l0-220.8C467.2 582.4 425.6 544 377.6 544zM422.4 851.2c0 25.6-19.2 44.8-44.8 44.8l-243.2 0c-25.6 0-44.8-19.2-44.8-44.8l0-220.8c0-25.6 19.2-44.8 44.8-44.8l243.2 0c25.6 0 44.8 19.2 44.8 44.8L422.4 851.2z" ></path><path d="M192 668.8l131.2 0 0 131.2-131.2 0 0-131.2Z"></path><path d="M633.6 470.4l249.6 0c51.2 0 89.6-41.6 89.6-89.6l0-227.2c0-51.2-41.6-89.6-89.6-89.6l-249.6 0c-51.2 0-89.6 41.6-89.6 89.6l0 227.2C544 432 585.6 470.4 633.6 470.4zM588.8 153.6c0-25.6 19.2-44.8 44.8-44.8l249.6 0c25.6 0 44.8 19.2 44.8 44.8l0 227.2c0 25.6-19.2 44.8-44.8 44.8l-249.6 0c-25.6 0-44.8-19.2-44.8-44.8L588.8 153.6z"></path><path d="M700.8 192l134.4 0 0 134.4-134.4 0 0-134.4Z"></path><path d="M572.8 716.8l137.6 0c12.8 0 22.4-9.6 22.4-22.4l0-137.6c0-12.8-9.6-22.4-22.4-22.4l-137.6 0c-12.8 0-22.4 9.6-22.4 22.4l0 137.6C550.4 707.2 560 716.8 572.8 716.8z"></path><path d="M886.4 563.2l0 38.4c0 12.8 12.8 25.6 25.6 25.6l38.4 0c12.8 0 25.6-12.8 25.6-25.6l0-38.4c0-12.8-12.8-25.6-25.6-25.6l-38.4 0C899.2 537.6 886.4 547.2 886.4 563.2z"></path><path d="M582.4 944l48 0c12.8 0 22.4-9.6 22.4-22.4l0-48c0-12.8-9.6-22.4-22.4-22.4l-48 0c-12.8 0-22.4 9.6-22.4 22.4l0 48C560 934.4 569.6 944 582.4 944z"></path><path d="M944 704l-99.2 0c-16 0-28.8 12.8-28.8 28.8l0 44.8-48 0c-19.2 0-32 12.8-32 32l0 99.2c0 16 12.8 28.8 28.8 28.8l179.2 3.2c16 0 28.8-12.8 28.8-28.8l0-179.2C972.8 716.8 960 704 944 704z" ></path></svg>
+                                        </el-icon>
+                                    </template>
+                                    {lang qrcode_get}
+                                </el-button>
+                            </template>
+                        </el-popover>
+                        
+                    </div>
+                </div>
+            </el-form-item>
+        </el-form>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button @click="SettingEightClosed" :disabled="SettingForm.loading">{lang close}</el-button>
+        <el-button type="primary" @click="SettingSubmit" :loading="SettingForm.loading" :disabled="!SettingDialog.edit">
+            {lang save}</el-button>
+      </div>
+    </template>
+</el-drawer>
+<script>
+    const RightMixin = {
+        data(){
+            return {
+                SettingForm:{
+                    pagename:'',
+					address:'',
+                    id:0,
+                    langkey:''
+                },
+                SettingDialog:{
+					Visible:false,
+                    loading:false,
+					edit:false,
+					active:'basic',
+					pathinfo:parseFloat('{$_G['setting']['pathinfo']}'),
+				},
+                SettingQrcode:{
+					isqrcode:false,
+					qrcodeurl:''
+				},
+                SettingAddressOld:''
+            }
+        },
+        methods:{
+            SettingAddressInput(value){
+                const regex = /^[a-zA-Z_0-9]+$/;
+                if (!regex.test(value)) {
+                    this.SettingForm.address = this.SettingAddressOld;
+                }else{
+                    this.SettingAddressOld = value;
+                    this.SettingEditStatus();
+                }
+            },
+            async SettingGetData(){
+                if(!this.SettingForm.id)return false;
+                const {data: res} = await axios.post(BasicUrl+'addpage',{
+                    id:this.SettingForm.id
+                });
+                this.SettingAddressOld = res.data.url || '';
+                this.SettingForm.address = res.data.url || '';
+                this.SettingForm.langkey = res.data.langkey || '';
+            },
+            SettingEightClosed(){
+                this.SettingDialog.Visible = false;
+                this.SettingDialog.loading = false;
+                this.SettingDialog.edit = false;
+                this.SettingQrcode.isqrcode = false;
+                this.SettingQrcode.qrcodeurl = '';
+            },
+            RightCopyUrl(url,issiteurl){
+				const self = this;
+				var input = document.createElement('input'); input.setAttribute('id', 'copyInput');
+                let furl = '{$_G['siteurl']}'+url;
+                if(issiteurl){
+                    furl = url;
+                }
+				input.setAttribute('value', furl);
+				document.getElementsByTagName('body')[0].appendChild(input);
+				document.getElementById('copyInput').select();
+				document.execCommand('copy')
+				self.$message({
+					message: '{lang copy_clipboard}',
+					type: 'success'
+				});
+				document.getElementById('copyInput').remove();
+			},
+            TableDownQrcodeurl(url){
+				let a = document.createElement('a')
+				a.href = url;
+				a.download = '{lang qrcode}'
+				a.click()
+			},
+            //获取二维码
+			async TableGeturlqrcode(){
+                const self = this;
+                if(this.SettingQrcode.isqrcode)return false;
+				var {data: res} = await axios.post(BasicUrl+'geturlqrcode',{
+					id:this.SettingForm.id
+				});
+				if(res.success){
+					this.SettingQrcode.isqrcode = true;
+                    this.SettingQrcode.qrcodeurl = res.qrcode;
+				}else{
+					self.$message.error(res.msg || '{lang failure}');
+				}
+				
+			},
+            SettingEditStatus(){
+				this.SettingDialog.edit = true;
+			},
+            async SettingSubmit(){
+                const self = this;
+                let param = {
+                    addpage:true,
+                    formhash:'{FORMHASH}',
+                    id:this.SettingForm.id,
+                    address:this.SettingForm.address,
+                    pagename:this.SettingForm.pagename
+                };
+                const {data: res} = await axios.post(BasicUrl+'addpage',param);
+                if(res.success){
+                    let curr = this.tableData.find(function(current){
+                        return parseFloat(current.id) == parseFloat(self.SettingForm.id);
+                    });
+                    if(curr){
+                        curr.pagename = this.SettingForm.pagename;
+                    }
+                    self.$message({
+                        type:'success',
+                        message:'{lang edit_success}'
+                    });
+                    this.SettingDialog.Visible = false;
+                }else{
+                    self.$message.error(res.msg || '{lang add_error}');
+                }
+            },
+            SettingFormPagenameChange(val){
+                this.SettingForm.pagename = val;
+            }
+		}
+    }
+</script>

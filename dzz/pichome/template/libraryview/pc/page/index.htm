@@ -1,0 +1,224 @@
+<!--{template common/container/pc/header_start}-->
+<script type="text/javascript" src="dzz/pichome/template/librarylist/assets/js/common.js?{VERHASH}"></script>
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/screendir/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/libraryview/pc/assets/index.css?{VERHASH}"/>
+<script type="text/javascript" src="static/jszip/jszip.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/jszip/FileSaver.min.js?{VERHASH}"></script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+        <el-header class="page-header"  height="60px" style="--el-header-padding: 0 8px;">
+            <!--{template libraryview/pc/components/index/header}-->
+        </el-header>
+        <el-container>
+            <template v-if="classifyType">
+				<el-aside class="page-left" :width="LeftWidth+'px'" v-show="HeaderRightBtnShow.column.indexOf('left')>-1">
+					<!--{template libraryview/pc/components/left/index}-->
+				</el-aside>
+			</template>
+			
+			<el-container>
+				<el-header v-if="(screenType.show && !screenType.type) || !ispc" v-show="Screenshow" height="50px" style="padding: 0px 8px;padding-bottom: 4px;position: relative;">
+					<dzz-screen
+						ref="ScreenBoxRef"
+						:resize="DocumentResize"
+						:props="ScreenProps"
+						:headerkeyword="HeaderKeyword"
+						:defaultparam="ScreenParam"
+						@submit="CommonGetImageData"
+						@visible="handleDocumentOverlay"
+						:hassub="hassub"
+						@handlehassub="handlehassub">
+					</dzz-screen>
+					<div v-if="DocumentOverlay.screen" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
+				</el-header>
+				<el-main class="dzz-container" style="padding: 0px;overflow: hidden;position: relative;">
+					<el-scrollbar 
+						id="main_scrollbar" 
+						class="main_scrollbar" 
+						ref="MainscrollbarRef" 
+						@scroll="HandleElScrollbar">
+						<div v-if="screenType.show && screenType.type && ispc" v-show="Screenshow" style="padding: 10px 0;">
+							<div style="border-radius: 8px;background: var(--el-bg-color);border: var(--el-border);">
+								<dzz-screendir
+									ref="ScreenBoxRef"
+									:resize="DocumentResize"
+									:props="ScreenProps"
+									:headerkeyword="HeaderKeyword"
+									:defaultparam="ScreenParam"
+									:appid="DocumentAppid"
+									@submit="CommonGetImageData"
+									:hassub="hassub">
+								</dzz-screendir>
+							</div>
+							
+						</div>
+						
+						<!--{template libraryview/pc/components/index/image}-->
+						<div class="right-toolbar">
+							<el-backtop target=".main_scrollbar>.el-scrollbar__wrap" style="position: unset;margin-top: 10px;"></el-backtop>
+						</div>
+					</el-scrollbar>
+					<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
+				</el-main>
+			</el-container>
+            
+        </el-container>
+	</el-container>
+	<!--{template libraryview/pc/components/left/Jsindex}-->
+    <!--{template libraryview/pc/components/index/screen/Jsindex}-->
+	<!--{template libraryview/pc/components/index/common}-->
+	<!--分享对话框加载-->
+	<!--{eval  include template('shareAddDialog','./dzz/shares/template/')}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	var dzzoffice = createApp({
+		data(){
+			return {
+				DocumentResize:0,
+				DocumentAppid:'',
+				DocumentCtrl:false,
+				DocumentDropActive:false,
+				DocumentDropActive1:false,
+				OpenDetailType:'new',
+				DocumentThemeColor:'',//dark
+				scrollref:null,
+				DocumentVapp:{appname:'',type:0},
+				ispc:true,
+				classifyType:0,
+				screenType:{
+					type:0,
+					show:false
+				},
+				DocumentOverlay:{
+					left:false,
+					screen:false,
+					main:false,
+				},
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			},
+			DocumentAppid:{
+				handler(val){
+					this.ScreenParam.appid = val;
+				},
+				deep:true,
+				immediate: true
+			},
+		},
+		created(){
+			this.handleIsPc();
+			<!--{if intval($_G[setting][pathinfo])}-->
+			let param = '{$_GET[hashparams]}';
+			if(param){
+				param = JSON.parse(param)
+				this.DocumentAppid = param.appid;
+			}else{
+				this.DocumentAppid = this.CommonGetHashParam('appid',location.hash);
+			}
+			<!--{else}-->
+			this.DocumentAppid = this.CommonGetHashParam('appid',location.hash);
+			<!--{/if}-->
+			let keyword = this.CommonGetHashParam('keyword');
+			
+			if(keyword){
+				this.HeaderKeyword = decodeURI(keyword);
+			}
+
+			let aid = this.CommonGetHashParam('aid');
+			console.log(this.searchdata.aid);
+			
+
+			if(aid){
+				let cropImg = sessionStorage.getItem('cropimg'+this.DocumentAppid);
+				this.searchdata.aid = parseFloat(aid);
+				this.searchdata.img = cropImg;
+			}
+			if(this.DocumentAppid){
+				this.ScreenParam.appid = this.DocumentAppid;
+				var ShowScreen = sessionStorage.getItem('showscreen')? sessionStorage.getItem('showscreen'):1;
+				if(parseInt(ShowScreen)){
+					this.Screenshow = true;
+				}else{
+					this.Screenshow = false;
+				}
+			}
+		},
+		mixins:[leftMixins,CommonMixin,HeaderMixin,ScreenMixin,MixinImage,ShareAddDialogMixin],
+		methods:{
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			handleIsPc(){
+                let innerWidth = window.innerWidth;
+                if(innerWidth > 768){
+                    this.ispc = true;
+                }else{
+                    this.ispc = false;
+                }
+            },
+			handlehassub(status){
+				this.hassub = parseInt(status);
+			},
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			},
+		},
+		mounted(){
+			var self = this;
+			dzzoffice.WindowThis = this;
+			self.CommonInit();
+			this.scrollref = self.$refs.MainscrollbarRef;
+			window.onresize = function(){
+				self.DocumentResize += 1;
+			};
+		},
+		components:{
+			comavatar,
+			comsort
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		<!--{if $_G['language']=='zh-CN'}-->
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+		<!--{/if}-->
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('international',international);
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(DzzScreen);
+	dzzoffice.use(DzzScreendir);
+	dzzoffice.use(DzzCollectdialog);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

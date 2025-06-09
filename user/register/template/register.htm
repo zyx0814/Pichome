@@ -1,0 +1,332 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="{MOD_PATH}/images/register.css?{VERHASH}">
+ 
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<div id="wrapper_div" style="width: 100%;height:100%;  position: absolute; top: 0px; left: 0px; margin: 0px; padding: 0px; overflow: hidden;z-index:0;  font-size: 0px; background:{eval echo $_G['setting']['loginset']['bcolor']?$_G['setting']['loginset']['bcolor']:'#76838f';};"> 
+	
+		<img src="{eval echo $_G['setting']['loginset']['img']?$_G['setting']['loginset']['img']:MOD_PATH.'/images/bg.jpg';}" name="imgbg" id="imgbg" style="right: 0px; bottom: 0px; top: 0px; left: 0px; z-index:1;margin:0;padding:0;overflow:hidden; position: absolute;" @load="handleImgLoad(this)">
+
+		
+		<iframe v-if="loginset.url"  id="wrapper_frame" name="wrapper_frame" src="$_G['setting']['loginset']['url']" frameborder="0" marginheight="0" marginwidth="0" width="100%" height="100%" allowtransparency="true" style="z-index:2;position:absolute;width:100%;height:100%;background:url(dzz/images/b.gif);"></iframe>
+		
+	</div>
+	<div class="mainContainer" id="main_message">
+	<div class="modal-content">
+		<div class="mask"></div>
+		<el-tooltip content="{lang themeColor_tip}" placement="bottom">
+            <el-button 
+                text 
+				 class="themebtn"
+                :icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+                style="font-size: var(--el-font-size-extra-large);" 
+                circle  
+                size="large"
+                @click="DocumentThemeChange">
+            </el-button>
+        </el-tooltip>
+		 <div class="brand"> <img src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" /> </div>
+		<div v-if="loginset.title" class="main-title">$_G[setting][loginset][title]</div>
+		<div v-if="loginset.subtitle" class="sub-title">$_G[setting][loginset][subtitle]</div>
+		<el-text v-if="bbclosed" type="error" >{lang site_closed_please_admin}</el-text>
+      	
+		<el-form :model="ruleForm" class="loginForm" :rules="rules" ref="ruleForm" label-width="0" @keydown.enter.prevent="handleSubmit()">
+					
+			<input type="hidden" name="formhash" value="{FORMHASH}" />
+			<input type="hidden" v-model="ruleForm.referer" />
+			<el-form-item  prop="email">
+				<el-input class="maxWidth" size="large" v-model.trim="ruleForm.email" placeholder="{lang register_email_tips}"></el-input>
+			</el-form-item>
+			<el-form-item  prop="nickname">
+				<el-input class="maxWidth" size="large" v-model.trim="ruleForm.nickname" placeholder="{lang nickname}"></el-input>
+			</el-form-item>
+			<el-form-item  prop="username">
+				<el-input class="maxWidth" size="large" v-model.trim="ruleForm.username" placeholder="{lang username}"></el-input>
+			</el-form-item>
+			<el-form-item  prop="password">
+				<el-input class="maxWidth" size="large" show-password v-model.trim="ruleForm.password" placeholder="{lang please_input_password}"></el-input>
+				
+			</el-form-item>
+			<el-form-item  prop="password2">
+				<el-input class="maxWidth" size="large" show-password v-model.trim="ruleForm.password2" placeholder="{lang register_repassword_tips}"></el-input>
+				
+			</el-form-item>
+			<!--{if $bbrules}-->
+			<el-form-item >
+				<el-checkbox label="{lang agree}" v-model="ruleForm.agree" value="1" /></el-checkbox>
+				<el-link type="text" :underline=false @click="showBBrule">{lang rulemessage}</el-link>
+			</el-form-item>
+			<!--{/if}-->
+			<el-form-item style="margin-bottom:0;">
+				<el-button type="primary" size="large" @click="handleSubmit" style="width:100%">{$_G[setting][reglinkname]}</el-button>
+			</el-form-item>
+		
+			<div class="third-wrapper">
+				<!--{hook third_login}-->
+			</div>
+		 
+		</el-form>
+		<div class="copyright-container">
+		<!--{template pc/page/login_copyright}-->
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			let self = this;
+			
+			var inputpassword = function(rule, value, callback){
+				if (value) {
+					
+					
+					if(value.length<self.pwsetting.pwlength){//验证密码长度
+						callback(new Error('{lang password_short}'+self.pwsetting.pwlength));
+					}else if(self.pwsetting.strongpw.includes('1') && !value.match(/\d+/g)){//验证密码强度
+						callback(new Error('{lang pwd_strong_1}'));
+					}else if(self.pwsetting.strongpw.includes('2') && !value.match(/[a-z]+/g)){
+						callback(new Error('{lang pwd_strong_2}'));
+					}else if(self.pwsetting.strongpw.includes('3') && !value.match(/[A-Z]+/g)){
+						callback(new Error('{lang pwd_strong_3}'));
+					}else if(self.pwsetting.strongpw.includes('4') && !value.match(/[^a-z0-9]+/ig)){
+						callback(new Error('{lang pwd_strong_4}'));
+					}
+					if (self.ruleForm.password2 !== '') {
+						self.$refs.ruleForm.validateField('password2',(error) => {
+								console.log(error);
+						});
+					}
+					callback();
+				}else{
+					callback();
+				}
+			};
+			var inputpassword2 = function(rule, value, callback){
+				if (value !== self.ruleForm.password) {
+					callback(new Error('{lang password_not_match}'));
+				} else {
+					callback();
+				}
+			};
+			var checkemail = async function(rule, value, callback){
+				if (value) {
+					var isEmail = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;  
+					if(!isEmail.test(value)) {
+						callback(new Error('{lang email_illegal}')); 
+					}
+					//检查重名
+					const {data: res} = await axios.get('user.php?mod=ajax&action=checkemail&email=' + value);
+					if(res.error){
+						callback(new Error(res.error)); 
+					}
+					callback();
+				}else{
+					callback();
+				}
+			};
+			var checknickname = async function(rule, value, callback){
+				if (value) {
+					
+					//检查重名
+					const {data: res} = await axios.get('user.php?mod=ajax&action=checkusername&username=' + encodeURI(value));
+					if(res.error){
+						callback(new Error(res.error)); 
+					}
+					callback();
+				}else{
+					callback();
+				}
+			};
+			return {
+				DocumentThemeColor:'',
+				bbrules:parseInt('{$bbrules}'),
+				pwsetting:{
+					pwlength:parseInt("$_G['setting']['pwlength']"),
+					strongpw:{eval echo json_encode($_G['setting']['strongpw'])}
+				},
+				loginset:{
+					title:"{$_G[setting]['loginset']['title']}",
+					subtitle:"{$_G[setting]['loginset']['subtitle']}",
+					url:"{$_G[setting]['loginset']['url']}",
+					bcolor:"{$_G[setting]['loginset']['bcolor']}",
+					img:"{$_G[setting]['loginset']['img']}",
+				},
+				bgimg: {
+					width:0,
+					height:0
+				},
+				ruleForm: {
+					email:'',
+					nickname:'',
+					username:'',
+					password:'',
+					password2:'',
+					agree:true,
+					referer:"{$referer}"
+				},
+				rules: {
+					email: [
+						{ required: true, message: '"{lang please_input_email}', trigger: 'blur' },
+						{ validator: checkemail, trigger: ['blur', 'change'] }
+					],
+					nickname: [
+						{ required: true, message: '{lang please_input_nickname}', trigger: 'blur' },
+						{ validator: checknickname, trigger: ['blur', 'change'] }
+					],
+					username: [
+						{ required: true, message: '{lang please_input_username}', trigger: 'blur' }
+					],
+					password: [
+						{ required: true, message: '{lang please_input_password}', trigger: 'blur' },
+						{ validator: inputpassword, trigger: ['blur', 'change'] }
+					],
+					password2: [
+						{ required: true, message: '{lang please_input_repassword}', trigger: 'blur' },
+						{ validator: inputpassword2, trigger: ['blur', 'change'] }
+					]
+				}
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		created() {
+			 //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+			},
+			async showBBrule(){
+				let self=this;
+				const {data: res} = await axios.get('user.php?mod=register&op=ajax&&do=bbrule');
+				if(res.success){	
+				 self.$messageBox({
+					   title:'{lang terms_service}',
+						message: res.data,
+						dangerouslyUseHTMLString: true,
+						buttonSize:'large',
+					    appendTo:'body',
+					 	confirmButtonText:'{lang agree}{lang terms_service}',
+						callback:function(value,action){
+							
+						  if(value=='confirm') self.ruleForm.agree=true;
+						}
+					 });
+				}
+			},
+			handleImgLoad(){
+				let img=document.getElementById('imgbg');
+			
+				this.bgimg.width=img.width;
+				this.bgimg.height=img.height;
+				this.setImageSize();
+			},
+				
+			setImageSize(){
+				let width=this.bgimg.width;
+				let height=this.bgimg.height;
+				var clientWidth=document.documentElement.clientWidth;
+				var clientHeight=document.documentElement.clientHeight;
+				var r0=clientWidth/clientHeight;
+				var r1=width/height;
+				if(r0>r1){//width充满
+					w=clientWidth;
+					h=w*(height/width);
+				}else{
+					h=clientHeight;
+					w=h*(width/height);
+				}
+				if(document.getElementById('imgbg')){
+				  document.getElementById('imgbg').style.width=w+'px';
+				  document.getElementById('imgbg').style.height=h+'px';
+				}
+			},
+						
+			
+			handleSubmit(){
+				var self = this;
+				if(!self.ruleForm.agree){
+					self.$message.error('{lang register_rules_agree}');	
+					return;
+				}
+				self.$refs.ruleForm.validate(async function(valid){
+					if (valid) {
+						
+						var params = {
+							'regsubmit':true,
+							'formhash':'{FORMHASH}',
+							'email':self.ruleForm.email,
+							'nickname':self.ruleForm.nickname,
+							'username':self.ruleForm.username,
+							'password':self.ruleForm.password,
+							'password2':self.ruleForm.password2,
+							'agree':self.ruleForm.agree,
+							
+							'referer':self.ruleForm.referer
+						};
+						
+						self.btnloading = true;
+						const {data: res} = await axios.post('user.php?mod=register&returnType=json',params);
+						
+						if(res.success){
+							 self.$message({
+							 	message: res.success.message,
+								center: true,
+								dangerouslyUseHTMLString:true,
+								onClose:function(){
+								 	window.location.href=res.success.url_forward;
+							 	}
+							 });
+						}else{
+							self.btnloading = false;
+							self.$message.error(res.error);
+						}
+					} else {
+						self.$message.error('{lang submit_invalid_msg}');
+						self.btnloading = false;
+						return false;
+					}
+				});
+			}
+		},
+		mounted() {
+			window.onresize = () =>{
+				this.setImageSize();
+			}
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

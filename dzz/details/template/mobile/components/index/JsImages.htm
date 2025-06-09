@@ -1,0 +1,310 @@
+<div class="pic-container-scroll">
+	<div class="img-container">
+		<div id="imgContainer" :class="ParamSort.layout.value=='imageList'?'imagelist':''">
+			<template v-if="ParamSort.layout.value == 'table'">
+				<!--{template mobile/components/index/image/image_table}-->
+			</template>
+			<template v-else-if="ParamSort.layout.value == 'music'">
+				<!--{template mobile/components/index/image/image_music}-->
+			</template>
+			<template v-else>
+				<!--{template mobile/components/index/image/image_other}-->
+			</template>
+			<template  v-if="ParamImages.data.length&&ParamBasic.page>=ParamBasic.totalpage&&!ParamImages.loading&&!ParamImages.valloading">
+				<div style="position: absolute;bottom: 0;left: 0;width: 100%;line-height: 40px;text-align: center;color: var(--content-text);font-size: 14px;">
+					<!--{if {$_G[adminid]} == 1}-->
+					<p>到底了</p>
+					<!--{else}-->
+					<p>到底了，可能会有部分文件因权限未显示</p>
+					<!--{/if}--> 
+				</div>
+			</template>
+			<template v-if="ParamImages.valloading">
+				<div style="position: absolute;bottom: 0;left: 0;width: 100%;line-height: 40px;text-align: center;color: var(--content-text);font-size: 14px;">
+					<van-loading type="spinner" size="24px">加载中...</van-loading>
+				</div>
+			</template>
+		</div>
+		<template v-if="ParamImages.data.length==0&&!ParamImages.loading&&!ParamImages.valloading">
+			<!--{if {$_G[adminid]} == 1}-->
+			<van-empty
+			  class="custom-image"
+			  image="dzz/pichome/image/nodata.svg"
+			  description="无数据"
+			/>
+			<!--{else}-->
+			<van-empty
+			  class="custom-image"
+			  image="dzz/pichome/image/nodata.svg"
+			  description="无数据或者因权限文件未显示"
+			/>
+			<!--{/if}-->
+		</template>
+		
+	</div>
+	
+</div>
+<van-overlay :show="ParamImages.loading" :z-index="5000" />
+<!--{template mobile/components/index/image/JsImageList}-->
+<!--{template mobile/components/index/image/JsImgageWaterfall}-->
+<!--{template mobile/components/index/image/JsImagerowGrid}-->
+<!--{template mobile/components/index/image/JsImageTable}-->
+<script type="text/javascript">
+	var ImagesMixin = {
+		data(){
+			return {
+				DocumentAdminId:'$_G[adminid]',
+				ParamImages:{
+					imageList:{
+						maxNewtop:0,
+						maxNewLeft:0,
+						perpage : 0,
+						Margin:4,
+						columns:0,
+						fcolumns:1,
+						newWidth:0,//图片宽度
+						newHeight:0,//图片高度
+						boxHeight:0,//总体高度
+						OtherHeight:0,//底部信息
+						StoreImgdatas:[],
+					},
+					imgageWaterfall:{
+						imgWidth : 252,
+						imgArr : [],
+						ImgAll : [],
+						total : 0,
+						columns:0,
+						boxHeight:0,
+						OtherHeight:0,
+						perpage:0,
+						Margin:8,
+						isMax:false,
+						StoreImgdatas:[],
+					},
+					imagerowGrid:{
+						maxNewtop:0,
+						maxNewLeft:0,
+						rowElems:[],
+						perpage : 0,
+						Margin:4,
+						rowWidth:0,
+						OtherHeight:0,
+						SurplusImgdatas:[],
+						StoreImgdatas:[],
+					},
+					imgageTable:{
+						maxNewtop:0,
+						perpage : 0,
+						fixedH:60,
+						StoreImgdatas:[],
+					},
+					resize:0,
+					data:[],
+					Newdatas:[],
+					type:'refresh',
+					checked:false,
+					operation:{
+						type:'',
+						rids:[]
+					},
+					loading:true,
+					valloading:false,
+				},
+			}
+		},
+		watch:{
+			'ParamImages.resize':debounce(function(val){
+				var self = this;
+				self.ImagesLayoutInit();
+			},500),
+			'ParamImages.data':{
+				handler(val){
+					var self = this;
+					self.ImagesLayoutInit();
+					if(self.ParamImages.type == 'append'){
+						self.ParamImages.valloading = false;
+					}else{
+						self.ParamImages.loading = false;
+					}
+				},
+				deep:true,
+				// immediate:true
+			},
+			'ParamImages.checked':{
+				handler(val){
+					if(val){
+						this.ParamFooter.data.clear.show = false;
+						this.ParamFooter.data.search.show = false;
+						this.ParamFooter.data.screen.show = false;
+						this.ParamFooter.data.sort.show = false;
+						this.ParamFooter.data.user.show = false;
+						this.ParamFooter.data.collectcheck.show = true;
+						this.ParamFooter.data.outcheck.show = true;
+					}else{
+						this.CommonSetFooterBadge();
+						this.ParamFooter.data.search.show = true;
+						this.ParamFooter.data.screen.show = true;
+						this.ParamFooter.data.sort.show = true;
+						this.ParamFooter.data.user.show = true;
+						this.ParamFooter.data.collectcheck.show = false;
+						this.ParamFooter.data.outcheck.show = false;
+					}
+					this.ParamImages.type = 'refresh';
+					this.ImagesLayoutInit();
+				},
+				deep:true,
+				// immediate:true
+			},
+			'ParamImages.loading':{
+				handler(val){
+					var self = this;
+					if(val){
+						showLoadingToast({
+							message: '加载中...',
+							className:'conter-toast',
+							duration: 0,
+							forbidClick: true,
+							loadingType: 'spinner',
+						});
+					}else{
+						closeToast();
+					}
+				},
+				deep:true,
+				immediate:true
+			}
+		},
+		mixins:[ImagerowGridMixin,ImgageTableMixin,ImgageWaterfallMixin,ImageListMixin],
+		methods:{
+			
+
+			ImagesMoreClick(item){
+				this.ParamImages.operation.rids = [item.rid];
+				this.ImagesMore.item = item;
+				this.ImagesMore.data = [];
+				if(item.share){
+					this.ImagesMore.data.push({ name: '分享',type:'share' });
+				}
+				if(item.download){
+					this.ImagesMore.data.push({ name: '下载',type:'down' });
+				}
+				if(parseInt(item.collection)){
+					this.ImagesMore.data.push({ name: '收藏',type:'collect'});
+				}
+				<!--{if $_G[adminid]}-->
+					this.ImagesMore.data.push({ name:'密级',type:'grade' });
+					this.ImagesMore.data.push({ name:'固定地址',type:'address' });
+				<!--{/if}-->
+				
+				this.ImagesMore.visible = true;
+			},
+			ImagesDetailClick(rid,dpath,index){
+				var self = this;
+				this.FooterMusiclayoutEnd();
+				if(self.ParamImages.checked){
+					var index = self.ParamImages.operation.rids.indexOf(rid);
+					if(index > -1){
+						self.ParamImages.operation.rids.splice(index,1);
+					}else{
+						self.ParamImages.operation.rids.push(rid);
+					}
+				}else{
+					var arr = [];
+					for(var i in self.ParamImages.data){
+						arr.push(self.ParamImages.data[i].dpath);
+					}
+					sessionStorage.setItem('imgs',arr.join(','));
+					sessionStorage.setItem('selectindex',index);
+					var params = JSON.parse(JSON.stringify(self.ParamData));
+					params['ispage'] = this.ParamBasic.page>=this.ParamBasic.totalpage?false:true;
+					params['historygo'] = window.location.href;
+					sessionStorage.setItem('imgparam',JSON.stringify(params));
+					
+					this.JsDetailsPopup.src = SITEURL+MOD_URL+'&op=details#path='+dpath;
+					// window.location.href = SITEURL+MOD_URL+'&op=details#path='+dpath;
+				}
+				
+			},
+			ImagesMounted(){
+				var self = this;
+				var ParamBasic = self.ParamBasic;
+				var beforeScrollTop = document.body.scrollTop,fn = fn || function() {};  
+				console.log();
+				document.querySelector('.pic-container-scroll').addEventListener('scroll', function(e) {
+					var afterScrollTop = this.scrollTop,
+					updown = afterScrollTop - beforeScrollTop;
+					if(afterScrollTop == 0){
+						self.ParamFooter.IsShow = 'up';
+						return false;
+					}
+					if( updown === 0 ) {
+						return false;
+					}            
+					beforeScrollTop = afterScrollTop;
+					self.ParamFooter.IsShow = updown > 0 ? "down" : "up";  //判断往上还是往下
+					self.ImagesLayoutScrollShow();
+					if(this.scrollTop+this.scrollHeight>=this.scrollHeight-80){
+						if(ParamBasic.page>=ParamBasic.totalpage || self.ParamImages.loading || self.ParamImages.valloading){
+							return false;
+						}
+						self.CommonhandleHash('scroll');
+					}
+				});
+
+
+				window.addEventListener('resize',function(){
+					self.ParamImages.resize += 1;
+				});
+			},
+			ImagesImgload(rid){
+				var self = this;
+				self.$refs['ref_'+rid].classList.remove('opacity');
+				self.$refs['ref_'+rid].closest('.imgbox-border').style.background = '';
+				self.$refs['ref_'+rid].closest('.imgbox-border').classList.remove('radius');
+			},
+			ImagesLayoutInit(){
+				var self = this;
+				if(self.ParamSort.layout.value == 'waterFall'){
+					self.ImagesWaterfalllayoutCompute();
+				}else if(self.ParamSort.layout.value == 'rowGrid'){
+					self.ImagesRowGridtlayoutCompute();
+				}else if(self.ParamSort.layout.value == 'table' || self.ParamSort.layout.value == 'music'){
+					self.ImagesTablelayoutCompute();
+				}else{
+					self.ImagesListlayoutCompute();
+				}
+			},
+			
+			
+			
+			ImagesLayoutScrollShow(){
+				var self = this;
+				var H = jQuery('.pic-container-scroll')[0].clientHeight;//获取可视区域高度
+				var S = jQuery('.pic-container-scroll')[0].scrollTop;
+				var arr = [];
+				
+				if(self.ParamSort.layout.value == 'waterFall'){
+					var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imgageWaterfall.StoreImgdatas));
+				}else if(self.ParamSort.layout.value == 'rowGrid'){
+					var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imagerowGrid.StoreImgdatas));
+				}else if(self.ParamSort.layout.value == 'table' || self.ParamSort.layout.value == 'music'){
+					var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imgageTable.StoreImgdatas));
+				}else{
+					var StoreImgdatas = JSON.parse(JSON.stringify(self.ParamImages.imageList.StoreImgdatas));
+				}
+				self.ParamImages.Newdatas = [];
+				for(var o in StoreImgdatas){
+					var item = JSON.parse(JSON.stringify(StoreImgdatas[o]));
+					if ((H+S) >= item.ptop && S<item.pbottom) {
+						item['index'] = parseInt(o);
+						self.ParamImages.Newdatas.push(item);
+					}
+				}
+
+			}
+		}
+	};
+
+
+
+</script>

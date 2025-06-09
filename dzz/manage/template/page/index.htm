@@ -1,0 +1,101 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="{MOD_PATH}/template/assets/css/index.css?{VERHASH}">
+
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<!--{template common/container/pc/ad_pic_header}-->
+        <el-main style="padding: 0px;overflow: hidden;position: relative;">
+            <el-scrollbar>
+                <div class="main-content container">
+					<el-row :gutter="20">
+						<template v-for="item in Lists">
+						<el-col class="content-li" :xs="6" :sm="6" :lg="4" :md="5"  :lg="4">
+							
+							<el-card :key="i"  shadow="hover">
+								<a target="_blank" :href="item.url">
+									<div class="item">
+										<el-image 
+										style="width: 64px; height: 64px" 
+										:src="item.img" 
+										fit="contain">
+										<template #error><div class="el-image__placeholder"></div></template>
+									</el-image>
+										<el-text tag="p" truncated>{{item.name}}</el-text>
+									</div>
+								</a>
+							</el-card>
+						</el-col>
+						</template>
+						
+					</el-row>
+				</div>
+            </el-scrollbar>		
+        </el-main>
+               
+
+	</el-container>
+    <!--{template components/operation}-->
+</div>
+<script type="text/javascript">
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+	const dzzoffice = createApp({
+		data() {
+			return {
+				HeaderMenuIndex:'manage',
+                DocumentThemeColor:'',
+				Lists:$list_json
+            }
+        },
+		created() {
+			this.HeaderMenu.active = 'manage';
+            //主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+		},
+		mixins:[HeaderMixin],
+        watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			}
+		},
+		methods: {
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			}
+		},
+		mounted() {
+            const self = this;
+
+        }
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.component('comavatar', comavatar);
+	dzzoffice.component('international',international);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

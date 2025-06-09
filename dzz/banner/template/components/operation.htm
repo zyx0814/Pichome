@@ -1,0 +1,355 @@
+<el-dialog
+    v-model="DialogData.visible"
+    :title="DialogData.types=='add'?'创建栏目':'编辑栏目'"
+    width="60%"
+    @open="OperationShow"
+    @closed="OperationClose"
+    :close-on-click-modal="!DialogData.loading"
+    :close-on-press-escape="!DialogData.loading"
+    :show-close="!DialogData.loading">
+    <el-form 
+        :model="DialogData" 
+        label-width="120px" 
+        label-suffix="："
+        :rules="OperationRules"
+        ref="OperationRef"
+        v-loading="DialogData.loading">
+        <el-form-item label="图标">
+            <el-upload
+                class="avatar-uploader"
+                name="files"
+                accept="image/gif,image/png,image/jpg,image/jpeg,image/svg"
+                action="{MOD_URL}&op=bannerinterfcae&do=upload" 
+                :show-file-list="false"
+                name="files[]"
+                :on-success="handleAvatarSuccess">
+                <el-image v-if="DialogData.img" :src="DialogData.img" style="width: 100px; height: 100px;"  fit="cover" ></el-image>
+                <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+            </el-upload>
+        </el-form-item>
+        <el-form-item label="名称" prop="bannername">
+            <el-input style="width: 50%;" v-model="DialogData.bannername"  ></el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+            <el-switch v-model="DialogData.isshow" :active-value="1" :inactive-value="0" ></el-switch>
+        </el-form-item>
+        <el-form-item label="数据类型">
+            <el-radio-group v-model="DialogData.type" @change="OperationGetTypesChange">
+                <el-radio :label="0" size="large">库</el-radio>
+                <el-radio :label="1" size="large">智能数据</el-radio>
+                <el-radio :label="2" size="large">单页</el-radio>
+                <el-radio :label="3" size="large">链接</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form-item label="数据来源" prop="value">
+            <template v-if="DialogData.type == 3">
+                <el-input style="width: 50%;" v-model="DialogData.value" ></el-input>
+            </template>
+            <template v-else>
+                <el-select style="width: 50%;" v-model="DialogData.value" @change="OperationValue">
+                        <template v-if="DialogData.type == 0">
+                            <el-option
+                                v-for="item in DialogData.dataList.ku"
+                                :key="item.id"
+                                :label="item.name"
+                                :value="item.id"></el-option>
+                        </template>
+                        <template v-else-if="DialogData.type == 1">
+                            <el-option
+                                v-for="item in DialogData.dataList.sources"
+                                :key="item.id"
+                                :label="item.name"
+                                :value="item.id"></el-option>
+                        </template>
+                        <template v-else-if="DialogData.type == 2">
+                            <el-option
+                                v-for="item in DialogData.dataList.alonepage"
+                                :key="item.id"
+                                :label="item.name"
+                                :value="item.id"></el-option>
+                        </template>
+                  </el-select>
+            </template>
+            
+        </el-form-item>
+    </el-form>
+<template #footer>
+<span class="dialog-footer">
+    <el-button @click="DialogData.visible = false" :disabled="DialogData.loading">取消</el-button>
+    <el-button type="primary" @click="OperationSubmit" :disabled="DialogData.loading">确定</el-button>
+</span>
+</template>
+</el-dialog>
+<script>
+    const OperationMixi = {
+        data(){
+            return {
+                DialogData:{
+                    visible:false,
+                    loading:true,
+                    types:'add',
+                    ftypes:'',
+                    img:'',
+                    aid:0,
+                    bannername:'',
+                    isshow:1,
+                    type:0,
+                    value:'',
+                    valuename:'',
+                    node:null,
+                    dataList:{
+                        ku:[],
+                        sources:[],
+                        alonepage:[],
+                    }
+                },
+                OperationRules:{
+                    bannername: [
+                        { required: true, message: '栏目名称不能为空', trigger: 'blur' },
+                    ],
+                    value: [
+                        { required: true, message: '数据来源不能为空', trigger: 'change' },
+                    ],
+                }
+            }
+        },
+        methods:{
+            OperationClose(){
+                this.DialogData = {
+                    visible:false,
+                    loading:true,
+                    types:'add',
+                    ftypes:'',
+                    img:'',
+                    aid:0,
+                    bannername:'',
+                    isshow:1,
+                    type:0,
+                    value:'',
+                    valuename:'',
+                    node:null,
+                    dataList:{
+                        ku:[],
+                        sources:[],
+                        alonepage:[],
+                    }
+                };
+            },
+            OperationValue(){
+                let value = this.DialogData.value;
+                let stype = this.DialogData.type;
+                switch(stype){
+                    case 0:
+                        var data = this.DialogData.dataList.ku;
+                    break;
+                    case 1:
+                        var data = this.DialogData.dataList.sources;
+                    break;
+                    case 2:
+                        var data = this.DialogData.dataList.alonepage;
+                    break;
+                    case 3:
+                        var data = [];
+                    break;
+                }
+                let curr = data.find((current) => {
+                    return current.id == value;
+                });
+                if(curr){
+                    this.DialogData.valuename = curr.name;
+                }else{
+                    this.DialogData.valuename = '';
+                }
+            },
+            handleAvatarSuccess(response, uploadFile, uploadFiles){
+                const self = this;
+                if(response.files[0].error){
+                    self.$message.error(response.files[0].error)
+                }else{
+                    this.DialogData.img = response.files[0].data.img;
+                    this.DialogData.aid = response.files[0].data.aid;
+                }
+                
+            },
+            OperationShow(){
+                if(this.DialogData.types == 'add'){
+                    this.DialogData.loading = false;
+                    this.OperationGetTypes();
+                }else{
+                    this.DialogData.loading = true;
+                    this.OperationGetData();
+                }
+            },
+            async OperationGetData(){
+                const self = this;
+                const {data: res} = await axios.post(BaseUrl+'&do=editbannerdata',{
+                    bid:this.DialogData.node.data.id,
+                });
+                self.DialogData.loading = false;
+                if(res.success){
+                    self.DialogData.img = res.data.iconpath;
+                    self.DialogData.aid = res.data.icon;
+                    self.DialogData.bannername = res.data.bannername;
+                    self.DialogData.type = parseInt(res.data.btype);
+                    self.DialogData.isshow = parseInt(res.data.isshow);
+                    self.DialogData.value = res.data.bdata;
+                    self.OperationGetTypes();
+                }else{
+                    self.DialogData.visible = false;
+                    self.$message.error(res.msg || '数据获取失败');
+                }
+            },
+            OperationGetTypesChange(){
+                this.DialogData.value = '';
+                this.DialogData.valuename = '';
+                this.OperationGetTypes();
+            },
+            async OperationGetTypes(){
+                const self = this;
+                let stype = self.DialogData.type;
+                
+                if(stype == 0 && self.DialogData.dataList.ku.length){
+                    self.OperationValue();
+                    return false;
+                }
+                if(stype == 1 && self.DialogData.dataList.sources.length){
+                    self.OperationValue();
+                    return false;
+                }
+                if(stype == 2 && self.DialogData.dataList.alonepage.length){
+                    self.OperationValue();
+                    return false;
+                }
+                if(stype == 3){
+                    return false;
+                }
+                if(stype == 2 ){
+                    var {data: res} = await axios.post(BaseUrl+'&do=getalonepage');
+                }else{
+                    var {data: res} = await axios.post(BaseUrl+'&do=getapporsources',{
+                        stype:stype,
+                    });
+                }
+                
+                if(res.success){
+                    if(stype == 0){
+                        self.DialogData.dataList.ku = res.data;
+                    }else if(stype == 1){
+                        self.DialogData.dataList.sources = res.data;
+                    }else if(stype == 2){
+                        self.DialogData.dataList.alonepage = res.data;
+                    }
+                    self.OperationValue();
+                }else{
+                    self.$message.error(res.msg || '数据源数据获取失败');
+                }
+            },
+            OperationSubmit(){
+                const self = this;
+                self.$refs.OperationRef.validate(function(valid){
+                    if(valid){
+                        if(self.DialogData.types == 'add'){
+                            self.OperationAddSubmit();
+                        }else{
+                            self.OperationEditSubmit();
+                        }
+                        
+                    }
+                })
+            },
+            async OperationAddSubmit(){
+                const self = this;
+                self.DialogData.loading = true;
+                let param = {
+                    addbanner:true,
+                    formhash:'{FORMHASH}',
+                    bannername:self.DialogData.bannername,
+                    btype:self.DialogData.type,
+                    icon:self.DialogData.aid,
+                    isshow:self.DialogData.isshow,
+                    bdata:self.DialogData.value,
+                    pid:0,
+                    disp:self.treeData.length
+                };
+               
+                if(self.DialogData.ftypes == 'child'){
+                    param.pid = self.DialogData.node.data.id;
+                    param.disp = self.DialogData.node.data.children.length;
+                }else if(self.DialogData.ftypes == 'sibling'){
+                    if(self.DialogData.node && self.DialogData.node.level > 1){
+                        param.pid = self.DialogData.node.parent.data.id;
+                        param.disp = self.DialogData.node.parent.data.children.length;
+                    }
+                }   
+                const {data: res} = await axios.post(BaseUrl+'&do=addbanner',param);
+                self.DialogData.loading = false;
+                if(res.success){
+                    let str = {
+                        id:res.bid,
+                        bannername:self.DialogData.bannername,
+                        icon:self.DialogData.img,
+                        soucresname:self.DialogData.valuename,
+                        isshow:self.DialogData.isshow+'',
+                        btype:self.DialogData.type
+                    };
+                    let stype = self.DialogData.type;
+                    if(stype >2){
+                        str.soucresname = self.DialogData.value;
+                    }
+                    if(self.DialogData.node){
+                        if(self.DialogData.ftypes == 'child'){
+                            self.DialogData.node.data.children.push(str);
+                        }else if(self.DialogData.ftypes == 'sibling'){
+                            if(self.DialogData.node.level > 1){
+                                self.DialogData.node.parent.data.children.push(str);
+                            }else{
+                                self.treeData.push(str);
+                            }
+                        }
+                    }else{
+                        self.treeData.push(str);
+                    }
+                    self.DialogData.visible = false;
+                }else{
+                    self.$message.error(res.msg || '提交失败');
+                }
+            },
+            async OperationEditSubmit(){
+                const self = this;
+                self.DialogData.loading = true;
+                const {data: res} = await axios.post(BaseUrl+'&do=editbannerdata',{
+                    editbanner:true,
+                    formhash:'{FORMHASH}',
+                    bid:self.DialogData.node.data.id,
+                    bannername:self.DialogData.bannername,
+                    btype:self.DialogData.type,
+                    icon:self.DialogData.aid,
+                    isshow:self.DialogData.isshow,
+                    bdata:self.DialogData.value,
+                    disp:self.DialogData.node.data.disp,
+                    pid:self.DialogData.node.data.pid,
+                });
+                self.DialogData.loading = false;
+                if(res.success){
+                    let stype = self.DialogData.type;
+                    self.DialogData.node.data.icon = self.DialogData.img;
+                    self.DialogData.node.data.bannername = self.DialogData.bannername;
+                    if(stype < 3){
+                        self.DialogData.node.data.soucresname = self.DialogData.valuename;
+                    }else{
+                        self.DialogData.node.data.soucresname = self.DialogData.value;
+                    }
+                    self.DialogData.node.data.btype = self.DialogData.type;
+                    self.DialogData.node.data.isshow = self.DialogData.isshow+'';
+                    self.DialogData.visible = false;
+                    self.$message({
+                        type:'success',
+                        message:'编辑成功'
+                    })
+                }else{
+                    self.$message.error(res.msg || '编辑失败');
+                }
+            },
+        }
+    }
+</script>

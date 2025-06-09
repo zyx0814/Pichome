@@ -1,0 +1,215 @@
+<div class="content" style="padding: 16px 25px;">
+	<el-table
+		v-loading="HtmlLoading"
+		:data="tableData"
+		style="width: 100%">
+		<el-table-column
+			label="{lang storage_location}"
+			show-overflow-tooltip>
+			<template #default="scope">
+				<!-- tableData: [{
+						img: 'dzz/images/default/system/ALIOSS.png',
+						name: '阿里云',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/baiduPCS.png',
+						name: '百度云',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/bucket.png',
+						name: '本地',
+						value:1
+					}, {
+						img: 'dzz/images/default/system/OneDrive.png',
+						name: 'OneDrive',
+						value:1
+					}], -->
+				<template v-if="scope.row.bz == 'dzz'">
+					<el-image
+						style="height: 30px;vertical-align: middle;"
+						src="dzz/images/default/system/bucket.png"
+						fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<template v-else-if="scope.row.bz == 'QCOS'">
+					<el-image
+						style="height: 30px;vertical-align: middle;"
+						src="dzz/images/default/system/QCOS.png"
+						fit="contain">
+						<template #error><div class="el-image__placeholder"></div></template>
+					</el-image>
+				</template>
+				<span style="margin-left: 8px;">{{scope.row.cloudname}}</span>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang default_storage_location}"
+			align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.isdefault)">
+					<el-tag size="small" type="success">{lang default_storage_location}</el-tag>
+				</template>
+				<template v-else>
+					<el-button size="small" @click="setDefault(scope.row.id)">{lang set_default}</el-button>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang storage_image}"
+			align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.imagestatus)">
+					<el-tag size="small">{lang enable}</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">{lang close}</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			prop="address"
+			label="{lang storage_media}"
+			align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.mediastatus)">
+					<el-tag size="small">{lang enable}</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">{lang close}</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang storage_doc}"
+			align="center">
+			<template #default="scope">
+				<template v-if="parseInt(scope.row.docstatus)">
+					<el-tag size="small">{lang enable}</el-tag>
+				</template>
+				<template v-else>
+					<el-tag size="small" type="danger">{lang close}</el-tag>
+				</template>
+			</template>
+		</el-table-column>
+		<el-table-column
+			label="{lang do}"
+			width="160">
+			<template #default="scope">
+				<el-button type="info" size="small" @click="TableEdit(scope.row.id,scope.row.bz)">{lang edit}</el-button>
+				<template v-if="scope.row.bz != 'dzz'">
+					<el-popconfirm width="250px"
+						@confirm="TableDelete(scope.row)"
+						title="{lang delete_confirm}">
+						<template #reference>
+						<el-button type="danger"  size="small">{lang delete}</el-button></template>
+					</el-popconfirm>
+				</template>
+				
+			</template>
+		</el-table-column>
+	</el-table>
+	<div style="margin-top: 16px;" v-show="!HtmlLoading">
+		<el-dropdown trigger="click" @command="BtnAddCommand">
+			<el-button icon="plus" size="large"></el-button>
+			<template #dropdown>
+				<el-dropdown-menu>
+					<!--{loop $storagelist $val}-->
+					<el-dropdown-item command="$val[bz]">$val[name]</el-dropdown-item>
+					<!--{/loop}-->
+				</el-dropdown-menu>
+			</template>
+			
+		</el-dropdown>
+		
+	</div>
+	<div style="margin-top: 24px;font-size: 18px;color: var(--content-textHover);">{lang notes}：<el-link style="vertical-align: text-top;font-weight: 700;" type="primary" :underline="false" href="https://www.yuque.com/pichome/np87ue/ge3lgm" target="_blank">{lang do_more_notes}</el-link></div>
+	<div class="tipTxt" style="line-height: 25px;font-size: 14px;">
+        {lang sotrage_location_set_notes}
+	</div>
+</div>
+<script type="text/javascript">
+	var TableMixin = {
+		data(){
+			return {
+				tableData: [],
+			}
+		},
+		created() {
+			this.tableData = [];
+			this.TableGetData();
+		},
+		methods:{
+			async TableGetData(){
+				var that = this;
+				this.HtmlLoading = true;
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=getstoragelist');
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				json.forEach(function(item){
+					that.tableData.push(item)
+				});
+				that.HtmlLoading = false;
+			},
+			async TableDelete(item){
+				var self = this;
+				self.loading = true;
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=deletespace',{id:item.id});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					let index=self.tableData.findIndex(function(val){
+						return  item.id == val.id;
+					});
+					if(index>-1) self.tableData.splice(index,1);
+					self.$message({
+						message:'{lang delete_success}',
+						type:'success'
+					});
+				}else{
+					self.$message.error(json.msg);
+				}
+				self.loading = false;
+			},
+			async setDefault(id){
+				var self = this;
+				self.loading = true;
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=setdefault',{id:id});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					
+					self.tableData.find(function(val,inx){
+						if(id == val.id){
+							self.tableData[inx]['isdefault']=1;
+						}else{
+							self.tableData[inx]['isdefault']=0;
+						}
+					});
+				}else{
+					self.$message.error(json.msg);
+				}
+				self.loading = false;
+			},
+			TableEdit(id,bz){
+				if(bz == 'dzz'){
+					this.EditDialogDzz.id = id;
+					this.EditDialogDzzGetData();
+				}else{
+					this.EditDialogOther.id = id;
+					this.EditDialogOtherGetData();
+				}
+			},
+			BtnAddCommand(val) {
+				this.AddDialog.bz = val;
+				this.AddDialog.dialogVisible = true;
+			},
+		}
+	};
+</script>

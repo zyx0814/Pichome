@@ -1,0 +1,80 @@
+<el-aside class="left-aside" width="260px">
+    <el-page-header @back="RightgoBack">
+        <template #icon>
+            <el-icon style="color: var(--el-text-color-primary);font-size: 24px;"><Back /></el-icon>
+        </template>
+        <template #title>
+            <el-text tag="b" size="large" truncated style="color: var(--el-text-color-primary)">{lang goback}</el-text>
+        </template>
+        <template #content>
+            <el-text tag="b" size="large" truncated style="color: var(--el-text-color-primary);vertical-align: bottom;">{{rightTitle}}</el-text>
+        </template>
+    </el-page-header>
+    <el-scrollbar style="padding: 10px;">
+        <el-text style="margin-bottom: 10px;display: block;color: var(--el-text-color-primary);" tag="b">{lang select_template}</el-text>
+        <ul class="right-type-box">
+            <li 
+            draggable="true" 
+            v-for="item in rightData" 
+            class="right-type-li"
+            :class="{'right-type-li-disabled':rightdb_idsStatus && item.flag == 'db_ids'}">
+                <el-text><el-icon><Circle-Plus /></el-icon>{{item.name}}</el-text>
+            </li>
+        </ul>
+    </el-scrollbar>
+</el-aside>
+<script>
+    const RightMixin = {
+        data(){
+            return {
+                rightTitle:'',
+                rightData:[
+                    {name:'{lang slide_show}',flag:'slide'},
+                    {name:'{lang full_text}',flag:'rich_text'},
+                    {name:'{lang link}',flag:'link'},
+                    // {name:'联系方式',flag:'contact'},
+                    {name:'{lang faqs}',flag:'question'},
+                    {name:'{lang manual_recommend}',flag:'manual_rec'},
+                    {name:'{lang file_recommend}',flag:'file_rec'},
+                    // {name:'图组推荐',flag:'picture_rec'},
+                    // {name:'矩行推荐',flag:'rectangle_rec'},
+                    {name:'{lang banner_ads}',flag:'banner'},
+                    {name:'{lang library}',flag:'db_ids'},
+                    // {name:'{lang tab_recommend}',flag:'tab_rec'},
+                    {name:'{lang search}',flag:'search_rec'},
+                ],
+                rightdb_idsStatus:false
+            }
+        },
+        methods:{
+            RightgoBack(){
+                window.location.href = 'index.php?mod=alonepage';
+            },
+            rightSortable(){
+                const self = this;
+                var tbody = document.querySelector('.right-type-box');
+                new Sortable(tbody, {
+                    draggable: ".right-type-li",
+                    filter: ".right-type-li-disabled",
+                    group: {
+                        name: 'shared',
+                        pull:'clone'
+                    },
+                    sort: false,
+                    animation: 150,
+                    // 元素被选中
+                    onChoose: function (/**Event*/evt) {
+                        self.mainvisible = false;
+                    },
+                    // 元素未被选中的时候（从选中到未选中）
+                    onUnchoose: function (/**Event*/evt) {
+                        self.mainvisible = true;
+                    },
+                });
+            }
+        },
+        mounted(){
+            this.rightSortable();
+        }
+    }
+</script>

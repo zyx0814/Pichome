@@ -1,0 +1,279 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/screendir/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/index.css?{VERHASH}"/>
+<style>
+	.dzz-affix .el-affix--fixed {
+		transition: all var(--el-transition-duration);
+		background: var(--el-bg-color-page);
+	}
+</style>
+<script>
+    function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-container class="dzz-container">
+			<el-scrollbar 
+				style="width: 100%;"
+				id="main_scrollbar" 
+				class="main_scrollbar"
+				ref="MainscrollbarRef" 
+				@scroll="HandleElScrollbar">
+				<el-affix 
+					class="dzz-affix" 
+					target=".main_scrollbar>.el-scrollbar__wrap" 
+					:offset="rollingdire=='down'?-90:0" >
+					<div style="padding: 8px 4px;padding-bottom: 0; display: flex;">
+						<el-input 
+							v-model="HeaderKeyword" 
+							prefix-icon="Search" 
+							@change="CommonGetImageData" 
+							type="search" 
+							placeholder="{lang search}" 
+							clearable ></el-input>
+						<el-popover
+							placement="bottom"
+							trigger="click"
+							popper-class="isdropdown header-dropdown-menu"
+							@show="handleDocumentOverlay(true)"
+							@hide="handleDocumentOverlay(false)">
+							<comsort
+								:iscolumn="false"
+								:defaultval="HeaderRightBtnShow"
+								@change="headerShowChange">
+							</comsort>
+							<template #reference>
+								<div style="margin-left: 12px;">
+									<el-button icon="Sort"></el-button>
+								</div>
+							</template>
+						</el-popover>
+					</div>
+					<el-header height="50px" style="padding: 0px;padding-bottom: 4px;">
+						<dzz-screen
+							ref="ScreenBoxRef"
+							:resize="DocumentResize"
+							:props="ScreenProps"
+							:headerkeyword="HeaderKeyword"
+							:defaultparam="ScreenParam"
+							@submit="CommonGetImageData"
+							@visible="handleDocumentOverlay"
+							:hassub="hassub"
+							@handlehassub="handlehassub">
+						</dzz-screen>
+					</el-header>
+				</el-affix>
+				<el-main style="--el-main-padding: 0;position: relative;overflow: hidden;">
+					<!--{template libraryview/mobile/components/index/image}-->
+					
+				</el-main>
+				<el-backtop v-show="!backtop" target=".main_scrollbar>.el-scrollbar__wrap" :right="20" :bottom="80"></el-backtop>
+			</el-scrollbar>
+			<div v-if="DocumentOverlay.main" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>
+		</el-container>
+		<el-header class="page-header"  height="50px" style="border:0;border-top: var(--el-border);">
+			<div class="page-header" style="height: 100%;width: 100%;border: 0;padding: 0;">
+				<!--{template libraryview/mobile/components/header_m}-->
+			</div>
+		</el-header>
+	</el-container>
+	
+    <!--{template libraryview/mobile/components/index/screen/Jsindex}-->
+	<!--{template libraryview/mobile/components/index/common}-->
+	
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+	var dzzoffice = createApp({
+		data(){
+			return {
+				DocumentResize:0,
+				DocumentAppid:'',
+				DocumentCtrl:false,
+				DocumentDropActive:false,
+				DocumentDropActive1:false,
+				DocumentThemeColor:'',//dark
+				scrollref:null,
+				DocumentVapp:{appname:'',type:0},
+				ispc:true,
+				screenType:{
+					type:0,
+					show:false
+				},
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					column:['left','right'],//侧边栏
+					layout:'waterFall'//图片布局方式
+				},
+				rollingdire:'up',
+				HeaderKeyword:'',
+				DocumentOverlay:{
+					screen:false,
+					main:false,
+				},
+
+				beforeScrollTop:0,
+				topValue:0,
+				backtop:null
+			}
+		},
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			},
+			DocumentAppid:{
+				handler(val){
+					this.ScreenParam.appid = val;
+				},
+				deep:true,
+				immediate: true
+			},
+		},
+		created(){
+			<!--{if intval($_G[setting][pathinfo])}-->
+			let param = '{$_GET[hashparams]}';
+			if(param){
+				param = JSON.parse(param)
+				this.DocumentAppid = param.appid;
+			}else{
+				this.DocumentAppid = this.CommonGetHashParam('appid',location.hash);
+			}
+			<!--{else}-->
+			this.DocumentAppid = this.CommonGetHashParam('appid',location.hash);
+			<!--{/if}-->
+			let keyword = this.CommonGetHashParam('keyword');
+			
+			if(keyword){
+				this.HeaderKeyword = decodeURI(keyword);
+			}
+			if(this.DocumentAppid){
+				this.ScreenParam.appid = this.DocumentAppid;
+				var ShowScreen = sessionStorage.getItem('showscreen')? sessionStorage.getItem('showscreen'):1;
+				if(parseInt(ShowScreen)){
+					this.Screenshow = true;
+				}else{
+					this.Screenshow = false;
+				}
+			}
+		},
+		mixins:[CommonMixin,ScreenMixin,MixinImage],
+		
+		methods:{
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+			headerShowChange(data){
+				const self = this;
+				this.HeaderRightBtnShow[data.type] = data.value;
+				switch(data.type){
+					case 'display':
+						let display = JSON.parse(JSON.stringify(data.value))
+						let index = display.indexOf('other');
+						if(index<0){
+							self.ImageProps.ShowMessage.other = '';
+							sessionStorage.removeItem('other');
+						}else{
+							display.splice(index,1);
+							self.ImageProps.ShowMessage.other = this.HeaderRightBtnShow.other; 
+							sessionStorage.setItem('other',this.HeaderRightBtnShow.other);
+						}
+						if(data.value && data.value.length){
+							sessionStorage.setItem('display',data.value.join(','));
+						}else{
+							sessionStorage.setItem('display','empty');
+						}
+						self.ImageProps.ShowMessage.display = display;
+					break;
+					case 'other':
+						sessionStorage.setItem('other',data.value);
+						self.ImageProps.ShowMessage.other = data.value;
+					break;
+					case 'sort':
+					case 'order':
+						sessionStorage.setItem(data.type,data.value);
+						this.HeaderRightBtnSubmit();
+					break;
+					case 'column':
+						self.$nextTick(function(){
+							self.$refs.RefImageLayout.updateImageData();
+						});
+					break;
+					case 'layout':
+						this.ImageProps.layout = data.value;
+						sessionStorage.setItem('layout',data.value);
+					break;
+				}
+			},
+			handlehassub(status){
+				this.hassub = parseInt(status);
+			},
+			handleDocumentOverlay(status,type){
+				for (const key in this.DocumentOverlay) {
+					this.DocumentOverlay[key] = status;
+				}
+				if(this.DocumentOverlay[type]){
+					this.DocumentOverlay[type] = false;
+				}
+			},
+		},
+		
+		mounted(){
+			var self = this;
+			dzzoffice.WindowThis = this;
+			self.CommonInit();
+			this.scrollref = self.$refs.MainscrollbarRef;
+			window.onresize = function(){
+				self.DocumentResize += 1;
+			};
+		},
+		components:{
+			comavatar,
+			comsort
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(DzzScreen);
+	dzzoffice.use(DzzScreendir);
+	dzzoffice.use(DzzCollectdialog);
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

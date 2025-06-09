@@ -1,0 +1,143 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<style>
+    .el-link__inner{
+        width: 100%;
+    }
+    .container {
+    margin-right: auto;
+    margin-left: auto;
+    width: 100%;
+  }
+  
+  @media (min-width: 768px) {
+    .container {
+      width: 750px;
+    }
+  }
+  @media (min-width: 992px) {
+    .container {
+      width: 970px;
+    }
+  }
+  @media (min-width: 1200px) {
+    .container {
+      width: 1170px;
+    }
+  }
+  @media (min-width: 1400px) {
+    .container {
+      width: 1370px;
+    }
+  }
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+    <el-container class="page-main">
+        <!--{template common/container/pc/header_default}-->
+        <el-container>
+            <el-main style="padding: 0;">
+                <el-scrollbar style="padding: 40px 20px;">
+                    <div class="container">
+                        <el-form
+                            :model="formData"
+                            label-position="top">
+                            <el-form-item label="{lang name}">
+                                <el-input v-model="formData.name"></el-input>
+                            </el-form-item>
+                            <el-form-item label="{lang desc}">
+                                <el-input 
+                                    v-model="formData.desc"
+                                    :rows="6"
+                                    type="textarea"></el-input>
+                            </el-form-item>
+                            <el-form-item label="{lang template}">
+                                <el-input 
+                                    v-model="formData.content"
+                                    :rows="6"
+                                    type="textarea"></el-input>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="info" style="width: 100%;" size="large" @click="onSubmit">{lang submit}</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                </el-scrollbar>
+            </el-main>
+        </el-container>
+
+    </el-container>
+</div>
+
+<script type="text/javascript">
+    const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch } = Vue;
+    const dzzoffice = createApp({
+        setup(){
+            let DocumentThemeColor = ref('');
+            let formData = reactive({
+                id:$id,
+                adddata:true,
+                formhash:'{FORMHASH}',
+                name:'',
+                desc:'',
+                content:''
+            });
+            <!--{if $data}-->
+                formData['name'] = '$data[name]';
+                formData['desc'] = '$data[desc]';
+                formData['content'] = '$data[content]';
+            <!--{/if}-->
+            watch(()=>DocumentThemeColor.value, (newval)=>{
+                document.querySelector('html').className = newval
+            },{
+                deep: true,
+            })
+            function DocumentThemeChange(){//主题色切换
+                if(DocumentThemeColor.value=='light'){
+                    DocumentThemeColor.value='dark';
+                    localStorage.setItem('theme','dark');
+                }else{
+                    DocumentThemeColor.value='light';
+                    localStorage.setItem('theme','light');
+                }
+            };
+            async function onSubmit(){
+                let { data: res } = await axios.post('{MOD_URL}&op=admin&do=add',formData);
+                if(res.success){
+                    window.location.href = res.msg;
+                }else{
+                    ElementPlus.ElMessage.error('{lang submit_unsuccess}');
+                }
+            }
+            onMounted(function(){
+                //主题颜色
+                let theme = localStorage.getItem('theme');
+                if(theme){
+                    DocumentThemeColor.value = theme;
+                }else{
+                    DocumentThemeColor.value = 'light'
+                }
+            });
+            return {
+                DocumentThemeColor,
+                formData,
+
+                DocumentThemeChange,
+                onSubmit
+            }
+        }
+    });
+    dzzoffice.use(ElementPlus, {
+        locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+    });
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        dzzoffice.component(key, component)
+    }
+    dzzoffice.component('comavatar', comavatar);
+    dzzoffice.component('international',international);
+    // 屏蔽警告信息
+    dzzoffice.config.warnHandler = function(){return null};
+    dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template pc/frame/footer_simple}-->

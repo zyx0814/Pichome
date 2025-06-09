@@ -1,0 +1,153 @@
+<Image-Layout 
+	ref="RefImageLayout"
+	:layout="ImageProps.layout"
+	:props="ImageProps.operation"
+	:showmessage="ImageProps.ShowMessage"
+	url="index.php?mod=banner&op=app&do=filelist"
+	:urlparam="ImageProps.urlparam"
+	:filedata="filedata"
+	@click="ImageDetails"
+	@returnparam="Imagereturnparam"
+	:scrollref="scrollref"
+	:screenshow="Screenshow"
+	:ischecked="false"
+	:hassub="hassub">
+</Image-Layout>
+<script type="text/javascript">
+	var MixinImage = {
+		data(){
+			return {
+				hassub:1,
+				ImageProps:{
+					layout:'imageList',//rowGrid,imageList,waterFall
+					ShowMessage:{
+						display:[],
+                    	other:null
+					},
+					urlparam:{},
+					operation:{
+						click:true,//节点是否可被选择
+	                    dblclick:false,//节点是否可被双击选择
+	                    ctrl:false,//是否开启ctrl选中
+	                    shift:false,//是否开启shift选中
+	                    contextmenu:false,//是否开启右键
+	                    drap:false,//是否开启拖动选中
+						checked:false
+					}
+				},
+				ImageParam:{
+					checkedKdys:[]
+				},
+				ImageDataParam:{},
+				ImageDataIframe:null,
+			}
+		},
+
+		methods:{
+			Imagereturnparam(data){//列表加载完成返回得参数
+				this.ImageDataParam = data;
+				var arr = [];
+				for(var i in this.ImageDataParam.data){
+					arr.push(this.ImageDataParam.data[i].dpath)
+				}
+				if(this.ImageDataIframe){
+					var params = this.CommonSetParam();
+					params['ispage'] = this.ImageDataParam.ismore;
+					params['page'] = this.ImageDataParam.page;
+					params['total'] = this.ImageDataParam.total;
+					params['totalpage'] = this.ImageDataParam.totalpage;
+					params['perpage'] = this.ImageDataParam.perpage;
+					params['pagetab'] = 'pichome';
+					params['moreurl'] = 'index.php?mod=banner&op=app&do=filelist';
+					this.ImageDataIframe.sessionStorage.setItem('imgparam',JSON.stringify(params));
+					
+					this.ImageDataIframe.sessionStorage.setItem('imgs',arr.join(','));
+				}else{
+					sessionStorage.setItem('imgs',arr.join(','));
+				}
+				
+			},
+			ImagePageTurning(dpath){//详情翻页事件
+				const self = this;
+				self.$refs.RefImageLayout.SetScrollbarTop(dpath);
+				self.HandleElScrollbar();
+			},
+			HandleElScrollbar(){
+				const self = this;
+				self.$refs.RefImageLayout.HandleElScrollbar();
+				if(self.backtop == null) {// 未发起时，启动定时器，1秒1执行  
+					self.backtop = setInterval(function () {
+						self.test();
+					}, 1000);  
+				}
+				self.topValue = self.$refs.MainscrollbarRef.wrapRef.scrollTop; 
+
+				let afterScrollTop = self.$refs.MainscrollbarRef.wrapRef.scrollTop;
+				let updown = afterScrollTop - self.beforeScrollTop;
+				if(afterScrollTop == 0){
+					self.rollingdire = 'up';
+					return false; 
+				}
+				if( updown === 0 ) {
+					return false;
+				}            
+				self.beforeScrollTop = afterScrollTop;
+				self.rollingdire = updown > 0 ? "down" : "up";  //判断往上还是往下
+			},
+			test() {  
+				const self = this;
+                // 判断此刻到顶部的距离是否和1秒前的距离相等  
+                if(self.$refs.MainscrollbarRef.wrapRef.scrollTop == self.topValue) {  
+                    clearInterval(self.backtop);  
+                    self.backtop = null;
+                }  
+            },
+			ImageDetails(item){//双击事件
+				const self = this;
+				var arr = [];
+				for(var i in this.ImageDataParam.data){
+					arr.push(this.ImageDataParam.data[i].dpath)
+				}
+				let curr = this.ImageDataParam.data.find(function(current){
+					return current.rid == item.id;
+				});
+				let index = this.ImageDataParam.data.findIndex(function(current){
+					return current.rid == item.id;
+				});
+
+				sessionStorage.setItem('href',window.location.href);
+				sessionStorage.setItem('href','index.php?mod=pichome&op=fileview#appid='+this.DocumentAppid);
+				sessionStorage.setItem('selectindex',index);
+				sessionStorage.setItem('imgs',arr.join(','));
+				sessionStorage.setItem('fidname','classify');
+
+				let div = document.createElement("div");
+				div.className = 'Details-Iframe';
+				let div1 = document.createElement("div");
+				div1.className = 'Details-Iframe-wrapper';
+				div.onclick=function(){
+					let div2 = document.querySelector('.Details-Iframe');
+					document.body.removeChild(div2);
+				}
+				div.append(div1);
+				document.body.appendChild(div);
+				let iframe = document.createElement("iframe");
+				iframe.style.opacity='0';
+				div1.append(iframe);
+				iframe.src = 'index.php?mod=details&opentype=current#path=' + curr.dpath;
+
+				window.removeEventListener('message', this.ImageDetailsMessage);
+				window.addEventListener('message', this.ImageDetailsMessage);
+			},
+			ImageDetailsMessage(event){
+		      	if (event.origin !== window.location.origin) {
+		        	return;
+		      	}
+		      	this.ImagePageTurning(event.data.dpath);
+			},
+		},
+		mounted(){
+			var self = this;
+		}
+	};
+</script>

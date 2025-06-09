@@ -1,0 +1,342 @@
+<div id="top_header">
+	<div class="header-content" style="padding: 0 16px;">
+		
+		<div class="h-left" style="min-width: auto;">
+			<!--{if $opentype=='current'}-->
+			<el-button plain  @click="headergoBack"  circle >
+				<el-icon  class="icon"><Close /></el-icon>
+			</el-button>
+			<!--{else}-->
+			<a href="{$_G[siteurl]}" style="width: 100%;position: relative;padding-left: 41px;text-decoration: none;">
+				<el-image src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+					<template #error><div class="el-image__placeholder"></div></template>
+				</el-image>
+				<span class="text">$_G['setting'][sitename]</span>
+			</a>
+			<!--{/if}-->
+		</div>
+		<div class="h-center">
+			<!-- <span v-cloak>{{ImgParam.index}}&nbsp;&nbsp;/&nbsp;&nbsp;{{ImgParam.total}}</span> -->
+			<!--{if $_GET['from']!=='page'}-->
+			<div class="carousel__arrow-box clearfix" >
+				<el-tooltip effect="dark" content="{lang pic_pre}" placement="bottom">
+					<div @click="headerCarouselArrow('left')" class="carousel__arrow carousel__arrow--left">
+						<el-icon class="icon"><Arrow-Left /></el-icon>
+					</div>
+				</el-tooltip>
+				<el-tooltip effect="dark" content="{lang pic_next}" placement="bottom">
+					<div @click="headerCarouselArrow('right')" class="carousel__arrow carousel__arrow--right">
+						<el-icon class="icon"><Arrow-Right /></el-icon>
+					</div>
+				</el-tooltip>
+			</div>
+			<!--{/if}-->
+			<div class="imgoperation" v-if="!imagesData.iniframe&&!HtmlLoading" v-cloak>
+				<div class="proportion" style="width: 170px;">
+					<div class="el-slider">
+						<div class="el-slider__runway">
+							<div class="el-slider__bar" :style="{width: ImgParam.slider+'px','left': '0%'}"></div>
+							<div class="el-slider__button-wrapper" :style="{left: ImgParam.slider+'px'}" @mousedown="headerSliderDrag">
+								<div class="el-tooltip el-slider__button"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				 
+				<el-dropdown trigger="click" @command="headerImgScale" v-cloak>
+					<span class="text proportionnum">{{ImgParam.fproportion}}%</span>
+					<template #dropdown>
+						<el-dropdown-menu style="width: 125px;" class="proportionnum-box">
+							<el-dropdown-item v-for="item in headerScales" :command="item">{{item}}%</el-dropdown-item>
+							<el-divider></el-divider>
+							<el-dropdown-item command="size">{lang size_original}</el-dropdown-item>
+							<el-dropdown-item command="adaption">{lang image_rowGrid}</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+				</el-dropdown>
+				<el-tooltip effect="dark" content="{lang size_original}" placement="bottom">
+					<span class="text" @click="headerImgOperation(1)">1:1</span>
+				</el-tooltip>
+				
+				<span class="text" @click="headerImgOperation(2)">{lang image_rowGrid}</span>
+
+				<el-tooltip effect="dark" content="{lang rotation}" placement="bottom">
+					<span class="text" @click="headerImgOperation(3)">
+						<el-icon class="icon"><Refresh-Right /></el-icon>
+					</span>
+				</el-tooltip>
+
+				<el-tooltip effect="dark" content="{lang left_mirror}" placement="bottom">
+					<span class="text" @click="headerImgOperation(4)">
+						<i class="iconfont icon-zuoyoufanzhuan_huaban1 icon" style="font-size: 21px;font-weight: 500;"></i>
+					</span>
+				</el-tooltip>
+				<el-tooltip effect="dark" content="{lang top_mirror}" placement="bottom">
+					<span class="text">
+						<i class="iconfont icon-chuizhifanzhuan_huaban1 icon" @click="headerImgOperation(5)" style="font-size: 21px;font-weight: 500;"></i>
+					</span>
+				</el-tooltip>
+				
+			</div>
+		</div>
+		<div class="h-right">
+			
+			<div class="r-option">
+				<!--{if $opentype!='current'}-->
+				<el-tooltip content="{lang theme_color}" placement="bottom">
+					<el-button 
+						text 
+						:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+						style="font-size: var(--el-font-size-extra-large);" 
+						circle  
+						size="large"
+						@click="DocumentThemeChange">
+					</el-button>
+				</el-tooltip>
+				<!--{/if}-->
+				<el-tooltip effect="dark" :content="IsFullScreen?'{lang exit}':'{lang full_screen}'" placement="bottom">
+					<div class="right-block" @click="headerFullScreen(IsFullScreen?false:true)">
+						<el-icon v-if="IsFullScreen" v-cloak><Scale-To-Original /></el-icon>
+						<el-icon v-else><Full-Screen /></el-icon>
+						
+					</div>
+				</el-tooltip>
+
+				<el-tooltip effect="dark" :content="HideInformation?'{lang display_info}':'{lang hide_info}'" placement="bottom">
+					<div class="right-block" @click="headerHideInformation(HideInformation?false:true)">
+						<el-icon v-if="HideInformation" v-cloak>
+							<svg t="1683384536257" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M120.470588 963.764706h60.235294v60.235294H120.470588v-60.235294z m481.882353 60.235294h60.235294v-60.235294h-60.235294v60.235294z m120.470588 0h60.235295v-60.235294h-60.235295v60.235294z m-481.882353 0h60.235295v-60.235294H240.941176v60.235294z m120.470589 0h60.235294v-60.235294H361.411765v60.235294z m120.470588 0h60.235294v-60.235294H481.882353v60.235294z m361.411765 0h60.235294v-60.235294h-60.235294v60.235294z m0-843.294118h60.235294V120.470588h-60.235294v60.235294z m0 120.470589h60.235294V240.941176h-60.235294v60.235295z m0 481.882353h60.235294v-60.235295h-60.235294v60.235295z m0-361.411765h60.235294V361.411765h-60.235294v60.235294z m0 120.470588h60.235294V481.882353h-60.235294v60.235294z m0 361.411765h60.235294v-60.235294h-60.235294v60.235294z m0-240.941177h60.235294v-60.235294h-60.235294v60.235294z m0-662.588235v60.235294h60.235294V0h-60.235294z m-120.470589 60.235294h60.235295V0h-60.235295v60.235294zM361.411765 60.235294h60.235294V0H361.411765v60.235294z m120.470588 0h60.235294V0H481.882353v60.235294z m120.470588 0h60.235294V0h-60.235294v60.235294zM240.941176 60.235294h60.235295V0H240.941176v60.235294zM120.470588 60.235294h60.235294V0H120.470588v60.235294z m0 722.82353h60.235294v-60.235295H120.470588v60.235295z m0 120.470588h60.235294v-60.235294H120.470588v60.235294z m0-240.941177h60.235294v-60.235294H120.470588v60.235294z m0-481.882353h60.235294V120.470588H120.470588v60.235294z m0 120.470589h60.235294V240.941176H120.470588v60.235295z m0 120.470588h60.235294V361.411765H120.470588v60.235294z m0 120.470588h60.235294V481.882353H120.470588v60.235294z"></path></svg>
+						</el-icon>
+						<el-icon v-else>
+							<svg t="1683384506841" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M1024 0v1024h-301.176471V0h301.176471zM542.117647 1024h60.235294v-60.235294H542.117647v60.235294z m-107.038118 0h53.549177v-60.235294h-53.549177v60.235294z m-321.295058 0h53.549176v-60.235294h-53.549176v60.235294z m107.098353 0h53.549176v-60.235294h-53.549176v60.235294z m107.098352 0h53.549177v-60.235294h-53.549177v60.235294zM0 1024h60.235294v-60.235294H0v60.235294z m0-481.882353h60.235294V481.882353H0v60.235294z m0-361.411765h60.235294V120.470588H0v60.235294z m0 481.882353h60.235294v-60.235294H0v60.235294z m0-240.941176h60.235294V361.411765H0v60.235294z m0 361.411765h60.235294v-60.235295H0v60.235295z m0 120.470588h60.235294v-60.235294H0v60.235294zM0 301.176471h60.235294V240.941176H0v60.235295z m0-240.941177h60.235294V0H0v60.235294z m488.568471-60.235294h-53.549177v60.235294h53.549177V0zM381.470118 0h-53.549177v60.235294h53.549177V0zM167.273412 0h-53.488941v60.235294h53.549176V0z m107.098353 0h-53.488941v60.235294h53.549176V0zM542.117647 60.235294h60.235294V0H542.117647v60.235294z m0 843.294118h60.235294v-60.235294H542.117647v60.235294z m0-120.470588h60.235294v-60.235295H542.117647v60.235295z m0-240.941177h60.235294V481.882353H542.117647v60.235294z m0 120.470588h60.235294v-60.235294H542.117647v60.235294z m0-361.411764h60.235294V240.941176H542.117647v60.235295z m0 120.470588h60.235294V361.411765H542.117647v60.235294z m0-240.941177h60.235294V120.470588H542.117647v60.235294z" ></path></svg>
+						</el-icon>
+					</div>
+				</el-tooltip>
+				
+			</div>
+			<!--{if $opentype!='current'}-->
+			<international current="$_G['language']"></international>
+
+			<comavatar
+					:level="parseInt($_G[pichomelevel])"
+					iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+					:adminid="parseInt($_G[adminid])"
+					PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+					:uid="parseInt($_G[uid])"
+					upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+					version="$_G[setting][version]"
+					formhash="{FORMHASH}">
+					<el-avatar size="40">
+						{eval echo avatar_block($_G[uid]);}
+					</el-avatar>
+				</comavatar>
+			<!--{/if}-->
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	var headerMixin = {
+		data(){
+			return {
+				headerScales:[5,10,25,50,100,125,150,200,300,400,800]
+			}
+		},
+		methods:{
+			headerSliderDrag(even){//滑块移动
+				var self = this;
+				var box = document.querySelector('.el-slider__button-wrapper');
+				box.classList.add = 'grabbing';
+				even = even ? even : window.event;
+				var fx = even.clientX;
+				var originX = fx - box.offsetLeft;
+				var sliderWidth = document.querySelector('.el-slider').clientWidth;
+				document.onmousemove = function(e){
+					var  x = e.clientX;
+					var moveX = e.clientX - originX;
+					var fmoveX = (sliderWidth/2)*(5/100);
+					if(moveX<=fmoveX){
+						moveX = fmoveX;
+					}
+					if(moveX>=sliderWidth){
+						moveX = sliderWidth;
+					}
+					var proportion = 0;
+					if(moveX<=(sliderWidth/2)){
+						proportion = Math.round((moveX-(sliderWidth/2))/(((sliderWidth/2))*0.1)*10)+100;
+					}else{
+						proportion = Math.round((moveX-(sliderWidth/2))/(((sliderWidth/2)/7)*0.1)*10)+100;
+					}
+					self.ImgParam.slider = moveX;
+					self.ImgParam.proportion = proportion/100;
+					self.imageproportion();
+					
+					return false; //阻止默认事件或冒泡 
+				}
+				document.onmouseup = function(){
+					box.classList.remove('grabbing');
+					document.onmousemove = null;
+					document.onmouseup = null;
+				};
+
+			},
+			headerCarouselArrow(type){//图片箭头
+				var self = this;
+				this.DocumentBack = false;
+				if(type == 'left'){
+					if(this.ImgParam.index == 1){
+						self.$message.error('{lang is_first}');
+						return false;
+					}
+					var num = self.ImgParam.index - 1;
+					self.path = self.paths[num- 1];
+					self.ImgParam.index = num;
+
+				}else{
+
+					<!--{if $opentype=='current'}-->
+					
+					if(window.parent.dzzoffice && window.parent.dzzoffice.WindowThis && window.parent.dzzoffice.WindowThis.ImageDataParam && window.parent.dzzoffice.WindowThis.ImageDataParam.ismore){
+						if(this.ImgParam.index == this.ImgParam.total){
+							self.$message .error('{lang is_last}');
+							return false;
+						}
+					}else{
+						if(this.ImgParam.index == this.ImgParam.total){
+							self.$message .error('{lang is_last}');
+							// self.ImgParam.iswait = true;
+							// self.HtmlLoading = true;
+							return false;
+						}
+					}
+
+					<!--{else}-->
+					if(this.ImgParam.index == this.ImgParam.total){
+						self.$message .error('{lang is_last}');
+						return false;
+					}
+					<!--{/if}-->
+					self.path = self.paths[this.ImgParam.index];
+					self.ImgParam.index = this.ImgParam.index + 1;
+				}
+				<!--{if $opentype=='current'}-->
+				if(window.parent.dzzoffice && window.parent.dzzoffice.WindowThis && window.parent.dzzoffice.WindowThis.ImagePageTurning){
+					window.parent.dzzoffice.WindowThis.ImagePageTurning(self.path);
+				}
+				
+				<!--{else}-->
+				<!--{/if}-->
+
+				sessionStorage.setItem('selectindex',this.ImgParam.index-1);
+				this.GetData();
+			},
+			headerImgScale(type){//比例选择
+				var self = this;
+				if(type == 'size'){
+					this.headerImgOperation(1);
+				}else if(type == 'adaption'){
+					this.headerImgOperation(2);
+				}else{
+					var num = parseInt(type)/100;
+					this.ImgParam.scale = num;
+					var proportion = parseInt(type);
+					self.ImgParam.proportion = proportion/100;
+					// var img = $('.image-viewer__img');
+					var slider = document.querySelector('.el-slider');
+					var fslider = 0;
+					if(proportion>100){
+						fslider = ((slider.clientWidth/2)/7)*(proportion/100)+(slider.clientWidth/2)-12;
+					}else{
+						fslider = (slider.clientWidth/2)*(proportion/100);
+					}
+					this.ImgParam.slider = fslider;
+					this.imageproportion();
+				}
+			},
+			headerImgOperation(type){//图片快捷点击
+				var type = parseInt(type);
+				var self = this;
+				if(type==1){
+					var proportion = 1;
+					self.ImgParam.proportion = proportion;
+					
+					// var img = $('.image-viewer__img');
+					var slider = document.querySelector('.el-slider');
+					this.ImgParam.slider = (slider.clientWidth/2)*proportion;
+					this.imageproportion();
+				}else if(type==2){
+					this.imageSet();
+				}else if(type==3){
+					var num = this.ImgParam.rotate + 90;
+					if(num>=360){
+						num=0;
+					}
+					this.ImgParam.rotate = num;
+				}else if(type==4){
+					var scaleX = this.ImgParam.scaleX;
+					if(scaleX == 0){
+						this.ImgParam.scaleX = -1;
+					}else{
+						this.ImgParam.scaleX = 0;
+					}
+				}else if(type==5){
+					var scaleY = this.ImgParam.scaleY;
+					if(scaleY == 0){
+						this.ImgParam.scaleY = -1;
+					}else{
+						this.ImgParam.scaleY = 0;
+					}
+				}
+				
+			},
+			headerFullScreen(status){//F11
+				this.IsFullScreen = status;
+				if(status){
+					this.headergofullScreen();
+				}else{
+					this.headerexitFullScreen();
+				}
+			},
+			headergofullScreen(){
+				var el = document.getElementById('dzzoffice');
+				var rfs = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen, 
+				          wscript; 
+				      if(typeof rfs != "undefined" && rfs) { 
+				          rfs.call(el); 
+				          return; 
+				      } 
+				      if(typeof window.ActiveXObject != "undefined") { 
+				          wscript = new ActiveXObject("WScript.Shell"); 
+				          if(wscript) { 
+				              wscript.SendKeys("{F11}"); 
+				          } 
+				      } 
+			},
+			headerexitFullScreen(){
+				var el= document, 
+				          cfs = el.cancelFullScreen || el.webkitCancelFullScreen || el.mozCancelFullScreen || el.exitFullScreen, 
+				          wscript; 
+				      if (typeof cfs != "undefined" && cfs) { 
+				        cfs.call(el); 
+				        return; 
+				      } 
+				      
+				      if (typeof window.ActiveXObject != "undefined") { 
+				          wscript = new ActiveXObject("WScript.Shell"); 
+				          if (wscript != null) { 
+				              wscript.SendKeys("{F11}"); 
+				          } 
+				    } 
+			},
+			headerHideInformation(status){//隐藏图片信息
+				this.HideInformation = status;
+
+			},
+			headergoBack(){
+				let div = window.parent.document.querySelector('.Details-Iframe');
+				if(div){
+					div.remove();
+				}
+			},
+		}
+	};
+</script>

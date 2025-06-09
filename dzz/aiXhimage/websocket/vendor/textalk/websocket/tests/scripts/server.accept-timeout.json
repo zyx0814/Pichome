@@ -1,0 +1,289 @@
+[
+    {
+        "function": "stream_socket_accept",
+        "params": [
+            "@mock-socket",
+            300
+        ],
+        "return": "@mock-stream"
+    },
+    {
+        "function": "stream_set_timeout",
+        "params": [
+            "@mock-stream",
+            300
+        ],
+        "return": true
+    },
+    {
+        "function": "stream_socket_get_name",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "127.0.0.1:12345"
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "GET \/my\/mock\/path HTTP\/1.1"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 171,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "host: localhost:8000"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 149,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "user-agent: websocket-client-php"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 115,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "connection: Upgrade"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 94,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "upgrade: websocket"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 74,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "sec-websocket-key: cktLWXhUdDQ2OXF0ZCFqOQ=="
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 29,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": "sec-websocket-version: 13"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 2,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    }
+    ,
+    {
+        "function": "stream_get_line",
+        "params": [
+            "@mock-stream",
+            1024,
+            "\r\n"
+        ],
+        "return": ""
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": false,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 0,
+            "seekable": false
+        }
+    },
+    {
+        "function": "feof",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": false
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream",
+            "HTTP\/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: YmysboNHNoWzWVeQpduY7xELjgU=\r\n\r\n"
+        ],
+        "return": 129
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 13
+    }
+]

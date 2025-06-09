@@ -1,0 +1,104 @@
+<a class="tabbar-item active" href="{$_G['siteurl']}">
+	<div class="tabbar-item__icon">
+		<el-icon size="24">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+				<path stroke-linejoin="round" stroke-linecap="square" stroke-width="2" stroke="currentColor" d="M9 18v24h30V18L24 6 9 18Z" data-follow-stroke="currentColor"/>
+				<path stroke-linejoin="round" stroke-width="2" stroke="currentColor" d="M19 29v13h10V29H19Z" data-follow-stroke="currentColor"/>
+				<path stroke-linecap="square" stroke-width="2" stroke="currentColor" d="M9 42h30" data-follow-stroke="currentColor"/>
+			</svg>
+		</el-icon>
+		
+	</div>
+	<div class="tabbar-item__text">
+		<el-text size="small">首页</el-text>
+	</div>
+</a>
+
+
+<a class="tabbar-item" href="index.php?mod=collection&op=view">
+	<div class="tabbar-item__icon">
+		<el-icon size="24">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+				<path stroke-linejoin="round" stroke-width="2" stroke="currentColor" d="m23.999 5-6.113 12.478L4 19.49l10.059 9.834L11.654 43 24 36.42 36.345 43 33.96 29.325 44 19.491l-13.809-2.013L24 5Z" data-follow-stroke="currentColor"/></svg>
+		</el-icon>
+		
+	</div>
+	<div class="tabbar-item__text">
+		<el-text size="small">收藏夹</el-text>
+	</div>
+</a>
+<div class="tabbar-item" v-if="(tabarr && tabarr.length) || (collectlisarr && collectlisarr.length)">
+	<div style="display: flex;align-items: center;justify-content: center;flex-direction: column;" @click="headerCollect.visble = true">
+		<div class="tabbar-item__icon">
+			<el-icon size="24">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+					<rect stroke-linejoin="round" stroke-width="2" stroke="currentColor" rx="3" height="36" width="36" y="6" x="6" data-follow-stroke="currentColor"/>
+					<path stroke-linejoin="round" stroke-linecap="square" stroke-width="2" stroke="currentColor" d="M24 16v16M16 24h16" data-follow-stroke="currentColor"/>
+				</svg>
+			</el-icon>
+			
+		</div>
+		<div class="tabbar-item__text">
+			<el-text size="small">归档文件</el-text>
+		</div>
+	</div>
+</div>
+<a class="tabbar-item" href="user.php?mod=my">
+	<div class="tabbar-item__icon">
+		<el-icon size="24">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+				<path stroke-linejoin="round" stroke-linecap="square" stroke-width="2" stroke="currentColor" d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4 4 12.954 4 24s8.954 20 20 20Z" clip-rule="evenodd" data-follow-stroke="currentColor"/>
+				<path stroke-linejoin="round" stroke-width="2" stroke="currentColor" d="M24 23a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" data-follow-stroke="currentColor"/>
+				<path stroke-linejoin="round" stroke-linecap="square" stroke-width="2" stroke="currentColor" d="M10.022 38.332C10.366 33.121 14.702 29 20 29h8c5.291 0 9.623 4.11 9.977 9.311" data-follow-stroke="currentColor"/>
+			</svg>
+		</el-icon>
+		
+	</div>
+	<div class="tabbar-item__text">
+		<el-text size="small">我的</el-text>
+	</div>
+</a>
+
+<el-drawer
+    v-model="headerCollect.visble"
+    direction="btt"
+	size="85%"
+	title="归档文件"
+	custom-class="m-header-munu">
+	<ul class="el-dropdown-menu">
+		<template v-for="(item,key) in tabarr">
+			<li class="el-dropdown-menu__item" style="height: 2.5rem;" @click="handleCollectCommand(item)">{{item.name}}</li>
+		</template>
+		<li class="el-dropdown-menu__item--divided" v-if="collectlisarr.length"></li>
+		<template v-for="(item,key) in collectlisarr">
+			<li class="el-dropdown-menu__item" style="height: 2.5rem;" @click="handleCollectCommand(item)">{{item.name}}</li>
+		</template>
+	</ul>
+</el-drawer>
+  
+<el-drawer
+    v-model="headerTabmessage.visible"
+    direction="btt"
+	size="100%"
+	title="{lang Edit_information_cover}"
+	custom-class="m-header-munu"
+	@open="OpenHeaderMessage"
+	style="padding: 0;">
+	<el-container>
+		<el-main>
+			<tab_message 
+				ref="tabheadermessage"
+				:allsubmit="true"
+				icotype="1"
+				formhash="{FORMHASH}"
+				:create="true"
+				:ispc="false"
+				:gid="headerTabmessage.gid"></tab_message>
+		</el-main>
+		<el-footer style="height: 46px;line-height: 45px;border-top: var(--el-border);display: flex;align-items: center;">
+			<el-button style="flex: 0 50%;" @click="headerTabmessage.visible=false">{lang close}</el-button>
+			<el-button type="primary" @click="tabheadermessageSave" style="flex: 0 50%;">{lang confirms}</el-button>
+		</el-footer>
+	</el-container>
+	
+  </el-drawer>

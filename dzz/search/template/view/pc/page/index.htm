@@ -1,0 +1,330 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" href="dzz/search/template/view/pc/assets/css/index.css?{VERHASH}">
+<script type="text/javascript" src="static/vue_components/screen/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/ImageLayout/index.js?{VERHASH}"></script>
+<link rel="stylesheet" type="text/css" href="static/scss/layout.css?{VERHASH}"/>
+<script type="text/javascript" src="static/vue_components/HeaderSort/index.js?{VERHASH}"></script>
+
+<script type="text/javascript" src="static/vue_components/collectdialog/index.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/vue_components/screendir/index.js?{VERHASH}"></script>
+<script src="static/vue-cropper/index.js?{VERHASH}"></script>
+<link rel="stylesheet" media="noexist" onload="this.media='all'" href="static/vue-cropper/index.css?{VERHASH}">
+<script type="text/javascript" src="static/jszip/jszip.min.js?{VERHASH}"></script>
+<script type="text/javascript" src="static/jszip/FileSaver.min.js?{VERHASH}"></script>
+<style>
+	.dzz-affix .el-affix--fixed {
+		transition: all var(--el-transition-duration);
+	}
+	.dzz-affix .el-affix--fixed {
+		background: var(--el-bg-color-page);
+	}
+</style>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+
+
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container class="page-main">
+		<el-header class="page-header" v-if="ispc"  height="auto" style="border-bottom: var(--el-border);padding: 0 10px;align-items: flex-start;">
+			<!--{template view/pc/components/header}-->
+        </el-header>
+		
+		<el-container class="page-main is-vertical">
+			<!--{template view/pc/components/screen}-->
+			<el-container class="page-main">
+				<el-aside width="auto" style="padding: 8px 10px;" v-if="searchData.img">
+					<div 
+					style="max-height: 651px;max-width: 487px;overflow:hidden;position: relative;border-radius: 8px;"
+					:style="{width:(searchData.boxW) +'px',height:(searchData.boxH) +'px'}">
+						<vue-cropper 
+							ref="vuecropper"
+							:can-move="false"
+							output-type="jpg"
+							:center-box="true"
+							:img="searchData.img"
+							:auto-crop="true" 
+							:auto-crop-width="searchData.width" 
+							:auto-crop-height="searchData.height"
+							:auto-crop-box="true" 
+							:min-crop-box-width="100" 
+							:stencil-props="{ mode: 'circle' }"
+							:min-crop-box-height="100"
+							:limit-min-size="[100,100]"
+							@img-load="handlecropimgload"
+						></vue-cropper>
+						<div v-if="searchData.loading" v-loading="searchData.loading" style="position: absolute;height: 100%;width: 100%;background: var(--el-bg-color-overlay);top: 0;left: 0;"></div>
+						<!-- <el-icon style="position: absolute;right: 6px;top: 6px;z-index: 100;color: #FFFFFF;font-size: 24px;cursor: pointer;" @click.stop="clearcropper"><Close-Bold /></el-icon> -->
+					</div>
+					<div style="padding-top: 10px;display: flex;justify-content: space-between;">
+						<el-button 
+							type="danger"
+							icon="Close" 
+							@click="handlecropClear"
+							:loading="searchData.submit">{lang cancel}</el-button>
+						<el-button 
+							type="primary"
+							icon="Check" 
+							@click="handlecropSubmit"
+							:loading="searchData.submit"
+							>{lang confirms}</el-button>
+					</div>
+				</el-aside>
+				<el-main class="dzz-container" style="padding: 0px;overflow: hidden;position: relative;">
+					<el-scrollbar 
+						id="main_scrollbar" 
+						class="main_scrollbar" 
+						ref="MainscrollbarRef" 
+						@scroll="HandleElScrollbar">
+						<template v-if="!ispc">
+							<el-affix 
+								class="dzz-affix" 
+								target=".main_scrollbar>.el-scrollbar__wrap" 
+								:offset="ispc?60:rollingdire=='down'?-90:0">
+								<div v-if="!ispc" style="padding: 8px 4px;padding-bottom: 0;display: flex;">
+									<el-input v-model="fheaderkeyword" prefix-icon="Search" @change="headerkeywordInput" type="search" placeholder="{lang search}" clearable ></el-input>
+									<el-popover
+										placement="bottom"
+										trigger="click"
+										popper-class="isdropdown header-dropdown-menu">
+										<comsort
+											:iscolumn="false"
+											:defaultval="HeaderRightBtnShow"
+											@change="HeaderShowChange"1>
+										</comsort>
+										<template #reference>
+											<div style="margin-left: 12px;">
+												<el-button icon="Sort"></el-button>
+											</div>
+										</template>
+									</el-popover>
+								</div>
+								<el-header height="50px" style="padding: 0px;padding-bottom: 4px;">
+									<dzz-screen
+										ref="ScreenBoxRef"
+										:resize="DocumentResize"
+										:props="ScreenProps"
+										:headerkeyword="HeaderKeyword"
+										:defaultparam="ScreenParam"
+										@submit="CommonGetImageData"
+										@visible="screenvisible">
+									</dzz-screen>
+								</el-header>
+							</el-affix>
+						</template>
+						
+	
+	
+						<div v-if="screenType.show && screenType.type && ispc" v-show="Screenshow" style="padding: 10px 0;">
+							<div style="border-radius: 8px;background: var(--el-bg-color);border: var(--el-border);">
+								<dzz-screendir
+									ref="ScreenBoxRef"
+									:resize="DocumentResize"
+									:props="ScreenProps"
+									:headerkeyword="HeaderKeyword"
+									:defaultparam="ScreenParam"
+									:appid="DocumentAppid"
+									@submit="CommonGetImageData">
+								</dzz-screendir>
+							</div>
+						</div>
+						
+						<!--{template view/pc/components/image}-->
+						<el-backtop 
+							target=".main_scrollbar>.el-scrollbar__wrap" 
+							:right="20" 
+							:bottom="ispc?20:80" ></el-backtop>
+					</el-scrollbar>
+				</el-main>
+			</el-container>
+			
+		</el-container>
+		<el-header v-if="!ispc" class="page-header"  height="50px" style="border:0;border-top: var(--el-border);">
+			<!--{template view/pc/components/header_m}-->
+        </el-header>
+	</el-container>
+	
+	<!--{template view/pc/components/common}-->
+	<div v-if="DocumentOverlay" class="el-overlay" style="z-index: 1001;background: transparent;"></div>
+	<!--分享对话框加载-->
+	<!--{eval  include template('shareAddDialog','./dzz/shares/template/')}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch,defineAsyncComponent, onBeforeUpdate } = Vue;
+	const dzzoffice = Vue.createApp({
+		data(){
+			return {
+				bannerData:{
+					data:[],
+					active:null,
+					title:''
+				},
+				DocumentAppid:'',
+				DocumentThemeColor:'',
+				scrollref:'',
+				DocumentResize:0,
+				ispc:true,
+				rollingdire:'up',
+				beforeScrollTop:0
+			}
+		},
+		
+		created(){
+			
+			//主题颜色
+			let theme = localStorage.getItem('theme');
+			if(theme){
+				this.DocumentThemeColor=theme;
+			}else{
+				this.DocumentThemeColor = 'light'
+			}
+			
+			let data = '$templatedata';
+			if(!data){
+				return false;
+			}
+			data = JSON.parse(data);
+			for (const key in data) {
+				const element = data[key];
+				this.bannerData.data.push(element);
+			}
+			this.handleIsPc();
+			let DocumentAppid = this.CommonGetHashParam('id',location.hash);
+			if(DocumentAppid){
+				this.DocumentAppid = DocumentAppid;
+				let keyword = this.CommonGetHashParam('keyword');
+				if(keyword !== 'undefined'){
+					this.headerkeyword = decodeURI(keyword);
+					this.fheaderkeyword = decodeURI(keyword);
+				}
+			}else{
+				let keyword = this.CommonGetHashParam('keyword',location.hash);
+				if(keyword !== 'undefined'){
+					this.headerkeyword = keyword?decodeURI(keyword):'';
+					this.fheaderkeyword = keyword?decodeURI(keyword):'';
+				}
+				if(this.bannerData.data.length){
+					this.DocumentAppid = this.bannerData.data[0].tid;
+				}else{
+					this.CommonInit();
+				}
+			}
+			
+		},
+		mixins:[CommonMixin,HeaderMixins,ScreenMixin,MixinImage,ShareAddDialogMixin],
+		watch:{
+			DocumentThemeColor:{
+				handler(newval){
+					document.querySelector('html').className = newval
+				},
+				deep:true,
+				// immediate:true
+			},
+			DocumentAppid:{
+				handler(val){
+					if(val){
+						let self = this;
+						let curr = this.bannerData.data.find(function(current){
+							return current.tid == val;
+						});
+						if(curr){
+							this.bannerData.title = curr.title;
+						}
+						this.bannerData.active = val;
+						this.ScreenParam.sid = val;
+						this.CommonInit();
+					}
+				},
+				deep:true,
+				immediate: true
+			},
+		},
+		
+		methods:{
+			HandleElScrollbar(data){
+				let self = this;
+				let topValue = 0;// 上次滚动条到顶部的距离  
+				self.$refs.RefImageLayout.HandleElScrollbar();
+				if(!this.ispc){
+                    topValue = data.scrollTop; 
+                    let afterScrollTop = data.scrollTop;
+                    let updown = afterScrollTop - this.beforeScrollTop;
+                    if(afterScrollTop == 0){
+                        this.rollingdire = 'up';
+                        return false; 
+                    }
+                    if( updown === 0 ) {
+                        return false;
+                    }            
+                    this.beforeScrollTop = afterScrollTop;
+                    this.rollingdire = updown > 0 ? "down" : "up";  //判断往上还是往下
+                }
+			},
+			handleIsPc(){
+                let innerWidth = window.innerWidth;
+                if(innerWidth > 768){
+                    this.ispc = true;
+                }else{
+                    this.ispc = false;
+                }
+            },
+			clearkeyword(){
+                this.headerkeyword = '';
+                this.fheaderkeyword = '';
+			},
+			DocumentThemeChange(){
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			}
+		},
+		components: {
+			comavatar,
+			comsort
+		},
+		mounted(){
+			var self = this;
+			dzzoffice.WindowThis = this;
+			self.scrollref = self.$refs.MainscrollbarRef;
+			window.onresize = function(){
+				self.DocumentResize += 1;
+				self.handleIsPc();
+			};
+		}
+	});
+	dzzoffice.use(DzzScreen);
+	dzzoffice.component('international',international);
+	dzzoffice.use(DzzScreendir);
+	dzzoffice.component('comsort', comsort);
+	dzzoffice.use(ImageLayout);
+	dzzoffice.use(DzzCollectdialog);
+	dzzoffice.component('vue-cropper', window['vue-cropper'].VueCropper);
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+
+<!--{template common/container/pc/footer}-->

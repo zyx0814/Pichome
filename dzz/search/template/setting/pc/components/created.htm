@@ -1,0 +1,86 @@
+<el-dialog
+	title="{lang add_templat}"
+	:close-on-click-modal="false"
+	v-model="Catalogue.dialogVisible"
+	>
+	
+	
+	<el-form label-width="auto" :model="Catalogue" ref="catalogueFormSearch">
+		<el-form-item label="{lang searchName}" prop="title" :rules="[{ required: true, message: '{lang searchName_empty}'}]">
+			<el-input v-model="Catalogue.title" placeholder="{lang searchName}"></el-input>
+		</el-form-item>
+		<el-form-item label="{lang searchDisp}" >
+			<el-input v-model="Catalogue.disp" type="number" placeholder="{lang searchDisp_placeholder}"></el-input>
+		</el-form-item>
+		<el-form-item label="{lang searchRange}" >
+					 <el-select style="width:100%"  v-model="Catalogue.searchRange" multiple>
+						<el-option
+					     v-for="item in kus"
+						:key="item.id"
+						:label="item.name"
+						:value="item.id"></el-option>
+					 </el-select>
+					<el-text tag="p" type="info" size="small" truncated>{lang searchRange_tips}</el-text>
+				</el-form-item>
+				
+				<el-form-item label="{lang searchExts}">
+					<el-input type="textarea" v-model="Catalogue.searchExts" @input="SettingEditStatus"></el-input>
+					<el-text tag="p" type="info" size="small" truncated>{lang searchExts_tips}</el-text>
+				</el-form-item>
+	</el-form>
+	
+
+	<template #footer>
+        <span class="dialog-footer">
+            <el-button @click="Catalogue.dialogVisible = false">{lang cancel}</el-button>
+            <el-button type="primary" @click="CatalogueSubmit">{lang submit}</el-button>
+        </span>
+    </template>
+	
+</el-dialog>
+<script type="text/javascript">
+	var CreatedMixin = {
+		data(){
+			return {
+				Catalogue:{
+					title:'',
+					disp:0,
+					searchRange:'',
+					searchExts:'',
+					dialogVisible:false
+				},
+			}
+		},
+		methods:{
+			
+			async CatalogueSubmit(){
+				var self = this;
+				self.loading = true;
+				var res = await axios.post(MOD_URL+'&op=setting&do=create',{
+					title:this.Catalogue.title,
+					disp:this.Catalogue.disp,
+					searchRange:this.Catalogue.searchRange,
+					exts:this.Catalogue.searchExts
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					//self.tableData.push(json.data);;
+					this.Catalogue={
+						title:'',
+						disp:0,
+						searchRange:'',
+						searchExts:'',
+						dialogVisible:false
+					}
+					window.location.reload();
+				}else{
+					self.$message.error(json.msg);
+				}
+				self.loading = false;
+			},
+		}
+	}
+</script>

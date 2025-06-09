@@ -1,0 +1,253 @@
+<div class="left-main" style="height: calc(100% - 40px);">
+	<el-scrollbar @scroll="DocumentHideAllPop">
+		<ul class="el-menu el-menu--vertical">
+			<li 
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType==''}"
+				@click="LeftClick('')">
+				<el-icon class="icon"><Message-Box /></el-icon>
+				<el-text>{lang all}</el-text>
+				<span class="num">{{LeftTreeSidebar.all}}</span>
+			</li>
+			<li 
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType=='notclassify'}"
+				@click="LeftClick('notclassify')">
+				<el-icon class="icon"><Discount /></el-icon>
+				<el-text>{lang unclassify}</el-text>
+				<span class="num">{{LeftTreeSidebar.nocat}}</span>
+			</li>
+			<li 
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType=='nottag'}"
+				@click="LeftClick('nottag')">
+				<el-icon class="icon"><Price-Tag /></el-icon>
+				<el-text>{lang no_tag}</el-text>
+				<span class="num">{{LeftTreeSidebar.notag}}</span>
+			</li>
+			<li 
+				v-if="DocumentVapp.type == 3 || DocumentVapp.type == 1"
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType=='tags'}"
+				@click="LeftClick('tags')">
+				<el-icon class="icon"><Collection-Tag /></el-icon>
+				<el-text>{lang tag_manage}</el-text>
+				<span class="num">{{LeftTreeSidebar.tagnum}}</span>
+			</li>
+			<!-- <li 
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType=='member'}"
+				@click="LeftClick('member')">
+				<el-text>成员管理</el-text>
+			</li> -->
+			<li 
+				v-if="DocumentVapp.type == 3"
+				class="el-menu-item" 
+				:class="{'is-active':LeftCurrenType=='recycle'}"
+				@click="LeftClick('recycle')">
+				<el-icon  class="icon"><Delete /></el-icon>
+				<el-text>{lang recycle}</el-text>
+				<span class="num">{{LeftTreeSidebar.isrecycle}}</span>
+			</li>
+		</ul>
+		<div class="tree-tip">
+			<el-button text  @click="LeftTree.Visible=!LeftTree.Visible" style="padding: 8px 6px;">
+				<el-text type="info">
+                    {lang classify}
+					<el-icon class="el-icon--right">
+						<template v-if="LeftTree.Visible">
+							<Caret-Bottom></Caret-Bottom>
+						</template>
+						<template v-else>
+							<Caret-Right></Caret-Right>
+						</template>
+					</el-icon>
+				</el-text>
+				
+			</el-button>
+			<template v-if="DocumentVapp.type == 3">
+				<el-button text icon="Plus" @click.stop="LeftTreeOperation('addparent')" style="padding: 6px;width: 32px;"></el-button>
+			</template>
+		</div>
+		<div v-show="LeftTree.Visible" v-loading="LeftTree.loading" style="padding-right: 10px;">
+			<el-tree
+				v-if="LeftTree.show"
+				ref="LeftTreeRef"
+				lazy
+				node-key="fid"
+				draggable
+				@node-click="LeftTreeClick"
+				@node-contextmenu="LeftTreeContextmenu"
+				:load="LeftTreeGetFolder"
+				:current-node-key="LeftTree.Currentkey"
+				:expand-on-click-node="false"
+				:default-expanded-keys="LeftTree.defaultOpenkeys"
+				highlight-current
+				icon="ArrowRight"
+				:props="{label:'fname',children: 'children',isLeaf:'leaf'}"
+				@node-drop="LeftTreeNodeDrop">
+				<template #default="{ node, data }">
+				    <div class="custom-tree-node el-tree-node__label">
+						<el-icon class="icon">
+							<template v-if="node.expanded">
+								<Folder-Opened />
+							</template>
+							<template v-else>
+								<Folder />
+							</template>
+						</el-icon>
+						<!-- <template v-if="node.data.isRename">
+							<el-input 
+								v-model.trim="data.fname" 
+								size="small"
+								:ref="'treeinput'+data.fid"
+								maxlength="20" 
+								placeholder="请输入"
+								@keyup.enter.native="LefttreeinputRename" 
+								@blur="LefttreeinputRename" />
+						</template>
+						<template v-else> -->
+							<div class="name" :ref="'treename'+data.fid" v-cloak v-html="node.label"></div>
+							<div class="num" v-if="node.expanded && parseInt(data.nosubfilenum)>0">{{data.nosubfilenum}}</div>
+							<div class="num" v-if="!node.expanded && parseInt(data.filenum)>0">{{data.filenum}}</div>
+						<!-- </template> -->
+				    	
+				    </div>
+			  </template>
+				
+			</el-tree>
+		</div>
+	</el-scrollbar>
+</div>
+
+<div class="left-search">
+	<el-input
+		v-model="LeftTree.filterText" 
+		placeholder="{lang search_cat}"
+		prefix-icon="Search"
+		clearable
+		@input="LeftClassifyFilterInput">
+	</el-input>
+</div>
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	ref="treeMenu"
+    v-model:visible="LeftTreePopover.show"
+	:popper-style="{top: LeftTreePopover.top, left: LeftTreePopover.left}"
+	trigger="contextmenu"
+	width="auto"
+	:show-arrow="false"
+	@after-enter="handleDocumentOverlay(true)"
+	@before-leave="handleDocumentOverlay(false)">
+    <ul class="el-dropdown-menu">
+		<li 
+			v-if="this.DocumentVapp.type == 3"
+			class="el-dropdown-menu__item" 
+			@click.stop="LeftTreeOperation('rename')">
+			<el-icon><Edit-Pen /></el-icon>
+            {lang rename}
+		</li>
+		<li
+			class="el-dropdown-menu__item" 
+			@click="LeftTreeOperation('tagging')">
+			<el-icon><Setting /></el-icon>
+            {lang Automatic_annotation}
+		</li>
+		<el-divider v-if="this.DocumentVapp.type == 3" style="margin: 4px 0;"></el-divider>
+		<li
+			v-if="this.DocumentVapp.type == 3"
+			class="el-dropdown-menu__item" 
+			@click="LeftTreeOperation('addparent')">
+			<el-icon><Folder-Add /></el-icon>
+            {lang add_same_level}
+		</li>
+		<li
+			v-if="this.DocumentVapp.type == 3"
+			class="el-dropdown-menu__item" 
+			@click="LeftTreeOperation('addchild')">
+			<el-icon><Folder-Add /></el-icon>
+            {lang add_son_level}
+		</li>
+		
+		<el-divider v-if="this.DocumentVapp.type == 3" style="margin: 4px 0;"></el-divider>
+		<li
+			v-if="this.DocumentVapp.type == 3"
+			class="el-dropdown-menu__item" 
+			@click="LeftTreeOperation('delete')">
+			<el-icon><Delete /></el-icon>
+			{lang delete_folder}
+		</li>
+	</ul>
+</el-popover>
+<el-dialog
+	custom-class="LeftTreeDialog"
+    v-model="LeftTreeDialog.Visible"
+    title="{lang delete_folder}"
+	:close-on-click-modal="false"
+	:close-on-press-escape="false"
+	:show-close="false"
+    width="30%">
+	<p>{lang delete_folder_confirm} " {{LeftTreeDialog.title}} " ？</p>
+	 <el-checkbox v-model="LeftTreeDialog.checked" :true-label="1" :true-label="0" label="{lang folder_to_recycle}" ></el-checkbox>
+    <template #footer>
+      <span class="dialog-footer">
+			<el-button @click="LeftTreeDialog.Visible = false" :disabled="LeftTreeDialog.loading">{lang cancel}</el-button>
+			<el-button type="primary" @click="LeftTreeDelete" :loading="LeftTreeDialog.loading">{lang confirms}</el-button>
+      </span>
+    </template>
+</el-dialog>
+<el-dialog
+    v-model="LeftTreeDialogAdd.Visible"
+    :title="LeftTreeDialogAdd.title"
+	:close-on-click-modal="false"
+	:close-on-press-escape="false"
+	:show-close="!LeftTreeDialogAdd.loading">
+	<el-form @submit.native.prevent>
+		<el-form-item label="{lang name}：">
+			<div class="language-box">
+				<el-input v-model="LeftTreeDialogAdd.name" clearable  @keyup.enter="LeftTreeAdd"></el-input>
+				<language 
+					v-if="LeftTreeDialogAdd.langkey" 
+					:langkey="LeftTreeDialogAdd.langkey" 
+					@change="LeftTreeDialogAddTitle"></language>
+			</div>
+		  	
+		</el-form-item>
+	</el-form>
+    <template #footer>
+      <span class="dialog-footer">
+			<el-button @click="LeftTreeDialogAdd.Visible = false" :disabled="LeftTreeDialogAdd.loading">{lang cancel}</el-button>
+			<el-button type="primary" @click="LeftTreeAdd" :loading="LeftTreeDialogAdd.loading">{lang confirms}</el-button>
+      </span>
+    </template>
+</el-dialog>
+<el-dialog
+    v-model="LeftTreeTaggingDialog.Visible"
+    title="{lang Automatic_annotation}"
+	@open="LeftTreeTaggingDialogOpen">
+
+	<el-form :model="form" label-width="100px" label-suffix="：">
+		<template v-for="(item, index) in LeftTreeTaggingDialog.fileds">
+			<template v-if="item.type=='tag'">
+				<!--{template librarylist/pc/components/left/tag}-->
+			</template>
+			<template v-else-if="item.type=='tabgroup'">
+				<!--{template librarylist/pc/components/left/tabgroup}-->
+			</template>
+		</template>
+
+	</el-form>
+    <template #footer>
+      <span class="dialog-footer">
+			<el-button @click="LeftTreeTaggingDialog.Visible = false" :disabled="LeftTreeTaggingDialog.loading">{lang cancel}</el-button>
+			<el-button type="primary" @click="LeftTabSubmit" :loading="LeftTreeTaggingDialog.loading">{lang confirms}</el-button>
+      </span>
+    </template>
+</el-dialog>
+
+<div 
+	@mousedown.prevent="LeftdragControllerDiv"
+	:style="{position: 'absolute',height: '100%',width: '4px',top: '0',left: LeftWidth-2+'px',cursor: 'col-resize','z-index': 100}" 
+	ref="leftResize" 
+	id="leftResize"></div>
+<div v-if="DocumentOverlay.left" class="el-overlay dzz-overlay" style="z-index: 1001;background: transparent;"></div>

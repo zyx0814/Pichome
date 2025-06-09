@@ -1,0 +1,190 @@
+	<a href="{$_G[siteurl]}" class="h-left" style="justify-content: start;width: 240px;
+    padding-right: 20px;">
+		<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+			<template #error><div class="el-image__placeholder"></div></template>
+		</el-image>
+		<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">
+			<!--{if $_GET['do'] == 'tags'}-->
+			{$appdata['appname']}
+			<!--{else}-->
+				{{ DocumentVapp.appname }}
+			<!--{/if}-->
+		</el-text>
+	</a>
+	<div class="h-center" style="padding-left: 0px;">
+		<!--{if $_GET['do'] != 'tags'}-->
+		<el-input
+			style="width: 450px;z-index: 100000000;"
+			class="headerkeyword"
+			ref="headerkeyword"
+			placeholder="{lang search}"
+			v-model="HeaderKeyword"
+			@keydown.enter="HeaderKeywordInput"
+			size="large">
+			<template #prefix>
+				<el-image v-if="searchData.img" style="width: 26px; height: 26px;border-radius: var(--el-border-radius-base);" :src="searchData.img" fit="cover" ></el-image>
+			</template>
+			<template #suffix>
+				<el-button v-if="HeaderKeyword || searchData.img" link icon="Close" style="font-size: 20px;" @click.stop="headerkeywordInputClear"></el-button>
+				<!--{if intval($_G['setting']['imageSearch_setting']['status'])}-->
+				<el-popover
+					ref="cameraPopover"
+					popper-class="camera-popover"
+					placement="bottom"
+					width="100%"
+					:show-arrow="false"
+					trigger="click"
+					popper-style="{let:0}"
+					:teleported="false"
+					:tabindex="1000"
+					@show="SearchUploadPopoverShow">
+					<div class="camera-dropdown">
+						<el-upload
+							class="camera-upload"
+							drag
+							:show-file-list="false"
+							:on-change="SearchUploadChange"
+							:on-progress="SearchUploadProgress"
+							:auto-upload="false"
+							accept="image/png, image/jpeg,image/jpg, image/webp">
+							<div 
+								style="display: flex;align-items: center;justify-content: center;flex-direction: column;">
+								<el-icon class="el-icon--upload"><upload-filled /></el-icon>
+								<div class="el-upload__text">
+									<el-text tag="p" style="
+									font-size: 14px;
+									line-height: 20px;">{lang drop_the_image}</el-text>
+									<el-text tag="p" type="info" size="small" style="line-height: 20px;margin-top: 8px;">{lang Image_format_support} jpg、jpeg、png、webp</el-text>
+								</div>
+							</div>
+						</el-upload>
+					</div>
+					<template #reference>
+						<el-button link icon="Camera" style="font-size: 20px;"></el-button>
+					</template>
+				</el-popover>
+				<!--{/if}-->
+			</template>
+			<template #append>
+				<el-button 
+				@click="HeaderKeywordInput" 
+				type="primary" 
+				icon="Search" 
+				style="font-size: 20px;padding-top: 0;padding-bottom: 0;display: flex;align-items: center;justify-content: center;"></el-button>
+			</template>
+		</el-input>
+		<!--{/if}-->
+	</div>
+	<div class="h-right">
+		<!--{template librarylist/pc/components/index/header/right}-->
+	</div>
+<script>
+	var HeaderMixins = {
+		data(){
+			return {
+				HeaderKeyword:'',
+				searchData:{
+					aid:0,
+					loading:false,
+					img:'',
+				},
+				CropBase:''
+			}
+		},
+		created(){
+			var self = this;
+			var hash=location.hash;
+			var url=hash.replace('#','');
+			var arr = url.split('&');
+			for(var i in arr){
+				var farr = arr[i].split('=');
+				switch(farr[0]){
+					case 'keyword':
+						self.HeaderKeyword = decodeURI(farr[1]);
+					break;
+				}
+			}
+		},
+		mixins:[HeaderRightMixin],
+		methods:{
+			SearchUploadPopoverShow(){
+				let self = this;
+				self.$refs.headerkeyword.blur();//失去焦点
+			},
+			HeaderKeywordInput(val){
+				this.CommonGetImageData();
+			},
+			SearchUploadChange(response,uploadFile){
+				
+				let self = this;
+				self.searchData.loading = true;
+				self.$refs.cameraPopover.hide();
+				let img = new Image();
+				// 设置图片的源（URL）
+				img.src = URL.createObjectURL(response.raw);
+				// 当图片加载完成时，获取其宽度和高度
+				img.onload = function() {
+					self.SearchUploadSubmit(img);
+					
+				};
+				img.onerror = () => {
+					self.searchData.loading = false;
+					self.$message.error(__lang.upload_unsuccess);
+				};
+				return false;
+			},
+			SearchUploadSubmit(img){
+				let self = this;
+				// 创建 canvas 并将图片绘制到 canvas 上
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
+
+				// // 设置 canvas 的宽高为图片的宽高
+				canvas.width = img.width;
+				canvas.height = img.height;
+
+				// // 将图片绘制到 canvas 上
+				ctx.drawImage(img, 0, 0);
+				// 将 canvas 内容转换为 JPG 格式的 Base64
+				const jpgBase64 = canvas.toDataURL('image/jpeg', 0.8); // 0.8 是图片质量
+
+				if(self.CropBase){
+					self.CropBase();
+				}
+				let CancelToken = axios.CancelToken;
+				axios.post('index.php?mod=io&op=getAidByBase64', {
+					base64:jpgBase64
+				},{
+					cancelToken: new CancelToken(function executor(c) {
+						self.CropBase = c;
+					})
+				}).then(function (res) {
+					if(res.data.success){
+						self.searchData.aid = res.data.aid;
+						self.searchData.loading = false;
+						self.searchData.img = res.data.img;
+						sessionStorage.setItem('cropimg',res.data.img);
+						self.CommonGetImageData();
+					}else{
+						self.$message.error(res.data.msg || __lang.upload_failed);
+					}
+				}).catch(function (error) {
+					// console.log(error);
+				});
+			},
+			headerkeywordInputClearData(){
+				let self = this;
+				self.fheaderkeyword = '';
+				self.HeaderKeyword = '';
+				self.searchData.aid = 0;
+				self.searchData.loading = false;
+				self.searchData.img = '';
+			},
+			headerkeywordInputClear(){
+				let self = this;
+				self.headerkeywordInputClearData();
+				self.CommonGetImageData();
+			},
+		}
+	};
+</script>

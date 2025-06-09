@@ -1,0 +1,36 @@
+<script type="text/javascript">
+	let RightFolderMixin = {
+		data(){
+			return {
+				RightFolderPopverParam:{
+					loading:true,
+					CheckedKeys:[],
+					ExpandedKeys:[],
+					activeNodes:[]
+				}
+			}
+		},
+		methods:{
+			async RightFolderPopverTreeLoad(node,resolve){
+				
+				var self = this;
+				var level = node.level;
+				var param = {
+					appid:this.DocumentAppid
+				};
+				if(level>0){
+					param['pfids'] = node.data.fid;
+				}
+				var res = await axios.post(MOD_URL+'&op=library&do=ajax&operation=getsearchfolder',param);
+				var new_data = res.data.folderdatanum;
+				var arr = [];
+				for(var i in new_data){
+					var item = new_data[i];
+					arr.push(item);
+				}
+				resolve(arr);
+			},
+			
+		}
+	}
+</script>

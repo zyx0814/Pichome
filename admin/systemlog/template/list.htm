@@ -1,0 +1,184 @@
+<!--{template common/container/pc/header_start}-->
+<style type="text/css">
+	:root{
+		--el-color-primary: #1c3676; 
+	}
+	body {
+		background: transparent;
+	}
+	.page-left .el-menu-item.is-active{
+		background-color: #e8ebf1;
+	}
+	.el-page-header__left {
+		margin-right: 8px;
+		color: #FFFFFF;
+	}
+	.el-page-header__content {
+		color: #fff;
+	}
+</style>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header"  height="60px" style="--el-header-padding: 0 8px;background: var(--el-color-primary);">
+			<!--{template header/index}-->
+		</el-header>
+		<el-container>
+			<el-aside width="300px" class="page-left">
+				<!--{template left}-->
+			</el-aside>
+			<el-container>
+			    <el-header height="56px" style="--el-header-padding: 0;border-bottom: var(--el-border);">
+					<el-menu :default-active="contentTop.activeIndex" class="list-menu" mode="horizontal" @select="contentTopSelect" style="height: 100%;border: 0;">
+						<el-menu-item style="height: 100%;line-height: 56px;" v-for="item in contentTop.data"  :index="item.active">{{item.text}}</el-menu-item>
+					</el-menu>
+				</el-header>
+			    <el-main style="padding: 0;">
+					<el-scrollbar style="height: 100%;">
+						<div style="padding: 20px;">
+							<el-table
+								:data="contentCenter.tableData"
+								style="width: 100%">
+								<el-table-column
+							        prop="operator"
+							        label="{lang operator}"
+							        width="100">
+								</el-table-column>
+								<el-table-column
+								    prop="usergroup"
+								    label="{lang usergroup}"
+								    width="100">
+								</el-table-column>
+								<el-table-column
+								    prop="ip"
+								    label="{lang ip}"
+								    width="120">
+								</el-table-column>
+								<el-table-column
+								    prop="time"
+								    label="{lang time}"
+								    width="120">
+								</el-table-column>
+								<el-table-column
+								    prop="os"
+								    label="{lang os}">
+								</el-table-column>
+								<!--{if $operation != 'cplog'}-->
+								<el-table-column
+								    prop="info"
+								    label="{lang info}">
+								</el-table-column>
+								<!--{/if}-->
+							</el-table>
+							<div style="text-align: center;padding: 20px 0;">
+								<el-pagination
+									background
+									@size-change="handleSizeChange"
+									@current-change="handleCurrentChange"
+									:current-page.sync="currentPage2"
+									:page-sizes="[15,20, 40, 80]"
+									:page-size="currentPage"
+									layout="total,sizes, prev, pager, next"
+									:total="$count">
+								</el-pagination>
+							</div>
+						</div>
+						
+					</el-scrollbar>
+					
+				</el-main>
+				
+			  </el-container>
+		</el-container>
+	</el-container>
+	<script type="text/javascript">
+		const { createApp, reactive, toRefs, toRef, ref, onMounted, nextTick, watch, computed, onBeforeUpdate } = Vue;
+		const dzzoffice = createApp({
+			data() {
+				return {
+					contentTop:{
+						activeIndex:null,
+						data:[]
+					},
+					contentCenter:{
+						tableData:[]
+					},
+					currentPage:{$lpp},
+					currentPage2:{$page}
+				};
+			},
+			mixins:[LeftMixin],
+			watch:{
+		
+			},
+			computed:{
+				
+			},
+			created() {
+				var self = this;
+				this.handleForEachTop();
+				this.handleForEachCenter();
+			},
+			methods: {
+				handleSizeChange(val){
+					window.location.href = MOD_URL+'&type=list&operation=$operation&lpp='+val+'&page='+this.currentPage2;
+				},
+				handleCurrentChange(val){
+					window.location.href = MOD_URL+'&type=list&operation=$operation&lpp='+this.currentPage+'&page='+val;
+				},
+				handleForEachCenter(){
+					<!--{loop $list $key $log}-->
+						this.contentCenter.tableData.push({
+							operator:'$log[2]',
+							usergroup:'$log[3]',
+							ip:'$log[4]',
+							time:'$log[1]',
+							os:'$log[5]',
+							<!--{if $operation != 'cplog'}-->
+							info:'$log[6]',
+							<!--{/if}-->
+						});
+					<!--{/loop}-->
+				},
+				handleForEachTop(){
+					<!--{loop $systemlog_setting $mark $info}-->
+					<!--{if $info[is_open]==1 }-->
+					<!--{if $operation==$mark }-->
+					this.contentTop.activeIndex = '$mark';
+					<!--{/if}-->
+					this.contentTop.data.push({
+						text:"$info['title']",
+						route:'{BASESCRIPT}?mod=systemlog&type=list&operation=$mark',
+						active:'$mark'
+					})
+					<!--{/if}-->
+					<!--{/loop}-->
+				},
+				contentTopSelect(key) {
+					var data = this.contentTop.data.find(function(item){
+						return item.active == key;
+					});
+					window.location.href = data.route;
+				}
+			},
+			mounted() {
+				var self = this;
+			},
+			components:{
+				comavatar,
+			}
+		})
+		dzzoffice.use(ElementPlus, {
+			locale: ElementPlusLocaleZhCn,
+		});
+		for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+			dzzoffice.component(key, component)
+		}
+		// 屏蔽警告信息
+		dzzoffice.config.warnHandler = function(){return null};
+		dzzoffice.mount('#dzzoffice');
+	</script>
+</div>
+
+
+<!--{template common/container/pc/footer}-->

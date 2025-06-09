@@ -1,0 +1,104 @@
+<!--{template common/container/pc/header_start}-->
+<link rel="stylesheet" href="static/scss/default/index.css?{VERHASH}">
+<link rel="stylesheet" type="text/css" href="dzz/pichome/template/librarylist/pc/assets/css/user.css?{VERHASH}"/>
+<script>
+	function debounce(fun, delay) {
+		var time;
+		return function(args) {
+			var that = this;
+			var _args = args;
+			if (time) clearTimeout(time);
+			time = setTimeout(function() {
+				fun.call(that, _args)
+			}, delay)
+		}
+	};
+</script>
+<!--{template common/container/pc/header_end}-->
+<div id="dzzoffice">
+	<el-container>
+		<el-header class="page-header" height="70px">
+			<div class="h-left">
+				<a href="{MOD_URL}&op=library" style="color: var(--el-color-black);text-decoration: none;width: 21px;padding-left: 0px;">
+					<el-icon style="font-size: 21px;vertical-align: middle;"><Back></Back></el-icon>
+				</a>
+				<el-text tag="b" size="large" style="margin-left: 10px;color:var(--el-text-color-primary)">$_G['setting'][sitename]</el-text>
+			</div>
+			<div class="h-center">
+			</div>
+			<div class="h-right">
+				<international current="$_G['language']"></international>
+				<comavatar
+					:level="parseInt($_G[pichomelevel])"
+					iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+					:adminid="parseInt($_G[adminid])"
+					PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+					:uid="parseInt($_G[uid])"
+					upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+					version="$_G[setting][version]"
+					formhash="{FORMHASH}">
+					<el-avatar size="40">
+						{eval echo avatar_block($_G[uid]);}
+					</el-avatar>
+				</comavatar>
+			</div>
+		</el-header>
+		<el-container>
+		   <el-aside class="page-left" :width="LeftWidth+'px'">
+				<!--{template librarylist/pc/components/left/index}-->
+		    </el-aside>
+			<el-main style="overflow: hidden;padding: 0;">
+				<el-scrollbar id="container_scroll">
+					<div class="page-content user-container" style="padding:var(--el-main-padding);max-width: 800px;margin: 0 auto;">
+						<!--{template librarylist/pc/components/user/header}-->
+						<el-divider></el-divider>
+						<!--{template librarylist/pc/components/user/table}-->
+					</div>
+				</el-scrollbar>
+			</el-main>
+		</el-container>
+	   
+	</el-container>
+	<!--{template librarylist/pc/components/left/Jsindex}-->
+</div>
+<script>
+	const { createApp, reactive, toRefs, toRef, ref, onMounted } = Vue;
+	const dzzoffice = createApp({
+		data(){
+			return {
+				DocumentResize:0,
+				DocumentAppid:'$_GET[appid]',
+			}
+		},
+		mixins:[leftMixins,MainHeaderMixin,MainTableMixin],
+		created(){
+			var self = this;
+			this.UserGetdata();
+		},
+		watch:{
+
+		},
+		methods:{
+
+		},
+		components: {
+		},
+		mounted(){
+			var self = this;
+		},
+		components:{
+			comavatar
+		}
+	});
+	dzzoffice.use(ElementPlus, {
+		locale: {$_G['language_list'][$_G['language']]['elementflagCamel']},
+	});
+	dzzoffice.component('international',international);
+	for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+		dzzoffice.component(key, component)
+	}
+	// 屏蔽警告信息
+	dzzoffice.config.warnHandler = function(){return null};
+	dzzoffice.mount('#dzzoffice');
+</script>
+<!--{template common/container/pc/footer}-->

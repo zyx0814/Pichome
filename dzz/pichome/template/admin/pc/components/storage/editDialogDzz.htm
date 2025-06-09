@@ -1,0 +1,307 @@
+<el-dialog
+	v-loading="EditDialogDzz.loading"
+	:title="EditDialogDzz.cloudname"
+	width="100%"
+	style="max-width:600px"
+	v-model="EditDialogDzz.dialogVisible">
+	<el-form ref="EditDialogDzzref" :model="EditDialogDzz" label-width="110px" label-position="top">
+		<el-form-item class="title">
+			<template #label>
+                {lang storage_iamge_setting}
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<template  #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">
+								1、{lang enable_gd}，{$_G['config']['gdgetcolorextlimit']}，{lang create_thumb}
+								<br>
+								2、{lang enable_imgick}，{$_G['config']['imageickallowextlimit']}，{lang file_create_thumb}
+							</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.imageval" @change="EditDialogDzzImageChange">
+				<el-radio border label="0">{lang close}</el-radio>
+				<el-radio border label="gd" :disabled="EditDialogDzz.gdstatus?false:true">GD</el-radio>
+				<el-radio border label="imagick" :disabled="EditDialogDzz.imagickstatus?false:true">imagemagick</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item class="title">
+			<template #label>
+                {lang storage_media_setting}
+				<el-tooltip 
+					effect="light"
+					placement="right-start">
+					<template #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">{lang enable_media_after_pre}：{$_G['config']['pichomeconvertext']}，{lang enable_media_after_end}</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.mediastatus" @change="EditDialogDzzMediaChange">
+				<el-radio border :label="0">{lang close}</el-radio>
+				<el-radio border :disabled="EditDialogDzz.mediastate?false:true" :label="1">ffmpeg</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item label="{lang media_preview_size}" v-if="parseInt(EditDialogDzz.mediastatus)">
+			<template #label>
+                {lang media_preview_size}：
+				<!--{loop $_G['config']['videoquality'] $key $val}-->
+				<!--{if $key==$_G['config']['defaultvideoquality']}-->
+				$val[name] $val[width]*$val[height] {lang bitrate}：$val[bitrate]
+				<!--{/if}-->
+				<!--{/loop}-->
+			</template>
+		</el-form-item>
+		<el-form-item class="title">
+			<template #label>
+                {lang office_doc_setting}
+				<el-tooltip
+					effect="light"
+					placement="right-start">
+					<template #content>
+						<div style="max-width: 300px;">
+							<p class="tipTxt" style="margin: 0;">{lang enable_doc_after_pre}：{$_G['config']['onlyofficeviewextlimit']}，{lang enable_doc_after_end}</p>
+						</div>
+					</template>
+					<el-icon style="margin-left: 8px;cursor: pointer;font-size: 16px;color: var(--content-text);"><Warning-Filled /></el-icon>
+				</el-tooltip>
+				<el-button v-if="EditDialogDzz.docstatus" style="margin-left: 16px;vertical-align: middle;" type="primary" size="mini" @click="EditDialogDzzDocChange('submit')">{lang save}</el-button>
+				
+			</template>
+			
+			<el-radio-group v-model="EditDialogDzz.docstatus" @change="EditDialogDzzDocChange">
+				<el-radio border :label="0">{lang close}</el-radio>
+				<el-radio border :label="1">OnlyOffice</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item 
+			prop="onlyofficeurl"
+			label="OnlyOffice Document Server API{lang address}" 
+			v-if="EditDialogDzz.docstatus" required
+			:rules="{required: true, message: 'OnlyOffice Document Server API{lang address}{lang unallow_empty}', trigger: 'blur'}">
+			<el-input v-model="EditDialogDzz.onlyofficeurl" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;font-size:12px;line-height: 1.5">{lang onlyoffice_server_address_msg}</p>
+		</el-form-item>
+		<el-form-item 
+			prop="jwtSecret"
+			label="JWTSecret" 
+			v-if="EditDialogDzz.docstatus"
+			>
+			<el-input v-model="EditDialogDzz.jwtSecret" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;font-size:12px;line-height: 1.5">{lang JWTSecret_input_msg}</p>
+		</el-form-item>
+		<el-form-item 
+			prop="onlyofficedocurl"
+			label="{lang file_server_address}"
+			v-if="EditDialogDzz.docstatus" required>
+			<el-input v-model="EditDialogDzz.onlyofficedocurl" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;font-size:12px;line-height: 1.5">{lang file_server_address_msg}</p>
+		</el-form-item>
+		<el-form-item 
+			prop="exts"
+			label="{lang office_thumb_exts}"
+			v-if="EditDialogDzz.docstatus"
+			>
+			<el-input v-model="EditDialogDzz.exts" class="maxWidth"></el-input>
+			<p class="tipTxt" style="margin: 0;font-size:12px;line-height: 1.5">{lang office_thumb_exts_msg}</p>
+		</el-form-item>
+	</el-form>
+</el-dialog>
+<script type="text/javascript">
+	var EditDialogDzzMixin = {
+		data(){
+			return {
+				EditDialogDzz:{
+					loading:false,
+					dialogVisible:false,
+					cloudname:'',
+					id:0,
+					
+					imagestatus:0,
+					imageval:'0',
+					gdstatus:0,
+					imagickstatus:0,
+					
+					mediastatus:0,
+					mediastate:0,
+					
+					docstatus:0,
+					onlyofficeurl:'http://127.0.0.1:90/',
+					onlyofficedocurl:'',
+					jwtSecret:'',
+					exts:'',
+					videoquality:parseInt($_G['config']['videoquality']) || 1
+					
+				}
+			}
+		},
+		created() {
+		},
+		methods:{
+			async EditDialogDzzDocChange(val){
+				var self = this;
+				if(val == 0){
+					var res = await axios.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+						id:self.EditDialogDzz.id,
+						docstatus:0,
+					});
+					if(res == 'intercept'){
+						return false;
+					}
+					var json = res.data;
+					if(json.success){
+						self.$message({
+							type:'success',
+							message:'{lang set_success}'
+						});
+						var tab = self.tableData.find(function(item){
+							return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+						});
+						tab.docstatus = 0;
+					}else{
+						self.$message.error('{lang set_failer}');
+					}	
+				}
+				if(val == 'submit'){
+					self.$refs.EditDialogDzzref.validate(async function(valid){
+						if(valid){
+							var res = await axios.post(MOD_URL+'&op=storagesetting&do=docsetting',{
+								id:self.EditDialogDzz.id,
+								docstatus:1,
+								onlyofficeurl:self.EditDialogDzz.onlyofficeurl,
+								fileurl:self.EditDialogDzz.onlyofficedocurl,
+								secret:self.EditDialogDzz.jwtSecret,
+								exts:self.EditDialogDzz.exts,
+							});
+							if(res == 'intercept'){
+								return false;
+							}
+							var json = res.data;
+							if(json.success){
+								self.$message({
+									type:'success',
+									message:'{lang set_success}'
+								});
+								var tab = self.tableData.find(function(item){
+									return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+								});
+								tab.docstatus = 1;
+							}else{
+								self.$message.error(json.msg);
+							}	
+						}
+					});
+				}
+			},
+			async EditDialogDzzImageChange(val){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=imagesetting',{
+					id:self.EditDialogDzz.id,
+					imagestatus:parseInt(val)==0?0:1,
+					imagelib:val,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.$message({
+						type:'success',
+						message:'{lang set_success}'
+					});
+					var tab = self.tableData.find(function(item){
+						return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+					});
+					tab.imagestatus = parseInt(val)==0?0:1;
+				}else{
+					self.$message.error('{lang set_failer}');
+				}	
+			},
+			async EditDialogDzzMediaChange(val){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=videosetting',{
+					id:self.EditDialogDzz.id,
+					mediastatus:val,
+					videoquality:self.EditDialogDzz.videoqualite,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				if(json.success){
+					self.$message({
+						type:'success',
+						message:'{lang set_success}'
+					});
+					var tab = self.tableData.find(function(item){
+						return parseInt(item.id) == parseInt(self.EditDialogDzz.id);
+					});
+					tab.mediastatus = val;
+				}else{
+					self.$message.error('{lang set_failer}');
+				}	
+			},
+			async EditDialogDzzGetData(){
+				var self = this;
+				if(!self.EditDialogDzz.id){
+					self.$message.error('{lang params_error_and_reloading}');
+					return false;
+				}
+				this.EditDialogDzz.loading = true;
+				this.EditDialogDzz.dialogVisible = true;
+				
+				var res = await axios.post(MOD_URL+'&op=storagesetting&do=getsettingdata',{
+					id:self.EditDialogDzz.id,
+				});
+				if(res == 'intercept'){
+					return false;
+				}
+				var json = res.data;
+				self.EditDialogDzz.cloudname = json.cloudname;
+				self.EditDialogDzz.imagestatus = parseInt(json.imagestatus);
+				self.EditDialogDzz.gdstatus = parseInt(json.gdstatus);
+				self.EditDialogDzz.imagickstatus = parseInt(json.imagickstatus);
+				self.EditDialogDzz.imageval = (json.imagelib);
+				
+				if(!self.EditDialogDzz.imagestatus){
+					self.EditDialogDzz.imageval = '0';
+				}
+				
+				self.EditDialogDzz.mediastatus = parseInt(json.mediastatus);
+				self.EditDialogDzz.mediastate = parseInt(json.mediastate);
+				if(!self.EditDialogDzz.mediastate){
+					self.EditDialogDzz.mediastatus = 0;
+				}
+				
+				
+				self.EditDialogDzz.docstatus = parseInt(json.docstatus);
+				self.EditDialogDzz.loading = false;
+				
+				self.EditDialogDzz.onlyofficeurl=json.officedata.DocumentUrl;
+				self.EditDialogDzz.onlyofficedocurl=json.officedata.FileUrl;
+				self.EditDialogDzz.exts=json.officedata.exts;
+				self.EditDialogDzz.jwtSecret=json.officedata.secret;
+				
+				
+			}
+		}
+	};
+</script>

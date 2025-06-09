@@ -1,0 +1,235 @@
+
+<div id="files_box" v-if="fileparam.show" style="padding: 0 8px;" @click="FileBoxclick">
+    <div class="file-headers">
+        <span class="cannot-select" style="cursor: pointer;font-size: 14px;" @click.stop="fileparam.visible = !fileparam.visible">
+            {lang Subfolders}（{{filedata.total}}）
+            <el-icon>
+                <Caret-Bottom v-show="fileparam.visible"></Caret-Bottom>
+                <Caret-Right v-show="!fileparam.visible"></Caret-Right>
+            </el-icon>
+        </span>
+        <div @click.stop class="cannot-select">
+            <el-checkbox 
+                v-model="hassub" 
+                :true-label="1" 
+                :false-label="0" 
+                label="{lang display_sub_folder_content}"
+                @change="ImageDataIsExpandedChange"></el-checkbox>
+        </div>
+    </div>
+    <div v-show="fileparam.visible">
+        <Image-File
+            ref="ImageFileRef"
+            :layout="ImageProps.layout"
+            :hassub="hassub"
+            :filedata="fileparam"
+            :perpage="50"
+            @click="Fileclick"
+            @dblclick="Filedblclick"
+            @contextmenu="FileContextmenu"
+            @operation="FileOperation"
+            @complete="FileComplete">
+        </Image-File>
+    </div>
+</div>
+<el-popover
+	popper-class="isdropdown header-dropdown-menu"
+	trigger="click"
+	ref="fileMenu"
+    v-model:visible="fileMunu.show"
+	:popper-style="{top: fileMunu.top, left: fileMunu.left}"
+	width="auto"
+	:show-arrow="false">
+    <ul class="el-dropdown-menu">
+		<li 
+			class="el-dropdown-menu__item" 
+			@click="FileMenuOperation('rename')">
+			<el-icon><Edit-Pen /></el-icon>
+            {lang rename}
+		</li>
+		<li
+			class="el-dropdown-menu__item" 
+			@click="FileMenuOperation('delete')">
+			<el-icon><Delete /></el-icon>
+            {lang delete_folder}
+		</li>
+	</ul>
+	
+</el-popover>
+<script>
+    const FileMixins = {
+        data(){
+            return {
+                hassub:1,
+                fileparam:{
+                    visible:true,
+                    //是否显示文件夹目录
+					show:false,
+                    //文件夹目录参数
+                    param:{},
+                    //文件夹目录请求地址
+                    url:'{MOD_URL}&op=library&do=filelist&operation=folderlist',
+                    //重命名链接
+                    renameurl:'{MOD_URL}&op=library&do=folder&operation=rename'
+                },
+                filedata:{
+                    data:[],
+                    total:0,
+				},
+                fileMunu:{
+					show:false,
+					data:null,
+					top:0,
+					left:0
+				},
+            }
+        },
+        methods:{
+            FileComplete(data){//完成事件
+                this.filedata.data = data.data;
+                this.filedata.total = data.total;
+            },
+            Fileclick(checkeds){//点击事件
+            	const self = this;
+                self.$nextTick(function(){
+					self.$refs.RefImageLayout.EmpytCheckedKeys();
+	                if(checkeds && checkeds.length == 1 && self.RightActivefid.length == checkeds.length && self.RightActivefid[0] == checkeds[0]){
+	                    return false;
+	                }
+	                self.RightParamClean();
+	                self.RightType = 'folder';
+					
+					self.RightActivefid = checkeds;
+					self.RightGetData();
+                })
+            },
+			FileBoxclick(e){//box点击事件
+				const self = this;
+            	self.$refs.RefImageLayout.EmpytCheckedKeys();
+				self.$refs.ImageFileRef.EmpytActivefid();
+				self.RightParamClean();
+				if(this.LeftCurrenType == 'filelist'){
+					self.RightType = 'folder';
+					self.RightActivefid = [this.LeftTree.Currentkey];
+				}else{
+					self.RightType = this.LeftCurrenType;
+				}
+				self.$nextTick(function(){
+					self.RightGetData();
+				})
+				
+            },
+            Filedblclick(item){//双击事件
+                var self = this;
+				var pathkey = item.pathkey.split(self.DocumentAppid);
+				var pathkeys = [];
+				for(var i in pathkey){
+					if(pathkey[i]){
+						pathkeys.push(pathkey[i]+self.DocumentAppid);
+					}
+				}
+				if(pathkeys.length){
+					pathkeys.splice(pathkeys.length-1,1)
+					self.LeftTree.defaultOpenkeysInit = pathkeys;
+					self.LeftTree.defaultOpenkeys = pathkeys;
+				}
+				self.LeftTree.Currentkey = item.fid;
+				self.ScreenParam.fids = item.fid;
+				self.$refs.LeftTreeRef.setCurrentKey(item.fid);
+				self.LeftCurrenType = 'filelist'
+				self.$refs.ScreenBoxRef.DeleteAll();
+				self.$nextTick(function(){
+					self.RightParamClean();
+					self.RightType = 'folder';
+					self.RightActivefid = [item.fid];
+					self.CommonGetImageData();
+					self.RightGetData();
+				});
+            },
+            FileContextmenu(item){//右键事件
+                var self = this;
+				this.DocumentHideAllPop();
+				if(this.DocumentVapp.type != 3){
+					self.Fileclick([item.fid]);
+					return false;
+				}
+				let menu = self.$refs.fileMenu.popperRef.contentRef;
+				var evt = event || window.event;
+				var clientWidth = document.documentElement.clientWidth || document.body.clientWidth ;
+				var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+							 
+				var clientHeight = document.documentElement.clientHeight || document.body.clientHeight ;
+				var scrollTop = document.documentElement.scrollTop || document.body.scrollTop ;
+				
+				//给left和top分别赋值为鼠标的位置；
+				self.fileMunu.left = evt.pageX+"px";
+				self.fileMunu.top = evt.pageY+"px";
+				//如果鼠标右边放不下菜单，就把left的值的改了
+				if(evt.pageX+100>clientWidth+scrollLeft){//菜单应该在鼠标左边；
+					var left1 = evt.pageX-100;
+					self.fileMunu.left = left1+"px";
+				}
+				//如果鼠标下边放不下菜单，就把top的值的改了
+				if(evt.pageY+100>clientHeight+scrollTop){
+					var top1 = (evt.pageY-100);
+					self.fileMunu.top = top1+"px";
+				}
+				this.fileMunu.data = item;
+				self.$nextTick(function(){
+                    self.fileMunu.show = true;
+				    self.Fileclick([item.fid]);
+                });
+            },
+            FileOperation({type,id,text}){//重命名
+                let self = this;
+                if(type == 'rename'){
+                    var node = self.$refs.LeftTreeRef.getNode(id);
+                    if(node){
+                        node.data.fname = text;
+                        node.data.pfname = text;
+                    }
+                }
+                
+            },
+            //设置获取文件夹参数
+			FileSetParam(){
+				var self = this;
+                if(this.LeftCurrenType != 'filelist'){
+                    this.fileparam.show = false;
+                    return false;
+                }
+				var param = {
+					appid:this.DocumentAppid,
+					fid:this.LeftTree.Currentkey,
+				};
+				if(this.HeaderKeyword){
+					param['keyword'] = this.HeaderKeyword;
+				}
+				this.fileparam.param = param;
+                this.fileparam.show = true;
+                self.$nextTick(function(){
+                	self.$refs.ImageFileRef.Init();
+                });
+			},
+            FileMenuOperation(type){
+				var self = this;
+				this.fileMunu.show = false;
+				if(type == 'rename'){
+					self.$refs.ImageFileRef.Rename(this.fileMunu.data.fid)
+				}else if(type == 'delete'){
+					this.LeftTreeDialog.fid = JSON.parse(JSON.stringify(this.fileMunu.data.fid));
+					if(parseInt(this.fileMunu.data.filenum)){
+						this.LeftTreeDialog.title = this.fileMunu.data.fname;
+						this.LeftTreeDialog.Visible = true;
+					}else{
+						this.LeftTreeDelete();
+					}
+					
+				}
+			},
+			ImageDataIsExpandedChange(val){
+				sessionStorage.setItem('hassub',val);
+			},
+        }
+    }
+</script>

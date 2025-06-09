@@ -1,0 +1,12 @@
+<div class="el-textarea__inner tag-box" style="min-height: 31px;line-height: 31px;">
+	<span v-if="!RightData.tags.length" style="color:var(--el-text-color-placeholder);font-size: var(--el-font-size-base);vertical-align: text-bottom;">标签</span>	
+	<el-tag
+		v-for="tag in RightData.tags"
+		@close="RightFileTagDelete(tag)"
+		:key="tag.tid"
+		disable-transitions
+		type="info">
+		{{tag.tagname}}
+   </el-tag>
+ </div>
+	

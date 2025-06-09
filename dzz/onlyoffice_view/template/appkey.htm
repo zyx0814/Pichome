@@ -1,0 +1,20 @@
+<!--{template common/header_simple_start}-->
+<!--{template common/header_simple_end}-->
+<div class="container" style="padding:30px;">
+  <div class="well" style="overflow:hidden;padding:40px;">
+    <form id="appkey_form" name="appkey_form" class="" action="{DZZSCRIPT}?mod=onlyoffice_view&op=appkey" method="post" >
+            <input type="hidden" name="confirmsubmit" value="true" />
+            <input type="hidden" name="adminurl" value="$_GET['adminurl']" />
+            <input type="hidden" name="formhash" value="{FORMHASH}" />
+            <div class="form-group">
+            	<label >请输入OnlyOffice Document Server API地址：</label>
+           		<input id="app_key" type="text" class="form-control" style="max-width:300px;" name="app_key" value="" />
+            	<span class="help-block">填写您的onlyoffice Document Server API地址，如:http://192.168.0.2/web-apps/apps/api/documents/api.js 或 http://192.168.0.2/OfficeWeb/apps/api/documents/api.js 根据你的文档服务器填写</span>
+             </div>
+             <div class="form-group">
+            	<button type="button" class="btn btn-primary" style="padding:8px 50px" onclick="if($('app_key').value==''){$('app_key').focus();}else{$('appkey_form').submit()}">提交</button>
+            </div>
+    </form>
+   </div>
+</div>
+<!--{template common/footer_simple}-->  

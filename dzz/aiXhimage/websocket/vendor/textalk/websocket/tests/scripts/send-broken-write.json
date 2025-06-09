@@ -1,0 +1,43 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fwrite",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": 18
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "stream_get_meta_data",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": {
+            "timed_out": false,
+            "blocked": true,
+            "eof": true,
+            "stream_type": "tcp_socket\/ssl",
+            "mode": "r+",
+            "unread_bytes": 2,
+            "seekable": false
+        }
+    },
+    {
+        "function": "fclose",
+        "params": [],
+        "return": true
+    }
+]

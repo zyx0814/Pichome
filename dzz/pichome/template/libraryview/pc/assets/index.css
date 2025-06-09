@@ -1,0 +1,28 @@
+@charset "UTF-8";
+
+.page-header {
+  padding: 0 10px;
+}
+
+
+.headerkeyword .el-input-group__append{
+      background-color: var(--el-color-primary);
+      --el-input-border-color:var(--el-color-primary);
+      color: var(--el-color-white);
+  
+}
+.camera-popover{
+    left: 0 !important;
+    --el-popover-padding: 28px;
+}
+.camera-popover .camera-dropdown{
+    width: 100%;
+    z-index: 100000000;
+}
+.camera-popover .camera-dropdown .camera-upload .el-upload-dragger{
+    height: 340px;
+    border-width: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

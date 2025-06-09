@@ -1,0 +1,7 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [],
+        "return": "@mock-bad-context"
+    }
+]

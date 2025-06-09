@@ -1,0 +1,62 @@
+[
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "get_resource_type",
+        "params": [
+            "@mock-stream"
+        ],
+        "return": "stream"
+    },
+    {
+        "function": "fwrite",
+        "params": [],
+        "return": 12
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            2
+        ],
+        "return-op": "chr-array",
+        "return":[136, 154]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            4
+        ],
+        "return-op": "chr-array",
+        "return":[98, 250, 210, 113]
+    },
+    {
+        "function": "fread",
+        "params": [
+            "@mock-stream",
+            26
+        ],
+        "return-op": "chr-array",
+        "return": [97, 18, 145, 29, 13, 137, 183, 81, 3, 153, 185, 31, 13, 141, 190, 20, 6, 157, 183, 21, 88, 218, 227, 65, 82, 202]
+    },
+    {
+        "function": "fclose",
+        "params": [
+            "@mock-stream"
+        ],
+        "return":true
+    }
+]

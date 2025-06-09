@@ -1,0 +1,111 @@
+<script>
+	let RightColorMixin = {
+		data(){
+			return {
+				RightColorParam: {
+					base: '',
+					rgb: '',
+					rgba: '',
+					hsl: '',
+					hsv: '',
+					cmyk: ''
+				},
+			}
+		},
+		methods:{
+			RightColorCommand(val){
+				var self = this;
+				if(val == 'common'){
+					this.ScreenValue.color.value = this.RightColorParam.base;
+					this.ScreenSubmit();
+				}else{
+					CopyTxt(this,val)
+				}
+			},
+			RightColorDropdown(val) {
+				var rgb = this.RightColorHexToRgb( val);
+				var hsl = this.RightColorRgbToHsl(rgb.r, rgb.g, rgb.b);
+				var cmyk = this.RightColorRgbToCmyk(rgb.r, rgb.g, rgb.b);
+				var hsv = this.RightColorRgbToHsv(rgb.r, rgb.g, rgb.b);
+				this.RightColorParam = {
+					base: val,
+					rgb: 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')',
+					rgba: 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 1)',
+					hsl: hsl,
+					hsv: hsv,
+					cmyk: cmyk
+				};
+			},
+			RightColorHexToRgb(hex) {
+				var str = {
+					r: parseInt('0x' + hex.slice(1, 3)),
+					g: parseInt('0x' + hex.slice(3, 5)),
+					b: parseInt('0x' + hex.slice(5, 7))
+				};
+				return str;
+			},
+			RightColorRgbToHsl(r, g, b) {
+				r /= 255, g /= 255, b /= 255;
+				var max = Math.max(r, g, b),
+					min = Math.min(r, g, b);
+				var h, s, l = (max + min) / 2;
+				if (max == min) {
+					h = s = 0; // achromatic
+				} else {
+					var d = max - min;
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0);
+							break;
+						case g:
+							h = (b - r) / d + 2;
+							break;
+						case b:
+							h = (r - g) / d + 4;
+							break;
+					}
+					h *= 6;
+				}
+				return 'hsl(' + Math.round(parseInt(h * 100) / 10) + ', ' + Math.round(parseInt(s * 1000) / 10) +
+					'%, ' + Math.round(parseInt(l * 1000) / 10) + '%)';
+			},
+			RightColorRgbToHsv(R, G, B) {
+				R /= 255
+				G /= 255
+				B /= 255
+				var max = Math.max(R, G, B)
+				var min = Math.min(R, G, B)
+				var range = max - min
+				var V = max
+				var S = V === 0 ? 0 : range / V
+				var H = 0
+				if (R === V) H = (60 * (G - B)) / range
+				if (G === V) H = 120 + (60 * (B - R)) / range
+				if (B === V) H = 240 + (60 * (R - G)) / range
+				if (range === 0) H = 0
+				if (H < 0) H += 360
+				return 'hsv(' + Math.round(H) + ', ' + Math.round(parseInt(S * 1000) / 10) + '%, ' + Math.round(
+					parseInt(V * 1000) / 10) + '%)';
+			},
+			RightColorRgbToCmyk(R, G, B) {
+				if ((R == 0) && (G == 0) && (B == 0)) {
+					return [0, 0, 0, 1];
+				} else {
+					var calcR = 1 - (R / 255),
+						calcG = 1 - (G / 255),
+						calcB = 1 - (B / 255);
+			
+					var K = Math.min(calcR, Math.min(calcG, calcB)),
+						C = (calcR - K) / (1 - K),
+						M = (calcG - K) / (1 - K),
+						Y = (calcB - K) / (1 - K);
+			
+					return 'cmyk(' + Math.round(parseInt(C * 1000) / 10) + '%, ' + Math.round(parseInt(M * 1000) /
+						10) + '%, ' + Math.round(parseInt(Y * 1000) / 10) + '%, ' + Math.round(parseInt(K *
+						1000) / 10) + '%)';
+				}
+			},
+		}
+	}
+</script>

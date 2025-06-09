@@ -1,0 +1,68 @@
+<div class="h-left">
+	<a href="{$_G[siteurl]}" style="margin-right: 10px;width: 25px;height: 25px;">
+		<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain" style="width: 100%;height: 100%;">
+			<template #error><div class="el-image__placeholder"></div></template>
+		</el-image>
+	</a>
+</div>
+<div class="h-center" style="overflow: hidden;justify-content: center;" @click="headerdrawer_m=true">
+	<!-- <div @click="headerdrawer_m=true"> -->
+		<button class="reset-btn menu-hamburger hamburger" :class="{active:headerdrawer_m}">
+			<span class="hamburger-1"></span>
+			<span class="hamburger-2"></span>
+			<span class="hamburger-3"></span>
+		</button>
+		<el-text >{{ bannerData.item.bannername }}</el-text>
+	<!-- </div> -->
+</div>
+<div class="h-right"> 
+	<a href="user.php?mod=my" style="height: 25px;">
+		<el-avatar style="width: 25px;height: 25px;">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</a>
+</div>
+
+<el-drawer
+    v-model="headerdrawer_m"
+    direction="btt"
+	size="85%"
+	title="导航"
+	custom-class="m-header-munu">
+	<el-menu
+		class="dzz-menu-m"
+		:default-active="bannerData.active">
+		<template v-for="item in bannerData.data.top">
+			<template v-if="item.children && item.children.length">
+				<el-sub-menu 
+				:index="item.id" 
+				:class="{'is-active':bannerData.active==item.id}"
+				popper-class="dzz-sub-menu">
+					<template #title>
+						<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+							<template #error><div class="el-image__placeholder"></div></template>
+						</el-image>
+						{{item.bannername}}
+						<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+					</template>
+					<menuitem 
+						:datalist="item.children" 
+						@handleselect="handleSelect"
+						:active="bannerData.active"></menuitem>
+				</el-sub-menu>
+			</template>
+			<template v-else>
+				<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3 || parseInt(item.btype) == 5">
+					<template #title>
+						<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+							<template #error><div class="el-image__placeholder"></div></template>
+						</el-image>
+						{{item.bannername}}
+						<div class="title-text" @click.stop="parseInt(item.btype) != 5 && handleSelect(item)"></div>
+					</template>
+				</el-menu-item>
+			</template>
+		</template>
+	</el-menu>
+  </el-drawer>
+

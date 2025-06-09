@@ -1,0 +1,32 @@
+<div class="color-sequence" :gutter="2" style="margin-top: 20px;">
+	<template v-for="(item,key) in RightData.color">
+		<el-col>
+			<el-dropdown 
+				style="width: 100%;height: 100%;" 
+				trigger="click"
+				@command="RightColorCommand"
+				@visible-change="RightColorDropdown(item)">
+				<div class="color-item">
+					<el-tooltip
+						effect="dark"
+						:content="item"
+						placement="top">
+						<div style="width: 100%;height: 100%;" :style="{'background-color': item}"></div>
+					</el-tooltip>
+				</div>
+				<template #dropdown>
+					<el-dropdown-menu class="el-popover-color">
+						<el-dropdown-item  command="common">{lang search_color}</el-dropdown-item>
+						<el-dropdown-item divided :command="RightColorParam.base">{lang copy}&nbsp;{{RightColorParam.base}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.rgb">{lang copy}&nbsp;{{RightColorParam.rgb}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.rgba">{lang copy}&nbsp;{{RightColorParam.rgba}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.hsl">{lang copy}&nbsp;{{RightColorParam.hsl}}</el-dropdown-item>
+						<el-dropdown-item divided :command="RightColorParam.hsv">{lang copy}&nbsp;{{RightColorParam.hsv}}</el-dropdown-item>
+						<el-dropdown-item :command="RightColorParam.cmyk">{lang copy}&nbsp;{{RightColorParam.cmyk}}</el-dropdown-item>
+					   </el-dropdown-menu>
+				</template>
+			</el-dropdown>
+			
+		</el-col>
+	</template>
+</div>

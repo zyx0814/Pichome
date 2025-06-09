@@ -1,0 +1,59 @@
+<van-action-sheet
+	v-model="gradedata.Visible"
+	cancel-text="取消"
+	close-on-click-action>
+	<div class="vam-popup-title">密级</div>
+	<button type="button" class="van-action-sheet__item" v-for="item in gradedata.actions" @click="gradeselect(item.value)">
+		<van-image
+			style="vertical-align: sub;"
+			width="20px"
+			height="20px"
+			fit="contain"
+			:src="item.image"
+		/>
+	</button>
+</van-action-sheet>
+<script type="text/javascript">
+	var DetailGradeMixin = {
+		data(){
+			return {
+				gradedata:{
+					actions:[
+						{value:0,image:'dzz/pichome/image/grade/0.png'},
+						{value:1,image:'dzz/pichome/image/grade/1.png'},
+						{value:2,image:'dzz/pichome/image/grade/2.png'},
+						{value:3,image:'dzz/pichome/image/grade/3.png'},
+						{value:4,image:'dzz/pichome/image/grade/4.png'},
+						{value:5,image:'dzz/pichome/image/grade/5.png'}
+					],
+					Visible:false
+				}
+			}
+		},
+		methods:{
+			async gradeselect(val){
+				var self = this;
+				// self.gradedata.Visible = false;
+				// self.$toast.loading({
+				// 	message: '提交中...',
+				// 	forbidClick: true,
+				// 	duration:0
+				// });
+				// var res = await axios.post('index.php?mod=banner&op=ajax&operation=setfilelevel',{
+				// 	paths:self.path,
+				// 	level:val
+				// });
+				// if(res == 'intercept'){
+				// 	return false;
+				// }
+				// var json = res.data;
+				// if(json.success){
+				// 	self.showdata[self.showdataindex].data.level = val;
+				// 	self.$toast.success('提交成功');
+				// }else{
+				// 	self.$toast.fail('提交失败');
+				// }
+			}
+		}
+	};
+</script>
