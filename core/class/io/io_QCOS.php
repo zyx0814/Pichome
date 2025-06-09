@@ -1607,7 +1607,7 @@
                 $url = self::getStream($path);
                 // Download the file
                 $file = self::getMeta($path);
-                print_r($file);die;
+              
                 if ($file['type'] == 'folder') {
                     self::zipdownload($path);
                     exit();
