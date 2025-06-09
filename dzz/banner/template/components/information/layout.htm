@@ -1,0 +1,39 @@
+<el-dropdown @command="handleLayoutType">
+    <el-button text style="outline: none;">
+        <template v-if="bannerData.banner[bannerData.banneractive].layout=='waterFall'">瀑布流</template>
+        <template v-else-if="bannerData.banner[bannerData.banneractive].layout=='rowGrid'">自适应</template>
+        <template v-else-if="bannerData.banner[bannerData.banneractive].layout=='imageList'">网格</template>
+        <template v-else>列表</template>
+        <el-icon class="el-icon--right">
+            <arrow-down />
+        </el-icon>    
+    </el-button>
+    <template #dropdown>
+        <el-dropdown-menu>
+            <el-dropdown-item 
+                command="waterFall"
+                :style="{color:bannerData.banner[bannerData.banneractive].layout=='waterFall'?'var(--el-color-primary)':''}">
+                <el-icon><Check v-if="bannerData.banner[bannerData.banneractive].layout=='waterFall'" /></el-icon>
+                瀑布流
+            </el-dropdown-item>
+            <el-dropdown-item 
+                :style="{color:bannerData.banner[bannerData.banneractive].layout=='rowGrid'?'var(--el-color-primary)':''}"
+                command="rowGrid">
+                <el-icon><Check v-if="bannerData.banner[bannerData.banneractive].layout=='rowGrid'" /></el-icon>
+                自适应
+            </el-dropdown-item>
+            <el-dropdown-item 
+                :style="{color:bannerData.banner[bannerData.banneractive].layout=='imageList'?'var(--el-color-primary)':''}"
+                command="imageList">
+                <el-icon><Check v-if="bannerData.banner[bannerData.banneractive].layout=='imageList'" /></el-icon>
+                网格
+            </el-dropdown-item>
+            <el-dropdown-item 
+                :style="{color:bannerData.banner[bannerData.banneractive].layout=='tabodd'?'var(--el-color-primary)':''}"
+                command="tabodd">
+                <el-icon><Check v-if="bannerData.banner[bannerData.banneractive].layout=='tabodd'" /></el-icon>
+                列表
+            </el-dropdown-item>
+        </el-dropdown-menu>
+    </template>
+</el-dropdown>

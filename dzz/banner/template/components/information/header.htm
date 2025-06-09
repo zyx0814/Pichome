@@ -1,0 +1,115 @@
+<a  href="{$_G[siteurl]}" class="h-left" style="text-decoration: none;">
+	<el-image class="logo" src="data/attachment/sitelogo/sitelogo.png?{VERHASH}" fit="contain">
+		<template #error><div class="el-image__placeholder"></div></template>
+	</el-image>
+	<el-text tag="b" size="large" style="color:var(--el-text-color-primary);white-space: nowrap;">{$_G[setting][sitename]}</el-text>
+</a>
+<div class="h-center" style="overflow: hidden;">
+	<div style="width: 100%;margin-bottom: -5px;height: 100%;overflow: hidden;">
+		<el-menu
+			class="dzz-menu"
+			:default-active="bannerData.active"
+			mode="horizontal"
+			style="border:0;height: 100%;">
+			<template v-for="item in bannerData.data.top">
+				<template v-if="item.children && item.children.length">
+					<el-sub-menu 
+					:index="item.id" 
+					:class="{'is-active':bannerData.active==item.id}">
+						<template #title>
+							<el-image v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+						<menuitem 
+							:datalist="item.children" 
+							@handleselect="handleSelect"
+							:active="bannerData.active"></menuitem>
+					</el-sub-menu>
+				</template>
+				<template v-else>
+					<el-menu-item :index="item.id" :disabled="parseInt(item.btype) == 3">
+						<template #title>
+							<el-image  v-if="item.icon" class="icon" :src="item.icon" fit="cover">
+								<template #error><div class="el-image__placeholder"></div></template>
+							</el-image>
+							{{item.bannername}}
+							<div class="title-text" @click.stop="handleSelect(item)"></div>
+						</template>
+					</el-menu-item>
+				</template>
+			</template>
+		</el-menu>
+	</div>
+</div>
+<div class="h-right"> 
+	<el-tooltip content="切换页面配色" placement="bottom">
+		<el-button 
+			text 
+			:icon="DocumentThemeColor=='light'?'Sunny':'Moon'" 
+			style="font-size: var(--el-font-size-extra-large);" 
+			circle  
+			size="large"
+			@click="DocumentThemeChange">
+		</el-button>
+	</el-tooltip>
+	<comavatar
+		:level="parseInt($_G[pichomelevel])"
+		iscollect="<!--{if defined('PICHOME_LIENCE') && (!$_G[config][pichomeclosecollect] || $_G[adminid])}--><!--{/if}-->"
+		:adminid="parseInt($_G[adminid])"
+		PICHOME_LIENCE="<!--{if defined('PICHOME_LIENCE')}--><!--{/if}-->"
+		:uid="parseInt($_G[uid])"
+		upgrade="<!--{if $_G['setting']['upgrade']}--><!--{/if}-->"
+		version="$_G[setting][version]"
+		formhash="{FORMHASH}">
+		<el-avatar size="40">
+			{eval echo avatar_block($_G[uid]);}
+		</el-avatar>
+	</comavatar>
+</div>
+<script>
+	const HeaderMixins = {
+		data(){
+			return {
+				headerdrawer_m:false,
+				headerkeyword:'',
+				fheaderkeyword:'',
+				Screenshow:true,
+				imagereload:false,
+				HeaderRightBtnShow:{
+					display:[],//显示内容
+					other:'btime',//显示内容其它
+					order:'btime',//排序方式
+					sort:'desc',//升序、降序
+					layout:'waterFall'//图片布局方式
+				},
+				HeaderActive:''
+			}
+		},
+		methods:{
+			handleSelect(data){
+				if(data.url){
+					window.location.href = data.url;
+				}else{
+					window.location.href = data.realurl;
+				}
+				setTimeout(() => {
+					window.location.reload();
+				}, 300);
+			},
+			DocumentThemeChange(){
+				console.log(11111);
+				if(this.DocumentThemeColor=='light'){
+					this.DocumentThemeColor='dark';
+					localStorage.setItem('theme','dark');
+				}else{
+					this.DocumentThemeColor='light';
+					localStorage.setItem('theme','light');
+				}
+				
+			},
+		},
+	}
+</script>

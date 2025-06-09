@@ -1,0 +1,55 @@
+<div class="container" style="display: flex;justify-content: end;align-items: center;margin-top: 20px;margin-bottom: 12px;">
+    <el-dropdown @command="handleLayoutType">
+        <el-button text style="outline: none;">
+            <template v-if="bannerData.banner.other.layout=='waterFall'">瀑布流</template>
+            <template v-else-if="bannerData.banner.other.layout=='rowGrid'">自适应</template>
+            <template v-else-if="bannerData.banner.other.layout=='imageList'">网格</template>
+            <template v-else>列表</template>
+            <el-icon class="el-icon--right">
+                <arrow-down />
+            </el-icon>    
+        </el-button>
+        <template #dropdown>
+            <el-dropdown-menu>
+                <el-dropdown-item 
+                    command="waterFall"
+                    :style="{color:bannerData.banner.other.layout=='waterFall'?'var(--el-color-primary)':''}">
+                    <el-icon><Check v-if="bannerData.banner.other.layout=='waterFall'" /></el-icon>
+                    瀑布流
+                </el-dropdown-item>
+                <el-dropdown-item 
+                    :style="{color:bannerData.banner.other.layout=='rowGrid'?'var(--el-color-primary)':''}"
+                    command="rowGrid">
+                    <el-icon><Check v-if="bannerData.banner.other.layout=='rowGrid'" /></el-icon>
+                    自适应
+                </el-dropdown-item>
+                <el-dropdown-item 
+                    :style="{color:bannerData.banner.other.layout=='imageList'?'var(--el-color-primary)':''}"
+                    command="imageList">
+                    <el-icon><Check v-if="bannerData.banner.other.layout=='imageList'" /></el-icon>
+                    网格
+                </el-dropdown-item>
+                <el-dropdown-item 
+                    :style="{color:bannerData.banner.other.layout=='tabodd'?'var(--el-color-primary)':''}"
+                    command="tabodd">
+                    <el-icon><Check v-if="bannerData.banner.other.layout=='tabodd'" /></el-icon>
+                    列表
+                </el-dropdown-item>
+            </el-dropdown-menu>
+        </template>
+    </el-dropdown>
+</div>
+<div class="container" style="position: relative;margin-top: 10px;">
+    <Image-Layout
+        ref="RefImageLayoutother"
+        :props="{click:true}"
+        @returnparam="Imagereturnparam"
+        :layout="bannerData.banner.other.layout"
+        :urlparam="bannerData.ImageLayout.urlparam"
+        @click="ImageDetails"
+        :showmessage="bannerData.ImageLayout.showmessage"
+        :url="bannerData.ImageLayout.url"
+        :scrollref="scrollref"
+        :parentbox="bannerData.ImageLayout.parentbox">
+    </Image-Layout>
+</div>

@@ -1,0 +1,124 @@
+<div class="information-box"> 
+    <div class="container" 
+    style="
+    position: relative;
+    margin-top: 0;
+    border: var(--el-border);
+    border-radius: 8px;
+    overflow: hidden;">
+        <div class="message-header">
+            <div class="descriptions" style="--el-fill-color-blank: #F7F7F7;">
+                <!-- <el-descriptions 
+                    :title="bannerData.title"
+                    size="large"
+                    :column="2">
+                    <el-descriptions-item v-for="item in bannerData.fileds" :label="item.name+':'" style="background: transparent;">
+                        {{ item.value }}
+                    </el-descriptions-item>
+                </el-descriptions> -->
+                <div class="header-title">{{ bannerData.title }}</div>
+                <ul>
+                    <li v-for="item in bannerData.fileds">
+                        <div class="title">
+                            <el-text tag="b" style="color: inherit;">{{ item.name }}:</el-text>
+                        </div>
+                        <div class="content">
+                            <template v-if="item.type == 'timerange' || item.type == 'multiselect'">
+                                <span class="el-text" style="margin-right: 10px;" v-for="txt in item.value">{{ txt }}</span>
+                            </template>
+                            <template v-else>
+                                <span class="el-text">{{ item.value }}</span>
+                            </template>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="img-box">
+                <el-image :class="'image_'+bannerData.icotype" :src="bannerData.icon" fit="cover" >
+                    <template #error><div class="el-image__placeholder"></div></template>
+                    <template #placeholder><div class="el-image__placeholder"></div></template>
+                </el-image>
+            </div>
+            
+            
+        </div>
+        <div class="menu-box">
+            <el-menu
+                :default-active="bannerData.banneractive"
+                mode="horizontal"
+                @select="handleBannerSelect">
+                <el-menu-item 
+                    v-for="(item,key) in bannerData.banner" 
+                    :index="key">
+                    {{ item.name }}（{{ item.num }}）
+                </el-menu-item>
+            </el-menu>
+            <el-input
+                v-model="tabkeyword"
+                @keyup.enter.native="TabinputKeyWord">
+                <template #suffix>
+					<el-icon v-if="tabkeyword" @click="TabinputKeyWordClear" class="el-input__icon el-input__clear"><Close-Bold /></el-icon>
+					<el-icon v-else @click="TabinputKeyWord" class="el-input__icon"><Search /></el-icon>
+				</template>
+            </el-input>
+        </div>
+    </div>
+    <div class="container"  style="margin-top: 20px;" v-if="bannerData.banneractive == 'all' || bannerData.banneractive == 'search'">
+        <div class="tag-box">
+            <template v-for="tag in bannerData.tags">
+                <el-check-tag 
+                    :checked="tagactive == tag.tid" 
+                    style="margin-right: 12px;font-weight: 500;border: var(--el-border);margin-bottom: 5px;" 
+                    disable-transitions 
+                    @change="tagserach(tag)"
+                    :style="{background: tagactive != tag.tid?'var(--el-bg-color)':''}">
+                    {{ tag.tagname }}（{{tag.num}}）
+                </el-check-tag>
+            </template>
+            
+        </div>
+    </div>
+    <div ref="parentbox">
+        <template v-if="bannerData.banneractive == 'all'">
+            <div class="container" style="position: relative;">
+                <template v-for="item in bannerData.AllData">
+                    <div v-if="item.data.length" class="layout-box">
+                        <div class="top-header" style="margin-top: 20px;">
+                            <el-text tag="b" size="large">{{ item.name }}：</el-text>
+                            <el-button plain @click="handleBannerSelect(item.flag)">
+                                更多<el-icon><Arrow-Right /></el-icon>
+                            </el-button>
+                        </div>
+                        <Image-Layoutlimit
+                            v-if="!item.loading"
+                            :data="item.data"
+                            :layout="item.layout"
+                            :rows="1"
+                            :isshow="{name:true}">
+                        </Image-Layoutlimit>
+                    </div>
+                </template>
+            </div>
+        </template>
+        <template v-else-if="bannerData.banneractive == 'image'">
+            <!--{template components/information/image}-->
+        </template>
+        <template v-else-if="bannerData.banneractive == 'video'">
+            <!--{template components/information/video}-->
+        </template>
+        <template v-else-if="bannerData.banneractive == 'audio'">
+            <!--{template components/information/audio}-->
+        </template>
+        <template v-else-if="bannerData.banneractive == 'document'">
+            <!--{template components/information/document}-->
+        </template>
+        <template v-else-if="bannerData.banneractive == 'other'">
+            <!--{template components/information/other}-->
+        </template>
+        <template v-else-if="bannerData.banneractive == 'search'">
+            <!--{template components/information/search}-->
+        </template>
+    </div>
+    
+    
+</div>
