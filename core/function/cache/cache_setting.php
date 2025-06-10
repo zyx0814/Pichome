@@ -150,6 +150,20 @@ function build_cache_setting() {
 		}
 		$settinglanglist[$v['langflag']] =$nv;
     }
+	if(empty($settinglanglist)){
+		$settinglanglist = array(
+			'zh-CN' => Array (
+				'langflag' => 'zh-CN',
+				'isdefault' => 1,
+				'name' => '简体中文',
+				'elementflag' => 'zh-cn',
+				'langval' => '简体中文',
+				'icon' => 'dzz/lang/images/w80/zh-CN.png',
+				'elementflagCamel' => 'ElementPlusLocaleZhCn'
+			)
+		);
+		$defaultlang='zh-CN';
+	}
     $moreLangState = (count($settinglanglist) >1) ? 1 : 0;
     $data['language_list'] = $settinglanglist;
     $data['defaultlang'] = $defaultlang;

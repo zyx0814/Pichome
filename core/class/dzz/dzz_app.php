@@ -567,7 +567,21 @@ class dzz_app extends dzz_base{
         $defaultlang = getglobal('setting/defaultlang');
         $moreLanguageState = getglobal('setting/moreLanguageState');
         if(empty($settinglanglist)){
-            $settinglanglist = C::t('setting')->fetch('language_list',1);
+            if(!$settinglanglist = C::t('setting')->fetch('language_list',1)){
+                $settinglanglist = array(
+                    'zh-CN' => array(
+                        'langflag' => 'zh-CN',
+                        'isdefault' => 1,
+                        'name' => '简体中文',
+                        'elementflag' => 'zh-cn',
+                        'langval' => '简体中文',
+                        'icon' => 'dzz/lang/images/w80/zh-CN.png',
+                        'elementflagCamel' => 'ElementPlusLocaleZhCn'
+                    )
+                );
+                $defaultlang='zh-CN';
+                $moreLanguageState  = 0;
+            }
         }
         if(!$defaultlang){
             $defaultlang = C::t('setting')->fetch('defaultlang');
