@@ -350,6 +350,92 @@ if ($_GET['step'] == 'start') {
                 'identifier' => 'aiXhimage', 'app_path' => 'dzz', 'available' => 1, 'version' => '1.0',
                 'upgrade_version' => '', 'check_upgrade_time' => 0, 'extra' => 'a:1:{s:11:\"installfile\";s:11:\"install.php\";}', 'uids' => '', 'showadmin' => 1));
         }
+        if (!$appid=DB::result_first("select appid from %t where identifier = %s", array('app_market', 'ollama'))) {
+            $appid=DB::insert('app_market', array(
+                'appname' => 'ollama图片理解',
+                'appico' => 'appico/202501/26/154415eck9acekzp9uaj41.png',
+                'appdesc' => '',
+                'appurl' => '{dzzscript}?mod=ollama',
+                'appadminurl' => '{dzzscript}?mod=ollama&op=setting',
+                'noticeurl' => '',
+                'dateline' => 0,
+                'disp' => 0,
+                'vendor' => '',
+                'haveflash' => 0,
+                'isshow' => 1,
+                'havetask' => 0,
+                'hideInMarket' => 1,
+                'feature' => '',
+                'fileext' => '',
+                'group' => 3,
+                'orgid' => 0,
+                'position' => 0,
+                'system' => 0,
+                'identifier' => 'ollama', 'app_path' => 'dzz', 'available' => 1, 'version' => '1.0',
+                'upgrade_version' => '', 'check_upgrade_time' => 0, 'extra' => 'a:1:{s:11:\"installfile\";s:11:\"install.php\";}', 'uids' => '', 'showadmin' => 1),1);
+
+        }
+        if($appid){
+            //处理ollama相关挂载点
+
+            if ($hid=DB::result_first("select id from %t where addons = %s", array('hooks', 'dzz\ollama\classes\pichomedatadeleteafter'))) {
+                DB::update('hooks', array('app_market_id' => $appid,'priority'=>100), array('id' => $hid));
+            }else{
+                DB::insert('hooks', array(
+                    'app_market_id' => $appid,
+                    'name' => 'pichomedatadeleteafter',
+                    'description' => '删除库文件时清除ai记录',
+                    'type' => 1,
+                    'update_time' => 0,
+                    'addons' => 'dzz\ollama\classes\pichomedatadeleteafter',
+                    'status' => 1,
+                    'priority' => 100
+                ), false, true);
+            }
+            if ($hid=DB::result_first("select id from %t where addons = %s", array('hooks', 'dzz\ollama\classes\attachmentDelAfter'))) {
+                DB::update('hooks', array('app_market_id' => $appid,'priority'=>100), array('id' => $hid));
+            }else{
+                DB::insert('hooks', array(
+                    'app_market_id' => $appid,
+                    'name' => 'attachmentDelAfter',
+                    'description' => '删除附件表时清除对应ai记录',
+                    'type' => 1,
+                    'update_time' => 0,
+                    'addons' => 'dzz\ollama\classes\attachmentDelAfter',
+                    'status' => 1,
+                    'priority' => 100
+                ), false, true);
+            }
+            if ($hid=DB::result_first("select id from %t where addons = %s", array('hooks', 'dzz\ollama\classes\ImageAIkey'))) {
+                DB::update('hooks', array('app_market_id' => $appid,'priority'=>100), array('id' => $hid));
+            }else{
+                DB::insert('hooks', array(
+                    'app_market_id' => $appid,
+                    'name' => 'ImageAIkey',
+                    'description' => '编辑文件数据过滤',
+                    'type' => 1,
+                    'update_time' => 0,
+                    'addons' => 'dzz\ollama\classes\ImageAIkey',
+                    'status' => 1,
+                    'priority' => 100
+                ), false, true);
+            }
+             if ($hid=DB::result_first("select id from %t where addons = %s", array('hooks', 'dzz\ollama\classes\ImagetagAnddesc'))) {
+                 DB::update('hooks', array('app_market_id' => $appid,'priority'=>100), array('id' => $hid));
+             }else{
+                 DB::insert('hooks', array(
+                     'app_market_id' => $appid,
+                     'name' => 'ImagetagAnddesc',
+                     'description' => 'ai获取图片标签和描述',
+                     'type' => 1,
+                     'update_time' => 0,
+                     'addons' => 'dzz\ollama\classes\ImagetagAnddesc',
+                     'status' => 1,
+                     'priority' => 100
+                 ), false, true);
+             }
+
+        }
 
         //更新语言包表数据
         $langarr = [

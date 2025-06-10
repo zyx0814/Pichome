@@ -171,7 +171,6 @@ cq3kkB0tBUAAAAAASUVORK5CYII=
 		<item id="version"><![CDATA[团队版2.1.0]]></item>
 		<item id="hooks">
 			<item id="pichomedatadeleteafter" priority="100" description="pichomedatadeleteafter"><![CDATA[dzz\ollama\classes\pichomedatadeleteafter]]></item>
-			<item id="statsTokenuse" priority="100" description="pichomedatadeleteafter"><![CDATA[dzz\stats\classes\addTokenuse]]></item>
 			<item id="finalydelete" priority="100" description="finalydelete"><![CDATA[dzz\ollama\classes\attachmentDelAfter]]></item>
 			<item id="imageAiData" priority="100" description="ImagetagAnddesc"><![CDATA[dzz\ollama\classes\ImagetagAnddesc]]></item>
 			<item id="editfilefilter" priority="100" description="ImageAIkey"><![CDATA[dzz\ollama\classes\ImageAIkey]]></item>

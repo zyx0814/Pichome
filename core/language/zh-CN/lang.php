@@ -2024,6 +2024,6 @@ $_G[siteurl]',
 	'download_all'=>'下载全部',
     'search_picture'=>'搜相似图',
 	'similarity'=>'相似度',
-	'drop_the_image'=>'或拖拽图片',
+	'drop_the_image'=>'或拖拽图片 ，或截图后 Ctrl + V 上传图片',
 	'Image_format_support'=>'图片格式支持',
 );
