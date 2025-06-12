@@ -180,8 +180,15 @@ class dzz_app extends dzz_base{
             $sitepath = preg_replace("/\/archiver/i", '', $sitepath);
         }
         $_G['isHTTPS'] = $this->is_HTTPS();//($_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS']) != 'off') ? true : false;
-        $_G['siteport'] = (empty($_SERVER['SERVER_PORT']) || $_SERVER['SERVER_PORT'] == '80' || $_SERVER['SERVER_PORT'] == '443' || $_SERVER['HTTP_X_FORWARDED_PORT'] == '443')? '' : ':'.$_SERVER['SERVER_PORT'];
-        $host=preg_replace("/:\d+$/",'',$_SERVER['HTTP_HOST']).$_G['siteport'];
+        if(strpos($_SERVER['HTTP_HOST'],':')!==false){
+            list($host,$siteport) = explode(':',$_SERVER['HTTP_HOST']);
+            $_G['siteport']=':'.intval($siteport);
+            $host=$_SERVER['HTTP_HOST'];
+        }else{
+            $_G['siteport'] = (empty($_SERVER['SERVER_PORT']) || $_SERVER['SERVER_PORT'] == '80' || $_SERVER['SERVER_PORT'] == '443' || $_SERVER['HTTP_X_FORWARDED_PORT'] == '443')? '' : ':'.$_SERVER['SERVER_PORT'];
+            $host=preg_replace("/:\d+$/",'',$_SERVER['HTTP_HOST']).$_G['siteport'];
+        }
+
         $_G['siteurl'] = dhtmlspecialchars('http'.($_G['isHTTPS'] ? 's' : '').'://'.$host.$sitepath.'/');
      
 		if(strpos($_SERVER['HTTP_HOST'],'127.')!==false && strpos($_SERVER['HTTP_HOST'],'localhost')!==false){
@@ -567,22 +574,23 @@ class dzz_app extends dzz_base{
         $defaultlang = getglobal('setting/defaultlang');
         $moreLanguageState = getglobal('setting/moreLanguageState');
         if(empty($settinglanglist)){
-            if(!$settinglanglist = C::t('setting')->fetch('language_list',1)){
-                $settinglanglist = array(
-                    'zh-CN' => array(
-                        'langflag' => 'zh-CN',
-                        'isdefault' => 1,
-                        'name' => '简体中文',
-                        'elementflag' => 'zh-cn',
-                        'langval' => '简体中文',
-                        'icon' => 'dzz/lang/images/w80/zh-CN.png',
-                        'elementflagCamel' => 'ElementPlusLocaleZhCn'
-                    )
-                );
-                $defaultlang='zh-CN';
-                $moreLanguageState  = 0;
-            }
+           if(!$settinglanglist = C::t('setting')->fetch('language_list',1)) {
+               $settinglanglist = array(
+                   'zh-CN' => array(
+                       'langflag' => 'zh-CN',
+                       'isdefault' => 1,
+                       'name' => '简体中文',
+                       'elementflag' => 'zh-cn',
+                       'langval' => '简体中文',
+                       'icon' => 'dzz/lang/images/w80/zh-CN.png',
+                       'elementflagCamel' => 'ElementPlusLocaleZhCn'
+                   )
+               );
+               $defaultlang='zh-CN';
+               $moreLanguageState  = 0;
+           }
         }
+
         if(!$defaultlang){
             $defaultlang = C::t('setting')->fetch('defaultlang');
         }
