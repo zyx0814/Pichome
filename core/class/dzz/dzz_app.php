@@ -180,16 +180,14 @@ class dzz_app extends dzz_base{
             $sitepath = preg_replace("/\/archiver/i", '', $sitepath);
         }
         $_G['isHTTPS'] = $this->is_HTTPS();//($_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS']) != 'off') ? true : false;
+
         if(strpos($_SERVER['HTTP_HOST'],':')!==false){
             list($host,$siteport) = explode(':',$_SERVER['HTTP_HOST']);
             $_G['siteport']=':'.intval($siteport);
-            $host=$_SERVER['HTTP_HOST'];
         }else{
             $_G['siteport'] = (empty($_SERVER['SERVER_PORT']) || $_SERVER['SERVER_PORT'] == '80' || $_SERVER['SERVER_PORT'] == '443' || $_SERVER['HTTP_X_FORWARDED_PORT'] == '443')? '' : ':'.$_SERVER['SERVER_PORT'];
-            $host=preg_replace("/:\d+$/",'',$_SERVER['HTTP_HOST']).$_G['siteport'];
         }
-
-        $_G['siteurl'] = dhtmlspecialchars('http'.($_G['isHTTPS'] ? 's' : '').'://'.$host.$sitepath.'/');
+        $_G['siteurl'] = dhtmlspecialchars('http'.($_G['isHTTPS'] ? 's' : '').'://'.$_SERVER['HTTP_HOST'].$sitepath.'/');
      
 		if(strpos($_SERVER['HTTP_HOST'],'127.')!==false && strpos($_SERVER['HTTP_HOST'],'localhost')!==false){
 			$_G['localurl']=dhtmlspecialchars('http'.($_G['isHTTPS'] ? 's' : '').'://127.0.0.1'.$sitepath.'/');
