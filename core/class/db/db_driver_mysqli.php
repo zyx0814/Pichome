@@ -82,9 +82,9 @@ class db_driver_mysqli
 			$halt && $this->halt('notconnect', $this->errno());
 		} else {
 			$this->curlink = $link;
-			if($this->version() > '4.1') {
+			if(floatval($this->version()) > 4.1) {
 				$link->set_charset($dbcharset ? $dbcharset : $this->config[1]['dbcharset']);
-				$serverset = $this->version() > '5.0.1' ? 'sql_mode=\'\'' : '';
+				$serverset = floatval($this->version()) > 5.1 ? 'sql_mode=\'\'' : '';
 				$serverset && $link->query("SET $serverset");
 			}
 		}
