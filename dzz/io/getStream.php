@@ -11,60 +11,43 @@ if (!defined('IN_OAOOA')) {
 }
 global $_G;
 $path = isset($_GET['path']) ? trim($_GET['path']):'';
-if(!$path = Decode($path,'download2')){
+if(!$path = Decode($path,'read')){
     @header( 'HTTP/1.1 403 Not Found' );
     @header( 'Status: 403 Not Found' );
     exit('File not found');
 }
-$patharr = explode('_',$path);
 
-$perm = isset($patharr[1]) ? intval($patharr[1]):0;
+
+$rid = $path;
 
 //是否忽略密级权限
-$ulevel = getglobal('pichomelevel') ? getglobal('pichomelevel'):0;
+$ulevel = intval(getglobal('pichomelevel') );
 //是否获取真实文件地址
-$rid = $patharr[0];
 
-if(strpos($rid, 'attach::') === 0){
-    $thumbpath = $rid;
-    $resourcesdata = IO::getMeta($rid);
-}
-else{
-    $hasperm = true;
+
+if(strpos($path, 'attach::') === 0){
+    $thumbpath = $path;
+    $resourcesdata = IO::getMeta($path);
+}else {
     $resourcesdata = C::t('pichome_resources')->fetch($rid);
-    if(!$resourcesdata){
-        exit('file is not exists');
-    }
-    $resourattrdata = C::t('pichome_resources_attr')->fetch($rid);
-    $resourcesdata = array_merge($resourcesdata, $resourattrdata);
-    $appdata = C::t('pichome_vapp')->fetch($resourcesdata['appid']);
-    if($perm&2){//判断是否忽略权限
-        $hasperm = true;
-    }else{
-        if($_G['adminid']== 1){
-            $hasperm = true;
-        }else{
-            $hasperm = C::t('pichome_vapp')->getpermbypermdata($appdata['download'],'download');
-        }
-
-    }
-    if(!$hasperm || (!$perm&4 && $ulevel < $resourcesdata['level'])){
-        @header('HTTP/1.1 403 No Perm');
-        @header('Status: 404 No Perm');
-    }
-    if(is_numeric($resourcesdata['path'])){
-        $thumbpath = IO::getStream('attach::'.$resourcesdata['path']);
-    }else{
-        $thumbpath = $appdata['path'] . BS . $resourcesdata['path'];
-    }
 }
 
+if(!$resourcesdata){
+    exit('file is not exists');
+}
 
+$resourcesdata['name'] = preg_replace('/\.'.$resourcesdata['ext'] . '/', '', $resourcesdata['name']);
+$resourcesdata['name'] .='.'. $resourcesdata['ext'];
 
+if($resourcesdata['level']  &&  $ulevel < $resourcesdata['level']){
+    @header('HTTP/1.1 403 No Perm');
+    @header('Status: 404 No Perm');
+    exit('No Level Permission');
+}
 
-$url = IO::getStream($thumbpath);
-//$filename = ($resourcesdata['filename']) ? rtrim($resourcesdata['filename'], '.dzz'):rtrim($resourcesdata['name'], '.dzz');
-$filename = $resourcesdata['filename'] ?? $resourcesdata['name'];
+$url = IO::getStream($path);
+
+$filename = $_GET['filename'] ? getstr($_GET['filename']) : $resourcesdata['name'];
 
 // 定义要移除的后缀
 $suffix = '\.dzz$';
@@ -86,16 +69,17 @@ if (is_file($url)) {
     header("Pragma: private");
     header("Expires: " . date(DATE_RFC822, strtotime(" 30 day")));
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($filename)) . ' GMT');
-   /* if (preg_match("/Firefox/", $_SERVER["HTTP_USER_AGENT"])) {
-        $attachment = 'attachment; filename*='.CHASET.'\'\'' . $name;
+    if (preg_match("/Firefox/", $_SERVER["HTTP_USER_AGENT"])) {
+        $attachment = 'attachment; filename*='.CHARSET.'\'\'' . $name;
     } elseif (!preg_match("/Chrome/", $_SERVER["HTTP_USER_AGENT"]) && preg_match("/Safari/", $_SERVER["HTTP_USER_AGENT"])) {
         $name = trim($name,'"');
         $filename = rawurlencode($name); // 注意：rawurlencode与urlencode的区别
-        $attachment = 'attachment; filename*='.CHASET.'\'\'' . $filename;
+        $attachment = 'attachment; filename*='.CHARSET.'\'\'' . $filename;
     } else{
         $attachment = 'attachment; filename='.$name;
     }
-    header('content-disposition:'.$attachment);*/
+
+    // header('content-disposition:'.$attachment);
     if (isset($_SERVER['HTTP_RANGE'])) {
         $range = str_replace('=', '-', $_SERVER['HTTP_RANGE']);
         $range = explode('-', $range);

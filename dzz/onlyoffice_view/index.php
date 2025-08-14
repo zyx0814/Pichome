@@ -60,12 +60,13 @@ if(in_array($meta['ext'],$docexts)){
 }
 $mode='view';
 $perm_edit=false;
-$perm_download=perm::check('download2',$perm)?1:0;
+$perm_download=perm::check('download2',$perm)?true:false;
 $perm_print=false;
 $fullscreenstream = getglobal('siteurl').'index.php?mod=onlyoffice_view&path='.$_GET['path'];
 
-$key=$rid;
-$stream= $onlyofficedocurl . 'index.php?mod=io&op=getStream&hash='.VERHASH.'&path=' . dzzencode($rid.'_3', '', 0, 0);
+
+$key=GenerateRevisionId(str_replace(':','_',$rid));
+$stream= $onlyofficedocurl . 'index.php?mod=io&op=getStream&hash='.VERHASH.'&path=' . dzzencode($rid);
 
 $saveurl='';
 $config = [
@@ -100,7 +101,7 @@ $config = [
         "mode" => $mode,
         "lang" => "zh",
         "location" => "cn",
-        "callbackUrl" => $saveurl,  // absolute URL to the document storage service
+        "callbackUrl" => '',  // absolute URL to the document storage service
         "createUrl" =>  null,
         "user" => [  // the user currently viewing or editing the document
             "id" => $_G['uid'],
@@ -133,5 +134,11 @@ $config = [
 ];
 if($onlyofficesetting['secret']){
     $config["token"] = jwtEncode($config,$onlyofficesetting['secret']);
+}
+function GenerateRevisionId($key) {
+    if (strlen($key) > 20) $key = crc32($key);
+    $key = preg_replace("[^0-9-.a-zA-Z_=]", "_", $key);
+    $key = substr($key, 0, min(array(strlen($key), 20)));
+    return $key;
 }
 include template('main');
