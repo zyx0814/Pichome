@@ -79,7 +79,7 @@ if (is_file($url)) {
         $attachment = 'attachment; filename='.$name;
     }
 
-    // header('content-disposition:'.$attachment);
+     header('content-disposition:'.$attachment);
     if (isset($_SERVER['HTTP_RANGE'])) {
         $range = str_replace('=', '-', $_SERVER['HTTP_RANGE']);
         $range = explode('-', $range);
