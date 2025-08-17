@@ -684,8 +684,8 @@ function runquery($sql) {
 
 	$sql = str_replace("\r", "\n", str_replace(' '.ORIG_TABLEPRE, ' '.$tablepre, $sql));
 	$sql = str_replace("\r", "\n", str_replace(' `'.ORIG_TABLEPRE, ' `'.$tablepre, $sql));
-    $sql = str_replace("\r", "\n", str_replace(' pichome', ' '.$tablepre, $sql));
-    $sql = str_replace("\r", "\n", str_replace(' `pichome', ' `'.$tablepre, $sql));
+    $sql = str_replace("\r", "\n", str_replace(' pichome_', ' '.$tablepre, $sql));
+    $sql = str_replace("\r", "\n", str_replace(' `pichome_', ' `'.$tablepre, $sql));
 	$ret = array();
 	$num = 0;
 	foreach(explode(";\n", trim($sql)) as $query) {
