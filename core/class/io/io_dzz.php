@@ -605,7 +605,7 @@ class io_dzz extends io_api
         if(strpos($path, 'attach::') === 0){
             global $Types;
             $attachment = C::t('attachment')->fetch(intval(str_replace('attach::', '', $path)));
-            $bz = io_remote::getBzByRemoteid($attachment['remoteid']);
+            $bz = io_remote::getBzByRemoteid($attachment['remote']);
             $data = array(
                 'name' => $attachment['filename'],
                 'ext' => $attachment['filetype'],
