@@ -21,7 +21,12 @@ class table_pichome_folder_autodata extends dzz_table
         $olddatas = $this->fetch_by_fid($setarr['fid']);
         $oldkeys = array_keys($olddatas);
         $nkeys = array_keys($setarr['keys']);
-        $delkeys = array_diff($oldkeys,$nkeys);
+        if(empty($nkeys)){
+            $delkeys=$oldkeys;
+        }else{
+            $delkeys = array_diff($oldkeys,$nkeys);
+        }
+
         $haschange = false;
         if(!empty($delkeys)){
             foreach($delkeys as $v){
