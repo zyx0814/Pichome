@@ -253,7 +253,7 @@ elseif($operation == 'getfiledata'){//获取文件右侧信息
                 $o['allowedit'] = $allowedit;
                 $o['filenamewirte'] = $allowedit;
             }elseif($appdata['type'] == 3){
-                $allowedit = true;
+                $o['allowedit'] = true;
                 $o['filenamewirte'] = true;
             }
             foreach($o['fileds'] as $k=>$v){
