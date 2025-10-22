@@ -29,7 +29,7 @@ if($do=='checkpassword'){
     }
 
 }
-Hook::listen('check_login');//检查是否登录，未登录跳转到登录界面
+
 if($do=='delete') {
     $id = intval($_GET['id']);
     if (!$data = C::t('pichome_share')->fetch($id)) {
