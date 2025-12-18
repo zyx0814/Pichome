@@ -213,7 +213,7 @@ class table_pichome_resources extends dzz_table
             $v['opentype'] = getTypeByExt($v['ext']);
             if ($v['opentype'] == 'audio' || $v['opentype'] == 'video') {
                 if(in_array($v['ext'],explode(',',getglobal('config/pichomeplayermediaext')))){
-                    $v['mediaplayerpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream&hash=' . VERHASH . '&path=' . dzzencode($v['rid'] . '_3', '', 14400, 0);
+                    $v['mediaplayerpath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream&hash=' . VERHASH . '&path=' . $v['dpath'];
                 }else{
                     if($ppath = DB::result_first("select path from %t where rid = %s and status = %d",array('video_record',$v['rid'],2))){
                         $v['mediaplayerpath'] = IO::getFileUri($ppath);
@@ -615,8 +615,7 @@ class table_pichome_resources extends dzz_table
         $thumsizearr = $this->scaleImage($resourcesdata['width'], $resourcesdata['height'], $thumbwidth, $thumbheight);
         $resourcesdata['iconwidth'] = $thumsizearr[0];
         $resourcesdata['iconheight'] = $thumsizearr[1];
-
-        if (getglobal('adminid') == 1) $resourcesdata['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream' . '&path=' . dzzencode($rid . '_7', '', 0, 0);
+        if (getglobal('adminid') == 1) $resourcesdata['realfianllypath'] = getglobal('siteurl') . 'index.php?mod=io&op=getStream' . '&path=' .Pencode(array('path'=>$rid,'perm'=>$perm,'ishare'=>0,'isadmin'=>1),0);
         if(in_array($resourcesdata['ext'],['jpg','png','gif','webp','jpeg'])) $resourcesdata['showoriginal'] = 1;
         else $resourcesdata['showoriginal'] = 0;
         $resourcesdata['name'] = str_replace(strrchr($resourcesdata['name'], "."), "", $resourcesdata['name']);
