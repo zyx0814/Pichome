@@ -328,6 +328,7 @@ class table_pichome_folder extends dzz_table
 
         }else{
             $wheresql = ' f.fname like %s  ';
+            $params[] = '%'.$keyword.'%';
         }
 
 
