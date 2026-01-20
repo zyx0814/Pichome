@@ -19,7 +19,7 @@
 				</div>
 			</template>
 			<template v-else>
-				<div class="img-box" :ref="'BoxImg_'+item.data.dpath+item.type">
+				<div class="img-box" :ref="'BoxImg_'+item.id+item.type">
 					<img :src="item.data.icondata" class="image-viewer__img thumbnail" />
 					<img
 						@load="MainImgload"
