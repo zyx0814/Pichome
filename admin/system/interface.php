@@ -436,7 +436,7 @@
 						$arr['time'] = lang('per_hour').'00'. lang('point');;
 						$arr['lastrun'] = 'N/A';
 						$arr['nextrun'] = $arr['nextrun'] ? dgmdate($arr['nextrun'], $_G['setting']['dateformat'] . " " . $_G['setting']['timeformat']) : 'N/A';
-						exit(json_encode(array('success'=>true,data=>$arr)));
+						exit(json_encode(array('success'=>true,'data'=>$arr)));
 					}else{
 						exit(json_encode(array('error'=>true)));
 					}
@@ -454,33 +454,7 @@
 				}else{
 					exit(json_encode(array('error'=>true)));
 				}
-			}elseif(submitcheck('cronssubmit')) {
-				include_once libfile('function/cache');
-				$perm = $_GET['perm'];
-				// foreach ($_GET['namenew'] as $id => $name) {
-				$newcron = array('name' => dhtmlspecialchars($perm['name']), 'available' => $perm['available']);
-				if (empty($perm['available'])) {
-					$newcron['nextrun'] = '0';
-				}
-				$id = $perm['cronid'];
-				DB::update('cron', $newcron, "cronid='{$id}'");
-				// }
-				$query = DB::query("SELECT cronid, filename FROM " . DB::table('cron'));
-				while ($cron = DB::fetch($query)) {
-					$efile = explode(':', $cron['filename']);
-					if (count($efile) > 1) {
-						$filename = array_pop($efile);
-						$cronfile =  DZZ_ROOT. ''.implode("/",$efile).'/cron/'.$filename; 
-					} else {
-						$cronfile = DZZ_ROOT . './core/cron/' . $cron['filename'];
-					}
-					if (!file_exists($cronfile)) {
-						DB::update('cron', array('available' => '0', 'nextrun' => '0', ), array('cronid'=>$cron['cronid']));
-					}
-				}
-				updatecache('setting');
-				$msg = lang('crons_succeed');
-				exit(json_encode(array('success'=>true,'msg'=>$msg)));
+
 			} else {
 				$crons = array();
 				$query = DB::query("SELECT * FROM " . DB::table('cron') . " ORDER BY type DESC");
