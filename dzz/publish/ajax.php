@@ -1891,11 +1891,20 @@ elseif($do=='getFileContent'){
 }
 elseif($do == 'getColletLists'){//获取合集列表
     $page=$_GET['page']?intval($_GET['page']):1;
-    $perpage=$_GET['perpage']?intval($_GET['perpage']):2;
+    $perpage=$_GET['perpage']?intval($_GET['perpage']):20;
     $start=($page-1)*$perpage;
     $orderby=$_GET['orderby']?$_GET['orderby']:'dateline';
     $order=$_GET['order']?$_GET['order']:'DESC';
-
+    $allowed_orderby = ['dateline', 'pname', 'cviews', 'cdownload'];
+    $allowed_order   = ['ASC', 'DESC'];
+    $orderby = (is_string($_GET['orderby'] ?? null)) ? $_GET['orderby'] : 'dateline';
+    $order   = strtoupper((is_string($_GET['order'] ?? null)) ? $_GET['order'] : 'DESC');
+    if (!in_array($orderby, $allowed_orderby, true)) {
+        $orderby = 'dateline';
+    }
+    if (!in_array($order, $allowed_order, true)) {
+        $order = 'DESC';
+    }
     if($pdata['ptype']=='6' and $pdata['flag']>0) {
        $sql=" from %t ";
         $countsql=" COUNT(*)  from %t ";
@@ -1953,8 +1962,8 @@ elseif($do == 'getColletLists'){//获取合集列表
             $param[] = '%' . getstr($_GET['keyword']) . '%';
         }
 
-        $ordersql = "order by p.$orderby $order";
     }
+    $ordersql = "order by p.$orderby $order";
 
     $data=array();
     if($count=DB::result_first("select $countsql where $wheresql",$param)) {

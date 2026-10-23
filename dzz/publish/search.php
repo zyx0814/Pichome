@@ -28,7 +28,7 @@ if ($do == 'getsearchkeyword') {//热搜关键词
     $limit = 20;
 
     $data = [];
-    $sql = "pstatus>0 and ptype=6 ";
+    $sql = "pstatus=1 and ptype=6 ";
     $params = array('publish_list');
 
     foreach (DB::fetch_all("select * from %t where $sql limit $limit", $params) as $v) {
@@ -70,8 +70,17 @@ if ($do == 'getsearchkeyword') {//热搜关键词
     $pid = $_GET['id'] ? intval($_GET['id']) : 0;
     $sql = "p.pstatus='1'";
     $param = array( 'publish_list','publish_relation');
-    $orderby = $_GET['orderby'] ? $_GET['orderby'] : 'dateline';
-    $order = $_GET['order'] ? $_GET['order'] : 'DESC';
+    $allowed_orderby = ['dateline', 'title', 'cview', 'cdownload'];
+    $allowed_order   = ['ASC', 'DESC'];
+    $orderby = (is_string($_GET['orderby'] ?? null)) ? $_GET['orderby'] : 'dateline';
+    $order   = strtoupper((is_string($_GET['order'] ?? null)) ? $_GET['order'] : 'DESC');
+    if (!in_array($orderby, $allowed_orderby, true)) {
+        $orderby = 'dateline';
+    }
+    if (!in_array($order, $allowed_order, true)) {
+        $order = 'DESC';
+    }
+
     if($pid){
         $sql .= " and r.rpid =%d";
         $param[]=$pid;

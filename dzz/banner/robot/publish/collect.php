@@ -22,8 +22,8 @@ global $_G,$id,$data;
     $page=$_GET['page']?intval($_GET['page']):1;
     $perpage=$_GET['perpage']?intval($_GET['perpage']):5;
     $start=($page-1)*$perpage;
-    $orderby=$_GET['orderby']?$_GET['orderby']:'dateline';
-    $order=$_GET['order']?$_GET['order']:'DESC';
+    $orderby='dateline';
+    $order='DESC';
     $sql="p.pstatus='1' and r.rpid=%d";
     $param=array('publish_relation','publish_list',$id);
 
